@@ -6,9 +6,10 @@ from langchain.llms import OpenAI
 
 from .base import BaseChat
 from .simple import SimpleChat
+from .rephrase import RephraseChat
 
 
-USE_SIMPLE = True
+USE_SIMPLE = False
 
 
 os.environ["OPENAI_API_KEY"] = "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"
@@ -26,3 +27,5 @@ docsearch = FAISS.from_texts(instructions, embeddings)
 def new_chat() -> BaseChat:
     if USE_SIMPLE:
         return SimpleChat(docsearch)
+    else:
+        return RephraseChat(docsearch)
