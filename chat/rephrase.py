@@ -40,7 +40,25 @@ Assistant: Vitalik Buterin
 User: What about AAVE?
 Assistant: Stani Kulechov
 Follow Up Input: When was that?
-Standalone question: When was Ethereum and AAVE created?
+Standalone question: When were Ethereum and AAVE created?
+
+## Example:
+
+Chat History:
+User: Who created Ethereum?
+Assistant: Vitalik Buterin
+Follow Up Input: What is AAVE?
+Standalone question: What is AAVE?
+
+## Example:
+
+Chat History:
+User: Who created Ethereum?
+Assistant: Vitalik Buterin
+User: What is AAVE?
+Assistant: AAVE is a decentralized finance protocol that allows users to borrow and lend digital assets. It is a protocol built on Ethereum and is powered by a native token, Aave.
+Follow Up Input: Bitoin?
+Standalone question: What is Bitcoin?
 
 ## Example:
 
@@ -51,7 +69,7 @@ Standalone question:'''
 
 
 class RephraseChat(BaseChat):
-    def __init__(self, docsearch: Any) -> None:
+    def __init__(self, docsearch: Any, show_rephrased: bool = True) -> None:
         super().__init__()
         self.prompt = PromptTemplate(
             input_variables=["task_info", "question"],
@@ -61,6 +79,7 @@ class RephraseChat(BaseChat):
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt)
         self.chain.verbose = True
         self.docsearch = docsearch
+        self.show_rephrased = show_rephrased
 
         self.rephrase_prompt = PromptTemplate(
             input_variables=["history", "question"],
@@ -70,6 +89,7 @@ class RephraseChat(BaseChat):
         self.rephrase_chain.verbose = True
 
     def chat(self, userinput: str) -> str:
+        userinput = userinput.strip()
         if self.history:
             # First rephrase the question
             history_string = ""
@@ -77,10 +97,10 @@ class RephraseChat(BaseChat):
                 history_string += ("User: " + interaction.input + "\n")
                 history_string += ("Assistant: " + interaction.response + "\n")
             question = self.rephrase_chain.run({
-                "history": history_string,
+                "history": history_string.strip(),
                 "question": userinput,
                 "stop": "##",
-            })
+            }).strip()
             rephrased = True
         else:
             question = userinput
@@ -93,6 +113,6 @@ class RephraseChat(BaseChat):
             "stop": "User",
         })
         self.add_interaction(userinput, result)
-        if rephrased:
+        if self.show_rephrased and rephrased and userinput != question:
             result = "I think you're asking: " + question + "\n\n" + result
         return result
