@@ -4,3 +4,4 @@ openai==0.26.1
 faiss-cpu==1.7.3
 websocket-server==0.6.4
 dataclasses_json==0.5.7
+tiktoken==0.1.2
