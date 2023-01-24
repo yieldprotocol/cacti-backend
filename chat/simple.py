@@ -51,5 +51,6 @@ class SimpleChat(BaseChat):
             "history": history_string,
             "stop": "User",
         })
+        result = result.strip()
         self.add_interaction(userinput, result)
         return result

@@ -34,14 +34,15 @@ def run() -> None:
             ChatVariant.rephrase,
     ]:
         for filename, example in load_dataset():
-            output_path = os.path.join(output_dir, f'{filename}-variant{chat_variant}.json')
+            basename, _ = os.path.splitext(filename)
+            output_path = os.path.join(output_dir, f'{basename}-variant{chat_variant}.json')
             if os.path.exists(output_path):
                 continue
             chat_client = new_chat(chat_variant, show_intermediate_output=False)
             responses: List[str] = []
             for interaction in example.interactions:
                 response = chat_client.chat(interaction.input)
-                responses.append(response)
+                responses.append(response.strip())
             pred = QuestionAnswerChatPrediction(
                 chat_variant,
                 example,

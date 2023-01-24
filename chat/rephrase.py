@@ -112,6 +112,7 @@ class RephraseChat(BaseChat):
             "question": question,
             "stop": "User",
         })
+        result = result.strip()
         self.add_interaction(userinput, result)
         if self.show_rephrased and rephrased and userinput != question:
             result = "I think you're asking: " + question + "\n\n" + result
