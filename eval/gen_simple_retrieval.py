@@ -11,7 +11,7 @@ from langchain.chains import LLMChain
 from langchain.text_splitter import CharacterTextSplitter
 
 from chat.base import Interaction
-from eval.base import QuestionAnswerChatExample
+from eval.base import ScrapedFile, QuestionAnswerChatExample
 
 
 os.environ["OPENAI_API_KEY"] = "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"
@@ -46,6 +46,10 @@ A3: Ethereum transitioned its consensus mechanism from proof-of-work to proof-of
 Q1:'''
 
 
+tokenizer = tiktoken.get_encoding("gpt2")
+print('token length of template =', len(tokenizer.encode(TEMPLATE)))
+
+
 class QuestionAnswerGenerator:
     def __init__(self) -> None:
         self.prompt = PromptTemplate(
@@ -62,8 +66,8 @@ class QuestionAnswerGenerator:
         # parse interactions
         response = 'Q1: ' + response.strip()
         lines = response.split('\n')
-        for i, line in enumerate(lines):
-            print(i, line)
+        #for i, line in enumerate(lines):
+        #    print(i, line)
         i = 0
         while i + 1 < len(lines):
             question, answer = lines[i: i + 2]
@@ -103,8 +107,8 @@ def run() -> None:
     for scraped_file in iter_files():
         print(scraped_file.filename, len(scraped_file.content))
         docs = text_splitter.split_text(scraped_file.content)
-        for context in docs[:2]:
-            print('context', context)
+        for context in docs[1:3]:
+            print(f'Context:\n{context}')
             interactions = gen.generate(context)
             for i, interaction in enumerate(interactions):
                 print(f'Interaction {i}\nQ: {interaction.input}\nA: {interaction.response}')

@@ -1,7 +1,13 @@
+import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from typing import List
+
+
+class ChatVariant(enum.IntEnum):
+    simple = 1
+    rephrase = 2
 
 
 @dataclass_json
