@@ -32,7 +32,7 @@ Ethereum was conceived in 2013 by programmer Vitalik Buterin. Ethereum allows an
 On 15 September 2022, Ethereum transitioned its consensus mechanism from proof-of-work (PoW) to proof-of-stake (PoS) in an upgrade process known as "the Merge". This has cut Ethereum's energy usage by 99%.
 ## End context
 Q1: What does Ethereum let you do?
-A1: Ethereum allows anyone to deploy permanent and ummutable decentralized applications onto it.
+A1: Ethereum allows anyone to deploy permanent and immutable decentralized applications onto it.
 
 Q2: Who created it?
 A2: Vitalik Buterin.

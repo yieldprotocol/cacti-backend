@@ -26,3 +26,10 @@ class QuestionAnswerChatPrediction:
     chat_variant: ChatVariant
     example: QuestionAnswerChatExample
     responses: List[str]
+
+
+@dataclass_json
+@dataclass
+class QuestionAnswerChatAccuracyEvaluation:
+    prediction: QuestionAnswerChatPrediction
+    accuracy_responses: List[str]
