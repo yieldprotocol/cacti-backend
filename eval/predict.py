@@ -34,7 +34,7 @@ def load_dataset() -> Generator[QuestionAnswerChatExample, None, None]:
 
 def eval_docsearch() -> Any:
     embeddings = OpenAIEmbeddings()
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    text_splitter = CharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
     SCRAPE_DIR = '../../deep-cookie/protocols-scraped_data/lido-documentation'
     scrape_dir = os.path.join(os.path.dirname(__file__), SCRAPE_DIR)
     documents = []
