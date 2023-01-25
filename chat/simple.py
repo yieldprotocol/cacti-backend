@@ -26,7 +26,7 @@ Assistant:'''
 
 
 class SimpleChat(BaseChat):
-    def __init__(self, docsearch: Any) -> None:
+    def __init__(self, docsearch: Any, top_k: int = 4) -> None:
         super().__init__()
         self.prompt = PromptTemplate(
             input_variables=["task_info", "summary", "history"],
@@ -36,9 +36,10 @@ class SimpleChat(BaseChat):
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt)
         self.chain.verbose = True
         self.docsearch = docsearch
+        self.top_k = top_k
 
     def chat(self, userinput: str) -> str:
-        docs = self.docsearch.similarity_search(userinput)
+        docs = self.docsearch.similarity_search(userinput, k=self.top_k)
         task_info = ''.join([doc.page_content for doc in docs])
         history_string = ""
         for interaction in self.history:

@@ -69,7 +69,7 @@ Standalone question:'''
 
 
 class RephraseChat(BaseChat):
-    def __init__(self, docsearch: Any, show_rephrased: bool = True) -> None:
+    def __init__(self, docsearch: Any, top_k: int = 4, show_rephrased: bool = True) -> None:
         super().__init__()
         self.prompt = PromptTemplate(
             input_variables=["task_info", "question"],
@@ -79,6 +79,7 @@ class RephraseChat(BaseChat):
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt)
         self.chain.verbose = True
         self.docsearch = docsearch
+        self.top_k = top_k
         self.show_rephrased = show_rephrased
 
         self.rephrase_prompt = PromptTemplate(
@@ -105,7 +106,7 @@ class RephraseChat(BaseChat):
         else:
             question = userinput
             rephrased = False
-        docs = self.docsearch.similarity_search(question)
+        docs = self.docsearch.similarity_search(question, k=self.top_k)
         task_info = ''.join([doc.page_content for doc in docs])
         result = self.chain.run({
             "task_info": task_info,
