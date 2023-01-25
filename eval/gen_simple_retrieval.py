@@ -14,10 +14,6 @@ from chat.base import Interaction
 from eval.base import ScrapedFile, QuestionAnswerChatExample
 
 
-os.environ["OPENAI_API_KEY"] = "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"
-OpenAI.api_key = "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"
-
-
 SCRAPE_DIR = '../../deep-cookie/protocols-scraped_data/lido-documentation'
 OUTPUT_DIR = 'qa_lido'
 
