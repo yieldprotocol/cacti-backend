@@ -33,3 +33,10 @@ class QuestionAnswerChatPrediction:
 class QuestionAnswerChatAccuracyEvaluation:
     prediction: QuestionAnswerChatPrediction
     accuracy_responses: List[str]
+
+
+@dataclass_json
+@dataclass
+class QuestionAnswerChatPersonalityEvaluation:
+    prediction: QuestionAnswerChatPrediction
+    personality_responses: List[str]
