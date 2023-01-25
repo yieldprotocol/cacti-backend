@@ -83,7 +83,7 @@ class QuestionAnswerGenerator:
 def iter_files() -> Generator[str, None, None]:
     scrape_dir = os.path.join(os.path.dirname(__file__), SCRAPE_DIR)
     for filename in os.listdir(scrape_dir):
-        if filename in (
+        if filename not in (
                 'https:__docs.lido.fi_contracts_lido-oracle.txt',
                 'https:__docs.lido.fi_lido-dao.txt',
                 'https:__docs.lido.fi_.txt',
