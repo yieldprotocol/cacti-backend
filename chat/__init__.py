@@ -23,19 +23,6 @@ def get_docsearch():
     global _docsearch
     if _docsearch is None:
         embeddings = OpenAIEmbeddings()
-        '''
-        text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        SCRAPE_DIR = '../../deep-cookie/protocols-scraped_data/lido-documentation'
-        scrape_dir = os.path.join(os.path.dirname(__file__), SCRAPE_DIR)
-        documents = []
-        for filename in os.listdir(scrape_dir):
-            filepath = os.path.join(scrape_dir, filename)
-            lines = list(open(filepath).readlines())
-            content = '\n'.join(lines)
-            docs = text_splitter.split_text(content)
-            documents.extend(docs)
-
-        '''
         with open('./web3fuctions.txt') as f:
             web3functions = f.read()
         # text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)

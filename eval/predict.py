@@ -1,8 +1,14 @@
-from typing import Generator, List
+from typing import Any, Generator, List
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 import os
 
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores.faiss import FAISS
+from langchain.llms import OpenAI
+from langchain.text_splitter import CharacterTextSplitter
+
+import chat
 from chat import (
     ChatVariant,
     new_chat,
@@ -26,7 +32,24 @@ def load_dataset() -> Generator[QuestionAnswerChatExample, None, None]:
         yield filename, example
 
 
+def eval_docsearch() -> Any:
+    embeddings = OpenAIEmbeddings()
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    SCRAPE_DIR = '../../deep-cookie/protocols-scraped_data/lido-documentation'
+    scrape_dir = os.path.join(os.path.dirname(__file__), SCRAPE_DIR)
+    documents = []
+    for filename in os.listdir(scrape_dir):
+        filepath = os.path.join(scrape_dir, filename)
+        lines = list(open(filepath).readlines())
+        content = '\n'.join(lines)
+        docs = text_splitter.split_text(content)
+        documents.extend(docs)
+    docsearch = FAISS.from_texts(documents, embeddings)
+    return docsearch
+
+
 def run() -> None:
+    chat._docsearch = eval_docsearch()  # inject our embeddings
     output_dir = os.path.join(os.path.dirname(__file__), OUTPUT_DIR)
     os.makedirs(output_dir, exist_ok=True)
     for chat_variant in [
