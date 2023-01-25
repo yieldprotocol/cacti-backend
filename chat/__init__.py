@@ -11,10 +11,10 @@ from .base import (
 )
 from .simple import SimpleChat
 from .rephrase import RephraseChat
+from utils import set_api_key
 
 
-os.environ["OPENAI_API_KEY"] = "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"
-OpenAI.api_key = "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"
+set_api_key()
 
 
 _docsearch = None
