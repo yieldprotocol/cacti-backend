@@ -4,6 +4,8 @@ from langchain.llms import OpenAI
 
 
 OPENAI_API_KEY = "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"
+WEAVIATE_URL = "http://0.0.0.0:8080"
+
 
 
 def set_api_key():
