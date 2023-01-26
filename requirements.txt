@@ -1,7 +1,8 @@
-langchain==0.0.64
+langchain==0.0.70
 gradio==3.16.2
 openai==0.26.1
 faiss-cpu==1.7.3
 websocket-server==0.6.4
 dataclasses_json==0.5.7
 tiktoken==0.1.2
+weaviate-client==3.10.0
