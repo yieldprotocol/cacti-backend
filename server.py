@@ -1,6 +1,10 @@
 import logging
 from websocket_server import WebsocketServer
 import chat
+from utils import set_api_key
+
+set_api_key()
+
 
 client_id_to_chat = {}
 
