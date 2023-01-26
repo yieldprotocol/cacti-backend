@@ -8,7 +8,7 @@ from langchain.vectorstores.faiss import FAISS
 from langchain.llms import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
 
-import chat
+import index
 from chat import (
     ChatVariant,
     new_chat,
@@ -49,7 +49,7 @@ def eval_docsearch() -> Any:
 
 
 def run() -> None:
-    chat._docsearch = eval_docsearch()  # inject our embeddings
+    index._docsearch = eval_docsearch()  # inject our embeddings
     output_dir = os.path.join(os.path.dirname(__file__), OUTPUT_DIR)
     os.makedirs(output_dir, exist_ok=True)
     for chat_variant in [
