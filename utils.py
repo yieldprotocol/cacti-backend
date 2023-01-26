@@ -4,7 +4,7 @@ from langchain.llms import OpenAI
 
 
 OPENAI_API_KEY = "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"
-WEAVIATE_URL = "http://0.0.0.0:8080"
+WEAVIATE_URL = "http://chatweb3:q0jficzXOA69T5FWgAeT@23.20.190.128:5050"
 
 
 
