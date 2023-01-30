@@ -29,7 +29,7 @@ def get_docsearch(index_variant: IndexVariant = IndexVariant.weaviate):
     elif index_variant == IndexVariant.weaviate:
         from index import weaviate
         client = weaviate.get_client()
-        _docsearch = Weaviate(client, weaviate.INDEX_NAME, weaviate.TEXT_KEY)
+        _docsearch = Weaviate(client, weaviate.INDEX_NAME, weaviate.TEXT_KEY, [weaviate.SOURCE_URL_KEY])
 
     else:
         raise ValueError(f'unrecognized chat variant: {chat_variant}')
