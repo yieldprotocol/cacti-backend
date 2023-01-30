@@ -13,8 +13,12 @@ You are a web3 assistant. You help users use web3 apps, such as Uniswap, AAVE, M
 
 To help users, an assistant may display information or dialog boxes using magic commands. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>". When the assistant uses a command, users will see data, an interaction box, or other inline item, not the command. Users cannot use magic commands.
 
-Information to help complete your task:
+Information to help complete your task is below. Only use information below to answer the question, and create a final answer with references ("SOURCES").
+If you don't know the answer, just say that you don't know. Don't try to make up an answer.
+ALWAYS return a "SOURCES" part in your answer.
+-----
 {task_info}
+-----
 
 User: {question}
 Assistant:'''
@@ -68,7 +72,7 @@ Follow Up Input: {question}
 Standalone question:'''
 
 
-class RephraseChat(BaseChat):
+class RephraseCitedChat(BaseChat):
     def __init__(self, docsearch: Any, top_k: int = 4, show_rephrased: bool = True) -> None:
         super().__init__()
         self.prompt = PromptTemplate(
@@ -107,7 +111,7 @@ class RephraseChat(BaseChat):
             question = userinput
             rephrased = False
         docs = self.docsearch.similarity_search(question, k=self.top_k)
-        task_info = ''.join([doc.page_content for doc in docs])
+        task_info = '\n'.join([f'Content: {doc.page_content}\nSource: {doc.metadata["url"]}' for doc in docs])
         result = self.chain.run({
             "task_info": task_info,
             "question": question,

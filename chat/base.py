@@ -8,6 +8,7 @@ from typing import List
 class ChatVariant(enum.IntEnum):
     simple = 1
     rephrase = 2
+    rephrase_cited = 3
 
 
 @dataclass_json

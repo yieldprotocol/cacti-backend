@@ -32,7 +32,7 @@ class SimpleChat(BaseChat):
             input_variables=["task_info", "summary", "history"],
             template=TEMPLATE,
         )
-        self.llm = OpenAI(temperature=0.9)
+        self.llm = OpenAI(temperature=0.9, max_tokens=-1)
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt)
         self.chain.verbose = True
         self.docsearch = docsearch

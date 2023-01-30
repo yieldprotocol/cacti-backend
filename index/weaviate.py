@@ -14,6 +14,7 @@ import utils
 namespace_uuid = uuid.UUID('64265e01-0339-4063-8aa3-bcd562b55aea')
 INDEX_NAME = 'IndexV1'
 TEXT_KEY = 'content'
+SOURCE_URL_KEY = 'url'
 
 
 text_splitter = CharacterTextSplitter(
@@ -71,7 +72,7 @@ def create_schema(delete_first: bool = False) -> None:
                     {
                         "dataType": ["text"],
                         "description": "The source url of the chunk",
-                        "name": "url",
+                        "name": SOURCE_URL_KEY,
                     },
                 ],
             },
@@ -86,7 +87,7 @@ def BACKFILL_txt():
     with open('./web3fuctions.txt') as f:
         web3functions = f.read()
     documents = web3functions.split("---")
-    metadatas = [{'url': './web3fuctions.txt'} for _ in documents]
+    metadatas = [{SOURCE_URL_KEY: './web3fuctions.txt'} for _ in documents]
 
     client = get_client()
     w = Weaviate(client, INDEX_NAME, TEXT_KEY)

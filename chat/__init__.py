@@ -8,13 +8,19 @@ from .base import (
 )
 from .simple import SimpleChat
 from .rephrase import RephraseChat
+from .rephrase_cited import RephraseCitedChat
 
 
-def new_chat(chat_variant: ChatVariant = ChatVariant.rephrase, show_intermediate_output: bool = True) -> BaseChat:
+DEFAULT_CHAT_VARIANT = ChatVariant.rephrase_cited
+
+
+def new_chat(chat_variant: ChatVariant = DEFAULT_CHAT_VARIANT, show_intermediate_output: bool = True) -> BaseChat:
     docsearch = index.get_docsearch()
     if chat_variant == ChatVariant.simple:
         return SimpleChat(docsearch)
     elif chat_variant == ChatVariant.rephrase:
         return RephraseChat(docsearch, show_rephrased=show_intermediate_output)
+    elif chat_variant == ChatVariant.rephrase_cited:
+        return RephraseCitedChat(docsearch, show_rephrased=show_intermediate_output)
     else:
         raise ValueError(f'unrecognized chat variant: {chat_variant}')
