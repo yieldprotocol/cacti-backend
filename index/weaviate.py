@@ -5,7 +5,8 @@ import uuid
 
 import weaviate  # type: ignore
 from langchain.docstore.document import Document
-from langchain.text_splitter import CharacterTextSplitter
+#from langchain.text_splitter import CharacterTextSplitter
+from .text_splitter import TokenTextSplitter
 
 import utils
 
@@ -17,7 +18,11 @@ TEXT_KEY = 'content'
 SOURCE_URL_KEY = 'url'
 
 
-text_splitter = CharacterTextSplitter(
+#text_splitter = CharacterTextSplitter(
+#    chunk_size=1000,
+#    chunk_overlap=200,
+#)
+text_splitter = TokenTextSplitter(
     chunk_size=1000,
     chunk_overlap=200,
 )
@@ -92,3 +97,27 @@ def BACKFILL_txt():
     client = get_client()
     w = Weaviate(client, INDEX_NAME, TEXT_KEY)
     w.add_texts(documents, metadatas)
+
+
+# run with: python3 -c "from index import weaviate; weaviate.BACKFILL_scrape()"
+def BACKFILL_scrape():
+    from langchain.vectorstores import Weaviate
+    from scrape.scrape import get_body_text
+    from scrape.models import ScrapedUrl as ScrapedUrlModel
+
+    client = get_client()
+    w = Weaviate(client, INDEX_NAME, TEXT_KEY)
+
+    documents = []
+    metadatas = []
+    for scraped_url in ScrapedUrlModel.query.all():
+        print('including for indexing', scraped_url.url)
+        output = scraped_url.data
+        text = get_body_text(output)
+        documents.append(text)
+        metadatas.append({SOURCE_URL_KEY: scraped_url.url})
+    splitted_docs = text_splitter.create_documents(documents, metadatas=metadatas)
+    splitted_texts = [d.page_content for d in splitted_docs]
+    splitted_metadatas = [d.metadata for d in splitted_docs]
+
+    w.add_texts(splitted_texts, splitted_metadatas)
