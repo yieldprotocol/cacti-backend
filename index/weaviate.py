@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Iterable, List, Optional
 import os
 import traceback
 import uuid
@@ -12,10 +12,11 @@ import utils
 
 
 # set an arbitrary uuid for namespace, for consistent uuids for objects
-namespace_uuid = uuid.UUID('64265e01-0339-4063-8aa3-bcd562b55aea')
+NAMESPACE_UUID = uuid.UUID('64265e01-0339-4063-8aa3-bcd562b55aea')
 INDEX_NAME = 'IndexV1'
 TEXT_KEY = 'content'
 SOURCE_URL_KEY = 'url'
+CHUNK_ID_KEY = 'chunk_id'
 
 
 #text_splitter = CharacterTextSplitter(
@@ -79,6 +80,11 @@ def create_schema(delete_first: bool = False) -> None:
                         "description": "The source url of the chunk",
                         "name": SOURCE_URL_KEY,
                     },
+                    {
+                        "dataType": ["int"],
+                        "description": "The id of the chunk",
+                        "name": CHUNK_ID_KEY,
+                    },
                 ],
             },
         ]
@@ -106,18 +112,58 @@ def BACKFILL_scrape():
     from scrape.models import ScrapedUrl as ScrapedUrlModel
 
     client = get_client()
-    w = Weaviate(client, INDEX_NAME, TEXT_KEY)
-
-    documents = []
-    metadatas = []
-    for scraped_url in ScrapedUrlModel.query.all():
-        print('including for indexing', scraped_url.url)
+    for i, scraped_url in enumerate(_yield_limit(ScrapedUrlModel.query, ScrapedUrlModel.id)):
+        print('indexing', i, scraped_url.url)
         output = scraped_url.data
         text = get_body_text(output)
-        documents.append(text)
-        metadatas.append({SOURCE_URL_KEY: scraped_url.url})
-    splitted_docs = text_splitter.create_documents(documents, metadatas=metadatas)
-    splitted_texts = [d.page_content for d in splitted_docs]
-    splitted_metadatas = [d.metadata for d in splitted_docs]
+        metadata = {SOURCE_URL_KEY: scraped_url.url}
+        splitted_docs = text_splitter.create_documents([text], metadatas=[metadata])
+        splitted_texts = [d.page_content for d in splitted_docs]
+        splitted_metadatas = [{CHUNK_ID_KEY: chunk_id, **d.metadata} for chunk_id, d in enumerate(splitted_docs)]
+        _add_texts_with_stable_uuids(client, splitted_texts, splitted_metadatas)
 
-    w.add_texts(splitted_texts, splitted_metadatas)
+
+def _get_index_size():
+    client = get_client()
+    data = client.query.aggregate(INDEX_NAME).with_fields('meta { count }').do()
+    print(data)
+    return data['data']['Aggregate'][INDEX_NAME][0]['meta']['count']
+
+
+def _add_texts_with_stable_uuids(client: Any, texts: Iterable[str], metadatas: Optional[List[dict]] = None):
+    with client.batch as batch:
+        ids = []
+        for i, doc in enumerate(texts):
+            data_properties = {
+                TEXT_KEY: doc,
+            }
+            if metadatas is not None:
+                for key in metadatas[i].keys():
+                    data_properties[key] = metadatas[i][key]
+
+            source_url = data_properties[SOURCE_URL_KEY]
+            chunk_id = data_properties[CHUNK_ID_KEY]
+            doc_uuid = uuid.uuid5(NAMESPACE_UUID, f'doc:{source_url}:{chunk_id}')
+            batch.add_data_object(data_properties, INDEX_NAME, doc_uuid)
+
+
+def _yield_limit(qry, pk_attr, maxrq=100):
+    """specialized windowed query generator (using LIMIT/OFFSET)
+
+    This recipe is to select through a large number of rows thats too
+    large to fetch at once. The technique depends on the primary key
+    of the FROM clause being an integer value, and selects items
+    using LIMIT."""
+    # source: https://github.com/sqlalchemy/sqlalchemy/wiki/RangeQuery-and-WindowedRangeQuery
+
+    firstid = None
+    while True:
+        q = qry
+        if firstid is not None:
+            q = qry.filter(pk_attr > firstid)
+        rec = None
+        for rec in q.order_by(pk_attr).limit(maxrq):
+            yield rec
+        if rec is None:
+            break
+        firstid = pk_attr.__get__(rec, pk_attr) if rec else None
