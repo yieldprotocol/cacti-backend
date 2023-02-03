@@ -27,9 +27,9 @@ def get_docsearch(index_variant: IndexVariant = IndexVariant.weaviate):
         _docsearch = FAISS.from_texts(documents, embeddings)
 
     elif index_variant == IndexVariant.weaviate:
-        from index import weaviate
+        from index import weaviate, sites
         client = weaviate.get_client()
-        _docsearch = Weaviate(client, weaviate.INDEX_NAME, weaviate.TEXT_KEY, [weaviate.SOURCE_URL_KEY])
+        _docsearch = Weaviate(client, sites.INDEX_NAME, sites.TEXT_KEY, [sites.SOURCE_URL_KEY])
 
     else:
         raise ValueError(f'unrecognized chat variant: {chat_variant}')
