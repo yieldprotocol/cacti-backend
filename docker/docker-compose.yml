@@ -55,8 +55,12 @@ services:
     volumes:
     - ./nginx/.htpasswd:/.htpasswd
     - ./nginx/server_block.conf:/opt/bitnami/nginx/conf/server_blocks/my_server_block.conf:ro
+    - ./nginx/certs:/certs
     image: bitnami/nginx:latest
     ports:
+    - 443:8443
+    - 80:8081
+    - 9998:9998
     - 5050:5050
     - 5173:5173
 ...
