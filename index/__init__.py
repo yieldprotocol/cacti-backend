@@ -35,3 +35,9 @@ def get_docsearch(index_variant: IndexVariant = IndexVariant.weaviate):
         raise ValueError(f'unrecognized chat variant: {chat_variant}')
 
     return _docsearch
+
+
+def get_widget_search():
+    from index import weaviate, widgets
+    client = weaviate.get_client()
+    return Weaviate(client, widgets.INDEX_NAME, widgets.TEXT_KEY)
