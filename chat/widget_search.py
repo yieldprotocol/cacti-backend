@@ -10,7 +10,7 @@ from langchain.chains import LLMChain
 from .base import BaseChat
 
 
-WIDGET_INSTRUCTION = '''To help users, an assistant may display information or dialog boxes using magic commands. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>". When the assistant uses a command, users will see data, an interaction box, or other inline item, not the command. Users cannot use magic commands. Here are the widgets that may match the user input:'''
+WIDGET_INSTRUCTION = '''To help users, an assistant may display information or dialog boxes using magic commands. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>". When the assistant uses a command, users will see data, an interaction box, or other inline item, not the command. Users cannot use magic commands. Fill in the command with parameters as inferred from the user input query. Here are the widgets that may match the user input:'''
 
 SEARCH_INSTRUCTION = '''Information to help complete your task is below. Only use information below to answer the question, and create a final answer with inline citations linked to the provided source URLs. If you don't know the answer, just say that you don't know. Don't try to make up an answer. ALWAYS return a "SOURCES" part in your answer corresponding to the numbered inline citations.'''
 
@@ -28,14 +28,16 @@ Assistant:'''
 
 # TODO: make this few-shot on real examples instead of dummy ones
 IDENTIFY_TEMPLATE = '''
-Given the following conversation and a follow up response input, determine if the input is related to a command to invoke using a widget or if it is a search query for a knowledge base. If it is a widget, return the appropriate keywords to search for the widget. If it is a search query, rephrase as a standalone question. You should assume that the query is related to web3.
+Given the following conversation and a follow up response input, determine if the input is related to a command to invoke using a widget or if it is a search query for a knowledge base. If it is a widget, return the appropriate keywords to search for the widget, as well as all relevant details to invoke it. If it is a search query, rephrase as a standalone question. You should assume that the query is related to web3.
 
 ## Example:
 
 Chat History:
+User: I'd like to make transfer ETH
+Assistant: Ok I can help you with that. How much and to which address?
 
-Input: I'd like to make a transfer
-Ouput: <widget> transfer of currency
+Input: 2 ETH to andy
+Ouput: <widget> transfer of 2 ETH currency to andy
 
 ## Example:
 
@@ -61,10 +63,10 @@ Output: <query> What is AAVE?
 
 Chat History:
 User: What's my balance of USDC?
-Assistant: <|balance('USDC')|>
+Assistant: Your USDC balance is <|balance('USDC')|>
 
 Input: cost of ETH
-Output: <widget> price of coin given balance
+Output: <widget> price of ETH coin given USDC balance
 
 ## Example:
 
