@@ -12,6 +12,7 @@ from .weaviate import get_client
 # set an arbitrary uuid for namespace, for consistent uuids for objects
 NAMESPACE_UUID = uuid.UUID('64265e01-0339-4063-8aa3-bcd562b55aea')
 INDEX_NAME = 'IndexV1'
+INDEX_DESCRIPTION = "Index of web3 document chunks"
 TEXT_KEY = 'content'
 SOURCE_URL_KEY = 'url'
 CHUNK_ID_KEY = 'chunk_id'
@@ -44,7 +45,7 @@ def create_schema(delete_first: bool = False) -> None:
         "classes": [
             {
                 "class": INDEX_NAME,
-                "description": "Index of web3 document chunks",
+                "description": INDEX_DESCRIPTION,
                 "vectorizer": "text2vec-openai",
                 "moduleConfig": {
                     "text2vec-openai": {
