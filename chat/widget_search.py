@@ -10,7 +10,7 @@ from langchain.chains import LLMChain
 from .base import BaseChat
 
 
-WIDGET_INSTRUCTION = '''To help users, an assistant may display information or dialog boxes using magic commands. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>". When the assistant uses a command, users will see data, an interaction box, or other inline item, not the command. Users cannot use magic commands. Fill in the command with parameters as inferred from the user input query. Here are the widgets that may match the user input:'''
+WIDGET_INSTRUCTION = '''To help users, an assistant may display information or dialog boxes using magic commands. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>". When the assistant uses a command, users will see data, an interaction box, or other inline item, not the command. Users cannot use magic commands. Fill in the command with parameters as inferred from the user input query. If there are missing parameters, prompt for them but do not return an incomplete magic command. Here are the widgets that may match the user input:'''
 
 SEARCH_INSTRUCTION = '''Information to help complete your task is below. Only use information below to answer the question, and create a final answer with inline citations linked to the provided source URLs. If you don't know the answer, just say that you don't know. Don't try to make up an answer. ALWAYS return a "SOURCES" part in your answer corresponding to the numbered inline citations.'''
 
