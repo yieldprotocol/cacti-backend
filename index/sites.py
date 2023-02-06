@@ -4,8 +4,7 @@ import traceback
 import uuid
 
 from langchain.docstore.document import Document
-#from langchain.text_splitter import CharacterTextSplitter
-from .text_splitter import TokenTextSplitter
+from langchain.text_splitter import TokenTextSplitter
 from .weaviate import get_client
 
 
@@ -18,10 +17,6 @@ SOURCE_URL_KEY = 'url'
 CHUNK_ID_KEY = 'chunk_id'
 
 
-#text_splitter = CharacterTextSplitter(
-#    chunk_size=1000,
-#    chunk_overlap=200,
-#)
 text_splitter = TokenTextSplitter(
     chunk_size=1000,
     chunk_overlap=200,

@@ -1,4 +1,4 @@
-langchain==0.0.74
+langchain==0.0.78
 gradio==3.16.2
 openai==0.26.1
 faiss-cpu==1.7.3
