@@ -1,4 +1,4 @@
-from typing import Any, Iterable, List, Optional
+from typing import Any, Generator, Iterable, List, Optional
 import os
 import traceback
 import uuid
@@ -82,10 +82,9 @@ def create_schema(delete_first: bool = False) -> None:
 def backfill():
     from langchain.vectorstores import Weaviate
     from scrape.scrape import get_body_text
-    from scrape.models import ScrapedUrl as ScrapedUrlModel
 
     client = get_client()
-    for i, scraped_url in enumerate(_yield_limit(ScrapedUrlModel.query, ScrapedUrlModel.id)):
+    for i, scraped_url in enumerate(iter_scraped_urls()):
         print('indexing', i, scraped_url.url)
         output = scraped_url.data
         text = get_body_text(output)
@@ -120,7 +119,13 @@ def _add_texts_with_stable_uuids(client: Any, texts: Iterable[str], metadatas: O
             batch.add_data_object(data_properties, INDEX_NAME, doc_uuid)
 
 
-def _yield_limit(qry, pk_attr, maxrq=100):
+def iter_scraped_urls() -> Generator[Any, None, None]:
+    from scrape.models import ScrapedUrl as ScrapedUrlModel
+    for scraped_url in _yield_limit(ScrapedUrlModel.query, ScrapedUrlModel.id):
+        yield scraped_url
+
+
+def _yield_limit(qry: Any, pk_attr: Any, maxrq: int = 100) -> Generator[Any, None, None]:
     """specialized windowed query generator (using LIMIT/OFFSET)
 
     This recipe is to select through a large number of rows thats too

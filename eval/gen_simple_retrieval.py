@@ -4,18 +4,18 @@ from typing import Generator, List
 import os
 import uuid
 
-import tiktoken
+import numpy as np
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-from langchain.text_splitter import CharacterTextSplitter
+from langchain.text_splitter import TokenTextSplitter
 
 from chat.base import Interaction
 from eval.base import ScrapedFile, QuestionAnswerChatExample
+import utils
 
 
-SCRAPE_DIR = '../../deep-cookie/protocols-scraped_data/lido-documentation'
-OUTPUT_DIR = 'qa_lido'
+OUTPUT_DIR = 'qa_scraped'
 
 
 TEMPLATE = '''You are given a few paragraphs of content. You have to extract a sequence of questions on Web3 around it, with corresponding answers. Questions in the series may build upon concepts referenced in previous questions and answers. We want sophisticated questions that probe for deep understanding, not simple fact retrieval questions.
@@ -46,8 +46,7 @@ A3: Ethereum transitioned its consensus mechanism from proof-of-work to proof-of
 Q1:'''
 
 
-tokenizer = tiktoken.get_encoding("gpt2")
-print('token length of template =', len(tokenizer.encode(TEMPLATE)))
+print('token length of template =', utils.get_token_len(TEMPLATE))
 
 
 class QuestionAnswerGenerator:
@@ -80,22 +79,37 @@ class QuestionAnswerGenerator:
         return ret
 
 
-def iter_files() -> Generator[str, None, None]:
-    scrape_dir = os.path.join(os.path.dirname(__file__), SCRAPE_DIR)
-    for filename in os.listdir(scrape_dir):
-        if filename not in (
-                'https:__docs.lido.fi_contracts_lido-oracle.txt',
-                'https:__docs.lido.fi_lido-dao.txt',
-                'https:__docs.lido.fi_.txt',
-        ):
+def iter_files(num_samples: int = 10) -> Generator[str, None, None]:
+    from index.sites import iter_scraped_urls
+    from scrape.scrape import get_body_text, has_scrape_error
+
+    texts = []
+    urls = []
+    for i, scraped_url in enumerate(iter_scraped_urls()):
+        if i < 1000:
             continue
-        filepath = os.path.join(scrape_dir, filename)
-        lines = list(open(filepath).readlines())
-        num_lines = len(lines)
-        num_chars = sum(map(len, lines))
-        if num_chars < 100:
+        if i >= 3000:
+            break
+        print('sampling', i, scraped_url.url)
+        output = scraped_url.data
+        if has_scrape_error(output):
             continue
-        yield ScrapedFile(filename, '\n'.join(lines))
+        try:
+            text = get_body_text(output)
+        except:
+            # sometimes there are .svg or other files in the db
+            continue
+        texts.append(text)
+        urls.append(scraped_url.url)
+
+    num_total = len(texts)
+    print(f'sampling {num_samples} of {num_total} chunks')
+
+    sampled_idxs = np.random.choice(np.arange(num_total), num_samples, replace=False)
+    for sampled_idx in sampled_idxs:
+        text = texts[sampled_idx]
+        url = urls[sampled_idx]
+        yield ScrapedFile(url, text)
 
 
 def save_output(output_dir: str, example: QuestionAnswerChatExample) -> None:
@@ -105,14 +119,23 @@ def save_output(output_dir: str, example: QuestionAnswerChatExample) -> None:
         fo.write(example.to_json())
 
 
-def run() -> None:
-    text_splitter = CharacterTextSplitter(chunk_size=4000, chunk_overlap=300)
+def run(num_file_samples: int = 10, num_chunk_samples: int = 1) -> None:
+    np.random.seed(0)
+    text_splitter = TokenTextSplitter(
+        chunk_size=2000,
+        chunk_overlap=200,
+    )
     gen = QuestionAnswerGenerator()
     output_dir = os.path.join(os.path.dirname(__file__), OUTPUT_DIR)
     os.makedirs(output_dir, exist_ok=True)
-    for scraped_file in iter_files():
-        print(scraped_file.filename, len(scraped_file.content))
+    for scraped_file in iter_files(num_samples=num_file_samples):
         docs = text_splitter.split_text(scraped_file.content)
+        docs = [doc for doc in docs if len(doc) > 1000]
+        if not docs:
+            continue
+        num_docs = len(docs)
+        print(scraped_file.filename, len(scraped_file.content), 'chars', num_docs, 'chunks')
+        docs = [docs[i] for i in np.random.choice(np.arange(len(docs)), min(num_docs, num_chunk_samples), replace=False)]
         for context in docs:
             print(f'Context:\n{context}')
             interactions = gen.generate(context)
@@ -120,7 +143,6 @@ def run() -> None:
                 print(f'Interaction {i}\nQ: {interaction.input}\nA: {interaction.response}')
             example = QuestionAnswerChatExample(scraped_file.filename, context, interactions)
             save_output(output_dir, example)
-        break
 
 
 # Run this with: python3 -m eval.gen_simple_retrieval

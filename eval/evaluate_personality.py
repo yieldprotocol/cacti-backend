@@ -4,7 +4,6 @@ from dataclasses_json import dataclass_json
 import itertools
 import os
 
-import tiktoken
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
@@ -14,10 +13,11 @@ from eval.base import (
     QuestionAnswerChatPrediction,
     QuestionAnswerChatPersonalityEvaluation,
 )
+import utils
 
 
-PREDICTION_DIR = 'qa_lido_prediction'
-OUTPUT_DIR = 'qa_lido_eval_personality'
+PREDICTION_DIR = 'qa_scraped_prediction'
+OUTPUT_DIR = 'qa_scraped_eval_personality'
 
 
 
@@ -39,8 +39,7 @@ Answer: {prediction_response}
 Engaging:'''
 
 
-tokenizer = tiktoken.get_encoding("gpt2")
-print('token length of template =', len(tokenizer.encode(TEMPLATE)))
+print('token length of template =', utils.get_token_len(TEMPLATE))
 
 
 class PersonalityEvaluator:

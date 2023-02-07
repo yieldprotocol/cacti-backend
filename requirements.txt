@@ -4,7 +4,7 @@ openai==0.26.1
 faiss-cpu==1.7.3
 websocket-server==0.6.4
 dataclasses_json==0.5.7
-tiktoken==0.1.2
+tiktoken==0.2.0
 weaviate-client==3.10.0
 SQLAlchemy==1.4.46
 SQLAlchemy_Utils==0.39.0

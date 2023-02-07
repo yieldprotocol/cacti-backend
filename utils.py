@@ -1,5 +1,6 @@
 import os
 
+import tiktoken
 from langchain.llms import OpenAI
 
 
@@ -11,3 +12,10 @@ WEAVIATE_URL = "https://chatweb3:q0jficzXOA69T5FWgAeT@chatweb3.func.ai:5050"
 def set_api_key():
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
     OpenAI.api_key = OPENAI_API_KEY
+
+
+tokenizer = tiktoken.encoding_for_model("text-davinci-003")
+
+
+def get_token_len(s: str) -> int:
+    return len(tokenizer.encode(s))

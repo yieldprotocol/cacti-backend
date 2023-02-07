@@ -79,6 +79,10 @@ def _request(payload):
     return r
 
 
+def has_scrape_error(output: Any) -> bool:
+    return 'error' in output
+
+
 def get_body_text(output: Any) -> str:
     # find main body
     for element in output['data']:
