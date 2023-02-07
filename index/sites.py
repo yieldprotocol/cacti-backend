@@ -81,13 +81,19 @@ def create_schema(delete_first: bool = False) -> None:
 # run with: python3 -c "from index import sites; sites.backfill()"
 def backfill():
     from langchain.vectorstores import Weaviate
-    from scrape.scrape import get_body_text
+    from scrape.scrape import get_body_text, has_scrape_error
 
     client = get_client()
     for i, scraped_url in enumerate(iter_scraped_urls()):
         print('indexing', i, scraped_url.url)
         output = scraped_url.data
-        text = get_body_text(output)
+        if has_scrape_error(output):
+            continue
+        try:
+            text = get_body_text(output)
+        except:
+            # sometimes there are .svg or other files in the db
+            continue
         metadata = {SOURCE_URL_KEY: scraped_url.url}
         splitted_docs = text_splitter.create_documents([text], metadatas=[metadata])
         splitted_texts = [d.page_content for d in splitted_docs]
