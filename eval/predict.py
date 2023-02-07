@@ -28,7 +28,8 @@ def load_dataset() -> Generator[QuestionAnswerChatExample, None, None]:
     dataset_dir = os.path.join(os.path.dirname(__file__), DATASET_DIR)
     for filename in sorted(os.listdir(dataset_dir)):
         filepath = os.path.join(dataset_dir, filename)
-        example = QuestionAnswerChatExample.schema().loads(open(filepath).read())
+        with open(filepath) as fi:
+            example = QuestionAnswerChatExample.schema().loads(fi.read())
         yield filename, example
 
 
