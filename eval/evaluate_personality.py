@@ -67,7 +67,8 @@ def load_prediction() -> Generator[QuestionAnswerChatPrediction, None, None]:
     prediction_dir = os.path.join(os.path.dirname(__file__), PREDICTION_DIR)
     for filename in sorted(os.listdir(prediction_dir)):
         filepath = os.path.join(prediction_dir, filename)
-        example = QuestionAnswerChatPrediction.schema().loads(open(filepath).read())
+        with open(filepath) as fi:
+            example = QuestionAnswerChatPrediction.schema().loads(fi.read())
         yield filename, example
 
 
