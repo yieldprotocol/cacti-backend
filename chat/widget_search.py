@@ -78,7 +78,7 @@ Output:'''
 
 
 class WidgetSearchChat(BaseChat):
-    def __init__(self, doc_search: Any, widget_search: Any, top_k: int = 4, show_thinking: bool = True) -> None:
+    def __init__(self, doc_search: Any, widget_search: Any, top_k: int = 3, show_thinking: bool = True) -> None:
         super().__init__()
         self.prompt = PromptTemplate(
             input_variables=["instruction", "task_info", "question"],

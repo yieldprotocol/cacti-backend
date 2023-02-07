@@ -20,8 +20,8 @@ from eval.base import (
 )
 
 
-DATASET_DIR = 'qa_lido'
-OUTPUT_DIR = 'qa_lido_prediction'
+DATASET_DIR = 'qa_scraped'
+OUTPUT_DIR = 'qa_scraped_prediction'
 
 
 def load_dataset() -> Generator[QuestionAnswerChatExample, None, None]:
@@ -32,24 +32,7 @@ def load_dataset() -> Generator[QuestionAnswerChatExample, None, None]:
         yield filename, example
 
 
-def eval_docsearch() -> Any:
-    embeddings = OpenAIEmbeddings()
-    text_splitter = CharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
-    SCRAPE_DIR = '../../deep-cookie/protocols-scraped_data/lido-documentation'
-    scrape_dir = os.path.join(os.path.dirname(__file__), SCRAPE_DIR)
-    documents = []
-    for filename in os.listdir(scrape_dir):
-        filepath = os.path.join(scrape_dir, filename)
-        lines = list(open(filepath).readlines())
-        content = '\n'.join(lines)
-        docs = text_splitter.split_text(content)
-        documents.extend(docs)
-    docsearch = FAISS.from_texts(documents, embeddings)
-    return docsearch
-
-
 def run() -> None:
-    index._docsearch = eval_docsearch()  # inject our embeddings
     output_dir = os.path.join(os.path.dirname(__file__), OUTPUT_DIR)
     os.makedirs(output_dir, exist_ok=True)
     for chat_variant in [
