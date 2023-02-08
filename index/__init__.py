@@ -18,7 +18,7 @@ def get_docsearch(index_variant: IndexVariant = IndexVariant.weaviate):
 
     if index_variant == IndexVariant.faiss:
         embeddings = OpenAIEmbeddings()
-        with open('./web3fuctions.txt') as f:
+        with open('./web3functions.txt') as f:
             web3functions = f.read()
         # text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
         # instructions = text_splitter.split_text(ladle)
