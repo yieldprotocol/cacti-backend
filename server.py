@@ -1,3 +1,4 @@
+import json
 import logging
 from websocket_server import WebsocketServer
 import chat
@@ -16,6 +17,13 @@ def client_left(client, server):
 
 def message_received(client, server, message):
     client_chat = client_id_to_chat[client['id']]
+    try:
+        obj = json.loads(message)
+        if isinstance(obj, dict) and obj.get('actor') == 'user' and obj.get('type') == 'text':
+            message = obj['payload']
+    except:
+        # legacy message format, do nothing
+        pass
     r = client_chat.chat(message)
     server.send_message(client, r)
 
