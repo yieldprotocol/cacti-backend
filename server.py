@@ -24,8 +24,15 @@ def message_received(client, server, message):
     except:
         # legacy message format, do nothing
         pass
-    r = client_chat.chat(message)
-    server.send_message(client, r)
+
+    for resp in client_chat.chat(message):
+        msg = json.dumps({
+            'actor': resp.actor,
+            'type': 'text',
+            'payload': resp.response,
+            'stillThinking': resp.still_thinking,
+        })
+        server.send_message(client, msg)
 
 
 server = WebsocketServer(host='0.0.0.0', port=9999, loglevel=logging.INFO)

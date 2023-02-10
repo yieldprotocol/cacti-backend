@@ -1,11 +1,11 @@
 import os
-from typing import Any
+from typing import Any, Generator
 
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
-from .base import BaseChat
+from .base import BaseChat, Response
 import utils
 
 
@@ -37,7 +37,7 @@ class SimpleChat(BaseChat):
         self.docsearch = docsearch
         self.top_k = top_k
 
-    def chat(self, userinput: str) -> str:
+    def chat(self, userinput: str) -> Generator[Response, None, None]:
         docs = self.docsearch.similarity_search(userinput, k=self.top_k)
         task_info = ''.join([doc.page_content for doc in docs])
         history_string = ""
@@ -53,4 +53,4 @@ class SimpleChat(BaseChat):
         })
         result = result.strip()
         self.add_interaction(userinput, result)
-        return result
+        yield Response(result)

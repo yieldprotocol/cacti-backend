@@ -2,7 +2,7 @@ import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
-from typing import List
+from typing import List, Generator
 
 
 class ChatVariant(enum.IntEnum):
@@ -19,6 +19,14 @@ class Interaction:
     response: str
 
 
+@dataclass_json
+@dataclass
+class Response:
+    response: str
+    actor: str = 'bot'
+    still_thinking: bool = False
+
+
 class BaseChat:
     """Common interface for chat."""
 
@@ -27,7 +35,7 @@ class BaseChat:
         self.history: List[Interaction] = []
 
     @abstractmethod
-    def chat(self, user_input: str) -> str:
+    def chat(self, user_input: str) -> Generator[Response, None, None]:
         """Accept user input and return response."""
 
     def add_interaction(self, user_input: str, response: str) -> None:
