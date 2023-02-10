@@ -1,13 +1,14 @@
 # This chat variant determines if the user's query is related to a widget or a search
 
 import os
-from typing import Any
+import time
+from typing import Any, Generator
 
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
-from .base import BaseChat
+from .base import BaseChat, Response
 
 
 WIDGET_INSTRUCTION = '''To help users, an assistant may display information or dialog boxes using magic commands. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>". When the assistant uses a command, users will see data, an interaction box, or other inline item, not the command. Users cannot use magic commands. Fill in the command with parameters as inferred from the user input query. If there are missing parameters, prompt for them but do not return an incomplete magic command. Here are the widgets that may match the user input:'''
@@ -99,38 +100,47 @@ class WidgetSearchChat(BaseChat):
         self.identify_chain = LLMChain(llm=self.llm, prompt=self.identify_prompt)
         self.identify_chain.verbose = True
 
-    def chat(self, userinput: str) -> str:
+    def chat(self, userinput: str) -> Generator[Response, None, None]:
         userinput = userinput.strip()
         # First identify the question
         history_string = ""
         for interaction in self.history:
             history_string += ("User: " + interaction.input + "\n")
             history_string += ("Assistant: " + interaction.response + "\n")
+        start = time.time()
         response = self.identify_chain.run({
             "history": history_string.strip(),
             "question": userinput,
             "stop": "##",
         }).strip()
+        duration = time.time() - start
         identified_type, question = response.split(' ', 1)
 
+        if self.show_thinking and userinput != question:
+            if identified_type == '<widget>':
+                thinking = "I think you want a widget for: " + question + "."
+            else:
+                thinking = "I think you're asking: " + question
+            yield Response(response=thinking, still_thinking=True)
+        yield Response(response=f'Intent identification took {duration: .2f}s', actor='system')
         if identified_type == '<widget>':
             widgets = self.widget_search.similarity_search(question, k=self.top_k)
             task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
             instruction = WIDGET_INSTRUCTION
-            thinking = "I think you want a widget for: " + question + "."
         else:
             docs = self.doc_search.similarity_search(question, k=self.top_k)
             task_info = '\n'.join([f'Content: {doc.page_content}\nSource: {doc.metadata["url"]}' for doc in docs])
             instruction = SEARCH_INSTRUCTION
-            thinking = "I think you're asking: " + question
+        #yield Response(response=task_info, actor='system')  # TODO: too noisy
+        start = time.time()
         result = self.chain.run({
             "instruction": instruction,
             "task_info": task_info,
             "question": question,
             "stop": "User",
         })
+        duration = time.time() - start
         result = result.strip()
         self.add_interaction(userinput, result)
-        if self.show_thinking and userinput != question:
-            result = thinking + "\n\n" + result
-        return result
+        yield Response(result)
+        yield Response(response=f'Response generation took {duration: .2f}s', actor='system')
