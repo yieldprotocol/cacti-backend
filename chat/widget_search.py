@@ -7,6 +7,7 @@ from typing import Any, Generator
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+from langchain.prompts.base import BaseOutputParser
 
 from .base import BaseChat, Response
 
@@ -78,16 +79,32 @@ Input: {question}
 Output:'''
 
 
+class ChatOutputParser(BaseOutputParser):
+
+    @property
+    def _type(self) -> str:
+        """Return the type key."""
+        return "chat_output_parser"
+
+    def parse(self, text: str) -> str:
+        """Parse the output of an LLM call."""
+        ret = text.strip()
+        return ret
+
+
 class WidgetSearchChat(BaseChat):
     def __init__(self, doc_search: Any, widget_search: Any, top_k: int = 3, show_thinking: bool = True) -> None:
         super().__init__()
+        self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
             input_variables=["task_info", "question"],
             template=TEMPLATE.replace("{instruction}", WIDGET_INSTRUCTION),
+            output_parser=self.output_parser,
         )
         self.search_prompt = PromptTemplate(
             input_variables=["task_info", "question"],
             template=TEMPLATE.replace("{instruction}", SEARCH_INSTRUCTION),
+            output_parser=self.output_parser,
         )
         self.llm = OpenAI(temperature=0.0, max_tokens=-1)
         self.widget_chain = LLMChain(llm=self.llm, prompt=self.widget_prompt)
@@ -102,6 +119,7 @@ class WidgetSearchChat(BaseChat):
         self.identify_prompt = PromptTemplate(
             input_variables=["history", "question"],
             template=IDENTIFY_TEMPLATE,
+            output_parser=self.output_parser,
         )
         self.identify_chain = LLMChain(llm=self.llm, prompt=self.identify_prompt)
         self.identify_chain.verbose = True
@@ -114,11 +132,12 @@ class WidgetSearchChat(BaseChat):
             history_string += ("User: " + interaction.input + "\n")
             history_string += ("Assistant: " + interaction.response + "\n")
         start = time.time()
-        response = self.identify_chain.run({
+        example = {
             "history": history_string.strip(),
             "question": userinput,
             "stop": "##",
-        }).strip()
+        }
+        response = self.identify_chain.apply_and_parse([example])[0]
         duration = time.time() - start
         identified_type, question = response.split(' ', 1)
 
@@ -139,13 +158,13 @@ class WidgetSearchChat(BaseChat):
             chain = self.search_chain
         #yield Response(response=task_info, actor='system')  # TODO: too noisy
         start = time.time()
-        result = chain.run({
+        example = {
             "task_info": task_info,
             "question": question,
             "stop": "User",
-        })
+        }
+        result = chain.apply_and_parse([example])[0]
         duration = time.time() - start
-        result = result.strip()
         self.add_interaction(userinput, result)
         yield Response(result)
         yield Response(response=f'Response generation took {duration: .2f}s', actor='system')
