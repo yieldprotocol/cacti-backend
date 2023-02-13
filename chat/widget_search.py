@@ -81,13 +81,19 @@ Output:'''
 class WidgetSearchChat(BaseChat):
     def __init__(self, doc_search: Any, widget_search: Any, top_k: int = 3, show_thinking: bool = True) -> None:
         super().__init__()
-        self.prompt = PromptTemplate(
-            input_variables=["instruction", "task_info", "question"],
-            template=TEMPLATE,
+        self.widget_prompt = PromptTemplate(
+            input_variables=["task_info", "question"],
+            template=TEMPLATE.replace("{instruction}", WIDGET_INSTRUCTION),
+        )
+        self.search_prompt = PromptTemplate(
+            input_variables=["task_info", "question"],
+            template=TEMPLATE.replace("{instruction}", SEARCH_INSTRUCTION),
         )
         self.llm = OpenAI(temperature=0.0, max_tokens=-1)
-        self.chain = LLMChain(llm=self.llm, prompt=self.prompt)
-        self.chain.verbose = True
+        self.widget_chain = LLMChain(llm=self.llm, prompt=self.widget_prompt)
+        self.widget_chain.verbose = True
+        self.search_chain = LLMChain(llm=self.llm, prompt=self.search_prompt)
+        self.search_chain.verbose = True
         self.doc_search = doc_search
         self.widget_search = widget_search
         self.top_k = top_k
@@ -126,15 +132,14 @@ class WidgetSearchChat(BaseChat):
         if identified_type == '<widget>':
             widgets = self.widget_search.similarity_search(question, k=self.top_k)
             task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
-            instruction = WIDGET_INSTRUCTION
+            chain = self.widget_chain
         else:
             docs = self.doc_search.similarity_search(question, k=self.top_k)
             task_info = '\n'.join([f'Content: {doc.page_content}\nSource: {doc.metadata["url"]}' for doc in docs])
-            instruction = SEARCH_INSTRUCTION
+            chain = self.search_chain
         #yield Response(response=task_info, actor='system')  # TODO: too noisy
         start = time.time()
-        result = self.chain.run({
-            "instruction": instruction,
+        result = chain.run({
             "task_info": task_info,
             "question": question,
             "stop": "User",
