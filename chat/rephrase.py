@@ -5,7 +5,8 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
-from .base import BaseChat, Response
+import registry
+from .base import BaseChat, ChatHistory, Response
 
 
 TEMPLATE = '''
@@ -66,8 +67,9 @@ Follow Up Input: {question}
 Standalone question:'''
 
 
+@registry.register_class
 class RephraseChat(BaseChat):
-    def __init__(self, docsearch: Any, top_k: int = 3, show_rephrased: bool = True) -> None:
+    def __init__(self, doc_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
         super().__init__()
         self.prompt = PromptTemplate(
             input_variables=["task_info", "question"],
@@ -76,9 +78,9 @@ class RephraseChat(BaseChat):
         self.llm = OpenAI(temperature=0.0, max_tokens=-1)
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt)
         self.chain.verbose = True
-        self.docsearch = docsearch
+        self.doc_index = doc_index
         self.top_k = top_k
-        self.show_rephrased = show_rephrased
+        self.show_thinking = show_thinking
 
         self.rephrase_prompt = PromptTemplate(
             input_variables=["history", "question"],
@@ -87,12 +89,12 @@ class RephraseChat(BaseChat):
         self.rephrase_chain = LLMChain(llm=self.llm, prompt=self.rephrase_prompt)
         self.rephrase_chain.verbose = True
 
-    def chat(self, userinput: str) -> Generator[Response, None, None]:
+    def receive_input(self, history: ChatHistory, userinput: str) -> Generator[Response, None, None]:
         userinput = userinput.strip()
-        if self.history:
+        if history:
             # First rephrase the question
             history_string = ""
-            for interaction in self.history:
+            for interaction in history:
                 history_string += ("User: " + interaction.input + "\n")
                 history_string += ("Assistant: " + interaction.response + "\n")
             question = self.rephrase_chain.run({
@@ -104,9 +106,9 @@ class RephraseChat(BaseChat):
         else:
             question = userinput
             rephrased = False
-        if self.show_rephrased and rephrased and userinput != question:
+        if self.show_thinking and rephrased and userinput != question:
             yield Response(response="I think you're asking: " + question, still_thinking=True)
-        docs = self.docsearch.similarity_search(question, k=self.top_k)
+        docs = self.doc_index.similarity_search(question, k=self.top_k)
         task_info = ''.join([doc.page_content for doc in docs])
         result = self.chain.run({
             "task_info": task_info,
@@ -114,5 +116,5 @@ class RephraseChat(BaseChat):
             "stop": "User",
         })
         result = result.strip()
-        self.add_interaction(userinput, result)
+        history.add_interaction(userinput, result)
         yield Response(result)

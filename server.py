@@ -1,22 +1,32 @@
 import json
 import logging
+
 from websocket_server import WebsocketServer
+
 import chat
+import index
+import system
+import config
 from utils import set_api_key
+
 
 set_api_key()
 
+system = config.initialized_system()
 
-client_id_to_chat = {}
+client_id_to_chat_history = {}
+
 
 def new_client(client, server):
-    client_id_to_chat[client['id']] = chat.new_chat()
+    client_id_to_chat_history[client['id']] = chat.ChatHistory.new()
+
 
 def client_left(client, server):
-    client_id_to_chat.pop(client['id'])
+    client_id_to_chat_history.pop(client['id'])
+
 
 def message_received(client, server, message):
-    client_chat = client_id_to_chat[client['id']]
+    history = client_id_to_chat_history[client['id']]
     try:
         obj = json.loads(message)
         if isinstance(obj, dict) and obj.get('actor') == 'user' and obj.get('type') == 'text':
@@ -25,7 +35,7 @@ def message_received(client, server, message):
         # legacy message format, do nothing
         pass
 
-    for resp in client_chat.chat(message):
+    for resp in system.chat.receive_input(history, message):
         msg = json.dumps({
             'actor': resp.actor,
             'type': 'text',

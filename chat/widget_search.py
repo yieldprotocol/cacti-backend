@@ -9,7 +9,8 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
 
-from .base import BaseChat, Response
+import registry
+from .base import BaseChat, ChatHistory, Response
 
 
 WIDGET_INSTRUCTION = '''To help users, an assistant may display information or dialog boxes using magic commands. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>". When the assistant uses a command, users will see data, an interaction box, or other inline item, not the command. Users cannot use magic commands. Fill in the command with parameters as inferred from the user input query. If there are missing parameters, prompt for them and do not make assumptions without the user's input. Do not return a magic command unless all parameters are known. Examples are given for illustration purposes, do not confuse them for the user's input. If a widget involves a transaction that requires user confirmation, prompt for it. If the widget requires a connected wallet, make sure that is available first. If there is no appropriate widget available, explain the situation and ask for more information. Do not make up a non-existent widget magic command, only use the most appropriate one. Here are the widgets that may match the user input:'''
@@ -92,8 +93,9 @@ class ChatOutputParser(BaseOutputParser):
         return ret
 
 
+@registry.register_class
 class WidgetSearchChat(BaseChat):
-    def __init__(self, doc_search: Any, widget_search: Any, top_k: int = 3, show_thinking: bool = True) -> None:
+    def __init__(self, doc_index: Any, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
@@ -111,8 +113,8 @@ class WidgetSearchChat(BaseChat):
         self.widget_chain.verbose = True
         self.search_chain = LLMChain(llm=self.llm, prompt=self.search_prompt)
         self.search_chain.verbose = True
-        self.doc_search = doc_search
-        self.widget_search = widget_search
+        self.doc_index = doc_index
+        self.widget_index = widget_index
         self.top_k = top_k
         self.show_thinking = show_thinking
 
@@ -124,11 +126,11 @@ class WidgetSearchChat(BaseChat):
         self.identify_chain = LLMChain(llm=self.llm, prompt=self.identify_prompt)
         self.identify_chain.verbose = True
 
-    def chat(self, userinput: str) -> Generator[Response, None, None]:
+    def receive_input(self, history: ChatHistory, userinput: str) -> Generator[Response, None, None]:
         userinput = userinput.strip()
         # First identify the question
         history_string = ""
-        for interaction in self.history:
+        for interaction in history:
             history_string += ("User: " + interaction.input + "\n")
             history_string += ("Assistant: " + interaction.response + "\n")
         start = time.time()
@@ -149,11 +151,11 @@ class WidgetSearchChat(BaseChat):
             yield Response(response=thinking, still_thinking=True)
         yield Response(response=f'Intent identification took {duration: .2f}s', actor='system')
         if identified_type == '<widget>':
-            widgets = self.widget_search.similarity_search(question, k=self.top_k)
+            widgets = self.widget_index.similarity_search(question, k=self.top_k)
             task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
             chain = self.widget_chain
         else:
-            docs = self.doc_search.similarity_search(question, k=self.top_k)
+            docs = self.doc_index.similarity_search(question, k=self.top_k)
             task_info = '\n'.join([f'Content: {doc.page_content}\nSource: {doc.metadata["url"]}' for doc in docs])
             chain = self.search_chain
         #yield Response(response=task_info, actor='system')  # TODO: too noisy
@@ -165,6 +167,6 @@ class WidgetSearchChat(BaseChat):
         }
         result = chain.apply_and_parse([example])[0]
         duration = time.time() - start
-        self.add_interaction(userinput, result)
+        history.add_interaction(userinput, result)
         yield Response(result)
         yield Response(response=f'Response generation took {duration: .2f}s', actor='system')

@@ -5,8 +5,8 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
-from .base import BaseChat, Response
-import utils
+import registry
+from .base import BaseChat, ChatHistory, Response
 
 
 TEMPLATE = '''
@@ -24,8 +24,9 @@ Assistant:'''
 
 
 
+@registry.register_class
 class SimpleChat(BaseChat):
-    def __init__(self, docsearch: Any, top_k: int = 3) -> None:
+    def __init__(self, doc_index: Any, top_k: int = 3) -> None:
         super().__init__()
         self.prompt = PromptTemplate(
             input_variables=["task_info", "summary", "history"],
@@ -34,14 +35,14 @@ class SimpleChat(BaseChat):
         self.llm = OpenAI(temperature=0.9, max_tokens=-1)
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt)
         self.chain.verbose = True
-        self.docsearch = docsearch
+        self.doc_index = doc_index
         self.top_k = top_k
 
-    def chat(self, userinput: str) -> Generator[Response, None, None]:
-        docs = self.docsearch.similarity_search(userinput, k=self.top_k)
+    def receive_input(self, history: ChatHistory, userinput: str) -> Generator[Response, None, None]:
+        docs = self.doc_index.similarity_search(userinput, k=self.top_k)
         task_info = ''.join([doc.page_content for doc in docs])
         history_string = ""
-        for interaction in self.history:
+        for interaction in history:
             history_string += ("User: " + interaction.input + "\n")
             history_string += ("Assistant: " + interaction.response + "\n")
         history_string += ("User: " + userinput )
@@ -52,5 +53,5 @@ class SimpleChat(BaseChat):
             "stop": "User",
         })
         result = result.strip()
-        self.add_interaction(userinput, result)
+        history.add_interaction(userinput, result)
         yield Response(result)
