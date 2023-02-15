@@ -1,6 +1,7 @@
 import json
 import logging
 import uuid
+from urllib.parse import urlparse, parse_qs
 
 from websocket_server import WebsocketServer
 
@@ -22,8 +23,7 @@ client_id_to_chat_history = {}
 
 
 def new_client(client, server):
-    session_id = uuid.uuid4()
-    client_id_to_chat_history[client['id']] = chat.ChatHistory.new(session_id)
+    client_id_to_chat_history[client['id']] = chat.ChatHistory.new()
 
 
 def client_left(client, server):
@@ -37,14 +37,57 @@ def message_received(client, server, message):
     actor = obj['actor']
     typ = obj['type']
     message = obj['payload']
-    assert actor == 'user', obj
 
-    # store user message
+    # check if we need to assign a new session id from the server side
+    send_history = False
+    if not history.session_id:
+        if typ == 'init':  # client gave us the session id
+            # parse query string for session id
+            q = parse_qs(urlparse(message).query)
+            history.session_id = uuid.UUID(q['s'][0])
+            send_history = True
+        else:  # server assigns new session id, send to client
+            history.session_id = uuid.uuid4()
+            msg = json.dumps({
+                'actor': 'system',
+                'type': 'uuid',
+                'payload': str(history.session_id),
+            })
+            server.send_message(client, msg)
+
     chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
     if not chat_session:
         chat_session = ChatSession(id=history.session_id)
         db_session.add(chat_session)
         db_session.flush()
+
+    if send_history:
+        last_user_message = None
+        last_bot_message = None
+        for message in ChatMessage.query.filter(ChatMessage.chat_session_id == history.session_id).order_by(ChatMessage.created).all():
+            msg = json.dumps({
+                'actor': message.actor,
+                'type': message.type,
+                'payload': message.payload,
+            })
+            server.send_message(client, msg)
+            if message.actor == 'user' and message.type == 'text':
+                # for now, only restore the last bot message as interaction
+                if last_bot_message is not None:
+                    assert last_user_message is not None
+                    history.add_interaction(last_user_message, last_bot_message)
+                    last_bot_message = None
+                last_user_message = message.payload
+            elif message.actor == 'bot' and message.type == 'text':
+                last_bot_message = message.payload
+        if last_bot_message is not None:
+            assert last_user_message is not None
+            history.add_interaction(last_user_message, last_bot_message)
+        return
+
+    assert actor == 'user', obj
+
+    # store new user message
     chat_message = ChatMessage(
         actor=actor,
         type=typ,

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
-from typing import List, Generator
+from typing import List, Generator, Optional
 import uuid
 
 
@@ -23,7 +23,7 @@ class Response:
 @dataclass
 class ChatHistory:
     interactions: List[Interaction]
-    session_id: uuid.UUID
+    session_id: Optional[uuid.UUID]
 
     def add_interaction(self, user_input: str, response: str) -> None:
         """Add interaction to history."""
@@ -36,7 +36,7 @@ class ChatHistory:
         return iter(self.interactions)
 
     @classmethod
-    def new(cls, session_id: uuid.UUID):
+    def new(cls, session_id: Optional[uuid.UUID] = None):
         return cls(interactions=[], session_id=session_id)
 
 

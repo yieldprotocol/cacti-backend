@@ -45,3 +45,6 @@ class ChatMessage(Base, Timestamp):  # type: ignore
         backref=backref('chat_messages',
                         uselist=True,
                         cascade='delete,all'))
+
+
+Index('chat_message_by_session', ChatMessage.chat_session_id, ChatMessage.created)
