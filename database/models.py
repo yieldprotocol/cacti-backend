@@ -10,7 +10,7 @@ from sqlalchemy import (  # type: ignore
 from sqlalchemy.orm import (  # type: ignore
     scoped_session, sessionmaker, relationship,
     backref)
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.ext.declarative import declarative_base  # type: ignore
 from sqlalchemy_utils import ChoiceType, Timestamp  # type: ignore
 
@@ -25,6 +25,12 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 Base = declarative_base()
 # We will need this for querying
 Base.query = db_session.query_property()
+
+
+class SystemConfig(Base, Timestamp):  # type: ignore
+    __tablename__ = 'system_config'
+    id = Column(Integer, primary_key=True)
+    json = Column(JSONB, nullable=False, index=True)
 
 
 class ChatSession(Base, Timestamp):  # type: ignore
@@ -45,6 +51,8 @@ class ChatMessage(Base, Timestamp):  # type: ignore
         backref=backref('chat_messages',
                         uselist=True,
                         cascade='delete,all'))
+
+    system_config_id = Column(Integer, ForeignKey('system_config.id'), nullable=False)
 
 
 Index('chat_message_by_session', ChatMessage.chat_session_id, ChatMessage.created)

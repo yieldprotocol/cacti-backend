@@ -10,7 +10,7 @@ import index
 import system
 import config
 from database.models import (
-    db_session, ChatSession, ChatMessage,
+    db_session, ChatSession, ChatMessage, SystemConfig,
 )
 from utils import set_api_key
 
@@ -18,6 +18,13 @@ from utils import set_api_key
 set_api_key()
 
 system = config.initialized_system()
+
+system_config = SystemConfig.query.filter_by(json=config.config).one_or_none()
+if not system_config:
+    system_config = SystemConfig(json=config.config)
+    db_session.add(system_config)
+    db_session.commit()
+
 
 client_id_to_chat_history = {}
 
@@ -93,6 +100,7 @@ def message_received(client, server, message):
         type=typ,
         payload=message,
         chat_session_id=chat_session.id,
+        system_config_id=system_config.id,
     )
     db_session.add(chat_message)
     db_session.commit()
@@ -112,6 +120,7 @@ def message_received(client, server, message):
             type='text',
             payload=resp.response,
             chat_session_id=chat_session.id,
+            system_config_id=system_config.id,
         )
         db_session.add(chat_message)
         db_session.commit()
