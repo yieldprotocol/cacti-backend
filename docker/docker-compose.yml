@@ -30,6 +30,16 @@ services:
       - 5432:5432
     volumes:
     - /mnt/data/langchain-db:/var/lib/postgresql/data
+  chat-db:
+    image: postgres:14.1
+    environment:
+      - POSTGRES_PASSWORD=lVIu2U0lBctiYBScboAJ
+      - POSTGRES_USER=chatdb
+      - POSTGRES_DB=chatdb
+    ports:
+      - 5433:5432
+    volumes:
+    - /mnt/data/chat-db:/var/lib/postgresql/data
   weaviate:
     volumes:
     - /mnt/data/weaviate:/var/lib/weaviate
