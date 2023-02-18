@@ -105,25 +105,42 @@ def message_received(client, server, message):
     db_session.add(chat_message)
     db_session.commit()
 
-    for resp in system.chat.receive_input(history, message):
+    def send_message(resp, last_chat_message_id=None):
         msg = json.dumps({
             'actor': resp.actor,
             'type': 'text',
             'payload': resp.response,
             'stillThinking': resp.still_thinking,
+            'operation': resp.operation,
         })
         server.send_message(client, msg)
 
         # store response (if not streaming)
-        chat_message = ChatMessage(
-            actor=resp.actor,
-            type='text',
-            payload=resp.response,
-            chat_session_id=chat_session.id,
-            system_config_id=system_config.id,
-        )
-        db_session.add(chat_message)
-        db_session.commit()
+        if resp.operation == 'create':
+            chat_message = ChatMessage(
+                actor=resp.actor,
+                type='text',
+                payload=resp.response,
+                chat_session_id=chat_session.id,
+                system_config_id=system_config.id,
+            )
+            db_session.add(chat_message)
+            db_session.commit()
+            return chat_message.id
+        elif resp.operation == 'append':
+            # don't write to db
+            return last_chat_message_id
+        elif resp.operation == 'replace':
+            assert last_chat_message_id
+            chat_message = ChatMessage.query.get(last_chat_message_id)
+            chat_message.payload = resp.response
+            db_session.add(chat_message)
+            db_session.commit()
+            return last_chat_message_id
+        else:
+            assert 0, f'unrecognized operation: {resp.operation}'
+
+    system.chat.receive_input(history, message, send_message)
 
 
 server = WebsocketServer(host='0.0.0.0', port=9999, loglevel=logging.INFO)

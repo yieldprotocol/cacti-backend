@@ -2,7 +2,7 @@
 
 import os
 import time
-from typing import Any, Generator
+from typing import Any, Callable, Generator
 
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
@@ -10,7 +10,7 @@ from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
 
 import registry
-from .base import BaseChat, ChatHistory, Response
+from .base import BaseChat, ChatHistory, Response, streaming_callback_manager
 
 
 WIDGET_INSTRUCTION = '''To help users, an assistant may display information or dialog boxes using magic commands. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>". When the assistant uses a command, users will see data, an interaction box, or other inline item, not the command. Users cannot use magic commands. Fill in the command with parameters as inferred from the user input query. If there are missing parameters, prompt for them and do not make assumptions without the user's input. Do not return a magic command unless all parameters are known. Examples are given for illustration purposes, do not confuse them for the user's input. If a widget involves a transaction that requires user confirmation, prompt for it. If the widget requires a connected wallet, make sure that is available first. If there is no appropriate widget available, explain the situation and ask for more information. Do not make up a non-existent widget magic command, only use the most appropriate one. Here are the widgets that may match the user input:'''
@@ -108,11 +108,6 @@ class WidgetSearchChat(BaseChat):
             template=TEMPLATE.replace("{instruction}", SEARCH_INSTRUCTION),
             output_parser=self.output_parser,
         )
-        self.llm = OpenAI(temperature=0.0, max_tokens=-1)
-        self.widget_chain = LLMChain(llm=self.llm, prompt=self.widget_prompt)
-        self.widget_chain.verbose = True
-        self.search_chain = LLMChain(llm=self.llm, prompt=self.search_prompt)
-        self.search_chain.verbose = True
         self.doc_index = doc_index
         self.widget_index = widget_index
         self.top_k = top_k
@@ -123,10 +118,21 @@ class WidgetSearchChat(BaseChat):
             template=IDENTIFY_TEMPLATE,
             output_parser=self.output_parser,
         )
-        self.identify_chain = LLMChain(llm=self.llm, prompt=self.identify_prompt)
-        self.identify_chain.verbose = True
 
-    def receive_input(self, history: ChatHistory, userinput: str) -> Generator[Response, None, None]:
+    def get_llm(self, new_token_handler):
+        llm = OpenAI(
+            temperature=0.0, max_tokens=-1,
+            # options for streaming
+            streaming=True, callback_manager=streaming_callback_manager(new_token_handler)
+        )
+        return llm
+
+    def get_streaming_chain(self, prompt, new_token_handler):
+        llm = self.get_llm(new_token_handler)
+        chain = LLMChain(llm=llm, prompt=prompt, verbose=True)
+        return chain
+
+    def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> Generator[Response, None, None]:
         userinput = userinput.strip()
         # First identify the question
         history_string = ""
@@ -139,34 +145,67 @@ class WidgetSearchChat(BaseChat):
             "question": userinput,
             "stop": "##",
         }
-        response = self.identify_chain.apply_and_parse([example])[0]
-        duration = time.time() - start
-        identified_type, question = response.split(' ', 1)
 
-        if self.show_thinking and userinput != question:
+        chat_message_id = None
+        identify_response = ''
+
+        def identify_token_handler(token):
+            nonlocal chat_message_id, identify_response
+            if not self.show_thinking:
+                return
+            identify_response += token
+            if '> ' not in identify_response.strip():
+                return
+            identified_type, question = identify_response.strip().split(' ', 1)
+
             if identified_type == '<widget>':
-                thinking = "I think you want a widget for: " + question + "."
+                thinking = "I think you want a widget for: " + question
             else:
                 thinking = "I think you're asking: " + question
-            yield Response(response=thinking, still_thinking=True)
-        yield Response(response=f'Intent identification took {duration: .2f}s', actor='system')
+
+            chat_message_id = send(Response(
+                response=thinking,
+                still_thinking=False,
+                actor='bot',
+                operation='replace' if chat_message_id is not None else 'create',
+            ), last_chat_message_id=chat_message_id)
+
+        identify_chain = self.get_streaming_chain(self.identify_prompt, identify_token_handler)
+        identify_response = identify_chain.apply_and_parse([example])[0]
+
+        duration = time.time() - start
+        identified_type, question = identify_response.split(' ', 1)
+
+        send(Response(response=f'Intent identification took {duration: .2f}s', actor='system'))
+
+        chat_message_id = None
+
+        def new_token_handler(token):
+            nonlocal chat_message_id
+            chat_message_id = send(Response(
+                response=token,
+                still_thinking=False,
+                actor='bot',
+                operation='append' if chat_message_id is not None else 'create',
+            ), last_chat_message_id=chat_message_id)
+
         if identified_type == '<widget>':
             widgets = self.widget_index.similarity_search(question, k=self.top_k)
             task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
-            chain = self.widget_chain
+            chain = self.get_streaming_chain(self.widget_prompt, new_token_handler)
         else:
             docs = self.doc_index.similarity_search(question, k=self.top_k)
             task_info = '\n'.join([f'Content: {doc.page_content}\nSource: {doc.metadata["url"]}' for doc in docs])
-            chain = self.search_chain
-        #yield Response(response=task_info, actor='system')  # TODO: too noisy
+            chain = self.get_streaming_chain(self.search_prompt, new_token_handler)
         start = time.time()
         example = {
             "task_info": task_info,
             "question": question,
             "stop": "User",
         }
+
         result = chain.apply_and_parse([example])[0]
         duration = time.time() - start
         history.add_interaction(userinput, result)
-        yield Response(result)
-        yield Response(response=f'Response generation took {duration: .2f}s', actor='system')
+        send(Response(result, operation='replace'), last_chat_message_id=chat_message_id)
+        send(Response(response=f'Response generation took {duration: .2f}s', actor='system'))
