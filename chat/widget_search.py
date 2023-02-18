@@ -148,30 +148,42 @@ class WidgetSearchChat(BaseChat):
 
         chat_message_id = None
         identify_response = ''
+        identified_type = None
+        sent_response = ''
 
         def identify_token_handler(token):
-            nonlocal chat_message_id, identify_response
+            nonlocal chat_message_id, identify_response, identified_type, sent_response
             if not self.show_thinking:
                 return
             identify_response += token
             if '> ' not in identify_response.strip():
                 return
-            identified_type, question = identify_response.strip().split(' ', 1)
 
-            if identified_type == '<widget>':
-                thinking = "I think you want a widget for: " + question
-            else:
-                thinking = "I think you're asking: " + question
+            if not identified_type:
+                identified_type, question = identify_response.strip().split(' ', 1)
+                if identified_type == '<widget>':
+                    token = "I think you want a widget for: " + question
+                else:
+                    token = "I think you're asking: " + question
 
+            sent_response += token
             chat_message_id = send(Response(
-                response=thinking,
+                response=token,
                 still_thinking=False,
                 actor='bot',
-                operation='replace' if chat_message_id is not None else 'create',
+                operation='append' if chat_message_id is not None else 'create',
             ), last_chat_message_id=chat_message_id)
 
         identify_chain = self.get_streaming_chain(self.identify_prompt, identify_token_handler)
         identify_response = identify_chain.apply_and_parse([example])[0]
+        if self.show_thinking:
+            # send again, but with replace so we save to db
+            send(Response(
+                response=sent_response,
+                still_thinking=False,
+                actor='bot',
+                operation='replace',  # this will save to db where append did not
+            ), last_chat_message_id=chat_message_id)
 
         duration = time.time() - start
         identified_type, question = identify_response.split(' ', 1)
