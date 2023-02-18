@@ -188,7 +188,11 @@ class WidgetSearchChat(BaseChat):
         duration = time.time() - start
         identified_type, question = identify_response.split(' ', 1)
 
-        send(Response(response=f'Intent identification took {duration: .2f}s', actor='system'))
+        send(Response(
+            response=f'Intent identification took {duration: .2f}s',
+            actor='system',
+            still_thinking=True,  # turn on thinking again
+        ))
 
         chat_message_id = None
 
