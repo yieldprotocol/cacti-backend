@@ -106,6 +106,29 @@ def message_received(client, server, message):
     db_session.commit()
 
     def send_message(resp, last_chat_message_id=None):
+        """Send message function.
+
+        This function is passed into the chat module, to be called when the
+        server has something to send back to the client. It could be a full
+        message, or a partial response to be appended to the end of the
+        previous message. It could also be a different actor (e.g. 'system'
+        instead of just the 'bot') sending the message.
+
+        Parameters
+        ----------
+        last_chat_message_id: The id of the database record that should be
+            updated, if specified. The caller of this function controls the
+            logic of when a new record should be created (by passing a
+            response with operation 'create'), or when one should be
+            appended to or replaced (with 'append' and 'replace' respectively).
+
+        Returns
+        -------
+        chat message id representing the row in the db that this message
+        is being stored in.
+
+        """
+
         msg = json.dumps({
             'actor': resp.actor,
             'type': 'text',
