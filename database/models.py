@@ -1,4 +1,5 @@
 from typing import List, Optional
+import enum
 import uuid
 
 import sqlalchemy  # type: ignore
@@ -25,6 +26,13 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 Base = declarative_base()
 # We will need this for querying
 Base.query = db_session.query_property()
+
+
+class FeedbackStatus(enum.IntEnum):
+    none = 1
+    good = 2
+    bad = 3
+    neutral = 4
 
 
 class SystemConfig(Base, Timestamp):  # type: ignore
@@ -56,3 +64,15 @@ class ChatMessage(Base, Timestamp):  # type: ignore
 
 
 Index('chat_message_by_session', ChatMessage.chat_session_id, ChatMessage.created)
+
+
+class ChatMessageFeedback(Base, Timestamp):  # type: ignore
+    __tablename__ = 'chat_message_feedback'
+    chat_message_id = Column(UUID(as_uuid=True), ForeignKey('chat_message.id'), nullable=False, primary_key=True)
+    chat_message = relationship(
+        ChatMessage,
+        backref=backref('chat_message_feedback',
+                        uselist=False,
+                        cascade='delete'))
+
+    feedback_status = Column(ChoiceType(FeedbackStatus, impl=Integer()), default=FeedbackStatus.none, nullable=False)
