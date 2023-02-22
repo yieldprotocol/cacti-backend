@@ -10,7 +10,9 @@ import index
 import system
 import config
 from database.models import (
-    db_session, ChatSession, ChatMessage, SystemConfig,
+    db_session, FeedbackStatus,
+    ChatSession, ChatMessage, ChatMessageFeedback,
+    SystemConfig,
 )
 from utils import set_api_key
 
@@ -56,9 +58,11 @@ def message_received(client, server, message):
         else:  # server assigns new session id, send to client
             history.session_id = uuid.uuid4()
             msg = json.dumps({
+                'messageId': '',
                 'actor': 'system',
                 'type': 'uuid',
                 'payload': str(history.session_id),
+                'feedback': 'n/a',
             })
             server.send_message(client, msg)
 
@@ -73,9 +77,11 @@ def message_received(client, server, message):
         last_bot_message = None
         for message in ChatMessage.query.filter(ChatMessage.chat_session_id == history.session_id).order_by(ChatMessage.created).all():
             msg = json.dumps({
+                'messageId': str(message.id),
                 'actor': message.actor,
                 'type': message.type,
                 'payload': message.payload,
+                'feedback': str(message.chat_message_feedback.feedback_status.name) if message.chat_message_feedback else 'none',
             })
             server.send_message(client, msg)
             if message.actor == 'user' and message.type == 'text':
@@ -93,6 +99,22 @@ def message_received(client, server, message):
         return
 
     assert actor == 'user', obj
+
+    # check if it is an action
+    if typ == 'action':
+        chat_message_id = uuid.UUID(obj['payload']['messageId'])
+        feedback_status = FeedbackStatus.__members__[obj['payload']['choice']]
+        chat_message_feedback = ChatMessageFeedback.query.filter(ChatMessageFeedback.chat_message_id == chat_message_id).one_or_none()
+        if chat_message_feedback:
+            chat_message_feedback.feedback_status = feedback_status
+        else:
+            chat_message_feedback = ChatMessageFeedback(
+                chat_message_id=chat_message_id,
+                feedback_status=feedback_status,
+            )
+        db_session.add(chat_message_feedback)
+        db_session.commit()
+        return
 
     # store new user message
     chat_message = ChatMessage(
@@ -129,15 +151,6 @@ def message_received(client, server, message):
 
         """
 
-        msg = json.dumps({
-            'actor': resp.actor,
-            'type': 'text',
-            'payload': resp.response,
-            'stillThinking': resp.still_thinking,
-            'operation': resp.operation,
-        })
-        server.send_message(client, msg)
-
         # store response (if not streaming)
         if resp.operation == 'create':
             chat_message = ChatMessage(
@@ -149,19 +162,32 @@ def message_received(client, server, message):
             )
             db_session.add(chat_message)
             db_session.commit()
-            return chat_message.id
+            chat_message_id = chat_message.id
         elif resp.operation == 'append':
             # don't write to db
-            return last_chat_message_id
+            chat_message_id = last_chat_message_id
         elif resp.operation == 'replace':
             assert last_chat_message_id
             chat_message = ChatMessage.query.get(last_chat_message_id)
             chat_message.payload = resp.response
             db_session.add(chat_message)
             db_session.commit()
-            return last_chat_message_id
+            chat_message_id = last_chat_message_id
         else:
             assert 0, f'unrecognized operation: {resp.operation}'
+
+        msg = json.dumps({
+            'messageId': str(chat_message_id),
+            'actor': resp.actor,
+            'type': 'text',
+            'payload': resp.response,
+            'stillThinking': resp.still_thinking,
+            'operation': resp.operation,
+            'feedback': 'none',
+        })
+        server.send_message(client, msg)
+
+        return chat_message_id
 
     system.chat.receive_input(history, message, send_message)
 
