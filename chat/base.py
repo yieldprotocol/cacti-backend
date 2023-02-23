@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
-from typing import Any, Callable, Dict, List, Generator, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 import uuid
 
 from langchain.callbacks.base import CallbackManager
@@ -50,8 +50,8 @@ class BaseChat(ABC):
     """Common interface for chat."""
 
     @abstractmethod
-    def receive_input(self, history: ChatHistory, user_input: str, send_message: Callable) -> Generator[Response, None, None]:
-        """Accept user input and return response."""
+    def receive_input(self, history: ChatHistory, user_input: str, send_message: Callable) -> None:
+        """Accept user input and return responses via the send_message function."""
 
 
 class StreamingCallbackHandler(StreamingStdOutCallbackHandler):

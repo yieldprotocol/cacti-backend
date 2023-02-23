@@ -1,5 +1,5 @@
 import os
-from typing import Any, Generator
+from typing import Any, Callable
 
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
@@ -93,7 +93,7 @@ class RephraseCitedChat(BaseChat):
         self.rephrase_chain = LLMChain(llm=self.llm, prompt=self.rephrase_prompt)
         self.rephrase_chain.verbose = True
 
-    def receive_input(self, history: ChatHistory, userinput: str) -> Generator[Response, None, None]:
+    def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> None:
         userinput = userinput.strip()
         if history:
             # First rephrase the question
@@ -111,7 +111,7 @@ class RephraseCitedChat(BaseChat):
             question = userinput
             rephrased = False
         if self.show_thinking and rephrased and userinput != question:
-            yield Response(response="I think you're asking: " + question, still_thinking=True)
+            send(Response(response="I think you're asking: " + question, still_thinking=True))
         docs = self.doc_index.similarity_search(question, k=self.top_k)
         task_info = '\n'.join([f'Content: {doc.page_content}\nSource: {doc.metadata["url"]}' for doc in docs])
         result = self.chain.run({
@@ -121,4 +121,4 @@ class RephraseCitedChat(BaseChat):
         })
         result = result.strip()
         history.add_interaction(userinput, result)
-        yield Response(result)
+        send(Response(result))

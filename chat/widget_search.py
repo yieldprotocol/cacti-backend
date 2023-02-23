@@ -2,7 +2,7 @@
 
 import os
 import time
-from typing import Any, Callable, Generator
+from typing import Any, Callable
 
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
@@ -132,7 +132,7 @@ class WidgetSearchChat(BaseChat):
         chain = LLMChain(llm=llm, prompt=prompt, verbose=True)
         return chain
 
-    def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> Generator[Response, None, None]:
+    def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> None:
         userinput = userinput.strip()
         # First identify the question
         history_string = ""
