@@ -28,15 +28,63 @@ if not system_config:
     db_session.commit()
 
 
-client_id_to_chat_history = {}
+# in-memory mapping of connected clients to their associated ChatHistory instances
+_client_id_to_chat_history = {}
+
+
+def _register_client_history(client_id, history):
+    global _client_id_to_chat_history
+    assert client_id not in _client_id_to_chat_history
+    _client_id_to_chat_history[client_id] = history
+
+
+def _get_client_history(client_id):
+    global _client_id_to_chat_history
+    return _client_id_to_chat_history.get(client_id)
+
+
+def _deregister_client_history(client_id):
+    global _client_id_to_chat_history
+    return _client_id_to_chat_history.pop(client_id)
 
 
 def new_client(client, server):
-    client_id_to_chat_history[client['id']] = chat.ChatHistory.new()
+    history = _get_client_history(client['id'])
+    assert history is None, f'existing chat history session ${history.session_id} for new client connection'
 
 
 def client_left(client, server):
-    client_id_to_chat_history.pop(client['id'])
+    history = _deregister_client_history(client['id'])
+
+
+def _load_existing_history_and_messages(session_id):
+    """Given an existing session_id, recreate the ChatHistory instance along with the individual Messages"""
+    history = chat.ChatHistory.new(session_id=session_id)
+    messages = []
+
+    last_user_message = None
+    last_bot_message = None
+    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.created).all():
+        messages.append(message)
+
+        # register user <-> bot interactions
+        if message.type == 'text':
+            if message.actor == 'user':
+                # for now, only restore the last bot message as interaction
+                if last_bot_message is not None:
+                    assert last_user_message is not None
+                    history.add_interaction(last_user_message, last_bot_message)
+                    last_bot_message = None
+                last_user_message = message.payload
+
+            elif message.actor == 'bot':
+                last_bot_message = message.payload
+
+    if last_bot_message is not None:
+        assert last_user_message is not None
+        history.add_interaction(last_user_message, last_bot_message)
+
+    return history, messages
 
 
 def message_received(client, server, message):
@@ -45,42 +93,28 @@ def message_received(client, server, message):
 
 
 def _message_received(client, server, message):
-    history = client_id_to_chat_history[client['id']]
+    client_id = client['id']
+    history = _get_client_history(client_id)
     obj = json.loads(message)
     assert isinstance(obj, dict), obj
     actor = obj['actor']
     typ = obj['type']
     message = obj['payload']
 
-    # check if we need to assign a new session id from the server side
-    send_history = False
-    if not history.session_id:
-        if typ == 'init':  # client gave us the session id
-            # parse query string for session id
-            q = parse_qs(urlparse(message).query)
-            history.session_id = uuid.UUID(q['s'][0])
-            send_history = True
-        else:  # server assigns new session id, send to client
-            history.session_id = uuid.uuid4()
-            msg = json.dumps({
-                'messageId': '',
-                'actor': 'system',
-                'type': 'uuid',
-                'payload': str(history.session_id),
-                'feedback': 'n/a',
-            })
-            server.send_message(client, msg)
+    # resume an existing chat history session, given a session id
+    if typ == 'init':
+        assert history is None, f'received a session resume request for existing session ${history.session_id}'
 
-    chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
-    if not chat_session:
-        chat_session = ChatSession(id=history.session_id)
-        db_session.add(chat_session)
-        db_session.flush()
+        # parse query string for session id
+        params = parse_qs(urlparse(message).query)
+        session_id = uuid.UUID(params['s'][0])
 
-    if send_history:
-        last_user_message = None
-        last_bot_message = None
-        for message in ChatMessage.query.filter(ChatMessage.chat_session_id == history.session_id).order_by(ChatMessage.created).all():
+        # load DB stored chat history and associated messages
+        history, messages = _load_existing_history_and_messages(session_id)
+        _register_client_history(client_id, history)
+
+        # reconstruct the chat history for the client
+        for message in messages:
             msg = json.dumps({
                 'messageId': str(message.id),
                 'actor': message.actor,
@@ -89,21 +123,31 @@ def _message_received(client, server, message):
                 'feedback': str(message.chat_message_feedback.feedback_status.name) if message.chat_message_feedback else 'none',
             })
             server.send_message(client, msg)
-            if message.actor == 'user' and message.type == 'text':
-                # for now, only restore the last bot message as interaction
-                if last_bot_message is not None:
-                    assert last_user_message is not None
-                    history.add_interaction(last_user_message, last_bot_message)
-                    last_bot_message = None
-                last_user_message = message.payload
-            elif message.actor == 'bot' and message.type == 'text':
-                last_bot_message = message.payload
-        if last_bot_message is not None:
-            assert last_user_message is not None
-            history.add_interaction(last_user_message, last_bot_message)
         return
 
+    # first message received - first create a new session history instance
+    if history is None:
+        session_id = uuid.uuid4()
+        history = chat.ChatHistory.new(session_id=session_id)
+        _register_client_history(client_id, history)
+
+        # inform client of the newly created session id
+        msg = json.dumps({
+            'messageId': '',
+            'actor': 'system',
+            'type': 'uuid',
+            'payload': str(session_id),
+            'feedback': 'n/a',
+        })
+        server.send_message(client, msg)
+
     assert actor == 'user', obj
+
+    chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
+    if not chat_session:
+        chat_session = ChatSession(id=history.session_id)
+        db_session.add(chat_session)
+        db_session.flush()
 
     # check if it is an action
     if typ == 'action':
