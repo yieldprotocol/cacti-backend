@@ -40,6 +40,11 @@ def client_left(client, server):
 
 
 def message_received(client, server, message):
+    _message_received(client, server, message)
+    db_session.close()
+
+
+def _message_received(client, server, message):
     history = client_id_to_chat_history[client['id']]
     obj = json.loads(message)
     assert isinstance(obj, dict), obj
