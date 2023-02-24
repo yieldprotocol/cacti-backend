@@ -40,7 +40,7 @@ class ChatHistory:
         return iter(self.interactions)
 
     @classmethod
-    def new(cls, session_id: Optional[uuid.UUID] = None):
+    def new(cls, session_id: uuid.UUID):
         return cls(interactions=[], session_id=session_id)
 
 
