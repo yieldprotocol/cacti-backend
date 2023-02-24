@@ -66,7 +66,7 @@ def backfill():
     create_schema(delete_first=True)
 
     from langchain.vectorstores import Weaviate
-    with open('./web3functions.txt') as f:
+    with open('./knowledge_base/widgets.txt') as f:
         web3functions = f.read()
     documents = web3functions.split("---")
     metadatas = [{} for _ in documents]
