@@ -45,7 +45,7 @@ def _get_client_history(client_id):
 
 def _deregister_client_history(client_id):
     global _client_id_to_chat_history
-    return _client_id_to_chat_history.pop(client_id)
+    return _client_id_to_chat_history.pop(client_id, None)
 
 
 def new_client(client, server):
