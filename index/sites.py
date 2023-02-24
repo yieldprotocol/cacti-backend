@@ -5,11 +5,9 @@ import uuid
 
 from langchain.docstore.document import Document
 from langchain.text_splitter import TokenTextSplitter
-from .weaviate import get_client
+from .weaviate import get_client, NAMESPACE_UUID
 
 
-# set an arbitrary uuid for namespace, for consistent uuids for objects
-NAMESPACE_UUID = uuid.UUID('64265e01-0339-4063-8aa3-bcd562b55aea')
 INDEX_NAME = 'IndexV1'
 INDEX_DESCRIPTION = "Index of web3 document chunks"
 TEXT_KEY = 'content'
@@ -80,7 +78,6 @@ def create_schema(delete_first: bool = False) -> None:
 
 # run with: python3 -c "from index import sites; sites.backfill()"
 def backfill():
-    from langchain.vectorstores import Weaviate
     from scrape.scrape import get_body_text, has_scrape_error
 
     client = get_client()
