@@ -7,6 +7,7 @@ import uuid
 from langchain.callbacks.base import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.schema import AgentAction, AgentFinish, LLMResult
+from langchain.prompts.base import BaseOutputParser
 
 
 @dataclass_json
@@ -71,3 +72,16 @@ class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
 
 def streaming_callback_manager(new_token_handler: Callable) -> CallbackManager:
     return CallbackManager([StreamingCallbackHandler(new_token_handler)])
+
+
+class ChatOutputParser(BaseOutputParser):
+
+    @property
+    def _type(self) -> str:
+        """Return the type key."""
+        return "chat_output_parser"
+
+    def parse(self, text: str) -> str:
+        """Parse the output of an LLM call."""
+        ret = text.strip()
+        return ret
