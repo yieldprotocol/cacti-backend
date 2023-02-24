@@ -1,7 +1,6 @@
 import json
 import logging
 import uuid
-from urllib.parse import urlparse, parse_qs
 
 from websocket_server import WebsocketServer
 
@@ -54,7 +53,7 @@ def new_client(client, server):
 
 
 def client_left(client, server):
-    history = _deregister_client_history(client['id'])
+    _deregister_client_history(client['id'])
 
 
 def _load_existing_history_and_messages(session_id):
@@ -99,22 +98,30 @@ def _message_received(client, server, message):
     assert isinstance(obj, dict), obj
     actor = obj['actor']
     typ = obj['type']
-    message = obj['payload']
+    payload = obj['payload']
 
     # resume an existing chat history session, given a session id
     if typ == 'init':
         assert history is None, f'received a session resume request for existing session ${history.session_id}'
 
         # parse query string for session id
-        params = parse_qs(urlparse(message).query)
-        session_id = uuid.UUID(params['s'][0])
+        session_id = uuid.UUID(payload['sessionId'])
+        resume_from_message_id = payload.get('resumeFromMessageId')
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)
         _register_client_history(client_id, history)
 
-        # reconstruct the chat history for the client
-        for message in messages:
+        # reconstruct the chat history for the client, starting right after resume_from_message_id
+        if resume_from_message_id is None:
+            message_start_idx = 0
+        else:
+            message_start_indexes = [i for i, message in enumerate(messages) if message.id == resume_from_message_id]
+            assert len(message_start_indexes) == 1, f'expected one message to match id ${resume_from_message_id}'
+            message_start_idx = message_start_indexes[0] + 1
+
+        for i in range(message_start_idx, len(messages)):
+            message = messages[i]
             msg = json.dumps({
                 'messageId': str(message.id),
                 'actor': message.actor,
@@ -169,7 +176,7 @@ def _message_received(client, server, message):
     chat_message = ChatMessage(
         actor=actor,
         type=typ,
-        payload=message,
+        payload=payload,
         chat_session_id=chat_session.id,
         system_config_id=system_config.id,
     )
