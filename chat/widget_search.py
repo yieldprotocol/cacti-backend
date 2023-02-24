@@ -4,14 +4,12 @@ import os
 import time
 from typing import Any, Callable
 
-from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
 
 import registry
+import streaming
 from .base import (
-    BaseChat, ChatHistory, Response, streaming_callback_manager,
-    ChatOutputParser,
+    BaseChat, ChatHistory, Response, ChatOutputParser,
 )
 
 
@@ -108,19 +106,6 @@ class WidgetSearchChat(BaseChat):
             output_parser=self.output_parser,
         )
 
-    def get_llm(self, new_token_handler):
-        llm = OpenAI(
-            temperature=0.0, max_tokens=-1,
-            # options for streaming
-            streaming=True, callback_manager=streaming_callback_manager(new_token_handler)
-        )
-        return llm
-
-    def get_streaming_chain(self, prompt, new_token_handler):
-        llm = self.get_llm(new_token_handler)
-        chain = LLMChain(llm=llm, prompt=prompt, verbose=True)
-        return chain
-
     def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> None:
         userinput = userinput.strip()
         # First identify the question
@@ -163,7 +148,7 @@ class WidgetSearchChat(BaseChat):
                 operation='append' if chat_message_id is not None else 'create',
             ), last_chat_message_id=chat_message_id)
 
-        identify_chain = self.get_streaming_chain(self.identify_prompt, identify_token_handler)
+        identify_chain = streaming.get_streaming_chain(self.identify_prompt, identify_token_handler)
         identify_response = identify_chain.apply_and_parse([example])[0]
         if self.show_thinking:
             # send again, but with replace so we save to db
@@ -197,11 +182,11 @@ class WidgetSearchChat(BaseChat):
         if identified_type == '<widget>':
             widgets = self.widget_index.similarity_search(question, k=self.top_k)
             task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
-            chain = self.get_streaming_chain(self.widget_prompt, new_token_handler)
+            chain = streaming.get_streaming_chain(self.widget_prompt, new_token_handler)
         else:
             docs = self.doc_index.similarity_search(question, k=self.top_k)
             task_info = '\n'.join([f'Content: {doc.page_content}\nSource: {doc.metadata["url"]}' for doc in docs])
-            chain = self.get_streaming_chain(self.search_prompt, new_token_handler)
+            chain = streaming.get_streaming_chain(self.search_prompt, new_token_handler)
         start = time.time()
         example = {
             "task_info": task_info,
