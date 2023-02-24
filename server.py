@@ -1,6 +1,7 @@
 import json
 import logging
 import uuid
+from urllib.parse import urlparse, parse_qs
 
 from websocket_server import WebsocketServer
 
@@ -58,7 +59,7 @@ def client_left(client, server):
 
 def _load_existing_history_and_messages(session_id):
     """Given an existing session_id, recreate the ChatHistory instance along with the individual Messages"""
-    history = chat.ChatHistory.new(session_id=session_id)
+    history = chat.ChatHistory.new(session_id)
     messages = []
 
     last_user_message = None
@@ -104,9 +105,17 @@ def _message_received(client, server, message):
     if typ == 'init':
         assert history is None, f'received a session resume request for existing session ${history.session_id}'
 
-        # parse query string for session id
-        session_id = uuid.UUID(payload['sessionId'])
-        resume_from_message_id = payload.get('resumeFromMessageId')
+        # HACK: legacy payload is a query string of the format '?s=some_session_id', temporarily preserve backwards compatibility
+        if isinstance(payload, str):
+            # parse query string for session id
+            params = parse_qs(urlparse(payload).query)
+            session_id = uuid.UUID(params['s'][0])
+            resume_from_message_id = None
+            print('legacy payload', payload)
+        else:
+            session_id = uuid.UUID(payload['sessionId'])
+            resume_from_message_id = payload.get('resumeFromMessageId')
+            print('new payload', payload)
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)
@@ -135,7 +144,7 @@ def _message_received(client, server, message):
     # first message received - first create a new session history instance
     if history is None:
         session_id = uuid.uuid4()
-        history = chat.ChatHistory.new(session_id=session_id)
+        history = chat.ChatHistory.new(session_id)
         _register_client_history(client_id, history)
 
         # inform client of the newly created session id
@@ -245,7 +254,7 @@ def _message_received(client, server, message):
 
         return chat_message_id
 
-    system.chat.receive_input(history, message, send_message)
+    system.chat.receive_input(history, payload, send_message)
 
 
 server = WebsocketServer(host='0.0.0.0', port=9999, loglevel=logging.INFO)
