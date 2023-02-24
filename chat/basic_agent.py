@@ -22,11 +22,36 @@ class BasicAgentChat(BaseChat):
         start = time.time()
 
         system_chat_message_id = None
-        system_response = ''  # we need to store this for the 'replace' op to save to db
+        system_response = ''
         bot_chat_message_id = None
+        bot_response = ''
+
+        def system_flush(response):
+            nonlocal system_chat_message_id
+            send(Response(
+                response=response,
+                still_thinking=True,
+                actor='system',
+                operation='replace',
+            ), last_chat_message_id=system_chat_message_id)
+
+        def bot_flush(response):
+            nonlocal bot_chat_message_id
+            send(Response(
+                response=response,
+                still_thinking=False,
+                actor='bot',
+                operation='replace',
+            ), last_chat_message_id=bot_chat_message_id)
 
         def system_new_token_handler(token):
-            nonlocal system_chat_message_id, system_response
+            nonlocal system_chat_message_id, system_response, bot_chat_message_id, bot_response
+
+            if bot_chat_message_id is not None:
+                bot_flush(bot_response)
+                bot_chat_message_id = None
+                bot_response = ''
+
             system_response += token
             system_chat_message_id = send(Response(
                 response=token,
@@ -36,18 +61,14 @@ class BasicAgentChat(BaseChat):
             ), last_chat_message_id=system_chat_message_id)
 
         def bot_new_token_handler(token):
-            nonlocal bot_chat_message_id, system_chat_message_id, system_response
+            nonlocal bot_chat_message_id, bot_response, system_chat_message_id, system_response
 
             if system_chat_message_id is not None:
-                send(Response(
-                    response=system_response,
-                    still_thinking=True,
-                    actor='system',
-                    operation='replace',
-                ), last_chat_message_id=system_chat_message_id)
+                system_flush(system_response)
                 system_chat_message_id = None
                 system_response = ''
 
+            bot_response += token
             bot_chat_message_id = send(Response(
                 response=token,
                 still_thinking=False,
@@ -60,5 +81,13 @@ class BasicAgentChat(BaseChat):
         result = agent.run(userinput)
         duration = time.time() - start
         history.add_interaction(userinput, result)
-        send(Response(result, operation='replace'), last_chat_message_id=bot_chat_message_id)
+
+        if system_chat_message_id is not None:
+            system_flush(system_response)
+
+        if bot_chat_message_id is not None:
+            bot_flush(result)
+        else:
+            send(Response(response=result))
+
         send(Response(response=f'Response generation took {duration: .2f}s', actor='system'))
