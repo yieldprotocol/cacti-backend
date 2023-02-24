@@ -7,10 +7,12 @@ from typing import Any, Callable
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-from langchain.prompts.base import BaseOutputParser
 
 import registry
-from .base import BaseChat, ChatHistory, Response, streaming_callback_manager
+from .base import (
+    BaseChat, ChatHistory, Response, streaming_callback_manager,
+    ChatOutputParser,
+)
 
 
 WIDGET_INSTRUCTION = '''To help users, an assistant may display information or dialog boxes using magic commands. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>". When the assistant uses a command, users will see data, an interaction box, or other inline item, not the command. Users cannot use magic commands. Fill in the command with parameters as inferred from the user input query. If there are missing parameters, prompt for them and do not make assumptions without the user's input. Do not return a magic command unless all parameters are known. Examples are given for illustration purposes, do not confuse them for the user's input. If a widget involves a transaction that requires user confirmation, prompt for it. If the widget requires a connected wallet, make sure that is available first. If there is no appropriate widget available, explain the situation and ask for more information. Do not make up a non-existent widget magic command, only use the most appropriate one. Here are the widgets that may match the user input:'''
@@ -78,19 +80,6 @@ Chat History:
 
 Input: {question}
 Output:'''
-
-
-class ChatOutputParser(BaseOutputParser):
-
-    @property
-    def _type(self) -> str:
-        """Return the type key."""
-        return "chat_output_parser"
-
-    def parse(self, text: str) -> str:
-        """Parse the output of an LLM call."""
-        ret = text.strip()
-        return ret
 
 
 @registry.register_class
