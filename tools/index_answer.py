@@ -6,6 +6,7 @@ from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
 
 import registry
+import streaming
 from .index_lookup import IndexLookupTool
 
 
@@ -31,12 +32,12 @@ class IndexAnswerTool(IndexLookupTool):
             *args,
             **kwargs
     ) -> None:
-        llm = OpenAI(temperature=0.0, max_tokens=-1)
         prompt = PromptTemplate(
             input_variables=["task_info", "question"],
             template=TEMPLATE,
         )
-        chain = LLMChain(llm=llm, prompt=prompt, verbose=True)
+        new_token_handler = kwargs.get('new_token_handler')
+        chain = streaming.get_streaming_chain(prompt, new_token_handler)
         super().__init__(
             *args,
             _chain=chain,
