@@ -1,14 +1,11 @@
 from typing import Any, Iterable, List, Optional
 import os
 import traceback
-import uuid
 
 from langchain.docstore.document import Document
 from .weaviate import get_client
 
 
-# set an arbitrary uuid for namespace, for consistent uuids for objects
-NAMESPACE_UUID = uuid.UUID('64265e01-0339-4063-8aa3-bcd562b55aea')
 INDEX_NAME = 'WidgetV1'
 INDEX_DESCRIPTION = "Index of widgets"
 TEXT_KEY = 'content'
@@ -18,9 +15,6 @@ def delete_schema() -> None:
     client = get_client()
     client.schema.delete_class(INDEX_NAME)
 
-
-# recreate schema with:
-# python3 -c "from index import weaviate; weaviate.create_schema(delete_first=True)"
 
 def create_schema(delete_first: bool = False) -> None:
     client = get_client()

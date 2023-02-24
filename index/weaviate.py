@@ -1,10 +1,15 @@
 from typing import Optional, List
+import uuid
 
 import weaviate  # type: ignore
 from langchain.vectorstores import Weaviate
 
 import utils
 import registry
+
+
+# set an arbitrary uuid for namespace, for consistent uuids for objects
+NAMESPACE_UUID = uuid.UUID('64265e01-0339-4063-8aa3-bcd562b55aea')
 
 
 def get_client() -> weaviate.Client:

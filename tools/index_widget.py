@@ -41,6 +41,7 @@ class IndexWidgetTool(IndexLookupTool):
         super().__init__(
             *args,
             _chain=chain,
+            content_description="widget definitions for users to invoke web3 transactions or live data",
             input_description="a standalone query with all relevant contextual details mentioned in order to select the right widget",
             output_description="a summarized answer with relevant magic command for widget, or a question prompt for more information to be provided",
             **kwargs
