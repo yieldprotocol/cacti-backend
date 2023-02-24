@@ -7,7 +7,7 @@ from .base import BaseTool
 
 
 TOOL_DESCRIPTION_TEMPLATE = (
-    "Search index with {content_description}."
+    "Search index containing {content_description}."
     " Input is best as {input_description}."
     " Output is {output_description}."
 )
