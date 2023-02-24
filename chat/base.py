@@ -4,8 +4,6 @@ from dataclasses_json import dataclass_json
 from typing import Any, Callable, Dict, List, Optional, Union
 import uuid
 
-from langchain.callbacks.base import CallbackManager
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.schema import AgentAction, AgentFinish, LLMResult
 from langchain.prompts.base import BaseOutputParser
 
@@ -53,25 +51,6 @@ class BaseChat(ABC):
     @abstractmethod
     def receive_input(self, history: ChatHistory, user_input: str, send_message: Callable) -> None:
         """Accept user input and return responses via the send_message function."""
-
-
-class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
-    """Override the minimal handler to get the token."""
-
-    def __init__(self, new_token_handler: Callable) -> None:
-        self.new_token_handler = new_token_handler
-
-    @property
-    def always_verbose(self) -> bool:
-        return True
-
-    def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
-        """Run on new LLM token. Only available when streaming is enabled."""
-        self.new_token_handler(token)
-
-
-def streaming_callback_manager(new_token_handler: Callable) -> CallbackManager:
-    return CallbackManager([StreamingCallbackHandler(new_token_handler)])
 
 
 class ChatOutputParser(BaseOutputParser):
