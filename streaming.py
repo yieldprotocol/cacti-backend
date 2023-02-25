@@ -55,5 +55,5 @@ def get_streaming_tools(tools, new_token_handler):
 
 def get_streaming_agent(tools, new_token_handler, **agent_kwargs):
     llm = get_streaming_llm(new_token_handler)
-    agent = initialize_agent(tools, llm, agent="zero-shot-react-description", verbose=True, **agent_kwargs)
+    agent = initialize_agent(tools, llm, agent="zero-shot-react-description", **agent_kwargs)
     return agent
