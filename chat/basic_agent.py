@@ -10,28 +10,42 @@ from tools.base import BaseTool
 from .base import BaseChat, ChatHistory, Response
 
 
-# We mirror these from langchain/agents/mrkl/prompt.py, so we can modify them
-PREFIX = """Answer the following questions as best you can. You have access to the following tools:"""
-FORMAT_INSTRUCTIONS = """Use the following format. If the Final Answer would match the last observation, just output "DONE".
+# We mirror these from langchain/agents/conversational/prompt.py, so we can modify them
+PREFIX = """Assistant is a large language model trained by OpenAI.
 
-Question: the input question you must answer.
-Thought: you should always think about what to do.
-Action: the action to take, should be one of [{tool_names}].
-Action Input: the input to the action.
-Observation: the result of the action.
-... (this Thought/Action/Action Input/Observation can repeat N times)
-...
-Thought: The last observation is useful as the final answer.
-Final Answer: DONE
+Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
 
-or
-...
-Thought: I now know the final answer derived from observations.
-Final Answer: the final answer to the original input question."""
+Assistant is constantly learning and improving, and its capabilities are constantly evolving. It is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. Additionally, Assistant is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide range of topics.
+
+Overall, Assistant is a powerful tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Assistant is here to assist.
+
+TOOLS:
+------
+
+Assistant has access to the following tools:"""
+FORMAT_INSTRUCTIONS = """To use a tool, please use the following format:
+
+```
+Thought: Do I need to use a tool? Yes
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+```
+
+When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
+
+```
+Thought: Do I need to use a tool? No
+{ai_prefix}: [your response here]
+```"""
+
 SUFFIX = """Begin!
 
-Question: {input}
-Thought:{agent_scratchpad}"""
+Previous conversation history:
+{chat_history}
+
+New input: {input}
+{agent_scratchpad}"""
 
 
 @registry.register_class
@@ -43,6 +57,10 @@ class BasicAgentChat(BaseChat):
 
     def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> None:
         userinput = userinput.strip()
+        history_string = ""
+        for interaction in history:
+            history_string += ("User: " + interaction.input + "\n")
+            history_string += ("Assistant: " + interaction.response + "\n")
         start = time.time()
 
         system_chat_message_id = None
@@ -106,12 +124,18 @@ class BasicAgentChat(BaseChat):
             system_new_token_handler,
             verbose=True,
             agent_kwargs=dict(
+                ai_prefix="Assistant",
+                human_prefix="User",
                 prefix=PREFIX,
                 suffix=SUFFIX,
                 format_instructions=FORMAT_INSTRUCTIONS,
             ),
         )
-        result = agent.run(userinput).strip()
+        example = {
+            'input': userinput,
+            'chat_history': history_string,
+        }
+        result = agent.run(example).strip()
         duration = time.time() - start
         history.add_interaction(userinput, result)
 
