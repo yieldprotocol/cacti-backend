@@ -16,24 +16,18 @@ PREFIX = """You are a web3 assistant. You help users use web3 apps, such as Unis
 TOOLS:
 ------
 
-You have access to the following tools:"""
+You can delegate your response to the user to any of the following tools, but you must provide it all the details it needs:"""
 FORMAT_INSTRUCTIONS = """To use a tool, please use the following format:
 
 ```
-Thought: Do I need to use a tool? Yes.
+Thought: you should always think about what to do.
 Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action.
-Observation: the result of the action.
+Action Input: the input to the action with all details.
+Observation: the response to the {human_prefix} from the action.
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I have nothing more to say to {human_prefix}, or I need more input from the {human_prefix}.
+{ai_prefix}: DONE
 ```
-
-If the last observation is useful as your response, you do not have to repeat it, you may just respond with "DONE".
-When you have a response to say to the {human_prefix}, or if you do not need to use a tool, you MUST use the format:
-
-```
-Thought: Do I need to use a tool? No.
-{ai_prefix}: [your response here].
-```
-
 """
 
 SUFFIX = """Begin!
@@ -42,7 +36,7 @@ Previous conversation history:
 {chat_history}
 
 New input: {input}
-{agent_scratchpad}"""
+Thought: {agent_scratchpad}"""
 
 
 @registry.register_class
@@ -82,6 +76,7 @@ class BasicAgentChat(BaseChat):
                 actor='bot',
                 operation='replace',
             ), last_chat_message_id=bot_chat_message_id)
+            history.add_interaction(userinput, response)
 
         def system_new_token_handler(token):
             nonlocal system_chat_message_id, system_response, bot_chat_message_id, bot_response
@@ -134,7 +129,6 @@ class BasicAgentChat(BaseChat):
         }
         result = agent.run(example).strip()
         duration = time.time() - start
-        history.add_interaction(userinput, result)
 
         if system_chat_message_id is not None:
             system_flush(system_response)

@@ -1,7 +1,6 @@
 Widget magic command: <|transfer({token}, {amount}, {address})|>
 Description of widget: This widget is used to transfer a token from a user's wallet to another address.
 Connected wallet required: yes
-Transaction confirmation required: yes
 Required parameters:
 -{token}: symbol of the token being transferred
 -{amount}: quantity to transfer
@@ -11,7 +10,6 @@ Example: if a user wants to transfer 2.3 ETH to 'vitalik.eth', an assistant shou
 Widget magic command: <|price({baseToken}, {quoteToken})|>
 Description of widget: This widget is used to get the price of a base token in units of a quote token.
 Connected wallet required: no
-Transaction confirmation required: no
 Required parameters:
 -{baseToken}: token to get the price of
 -{quoteToken}: token to use as units for price
@@ -20,7 +18,6 @@ Example: if the user has requested the price of ETH in USDC, an assistant may an
 Widget magic command: <|balance({token})|>
 Description of widget: This widget is used when a user requests their balance of a token.
 Connected wallet required: yes
-Transaction confirmation required: no
 Required parameters:
 -{token}: token to get the balance of from the user's wallet
 Example: if the user requests their balance of USDC, an assistant may answer with "Your balance of USDC is <|balance('USDC')|>".
@@ -29,9 +26,7 @@ Widget magic command: <|uniswap({tokenToSell}, {tokenToBuy}, {transactionKeyword
 Description of widget: This widget is used when a user wishes to use the Uniswap decentralized application for trading one token for another. To create a Uniswap transaction, a user must provide one of two possible combinations of information:
 1.) A token to sell, a token to buy, and an amount to sell (either a numeric value, or "max" to represent the maximum amount, which is equal to their wallet balance of that token). The transaction keyword to use is "SELLAMOUNT".
 2.) A token to sell, a token to buy, and an amount to buy (either a numeric value, or "max" to represent the maximum amount the user can buy given the the amount of tokens they have to sell in their wallet). The transaction keyword to use is "BUYAMOUNT".
-When a user has provided the requested information, you can provide them with a transaction completion box.
 Connected wallet required: yes
-Transaction confirmation required: yes
 Required parameters:
 -{tokenToSell}: token to sell in the swap transaction
 -{tokenToBuy}: token to buy in the swap transaction
@@ -40,9 +35,8 @@ Required parameters:
 Example: if a user wants to sell 5 WETH to buy USDC, an assistant should trigger the transaction completion box with "<|uniswap('WETH', 'USDC', 'SELLAMOUNT', 5.00)|>".
 ---
 Widget magic command: <|MakerDao({collateralToken}, {collateralTokenAmount}, {daiAmountToBorrow})|>
-Description of widget: MakerDao is a decentralized application for borrowing Dai, a dollar-pegged stabledoin. To borrow Dai, a user must provide the following information, the collateral to provide, the amount of collateral provided, and the amount of Dai to borrow. When a user has provided the requested information, an assistant can provide them with a transaction completion box.
+Description of widget: MakerDao is a decentralized application for borrowing Dai, a dollar-pegged stabledoin. To borrow Dai, a user must provide the following information, the collateral to provide, the amount of collateral provided, and the amount of Dai to borrow.
 Connected wallet required: yes
-Transaction confirmation required: yes
 Required parameters:
 -{collateralToken}: the token to provide as collateral for the borrowing of Dai
 -{collateralTokenAmount}: the amount of token provided as collateral
