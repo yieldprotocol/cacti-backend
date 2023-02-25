@@ -1,6 +1,6 @@
 import registry
 
-config = dict(
+default_config = dict(
     type="system.System",
     chat=dict(
         type="chat.widget_search.WidgetSearchChat",
@@ -57,5 +57,5 @@ def initialize_streaming(cfg, new_token_handler):
 
 
 
-def initialized_system():
+def initialize_system(config):
     return initialize(config)
