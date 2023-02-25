@@ -1,3 +1,4 @@
+from typing import Dict
 import json
 import logging
 import uuid
@@ -19,17 +20,14 @@ from utils import set_api_key
 
 set_api_key()
 
-system = config.initialized_system()
 
-system_config = SystemConfig.query.filter_by(json=config.config).one_or_none()
-if not system_config:
-    system_config = SystemConfig(json=config.config)
-    db_session.add(system_config)
-    db_session.commit()
+# in-memory mapping of system config id to initialized systems
+_system_config_id_to_system: Dict[int, system.System] = {}
 
-
-# in-memory mapping of connected clients to their associated ChatHistory instances
-_client_id_to_chat_history = {}
+# in-memory mapping of connected clients to their associated ChatHistory instance and system config id
+# these might be initialized independently
+_client_id_to_chat_history: Dict[str, chat.ChatHistory] = {}
+_client_id_to_system_config_id: Dict[str, int] = {}
 
 
 def _register_client_history(client_id, history):
@@ -55,6 +53,42 @@ def new_client(client, server):
 
 def client_left(client, server):
     _deregister_client_history(client['id'])
+
+
+def _set_client_system_config(client_id, system_config_id):
+    global _client_id_to_system_config_id
+    _client_id_to_system_config_id[client_id] = system_config_id
+
+
+def _get_client_system_config(client_id):
+    global _client_id_to_system_config_id
+    return _client_id_to_system_config_id.get(client_id, default_system_config.id)
+
+
+def _get_system(system_config_id):
+    global _system_config_id_to_system
+    system = _system_config_id_to_system.get(system_config_id)
+    if not system:
+        system_config = SystemConfig.query.get(system_config_id)
+        system = _register_system(system_config.id, system_config.json)
+    return system
+
+
+def _register_system(system_config_id, system_config_json):
+    global _system_config_id_to_system
+    system = config.initialize_system(system_config_json)
+    _system_config_id_to_system[system_config_id] = system
+    return system
+
+
+default_system_config = SystemConfig.query.filter_by(json=config.default_config).one_or_none()
+if not default_system_config:
+    default_system_config = SystemConfig(json=config.default_config)
+    db_session.add(default_system_config)
+    db_session.commit()
+print(f'The default system config id is: {default_system_config.id}')
+_register_system(default_system_config.id, default_system_config.json)
+
 
 
 def _load_existing_history_and_messages(session_id):
@@ -96,12 +130,20 @@ def message_received(client, server, message):
 
 def _message_received(client, server, message):
     client_id = client['id']
+    system_config_id = _get_client_system_config(client_id)
     history = _get_client_history(client_id)
     obj = json.loads(message)
     assert isinstance(obj, dict), obj
     actor = obj['actor']
     typ = obj['type']
     payload = obj['payload']
+
+    # set system config used by client
+    if typ == 'cfg':
+        if 'systemConfigId' in payload and bool(payload['systemConfigId']):
+            system_config_id = int(payload['systemConfigId'])
+            _set_client_system_config(client_id, system_config_id)
+        return
 
     # resume an existing chat history session, given a session id
     if typ == 'init':
@@ -187,7 +229,7 @@ def _message_received(client, server, message):
         type=typ,
         payload=payload,
         chat_session_id=chat_session.id,
-        system_config_id=system_config.id,
+        system_config_id=system_config_id,
     )
     db_session.add(chat_message)
     db_session.commit()
@@ -223,7 +265,7 @@ def _message_received(client, server, message):
                 type='text',
                 payload=resp.response,
                 chat_session_id=chat_session.id,
-                system_config_id=system_config.id,
+                system_config_id=system_config_id,
             )
             db_session.add(chat_message)
             db_session.commit()
@@ -254,6 +296,7 @@ def _message_received(client, server, message):
 
         return chat_message_id
 
+    system = _get_system(system_config_id)
     system.chat.receive_input(history, payload, send_message)
 
 
