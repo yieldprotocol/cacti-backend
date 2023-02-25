@@ -10,6 +10,24 @@ from tools.base import BaseTool
 from .base import BaseChat, ChatHistory, Response
 
 
+# We mirror these from langchain/agents/mrkl/prompt.py, so we can modify them
+PREFIX = """Answer the following questions as best you can. You have access to the following tools:"""
+FORMAT_INSTRUCTIONS = """Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question"""
+SUFFIX = """Begin!
+
+Question: {input}
+Thought:{agent_scratchpad}"""
+
+
 @registry.register_class
 class BasicAgentChat(BaseChat):
     def __init__(self, tools: List[BaseTool], show_thinking: bool = True) -> None:
@@ -77,7 +95,13 @@ class BasicAgentChat(BaseChat):
             ), last_chat_message_id=bot_chat_message_id)
 
         tools = streaming.get_streaming_tools(self.tools, bot_new_token_handler)
-        agent = streaming.get_streaming_agent(tools, system_new_token_handler)
+        agent = streaming.get_streaming_agent(
+            tools,
+            system_new_token_handler,
+            prefix=PREFIX,
+            suffix=SUFFIX,
+            format_instructions=FORMAT_INSTRUCTIONS,
+        )
         result = agent.run(userinput)
         duration = time.time() - start
         history.add_interaction(userinput, result)
