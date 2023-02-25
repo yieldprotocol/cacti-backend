@@ -88,8 +88,10 @@ def _load_existing_history_and_messages(session_id):
 
 
 def message_received(client, server, message):
-    _message_received(client, server, message)
-    db_session.close()
+    try:
+        _message_received(client, server, message)
+    finally:
+        db_session.close()
 
 
 def _message_received(client, server, message):
