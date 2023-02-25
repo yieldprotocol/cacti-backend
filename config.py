@@ -1,22 +1,54 @@
 import registry
 
+
+widget_index = dict(
+    type="index.weaviate.WeaviateIndex",
+    index_name="WidgetV1",
+    text_key="content",
+)
+app_info_index = dict(
+    type="index.weaviate.WeaviateIndex",
+    index_name="AppInfoV1",
+    text_key="question",
+    extra_keys=["answer", "suggested_follow_ups"],
+)
+scraped_sites_index = dict(
+    type="index.weaviate.WeaviateIndex",
+    index_name="IndexV1",
+    text_key="content",
+    extra_keys=["url"],
+)
+
 default_config = dict(
     type="system.System",
     chat=dict(
-        type="chat.widget_search.WidgetSearchChat",
-        doc_index=dict(
-            type="index.weaviate.WeaviateIndex",
-            index_name="IndexV1",
-            text_key="content",
-            extra_keys=["url"],
-        ),
-        widget_index=dict(
-            type="index.weaviate.WeaviateIndex",
-            index_name="WidgetV1",
-            text_key="content",
-        ),
-        show_thinking=True,
-    ),
+        type="chat.basic_agent.BasicAgentChat",
+        tools=[
+            dict(
+                type="tools.index_answer.IndexAnswerTool",
+                _streaming=True,  # if specified, this is lazily constructed in chat to support streaming
+                name="ScrapedSitesIndexAnswer",
+                content_description="general content scraped from web3 sites. It does not know about this app or about widget magic commands for invoking transactions.",
+                index=scraped_sites_index,
+                top_k=3,
+                source_key="url",
+            ),
+            dict(
+                type="tools.index_widget.IndexWidgetTool",
+                _streaming=True,  # if specified, this is lazily constructed in chat to support streaming
+                name="WidgetIndexAnswer",
+                index=widget_index,
+                top_k=3,
+            ),
+            dict(
+                type="tools.index_app_info.IndexAppInfoTool",
+                _streaming=True,  # if specified, this is lazily constructed in chat to support streaming
+                name="AppInfoIndexAnswer",
+                index=app_info_index,
+                top_k=3,
+            ),
+        ],
+    )
 )
 
 
