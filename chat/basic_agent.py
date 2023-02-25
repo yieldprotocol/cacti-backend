@@ -16,13 +16,13 @@ PREFIX = """You are a web3 assistant. You help users use web3 apps, such as Unis
 TOOLS:
 ------
 
-You can delegate your response to the user to any of the following tools, but you must provide it all the details it needs:"""
+You can delegate your response to the user to any of the following tools, or use them to gather more information, but you must provide it a summary of relevant facts from the chat history so far:"""
 FORMAT_INSTRUCTIONS = """To use a tool, please use the following format:
 
 ```
 Thought: you should always think about what to do.
 Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action with all details.
+Action Input: the input to the action with all details of relevant facts.
 Observation: the response to the {human_prefix} from the action.
 ... (this Thought/Action/Action Input/Observation can repeat N times)
 Thought: I have nothing more to say to {human_prefix}, or I need more input from the {human_prefix}.

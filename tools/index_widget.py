@@ -41,8 +41,8 @@ class IndexWidgetTool(IndexLookupTool):
         super().__init__(
             *args,
             _chain=chain,
-            content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear",
-            input_description="a standalone query with all relevant contextual details mentioned in order to select the right widget",
+            content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear. It cannot help the user with understanding how to use the app.",
+            input_description="a standalone query with all relevant contextual details mentioned in order to invoke the right widget",
             output_description="a summarized answer with relevant magic command for widget, or a question prompt for more information to be provided",
             **kwargs
         )
