@@ -111,11 +111,9 @@ def _message_received(client, server, message):
             params = parse_qs(urlparse(payload).query)
             session_id = uuid.UUID(params['s'][0])
             resume_from_message_id = None
-            print('legacy payload', payload)
         else:
             session_id = uuid.UUID(payload['sessionId'])
             resume_from_message_id = payload.get('resumeFromMessageId')
-            print('new payload', payload)
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)
@@ -125,7 +123,7 @@ def _message_received(client, server, message):
         if resume_from_message_id is None:
             message_start_idx = 0
         else:
-            message_start_indexes = [i for i, message in enumerate(messages) if message.id == resume_from_message_id]
+            message_start_indexes = [i for i, message in enumerate(messages) if str(message.id) == resume_from_message_id]
             assert len(message_start_indexes) == 1, f'expected one message to match id ${resume_from_message_id}'
             message_start_idx = message_start_indexes[0] + 1
 
