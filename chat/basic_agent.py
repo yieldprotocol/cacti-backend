@@ -12,16 +12,22 @@ from .base import BaseChat, ChatHistory, Response
 
 # We mirror these from langchain/agents/mrkl/prompt.py, so we can modify them
 PREFIX = """Answer the following questions as best you can. You have access to the following tools:"""
-FORMAT_INSTRUCTIONS = """Use the following format:
+FORMAT_INSTRUCTIONS = """Use the following format. If the Final Answer would match the last observation, just output "DONE".
 
-Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
+Question: the input question you must answer.
+Thought: you should always think about what to do.
+Action: the action to take, should be one of [{tool_names}].
+Action Input: the input to the action.
+Observation: the result of the action.
 ... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Final Answer: the final answer to the original input question"""
+...
+Thought: The last observation is useful as the final answer.
+Final Answer: DONE
+
+or
+...
+Thought: I now know the final answer derived from observations.
+Final Answer: the final answer to the original input question."""
 SUFFIX = """Begin!
 
 Question: {input}
@@ -98,11 +104,14 @@ class BasicAgentChat(BaseChat):
         agent = streaming.get_streaming_agent(
             tools,
             system_new_token_handler,
-            prefix=PREFIX,
-            suffix=SUFFIX,
-            format_instructions=FORMAT_INSTRUCTIONS,
+            verbose=True,
+            agent_kwargs=dict(
+                prefix=PREFIX,
+                suffix=SUFFIX,
+                format_instructions=FORMAT_INSTRUCTIONS,
+            ),
         )
-        result = agent.run(userinput)
+        result = agent.run(userinput).strip()
         duration = time.time() - start
         history.add_interaction(userinput, result)
 
@@ -112,6 +121,7 @@ class BasicAgentChat(BaseChat):
         if bot_chat_message_id is not None:
             bot_flush(result)
         else:
-            send(Response(response=result))
+            if result != 'DONE':
+                send(Response(response=result))
 
         send(Response(response=f'Response generation took {duration: .2f}s', actor='system'))
