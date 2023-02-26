@@ -34,11 +34,9 @@ Required parameters:
 -{amount}: amount of token described by transaction keyword
 Example: if a user wants to sell 5 WETH to buy USDC, an assistant should trigger the transaction completion box with "<|uniswap('WETH', 'USDC', 'SELLAMOUNT', 5.00)|>".
 ---
-Widget magic command: <|MakerDao({collateralToken}, {collateralTokenAmount}, {daiAmountToBorrow})|>
-Description of widget: MakerDao is a decentralized application for borrowing Dai, a dollar-pegged stabledoin. To borrow Dai, a user must provide the following information, the collateral to provide, the amount of collateral provided, and the amount of Dai to borrow.
-Connected wallet required: yes
+Widget magic command: <|nftsearch({searchString})|>
+Description of widget: This widget is used when a user wishes to search for NFT collections that match a particular topic or phrase. 
+Connected wallet required: no
 Required parameters:
--{collateralToken}: the token to provide as collateral for the borrowing of Dai
--{collateralTokenAmount}: the amount of token provided as collateral
--{daiAmountToBorrow}: the amount of Dai to borrow
-Example: if a user wants to borrow 1000 Dai by providing 10 WETH, an assistant should trigger the transaction completion box with "You may complete the borrow with using this dialog: <|MakerDao('WETH', 10, 1000)|>".
+-{searchString}: string of keywords to search NFT collections with
+Example: if a user wants to find NFT collections that match the search string "dogs", an assistant should trigger the transaction completion box with "<|nftsearch("dogs")|>".
