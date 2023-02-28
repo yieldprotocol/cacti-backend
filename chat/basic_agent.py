@@ -17,7 +17,7 @@ TOOLS:
 ------
 
 You can delegate your response to the user to any of the following tools, or use them to gather more information, but you must provide it a summary of relevant facts from the chat history so far:"""
-FORMAT_INSTRUCTIONS = """To use a tool, please use the following format:
+FORMAT_INSTRUCTIONS = """To use a tool, please use the following format and think step by step:
 
 ```
 Thought: you should always think about what to do.

@@ -1,28 +1,28 @@
-Widget magic command: <|transfer({token}, {amount}, {address})|>
+Widget magic command: <|display-transfer({token}, {amount}, {address})|>
 Description of widget: This widget is used to transfer a token from a user's wallet to another address.
 Connected wallet required: yes
 Required parameters:
 -{token}: symbol of the token being transferred
 -{amount}: quantity to transfer
 -{address}: transfer recipient address
-Example: if a user wants to transfer 2.3 ETH to 'vitalik.eth', an assistant should trigger the transaction completion box with "<|transfer('ETH', 2.3, 'vitalik.eth')|>".
+Example: if a user wants to transfer 2.3 ETH to 'vitalik.eth', an assistant should trigger the transaction completion box with "<|display-transfer('ETH', 2.3, 'vitalik.eth')|>".
 ---
-Widget magic command: <|price({baseToken}, {quoteToken})|>
+Widget magic command: <|fetch-price({baseToken}, {quoteToken})|>
 Description of widget: This widget is used to get the price of a base token in units of a quote token.
 Connected wallet required: no
 Required parameters:
 -{baseToken}: token to get the price of
 -{quoteToken}: token to use as units for price
-Example: if the user has requested the price of ETH in USDC, an assistant may answer with "The cost of ETH in USDC is <|price('ETH','USDC')|>".
+Example: if the user has requested the price of ETH in USDC, an assistant may answer with "The cost of ETH in USDC is <|fetch-price('ETH','USDC')|>".
 ---
-Widget magic command: <|balance({token})|>
+Widget magic command: <|fetch-balance({token})|>
 Description of widget: This widget is used when a user requests their balance of a token.
 Connected wallet required: yes
 Required parameters:
 -{token}: token to get the balance of from the user's wallet
-Example: if the user requests their balance of USDC, an assistant may answer with "Your balance of USDC is <|balance('USDC')|>".
+Example: if the user requests their balance of USDC, an assistant may answer with "Your balance of USDC is <|fetch-balance('USDC')|>".
 ---
-Widget magic command: <|uniswap({tokenToSell}, {tokenToBuy}, {transactionKeyword}, {amount})|>
+Widget magic command: <|display-uniswap({tokenToSell}, {tokenToBuy}, {transactionKeyword}, {amount})|>
 Description of widget: This widget is used when a user wishes to use the Uniswap decentralized application for trading one token for another. To create a Uniswap transaction, a user must provide one of two possible combinations of information:
 1.) A token to sell, a token to buy, and an amount to sell (either a numeric value, or "max" to represent the maximum amount, which is equal to their wallet balance of that token). The transaction keyword to use is "SELLAMOUNT".
 2.) A token to sell, a token to buy, and an amount to buy (either a numeric value, or "max" to represent the maximum amount the user can buy given the the amount of tokens they have to sell in their wallet). The transaction keyword to use is "BUYAMOUNT".
@@ -32,11 +32,18 @@ Required parameters:
 -{tokenToBuy}: token to buy in the swap transaction
 -{transactionKeyword}: either SELLAMOUNT or BUYAMOUNT depending on the direction
 -{amount}: amount of token described by transaction keyword
-Example: if a user wants to sell 5 WETH to buy USDC, an assistant should trigger the transaction completion box with "<|uniswap('WETH', 'USDC', 'SELLAMOUNT', 5.00)|>".
+Example: if a user wants to sell 5 WETH to buy USDC, an assistant should trigger the transaction completion box with "<|display-uniswap('WETH', 'USDC', 'SELLAMOUNT', 5.00)|>".
 ---
-Widget magic command: <|nftsearch({searchString})|>
-Description of widget: This widget is used when a user wishes to search for NFT collections that match a particular topic or phrase. 
+Widget magic command: <|display-nftsearch({searchString})|>
+Description of widget: This widget is used when a user wishes to search for NFT collections that match a particular topic or phrase.
 Connected wallet required: no
 Required parameters:
 -{searchString}: string of keywords to search NFT collections with
-Example: if a user wants to find NFT collections that match the search string "dogs", an assistant should trigger the transaction completion box with "<|nftsearch("dogs")|>".
+Example: if a user wants to find NFT collections that match the search string "dogs", an assistant should trigger the transaction completion box with "<|display-nftsearch("dogs")|>".
+---
+Widget magic command: <|fetch-calculate({expression})|>
+Description of widget: This widget is used when a user wants to calculate an arbitrary mathematical expression.
+Connected wallet required: no
+Required parameters:
+-{expression}: mathematical expression to calculate
+Example: if a user wants to determine the ratio of two numbers, an assistant should trigger the calculation with "<|fetch-calculate(number1 / number2)|>".

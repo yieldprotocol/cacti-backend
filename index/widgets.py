@@ -6,7 +6,7 @@ from langchain.docstore.document import Document
 from .weaviate import get_client
 
 
-INDEX_NAME = 'WidgetV1'
+INDEX_NAME = 'WidgetV2'
 INDEX_DESCRIPTION = "Index of widgets"
 TEXT_KEY = 'content'
 
@@ -54,10 +54,10 @@ def create_schema(delete_first: bool = False) -> None:
 
 
 # run with: python3 -c "from index import widgets; widgets.backfill()"
-def backfill():
+def backfill(delete_first=True):
     # TODO: right now we don't have stable document IDs unlike sites.
     # Always drop and recreate first.
-    create_schema(delete_first=True)
+    create_schema(delete_first=delete_first)
 
     from langchain.vectorstores import Weaviate
     with open('./knowledge_base/widgets.txt') as f:
