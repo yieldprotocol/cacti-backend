@@ -5,7 +5,6 @@ Required parameters:
 -{token}: symbol of the token being transferred
 -{amount}: quantity to transfer
 -{address}: transfer recipient address
-Example: if a user wants to transfer 2.3 ETH to 'vitalik.eth', an assistant should trigger the transaction completion box with "<|display-transfer('ETH',2.3,'vitalik.eth')|>".
 ---
 Widget magic command: <|fetch-price({baseToken},{quoteToken})|>
 Description of widget: This widget is used to get the price of a token.
@@ -15,7 +14,6 @@ Required parameters:
 -{quoteToken}: token to use as units for price
 Return value:
 -price of a base token in units of a quote token.
-Example: if the user has requested the price of ETH in USDC, an assistant may answer with "The cost of ETH in USDC is <|fetch-price('ETH','USDC')|>".
 ---
 Widget magic command: <|fetch-balance({token})|>
 Description of widget: This widget is used when a user requests their balance of a token.
@@ -24,7 +22,6 @@ Required parameters:
 -{token}: token to get the balance of from the user's wallet
 Return value:
 -user's wallet balance of a token, in decimal
-Example: if the user requests their balance of USDC, an assistant may answer with "Your balance of USDC is <|fetch-balance('USDC')|>".
 ---
 Widget magic command: <|display-uniswap({tokenToSell},{tokenToBuy},{transactionKeyword},{amount})|>
 Description of widget: This widget is used when a user wishes to use the Uniswap decentralized application for trading one token for another. To create a Uniswap transaction, a user must provide one of two possible combinations of information:
@@ -36,16 +33,12 @@ Required parameters:
 -{tokenToBuy}: token to buy in the swap transaction
 -{transactionKeyword}: either SELLAMOUNT if amount refers to token to sell or BUYAMOUNT if amount refers to token to buy
 -{amount}: amount of token described by transaction keyword that we are trying to buy or sell
-Examples:
--to swap 5 WETH for USDC, an assistant should trigger the transaction completion box with "<|display-uniswap('WETH','USDC','SELLAMOUNT',5)|>".
--to swap DAI for 3 ETH, trigger with "<|display-uniswap('DAI,'ETH,'BUYAMOUNT',3)|>".
 ---
 Widget magic command: <|display-nftsearch({searchString})|>
 Description of widget: This widget is used when a user wishes to search for NFT collections that match a particular topic or phrase.
 Connected wallet required: no
 Required parameters:
 -{searchString}: string of keywords to search NFT collections with
-Example: if a user wants to find NFT collections that match the search string "dogs", an assistant should trigger the transaction completion box with "<|display-nftsearch("dogs")|>".
 ---
 Widget magic command: <|fetch-nftcollection({address},{network})|>
 Description of widget: This widget is used when a user wishes retrieve data of an NFT collection given its address and network.
@@ -55,7 +48,6 @@ Required parameters:
 -{network}: network of the NFT collection
 Return value:
 -JSON object with data about the NFT collection
-Example: if a user wants to retrieve data about the Wild Dogs NFT collection, an assistant should use "<|fetch-nftcollection('0x04509754d1E7CB093b76Ef70104ac64C8f40b167','polygon-mainnet')|>".
 ---
 Widget magic command: <|fetch-nftasset({address},{network},{tokenID})|>
 Description of widget: This widget is used when a user wishes retrieve data of an NFT asset in a collection given its address, network, and token ID.
@@ -66,7 +58,6 @@ Required parameters:
 -{tokenID}: token ID of the asset
 Return value:
 -JSON object with data about the NFT asset
-Example: if a user wants to retrieve data about the Wild Dogs NFT #12, an assistant should use "<|fetch-nftasset('0x04509754d1E7CB093b76Ef70104ac64C8f40b167','polygon-mainnet',12)|>".
 ---
 Widget magic command: <|fetch-eval({expression})|>
 Description of widget: This widget is used when a user wants to calculate an arbitrary mathematical expression.
@@ -75,4 +66,3 @@ Required parameters:
 -{expression}: mathematical expression to calculate
 Return value:
 -the evaluated mathematical expression in numerical form
-Example: if a user wants to determine the ratio of two numbers, an assistant should trigger the calculation with "<|fetch-eval(number1/number2)|>".
