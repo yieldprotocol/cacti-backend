@@ -18,6 +18,19 @@ scraped_sites_index = dict(
     text_key="content",
     extra_keys=["url"],
 )
+api_docs_index = dict(
+    type="index.weaviate.WeaviateIndex",
+    index_name="APIDocsV1",
+    text_key="content",
+)
+
+crypto_tokens_index = dict(
+    type="index.weaviate.WeaviateIndex",
+    index_name="CryptoTokensV1",
+    text_key="canonical_id",
+    extra_keys=["name", "symbol"],
+)
+
 
 default_config = dict(
     type="system.System",
@@ -46,6 +59,15 @@ default_config = dict(
                 name="AppInfoIndexAnswer",
                 index=app_info_index,
                 top_k=3,
+            ),
+            dict(
+                type="tools.index_api_tool.IndexAPITool",
+                _streaming=True,
+                name="IndexAPITool",
+                index=api_docs_index,
+                crypto_tokens_index=crypto_tokens_index,
+                top_k=1,
+                return_direct=True,
             ),
         ],
     )
