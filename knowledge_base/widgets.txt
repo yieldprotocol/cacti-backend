@@ -16,7 +16,7 @@ Return value:
 -price of a base token in units of a quote token.
 ---
 Widget magic command: <|fetch-token-address({token})|>
-Description of widget: This widget is used when we need the token contract address given the token name or symbol.
+Description of widget: This widget is used when we need the token contract address given the web3 crypto token name or symbol.
 Connected wallet required: no
 Required parameters:
 -{token}: token to get the contract address of
@@ -27,7 +27,7 @@ Widget magic command: <|fetch-balance({token_address},{account_address})|>
 Description of widget: This widget is used when we need the balance of a token in an account or wallet
 Connected wallet required: no
 Required parameters:
--{token_address}: address of token to get the balance of
+-{token_address}: address of token contract to get the balance of. Use <|fetch-token-address({token})|> to find this given the token name.
 -{account_address}: address of the account to check the balance of
 Return value:
 -balance of a token in an account or wallet, in decimal units
