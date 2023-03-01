@@ -21,8 +21,8 @@ FORMAT_INSTRUCTIONS = """To use a tool, please use the following format and thin
 
 ```
 Thought: you should always think about what to do.
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action with all details of relevant facts.
+Action: the action/tool to use, should be one of [{tool_names}]
+Action Input: the input to the action/tool with the thought/intent and all details of relevant facts, matching the tool input format.
 Observation: the response to the {human_prefix} from the action.
 ... (this Thought/Action/Action Input/Observation can repeat N times)
 Thought: I have nothing more to say to {human_prefix}, or I need more input from the {human_prefix}.
