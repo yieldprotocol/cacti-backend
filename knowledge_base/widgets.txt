@@ -15,13 +15,22 @@ Required parameters:
 Return value:
 -price of a base token in units of a quote token.
 ---
-Widget magic command: <|fetch-balance({token})|>
-Description of widget: This widget is used when a user requests their balance of a token.
-Connected wallet required: yes
+Widget magic command: <|fetch-token-address({token})|>
+Description of widget: This widget is used when we need the token contract address given the token name or symbol.
+Connected wallet required: no
 Required parameters:
--{token}: token to get the balance of from the user's wallet
+-{token}: token to get the contract address of
 Return value:
--user's wallet balance of a token, in decimal
+-the contract address of the token, a string
+---
+Widget magic command: <|fetch-balance({token_address},{account_address})|>
+Description of widget: This widget is used when we need the balance of a token in an account or wallet
+Connected wallet required: no
+Required parameters:
+-{token_address}: address of token to get the balance of
+-{account_address}: address of the account to check the balance of
+Return value:
+-balance of a token in an account or wallet, in decimal units
 ---
 Widget magic command: <|display-uniswap({tokenToSell},{tokenToBuy},{transactionKeyword},{amount})|>
 Description of widget: This widget is used when a user wishes to use the Uniswap decentralized application for trading one token for another. To create a Uniswap transaction, a user must provide one of two possible combinations of information:
