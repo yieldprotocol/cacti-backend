@@ -48,7 +48,7 @@ class IndexAPITool(IndexLookupTool):
         if '__price_context_data__' in api_docs:
             docs = self.crypto_tokens_index.similarity_search(query, k=2)
             context_data = self._build_price_context_data(docs)
-            api_docs = api_docs.format(__context_data__=context_data)
+            api_docs = api_docs.format(__price_context_data__=context_data)
 
         result = self._chain.run(question=query, api_docs=api_docs)
 
