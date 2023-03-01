@@ -12,6 +12,8 @@ class IndexAPIChain(LangChainAPIChain):
     headers_key: str = "headers"
 
     def _call(self, inputs: Dict[str, Any]) -> Dict[str, str]:
+        """Override the base function to reset instance variables to use relevant input values at query time"""
+
         api_docs = inputs[self.api_docs_key]
         headers = inputs.get(self.headers_key, None)
 
