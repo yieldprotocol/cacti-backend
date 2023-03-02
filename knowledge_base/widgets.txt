@@ -23,12 +23,12 @@ Required parameters:
 Return value:
 -the contract address of the token, a string
 ---
-Widget magic command: <|fetch-balance({token_address},{account_address})|>
+Widget magic command: <|fetch-balance({tokenAddress},{accountAddress})|>
 Description of widget: This widget is used when we need the balance of a token in an account or wallet
 Connected wallet required: no
 Required parameters:
--{token_address}: address of token contract to get the balance of. Use <|fetch-token-address({token})|> to find this given the token name.
--{account_address}: address of the account to check the balance of
+-{tokenAddress}: address of token contract to get the balance of. Use <|fetch-token-address({token})|> to find this given the token name.
+-{accountAddress}: address of the account to check the balance of
 Return value:
 -balance of a token in an account or wallet, in decimal units
 ---
