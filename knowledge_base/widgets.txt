@@ -33,8 +33,8 @@ Return value:
 -balance of a token in an account or wallet, in decimal units
 ---
 Widget magic command: <|display-uniswap({tokenToSell},{tokenToBuy},{transactionKeyword},{amount})|>
-Description of widget: This widget is used when a user wishes to use the Uniswap decentralized application for trading one token for another. To create a Uniswap transaction, a user must provide one of two possible combinations of information:
-1.) A token to sell, a token to buy, the transaction keyword "SELLAMOUNT", and an amount to sell (either a numeric value, or "max" to represent the maximum amount, which is equal to their wallet balance of that token).
+Description of widget: This widget is used when we need to use the Uniswap decentralized application for trading one token for another. To create a Uniswap transaction, you need either:
+1.) A token to sell, a token to buy, the transaction keyword "SELLAMOUNT", and an amount to sell (either a numeric value, or "max" to represent the maximum amount, which is equal to their wallet balance of that token), OR
 2.) A token to sell, a token to buy, the transaction keyword "BUYAMOUNT", and an amount to buy (either a numeric value, or "max" to represent the maximum amount the user can buy given the the amount of tokens they have to sell in their wallet).
 Connected wallet required: yes
 Required parameters:
@@ -44,13 +44,13 @@ Required parameters:
 -{amount}: amount of token described by transaction keyword that we are trying to buy or sell
 ---
 Widget magic command: <|display-nftsearch({searchString})|>
-Description of widget: This widget is used when a user wishes to search for NFT collections that match a particular topic or phrase.
+Description of widget: This widget is used when we need to search for NFT collections that match a particular topic or phrase.
 Connected wallet required: no
 Required parameters:
 -{searchString}: string of keywords to search NFT collections with
 ---
 Widget magic command: <|fetch-nftcollection({address},{network})|>
-Description of widget: This widget is used when a user wishes retrieve data of an NFT collection given its address and network.
+Description of widget: This widget is used when we need to retrieve data of an NFT collection given its address and network.
 Connected wallet required: no
 Required parameters:
 -{address}: contract address of the NFT collection
@@ -59,7 +59,7 @@ Return value:
 -JSON object with data about the NFT collection
 ---
 Widget magic command: <|fetch-nftasset({address},{network},{tokenID})|>
-Description of widget: This widget is used when a user wishes retrieve data of an NFT asset in a collection given its address, network, and token ID.
+Description of widget: This widget is used when we need to retrieve data of an NFT asset in a collection given its address, network, and token ID.
 Connected wallet required: no
 Required parameters:
 -{address}: contract address of the NFT asset
@@ -69,7 +69,7 @@ Return value:
 -JSON object with data about the NFT asset
 ---
 Widget magic command: <|fetch-eval({expression})|>
-Description of widget: This widget is used when a user wants to calculate an arbitrary mathematical expression.
+Description of widget: This widget is used when we need to calculate an arbitrary mathematical expression.
 Connected wallet required: no
 Required parameters:
 -{expression}: mathematical expression to calculate
