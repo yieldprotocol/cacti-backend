@@ -18,7 +18,6 @@ CONTENT_DESCRIPTION = "This tool is useful when you need to get current data for
 INPUT_DESCRIPTION = "the entire user query with all revelant contextual information"
 
 OUTPUT_DESCRIPTION = "an API spec for an endpoint that can be used to get the data for the user query"
-
 @registry.register_class
 class IndexAPITool(IndexLookupTool):
 
@@ -46,10 +45,11 @@ class IndexAPITool(IndexLookupTool):
         api_docs = super()._run(query)
 
         if '__price_context_data__' in api_docs:
-            docs = self.crypto_tokens_index.similarity_search(query, k=2)
+            docs = self.crypto_tokens_index.similarity_search(query, k=3)
             context_data = self._build_price_context_data(docs)
             api_docs = api_docs.format(__price_context_data__=context_data)
 
+        print(api_docs)
         result = self._chain.run(question=query, api_docs=api_docs)
 
         return result

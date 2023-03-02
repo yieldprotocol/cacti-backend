@@ -2,6 +2,7 @@ from typing import Any, Iterable, List, Optional
 import os
 import traceback
 import json
+import time
 
 from langchain.docstore.document import Document
 from .weaviate import get_client
@@ -86,7 +87,6 @@ def backfill():
     create_schema(delete_first=True)
 
     from langchain.vectorstores import Weaviate
-
     
     with open('./knowledge_base/crypto_tokens.json') as f:
         crypto_tokens = json.load(f)
@@ -94,4 +94,16 @@ def backfill():
 
     client = get_client()
     w = Weaviate(client, INDEX_NAME, CANONICAL_ID_KEY)
-    w.add_texts(documents, crypto_tokens)
+
+    # NOTE: OpenAI has API limit of 3000/min so batch process the creation
+    batch_size = 40 
+    for i in range(0, len(documents), batch_size):
+        length = i + batch_size
+        print("index: ", i, " length:", length)
+        w.add_texts(documents[i:length], crypto_tokens[i:length])
+        time.sleep(1)
+
+def get_index_size():
+    client = get_client()
+    data = client.query.aggregate(INDEX_NAME).with_fields('meta { count }').do()
+    print(data)
