@@ -7,8 +7,8 @@ from .base import BaseTool
 
 
 TOOL_DESCRIPTION_TEMPLATE = (
-    "Search index containing {content_description}."
-    " Input is best as {input_description}."
+    "Document index containing {content_description}."
+    " Input has the format of {input_description}."
     " Output is {output_description}."
 )
 
@@ -32,7 +32,7 @@ class IndexLookupTool(BaseTool):
             index: Any,
             top_k: int,
             source_key: Optional[str] = None,
-            input_description: str = "a standalone query or phrase representing information to be retrieved from the index",
+            input_description: str = "a standalone question representing information to be retrieved from the index",
             output_description: str = "raw text snippets with associated source identifiers",
             **kwargs
     ) -> None:
