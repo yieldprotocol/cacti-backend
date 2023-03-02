@@ -1,3 +1,9 @@
+"""
+NOTE:
+- To build the index for crypo tokens, first download the large list from "https://api.coingecko.com/api/v3/coins/list" and save it in "knowledge_base/crypto_tokens.json"
+- Then run - python3 -c "from index import crypto_tokens; crypto_tokens.backfill()"
+"""
+
 from typing import Any, Iterable, List, Optional
 import os
 import traceback
@@ -80,7 +86,6 @@ def create_schema(delete_first: bool = False) -> None:
     client.schema.create(schema)
 
 
-# run with: python3 -c "from index import crypto_tokens; crypto_tokens.backfill()"
 def backfill():
     # TODO: right now we don't have stable document IDs unlike sites.
     # Always drop and recreate first.
