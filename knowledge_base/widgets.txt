@@ -42,10 +42,18 @@ Required parameters:
 -{amount}: amount of token described by transaction keyword that we are trying to buy or sell
 ---
 Widget magic command: <|display-nftsearch({searchString})|>
+Description of widget: This widget is used when the user wants to interactively search for NFT collections that match a particular topic or phrase.
+Connected wallet required: no
+Required parameters:
+-{searchString}: string of keywords to search NFT collections with
+---
+Widget magic command: <|fetch-nftsearch({searchString})|>
 Description of widget: This widget is used when we need to search for NFT collections that match a particular topic or phrase.
 Connected wallet required: no
 Required parameters:
 -{searchString}: string of keywords to search NFT collections with
+Return value:
+-a list of JSON objects representing the address and network of the NFT collections found
 ---
 Widget magic command: <|fetch-nftcollection({address},{network})|>
 Description of widget: This widget is used when we need to retrieve data of an NFT collection given its address and network.
