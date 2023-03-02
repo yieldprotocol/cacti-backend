@@ -15,27 +15,19 @@ Required parameters:
 Return value:
 -price of a base token in units of a quote token.
 ---
-Widget magic command: <|fetch-token-address({token})|>
-Description of widget: This widget is used when we need the token contract address given the web3 crypto token name or symbol.
-Connected wallet required: no
-Required parameters:
--{token}: token to get the contract address of
-Return value:
--the contract address of the token, a string
----
-Widget magic command: <|fetch-balance({tokenAddress},{accountAddress})|>
+Widget magic command: <|fetch-balance({token},{address})|>
 Description of widget: This widget is used when we need the balance of a token in an account or wallet
 Connected wallet required: no
 Required parameters:
--{tokenAddress}: address of token contract to get the balance of. Use <|fetch-token-address({token})|> to find this given the token name.
--{accountAddress}: address of the account to check the balance of
+-{token}: token to get the balance of.
+-{address}: address of the account or wallet to check the balance of
 Return value:
 -balance of a token in an account or wallet, in decimal units
 ---
 Widget magic command: <|display-uniswap({tokenToSell},{tokenToBuy},{transactionKeyword},{amount})|>
 Description of widget: This widget is used when we need to use the Uniswap decentralized application for trading one token for another. To create a Uniswap transaction, you need either:
-1.) A token to sell, a token to buy, the transaction keyword "SELLAMOUNT", and an amount to sell (either a numeric value, or "max" to represent the maximum amount, which is equal to their wallet balance of that token), OR
-2.) A token to sell, a token to buy, the transaction keyword "BUYAMOUNT", and an amount to buy (either a numeric value, or "max" to represent the maximum amount the user can buy given the the amount of tokens they have to sell in their wallet).
+1.) A token to sell, a token to buy, the transaction keyword "SELLAMOUNT", and an amount to sell, OR
+2.) A token to sell, a token to buy, the transaction keyword "BUYAMOUNT", and an amount to buy.
 Connected wallet required: yes
 Required parameters:
 -{tokenToSell}: token to sell in the swap transaction
