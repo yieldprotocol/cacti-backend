@@ -18,6 +18,8 @@ CONTENT_DESCRIPTION = "This tool is useful when you need to get current data for
 INPUT_DESCRIPTION = "the entire user query with all revelant contextual information"
 
 OUTPUT_DESCRIPTION = "an API spec for an endpoint that can be used to get the data for the user query"
+
+
 @registry.register_class
 class IndexAPITool(IndexLookupTool):
 
@@ -31,7 +33,7 @@ class IndexAPITool(IndexLookupTool):
     ) -> None:
 
         new_token_handler = kwargs.get('new_token_handler')
-        chain = streaming.get_streaming_api_chain(new_token_handler)
+        chain = streaming.get_streaming_chain(prompt=None, new_token_handler=new_token_handler, use_api_chain=True)
         super().__init__(
             *args,
             _chain=chain,
@@ -42,16 +44,20 @@ class IndexAPITool(IndexLookupTool):
         )
 
     def _run(self, query: str) -> str:
-        api_docs = super()._run(query)
+        docs = self._index.similarity_search(query, k=1, search_distance=0.85)
 
-        if '__price_context_data__' in api_docs:
-            docs = self.crypto_tokens_index.similarity_search(query, k=3)
-            context_data = self._build_price_context_data(docs)
-            api_docs = api_docs.format(__price_context_data__=context_data)
+        if len(docs) == 0:
+            return "Unable to find a relevant source to fulfill request"
 
-        print(api_docs)
-        result = self._chain.run(question=query, api_docs=api_docs)
+        api_spec = docs[0].metadata["spec"]
 
+        if '__price_context_data__' in api_spec:
+            crypto_tokens_docs = self.crypto_tokens_index.similarity_search(query, k=3)
+            context_data = self._build_price_context_data(crypto_tokens_docs)
+            api_spec = api_spec.format(__price_context_data__=context_data)
+
+        print(api_spec)
+        result = self._chain.run(question=query, api_docs=api_spec)
         return result
 
     def _build_price_context_data(self, docs):

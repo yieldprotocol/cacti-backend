@@ -21,7 +21,8 @@ scraped_sites_index = dict(
 api_docs_index = dict(
     type="index.weaviate.WeaviateIndex",
     index_name="APIDocsV1",
-    text_key="content",
+    text_key="description",
+    extra_keys=["spec"],
 )
 
 crypto_tokens_index = dict(
@@ -108,7 +109,6 @@ def initialize_streaming(cfg, new_token_handler):
         return _cfg
 
     return cfg
-
 
 
 def initialize_system(config):

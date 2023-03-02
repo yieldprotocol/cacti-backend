@@ -43,10 +43,16 @@ def get_streaming_llm(new_token_handler):
     return llm
 
 
-def get_streaming_chain(prompt, new_token_handler):
+def get_streaming_chain(prompt, new_token_handler, use_api_chain=False):
     llm = get_streaming_llm(new_token_handler)
-    chain = LLMChain(llm=llm, prompt=prompt, verbose=True)
-    return chain
+
+    if use_api_chain:
+        return IndexAPIChain.from_llm(
+            llm,
+            verbose=True
+        )
+    else:
+        return LLMChain(llm=llm, prompt=prompt, verbose=True)
 
 
 def get_streaming_tools(tools, new_token_handler):
@@ -56,13 +62,6 @@ def get_streaming_tools(tools, new_token_handler):
 
 def get_streaming_agent(tools, new_token_handler, **agent_kwargs):
     llm = get_streaming_llm(new_token_handler)
-    agent = initialize_agent(tools, llm, agent="conversational-react-description", **agent_kwargs)
+    agent = initialize_agent(
+        tools, llm, agent="conversational-react-description", **agent_kwargs)
     return agent
-
-def get_streaming_api_chain(new_token_handler, headers=None):
-    llm = get_streaming_llm(new_token_handler)
-    chain = IndexAPIChain.from_llm(
-        llm,
-        verbose=True
-    )
-    return chain

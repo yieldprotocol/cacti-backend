@@ -89,24 +89,25 @@ def create_schema(delete_first: bool = False) -> None:
 def backfill():
     # TODO: right now we don't have stable document IDs unlike sites.
     # Always drop and recreate first.
-    create_schema(delete_first=True)
-
     from langchain.vectorstores import Weaviate
-    
+
     with open('./knowledge_base/crypto_tokens.json') as f:
         crypto_tokens = json.load(f)
         documents = [c.pop("id") for c in crypto_tokens]
+
+    create_schema(delete_first=True)
 
     client = get_client()
     w = Weaviate(client, INDEX_NAME, CANONICAL_ID_KEY)
 
     # NOTE: OpenAI has API limit of 3000/min so batch process the creation
-    batch_size = 40 
+    batch_size = 40
     for i in range(0, len(documents), batch_size):
         length = i + batch_size
         print("index: ", i, " length:", length)
         w.add_texts(documents[i:length], crypto_tokens[i:length])
         time.sleep(1)
+
 
 def get_index_size():
     client = get_client()
