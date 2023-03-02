@@ -11,6 +11,7 @@ from .base import BaseTool
 
 from .index_lookup import IndexLookupTool
 from index.weaviate import WeaviateIndex
+from chains.api_chain import IndexAPIChain
 
 
 CONTENT_DESCRIPTION = "This tool is useful when you need to get current data for a given user query. This user query could be related to live prices, news, DeFi, NFTs and other Web3 information. Do not use any other tool if this tool is used"
@@ -24,7 +25,7 @@ OUTPUT_DESCRIPTION = "an API spec for an endpoint that can be used to get the da
 class IndexAPITool(IndexLookupTool):
 
     crypto_tokens_index: WeaviateIndex
-    _chain: LLMChain
+    _chain: IndexAPIChain
 
     def __init__(
             self,

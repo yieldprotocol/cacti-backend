@@ -194,9 +194,7 @@ class WidgetSearchChat(BaseChat):
             "stop": "User",
         }
 
-
         result = chain.apply_and_parse([example])[0]
-        print("LLM widget output", result)
         duration = time.time() - start
         history.add_interaction(userinput, result)
         send(Response(result, operation='replace'), last_chat_message_id=chat_message_id)
