@@ -15,6 +15,12 @@ Required parameters:
 Return value:
 -price of a base token in units of a quote token.
 ---
+Widget magic command: <|fetch-wallet()|>
+Description of widget: This widget is used when we need the wallet address.
+Connected wallet required: yes
+Return value:
+-address of connected wallet
+---
 Widget magic command: <|fetch-balance({token},{address})|>
 Description of widget: This widget is used when we need the balance of a token in an account or wallet
 Connected wallet required: no
