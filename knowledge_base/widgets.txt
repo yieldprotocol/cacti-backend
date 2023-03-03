@@ -53,23 +53,23 @@ Connected wallet required: no
 Required parameters:
 -{searchString}: string of keywords to search NFT collections with
 Return value:
--a list of JSON objects representing the address and network of the NFT collections found
+-a list of JSON objects NFT collections found, with properties like network, address and name
 ---
-Widget magic command: <|fetch-nftcollection({address},{network})|>
-Description of widget: This widget is used when we need to retrieve data of an NFT collection given its address and network.
+Widget magic command: <|fetch-nftcollection({network},{address})|>
+Description of widget: This widget is used when we need to retrieve data of an NFT collection given its network and address.
 Connected wallet required: no
 Required parameters:
--{address}: contract address of the NFT collection
 -{network}: network of the NFT collection
+-{address}: contract address of the NFT collection
 Return value:
 -JSON object with data about the NFT collection
 ---
-Widget magic command: <|fetch-nftasset({address},{network},{tokenID})|>
-Description of widget: This widget is used when we need to retrieve data of an NFT asset in a collection given its address, network, and token ID.
+Widget magic command: <|fetch-nftasset({network},{address},{tokenID})|>
+Description of widget: This widget is used when we need to retrieve data of an NFT asset in a collection given its network, address, and token ID.
 Connected wallet required: no
 Required parameters:
--{address}: contract address of the NFT asset
 -{network}: network of the NFT asset
+-{address}: contract address of the NFT asset
 -{tokenID}: token ID of the asset
 Return value:
 -JSON object with data about the NFT asset
