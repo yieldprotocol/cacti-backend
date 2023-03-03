@@ -10,11 +10,14 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
+from web3 import Web3
 
+import context
 import utils
 import registry
 import streaming
 from .index_lookup import IndexLookupTool
+from . import etherscan
 
 
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
@@ -25,6 +28,7 @@ TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget ma
 {task_info}
 ---
 
+Is wallet connected: {connected}
 Tool input: {question}
 Tool response:'''
 
@@ -41,7 +45,7 @@ class IndexWidgetTool(IndexLookupTool):
             **kwargs
     ) -> None:
         prompt = PromptTemplate(
-            input_variables=["task_info", "question"],
+            input_variables=["task_info", "question", "connected"],
             template=TEMPLATE,
         )
 
@@ -85,6 +89,7 @@ class IndexWidgetTool(IndexLookupTool):
         example = {
             "task_info": task_info,
             "question": query,
+            "connected": "Yes" if context.get_wallet_address() else "No",
             "stop": "User",
         }
         result = self._chain.run(example)
@@ -120,6 +125,10 @@ def replace_match(m: re.Match) -> str:
         return str(nftasset(*params))
     elif command == 'fetch-eval':
         return str(safe_eval(*params))
+    elif command == 'fetch-wallet':
+        return str(context.get_wallet_address())
+    elif command == 'fetch-balance':
+        return str(fetch_balance(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -145,6 +154,12 @@ def safe_eval(params: str) -> str:
             params1, params2 = params.split(op, 1)
             return str(eval(f"{float(params1)} {op} {float(params2)}"))
     return params
+
+
+@error_wrap
+def fetch_balance(token: str, wallet_address: str) -> str:
+    contract_address = etherscan.get_contract_address(token)
+    return etherscan.get_balance(contract_address, wallet_address)
 
 
 # For now just search one network

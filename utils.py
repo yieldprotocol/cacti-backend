@@ -1,5 +1,6 @@
 import os
 
+from web3 import Web3
 import tiktoken
 from langchain.llms import OpenAI
 
@@ -9,6 +10,7 @@ WEAVIATE_URL = "https://chatweb3:q0jficzXOA69T5FWgAeT@chatweb3.func.ai:5050"
 CHATDB_URL = "postgresql://chatdb:lVIu2U0lBctiYBScboAJ@chatweb3.func.ai:5433/chatdb"
 SCRAPEDB_URL = "postgresql://chatdb:lVIu2U0lBctiYBScboAJ@chatweb3.func.ai:5433/scrapedb"
 CENTER_API_KEY = 'key8f1af05afe473107c3ea2556'  # TODO: replace with yield version
+ETHERSCAN_API_KEY = 'ZCUTVCPHAJ5YRNB6SZTJN9ZV24FBEX86GJ'
 
 
 def set_api_key():
@@ -16,6 +18,7 @@ def set_api_key():
     OpenAI.api_key = OPENAI_API_KEY
 
 
+w3 = Web3(Web3.HTTPProvider('https://rpc.tenderly.co/fork/8c2fe457-1702-42f8-a1a3-a5f24b606f36'))
 tokenizer = tiktoken.encoding_for_model("text-davinci-003")
 
 
