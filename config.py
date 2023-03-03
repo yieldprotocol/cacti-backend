@@ -3,7 +3,7 @@ import registry
 
 widget_index = dict(
     type="index.weaviate.WeaviateIndex",
-    index_name="WidgetV2",
+    index_name="WidgetV3",
     text_key="content",
 )
 app_info_index = dict(
@@ -52,7 +52,7 @@ default_config = dict(
                 _streaming=True,  # if specified, this is lazily constructed in chat to support streaming
                 name="WidgetIndexAnswer",
                 index=widget_index,
-                top_k=3,
+                top_k=10,
             ),
             dict(
                 type="tools.index_app_info.IndexAppInfoTool",
