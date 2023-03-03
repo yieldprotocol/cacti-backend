@@ -4,6 +4,7 @@ import os
 import time
 from typing import Any, Callable, List
 
+import context
 import registry
 import streaming
 from tools.base import BaseTool
@@ -127,7 +128,8 @@ class BasicAgentChat(BaseChat):
             'input': userinput,
             'chat_history': history_string,
         }
-        result = agent.run(example).strip()
+        with context.with_wallet_address(history.wallet_address):
+            result = agent.run(example).strip()
         duration = time.time() - start
 
         if system_chat_message_id is not None:

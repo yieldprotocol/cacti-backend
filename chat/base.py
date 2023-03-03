@@ -27,7 +27,8 @@ class Response:
 @dataclass
 class ChatHistory:
     interactions: List[Interaction]
-    session_id: Optional[uuid.UUID]
+    session_id: uuid.UUID
+    wallet_address: Optional[str]
 
     def add_interaction(self, user_input: str, response: str) -> None:
         """Add interaction to history."""
@@ -40,8 +41,8 @@ class ChatHistory:
         return iter(self.interactions)
 
     @classmethod
-    def new(cls, session_id: uuid.UUID):
-        return cls(interactions=[], session_id=session_id)
+    def new(cls, session_id: uuid.UUID, wallet_address: Optional[str] = None):
+        return cls(interactions=[], session_id=session_id, wallet_address=wallet_address)
 
 
 
