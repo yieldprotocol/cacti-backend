@@ -28,6 +28,7 @@ _system_config_id_to_system: Dict[int, system.System] = {}
 # these might be initialized independently
 _client_id_to_chat_history: Dict[str, chat.ChatHistory] = {}
 _client_id_to_system_config_id: Dict[str, int] = {}
+_client_id_to_wallet_address: Dict[str, str] = {}
 
 
 def _register_client_history(client_id, history):
@@ -63,6 +64,16 @@ def _set_client_system_config(client_id, system_config_id):
 def _get_client_system_config(client_id):
     global _client_id_to_system_config_id
     return _client_id_to_system_config_id.get(client_id, default_system_config.id)
+
+
+def _set_client_wallet_address(client_id, wallet_address):
+    global _client_id_to_wallet_address
+    _client_id_to_wallet_address[client_id] = wallet_address
+
+
+def _get_client_wallet_address(client_id):
+    global _client_id_to_wallet_address
+    return _client_id_to_wallet_address.get(client_id)
 
 
 def _get_system(system_config_id):
@@ -148,6 +159,7 @@ def _message_received(client, server, message):
     # set wallet status
     if typ == 'wallet':
         #print(client_id, payload)
+        _set_client_wallet_address(client_id, payload.get('walletAddress'))
         return
 
     # resume an existing chat history session, given a session id
@@ -300,6 +312,9 @@ def _message_received(client, server, message):
         server.send_message(client, msg)
 
         return chat_message_id
+
+    # set wallet address onto chat history prior to processing input
+    history.wallet_address = _get_client_wallet_address(client_id)
 
     system = _get_system(system_config_id)
     system.chat.receive_input(history, payload, send_message)
