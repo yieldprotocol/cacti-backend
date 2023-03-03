@@ -10,3 +10,4 @@ SQLAlchemy==1.4.46
 SQLAlchemy_Utils==0.39.0
 psycopg2-binary==2.9.5
 qcore==1.8.0
+PyYAML==6.0

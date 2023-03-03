@@ -1,3 +1,6 @@
 *~
 __pycache__
 docker/nginx/certs
+.ipynb_checkpoints
+crypto_tokens.json
+.vscode

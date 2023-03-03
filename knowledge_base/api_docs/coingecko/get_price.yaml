@@ -1,0 +1,21 @@
+description: |-
+  API for current price of any cryptocurrency
+
+spec: |-
+  Endpoint: https://api.coingecko.com/api
+  GET /v3/simple/price
+
+  This API returns the current price of any cryptocurrency. 
+
+  The cryptocurrencies supported have the following data structure. Only use the ids from the below data structure.
+  {__price_context_data__}
+
+  Query parameters table:
+  ids | string | The "id" field of the cryptocurrency from the above data structure, comma seperated if more than one
+  vs_currencies | string | A valid 3 character ISO currency code. Should default to usd
+
+  Response schema (JSON object):
+  canonical id from query param | object | Result object
+
+  The result object has following schema: 
+  The ISO currency code from query param | number | the current price

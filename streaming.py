@@ -7,6 +7,7 @@ from langchain.callbacks.base import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 import config
+from chains import IndexAPIChain
 
 
 class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
@@ -42,10 +43,16 @@ def get_streaming_llm(new_token_handler):
     return llm
 
 
-def get_streaming_chain(prompt, new_token_handler):
+def get_streaming_chain(prompt, new_token_handler, use_api_chain=False):
     llm = get_streaming_llm(new_token_handler)
-    chain = LLMChain(llm=llm, prompt=prompt, verbose=True)
-    return chain
+
+    if use_api_chain:
+        return IndexAPIChain.from_llm(
+            llm,
+            verbose=True
+        )
+    else:
+        return LLMChain(llm=llm, prompt=prompt, verbose=True)
 
 
 def get_streaming_tools(tools, new_token_handler):
