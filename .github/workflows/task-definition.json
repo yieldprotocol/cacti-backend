@@ -9,7 +9,6 @@
                 {
                     "name": "chatweb3-9999-tcp",
                     "containerPort": 9999,
-                    "hostPort": 0,
                     "protocol": "tcp",
                     "appProtocol": "http"
                 }
