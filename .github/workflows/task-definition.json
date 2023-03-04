@@ -1,5 +1,4 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-2:116961472995:task-definition/chatweb3:1",
     "containerDefinitions": [
         {
             "name": "chatweb3",
@@ -9,10 +8,20 @@
                 {
                     "name": "chatweb3-9999-tcp",
                     "containerPort": 9999,
+                    "hostPort": 9999,
                     "protocol": "tcp",
                     "appProtocol": "http"
                 }
             ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "true",
+                    "awslogs-group": "awslogs-chatweb3-backend",
+                    "awslogs-region": "us-east-2",
+                    "awslogs-stream-prefix": "awslogs-chatweb3-backend"
+                }
+            },
             "essential": true,
             "environment": [],
             "environmentFiles": [],
@@ -22,13 +31,8 @@
     ],
     "family": "chatweb3",
     "networkMode": "bridge",
-    "revision": 1,
     "volumes": [],
-    "status": "ACTIVE",
     "placementConstraints": [],
-    "compatibilities": [
-        "EC2"
-    ],
     "requiresCompatibilities": [
         "EC2"
     ],
@@ -38,7 +42,5 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2023-03-03T00:00:34.582Z",
-    "registeredBy": "arn:aws:iam::116961472995:user/scott",
     "tags": []
 }
