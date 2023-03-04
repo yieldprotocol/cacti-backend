@@ -145,6 +145,11 @@ def _message_received(client, server, message):
             _set_client_system_config(client_id, system_config_id)
         return
 
+    # set wallet status
+    if typ == 'wallet':
+        #print(client_id, payload)
+        return
+
     # resume an existing chat history session, given a session id
     if typ == 'init':
         assert history is None, f'received a session resume request for existing session ${history.session_id}'

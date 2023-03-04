@@ -1,14 +1,17 @@
 from typing import Any, Iterable, List, Optional
 import os
 import traceback
+import pathlib
+import yaml
 
 from langchain.docstore.document import Document
 from .weaviate import get_client
 
 
-INDEX_NAME = 'WidgetV2'
-INDEX_DESCRIPTION = "Index of widgets"
-TEXT_KEY = 'content'
+INDEX_NAME = 'APIDocsV1'
+INDEX_DESCRIPTION = "Index of API docs"
+API_DESCRIPTION_KEY = 'description'
+API_SPEC_KEY = 'spec'
 
 
 def delete_schema() -> None:
@@ -37,14 +40,19 @@ def create_schema(delete_first: bool = False) -> None:
                 "properties": [
                     {
                         "dataType": ["text"],
-                        "description": "The content of the chunk",
+                        "description": "The API description",
                         "moduleConfig": {
                             "text2vec-openai": {
                                 "skip": False,
                                 "vectorizePropertyName": False,
                             }
                         },
-                        "name": TEXT_KEY,
+                        "name": API_DESCRIPTION_KEY,
+                    },
+                    {
+                        "dataType": ["text"],
+                        "description": "The API spec",
+                        "name": API_SPEC_KEY,
                     },
                 ],
             },
@@ -53,18 +61,40 @@ def create_schema(delete_first: bool = False) -> None:
     client.schema.create(schema)
 
 
-# run with: python3 -c "from index import widgets; widgets.backfill()"
-def backfill(delete_first=True):
+def backfill():
     # TODO: right now we don't have stable document IDs unlike sites.
     # Always drop and recreate first.
-    create_schema(delete_first=delete_first)
+    create_schema(delete_first=True)
 
     from langchain.vectorstores import Weaviate
-    with open('./knowledge_base/widgets.txt') as f:
-        web3functions = f.read()
-    documents = web3functions.split("---")
-    metadatas = [{} for _ in documents]
+
+    api_docs_dir = pathlib.Path("./knowledge_base/api_docs")
+
+    documents = []
+    metadatas = []
+
+    for file_path in api_docs_dir.rglob("*.yaml"):
+        with open(file_path, 'r') as file:
+            api_doc = yaml.safe_load(file)
+            documents.append(api_doc['description'])
+            metadatas.append({
+                API_SPEC_KEY: api_doc['spec'],
+            })
 
     client = get_client()
-    w = Weaviate(client, INDEX_NAME, TEXT_KEY)
+    w = Weaviate(client, INDEX_NAME, API_DESCRIPTION_KEY)
     w.add_texts(documents, metadatas)
+
+
+def test_query():
+    client = get_client()
+
+    query_result = client.query\
+        .get(INDEX_NAME, [API_DESCRIPTION_KEY, API_SPEC_KEY])\
+        .with_near_text({
+            "concepts": ["what is the price of"],
+            "certainty": 0.85,
+        })\
+        .with_limit(1)\
+        .do()
+    print(query_result)
