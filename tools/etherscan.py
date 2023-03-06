@@ -11,6 +11,17 @@ def get_ABI(contract_address):
     return result
 
 
+def get_eth_balance(address):
+    url = f'https://api.etherscan.io/api?module=account&action=balance&address={address}&tag=latest&apikey={ETHERSCAN_API_KEY}'
+    response = requests.get(url)
+    result = 0
+    if response.status_code == 200:
+        result = response.json()['result']
+    else:
+        print(f'Error: {response.status_code}')
+    return result
+
+
 erc_20_abi = get_ABI("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
 
@@ -19,7 +30,10 @@ def get_balance(contract_address, account_address):
         address=w3.toChecksumAddress(contract_address),
         abi=erc_20_abi,
     )
-    return contract.functions.balanceOf(w3.toChecksumAddress(account_address)).call()
+    if is_zero_address(contract_address):
+        return get_eth_balance(account_address)
+    return contract.functions.balanceOf(
+        w3.toChecksumAddress(account_address)).call()
 
 
 TOKEN_TO_CONTRACT_ADDRESS = {
@@ -38,3 +52,137 @@ TOKEN_TO_CONTRACT_ADDRESS = {
 def get_contract_address(token):
     contract_address = TOKEN_TO_CONTRACT_ADDRESS.get(token)
     return contract_address
+
+
+def is_zero_address(address):
+    return address == '0x0000000000000000000000000000000000000000'
+
+
+def get_all_transactions(address):
+    # Construct the Etherscan API URL
+    url = f'https://api.etherscan.io/api?module=account&action=getabi&address={address}&apikey={ETHERSCAN_API_KEY}'
+    # Make the GET request
+    response = requests.get(url)
+    # Parse the response
+    data = response.json()
+    return data
+
+
+def get_all_eth_from_address(address):
+    # Construct the Etherscan API URL
+    url = f'https://api.etherscan.io/api?module=account&action=txlist&address={address}&apikey={ETHERSCAN_API_KEY}&sort=desc'
+    # Make the GET request
+    response = requests.get(url)
+    # Parse the response
+    data = response.json()
+    transactions = data['result']
+    value = 0
+    for trans in transactions:
+        if trans['from'].lower() == address.lower():
+            value += int(trans['value'])
+    return value
+
+
+def get_all_eth_to_address(address):
+    # Construct the Etherscan API URL
+    url = f'https://api.etherscan.io/api?module=account&action=txlist&address={address}&apikey={ETHERSCAN_API_KEY}&sort=desc'
+    # Make the GET request
+    response = requests.get(url)
+    # Parse the response
+    data = response.json()
+    transactions = data['result']
+    value = 0
+    for trans in transactions:
+        if trans['to'].lower() == address.lower():
+            value += int(trans['value'])
+    return value
+
+
+def get_all_gas_for_address(address):
+    # Construct the Etherscan API URL
+    url = f'https://api.etherscan.io/api?module=account&action=txlist&address={address}&apikey={ETHERSCAN_API_KEY}&sort=desc'
+    # Make the GET request
+    response = requests.get(url)
+    # Parse the response
+    data = response.json()
+    transactions = data['result']
+    value = 0
+    for trans in transactions:
+        value += int(trans['gas'])
+    return value
+
+
+def get_token_transafer_history(token_address, address):
+    # Construct the Etherscan API URL
+    url = f'https://api.etherscan.io/api?module=account&action=tokentx&address={address}&contractaddress={token_address}&apikey={ETHERSCAN_API_KEY}&sort=desc'
+    # Make the GET request
+    response = requests.get(url)
+    # Parse the response
+    data = response.json()
+    transactions = data['result']
+    return transactions
+
+
+def get_token_transafer_history_to_address(token_address, address):
+    transactions = get_token_transafer_history(token_address, address)
+    result = []
+    for trans in transactions:
+        if trans['to'].lower() == address.lower():
+            result.append(trans)
+    return result
+
+
+def get_token_transafer_history_from_address(token_address, address):
+    transactions = get_token_transafer_history(token_address, address)
+    result = []
+    for trans in transactions:
+        if trans['from'].lower() == address.lower():
+            result.append(trans)
+    return result
+
+
+def get_total_token_transafer_history_to_address(token_address, address):
+    transactions = get_token_transafer_history_to_address(token_address,
+                                                          address)
+    value = 0
+    for trans in transactions:
+        value += int(trans['value'])
+    return value
+
+
+def get_total_token_transafer_history_from_address(token_address, address):
+    transactions = get_token_transafer_history_from_address(token_address,
+                                                            address)
+    value = 0
+    for trans in transactions:
+        value += int(trans['value'])
+    return value
+
+def get_nft_transafer_history(token_address, address):
+    # Construct the Etherscan API URL
+    url = f'https://api.etherscan.io/api?module=account&action=tokennfttx&address={address}&contractaddress={token_address}&apikey={ETHERSCAN_API_KEY}&sort=desc'
+    # Make the GET request
+    response = requests.get(url)
+    # Parse the response
+    data = response.json()
+    transactions = data['result']
+    return transactions
+
+def get_nft_transafer_history_to_address(token_address, address):
+    transactions = get_nft_transafer_history(token_address, address)
+    result = []
+    for trans in transactions:
+        if trans['to'].lower() == address.lower():
+            result.append(trans)
+    return result
+
+def get_nft_transafer_history_from_address(token_address, address):
+    transactions = get_nft_transafer_history(token_address, address)
+    result = []
+    for trans in transactions:
+        if trans['from'].lower() == address.lower():
+            result.append(trans)
+    return result
+
+
+
