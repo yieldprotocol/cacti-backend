@@ -38,6 +38,7 @@ def get_streaming_llm(new_token_handler):
 
     llm = OpenAI(
         temperature=0.0, max_tokens=-1,
+        model_name="gpt-3.5-turbo",
         **streaming_kwargs
     )
     return llm

@@ -49,18 +49,22 @@ class IndexWidgetTool(IndexLookupTool):
             template=TEMPLATE,
         )
 
+        # assumes we don't get these as input params
+        open_pattern = '<'  #'<|'
+        close_pattern = '>'  #'|>'
+
         new_token_handler = kwargs.get('new_token_handler')
         response_buffer = ""
 
         def injection_handler(token):
             nonlocal new_token_handler, response_buffer
             response_buffer += token
-            while '<|' in response_buffer:
-                if '|>' in response_buffer:
+            while open_pattern in response_buffer:
+                if close_pattern in response_buffer:
                     # parse fetch command
                     response_buffer = iterative_evaluate(response_buffer)
                     if response_buffer == response_buffer:  # nothing resolved
-                        if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        if len(response_buffer.split(open_pattern)) == len(response_buffer.split(close_pattern)):
                             # matching pairs of open/close, just flush
                             break
                         else:
