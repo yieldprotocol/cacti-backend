@@ -33,9 +33,9 @@ Here is the response from the API:
 
 {api_response}
 
-Summarize this response to answer the original question.
+Summarize this response as a direct answer to the original question. Don't use a full sentence. Just give the answer, don't repeat parts of the question.
 
-Summary:"""
+The answer to the question is:"""
 )
 
 API_RESPONSE_PROMPT = PromptTemplate(

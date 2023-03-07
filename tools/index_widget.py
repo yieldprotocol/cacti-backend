@@ -16,8 +16,10 @@ import context
 import utils
 import registry
 import streaming
+from index.weaviate import WeaviateIndex
 from integrations import etherscan, defillama
 from .index_lookup import IndexLookupTool
+from .index_api_tool import IndexAPITool
 
 
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
@@ -137,6 +139,8 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
+    elif command == 'fetch-data-via-api':
+        return str(fetch_data_via_api(' '.join(params)))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -183,6 +187,28 @@ def fetch_eth_out(wallet_address: str) -> str:
 @error_wrap
 def fetch_gas(wallet_address: str) -> str:
     return etherscan.get_all_gas_for_address(wallet_address)
+
+
+# Call into Index API tool
+@error_wrap
+def fetch_data_via_api(input_str: str) -> str:
+    api_docs_index = WeaviateIndex(
+        index_name="APIDocsV1",
+        text_key="description",
+        extra_keys=["spec"],
+    )
+    crypto_tokens_index = WeaviateIndex(
+        index_name="CryptoTokensV1",
+        text_key="canonical_id",
+        extra_keys=["name", "symbol"],
+    )
+    index_api_tool = IndexAPITool(
+        name="IndexAPITool",
+        index=api_docs_index,
+        crypto_tokens_index=crypto_tokens_index,
+        top_k=1,
+    )
+    return index_api_tool.run(input_str)
 
 
 # For now just search one network

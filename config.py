@@ -3,7 +3,7 @@ import registry
 
 widget_index = dict(
     type="index.weaviate.WeaviateIndex",
-    index_name="WidgetV4",
+    index_name="WidgetV5",
     text_key="content",
 )
 app_info_index = dict(
@@ -60,15 +60,6 @@ default_config = dict(
                 name="AppInfoIndexAnswer",
                 index=app_info_index,
                 top_k=3,
-            ),
-            dict(
-                type="tools.index_api_tool.IndexAPITool",
-                _streaming=True,
-                name="IndexAPITool",
-                index=api_docs_index,
-                crypto_tokens_index=crypto_tokens_index,
-                top_k=1,
-                return_direct=True,
             ),
         ],
     )

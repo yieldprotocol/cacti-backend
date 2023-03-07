@@ -6,15 +6,6 @@ Required parameters:
 -{amount}: quantity to transfer
 -{address}: transfer recipient address
 ---
-Widget magic command: <|fetch-price({baseToken},{quoteToken})|>
-Description of widget: This widget is used to get the price of a token.
-Connected wallet required: no
-Required parameters:
--{baseToken}: token to get the price of
--{quoteToken}: token to use as units for price
-Return value:
--price of a base token in units of a quote token.
----
 Widget magic command: <|fetch-wallet()|>
 Description of widget: This widget is used when we need the wallet address.
 Connected wallet required: yes
@@ -124,3 +115,11 @@ Parameters:
 -{count}: number of yield sources. Use "*" when parameter not available
 Return value:
 -a human-readable string with yield information
+---
+Widget magic command: <|fetch-data-via-api({input_query_or_phrase})|>
+Description of widget: This widget is used when we need to fetch data over an API. It can handle live data like prices and other financial real-time data.
+Connected wallet required: no
+Required parameters:
+-{input_query_or_phrase}: the original tool input, the string describing what data we want to fetch over an API
+Return value:
+-short response to input using data from the api
