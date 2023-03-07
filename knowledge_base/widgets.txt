@@ -30,6 +30,39 @@ Required parameters:
 Return value:
 -balance of a token in an account or wallet, in decimal units
 ---
+Widget magic command: <|fetch-transactions({address},{last_n})|>
+Description of widget: This widget is used when we need the transaction details in an account or wallet
+Connected wallet required: no
+Required parameters:
+-{address}: address of the account or wallet to check the transactions of
+-{last_n}: how many latest transactions the user wants to get.
+Return value:
+-the transaction details
+---
+Widget magic command: <|fetch-gas({address})|>
+Description of widget: This widget is used when we need the all gas used for transactions in an account or wallet
+Connected wallet required: no
+Required parameters:
+-{address}: address of the account or wallet to check the gas of
+Return value:
+-the gas amount used
+---
+Widget magic command: <|fetch-eth-in({address})|>
+Description of widget: This widget is used when we need the all ETH inflow into an account or wallet
+Connected wallet required: no
+Required parameters:
+-{address}: address of the account or wallet to check the inflow ETH
+Return value:
+-the inflow ETH amount
+---
+Widget magic command: <|fetch-eth-out({address})|>
+Description of widget: This widget is used when we need the all ETH outflow from an account or wallet
+Connected wallet required: no
+Required parameters:
+-{address}: address of the account or wallet to check the outflow ETH
+Return value:
+-the outflow ETH amount
+---
 Widget magic command: <|display-uniswap({tokenToSell},{tokenToBuy},{transactionKeyword},{amount})|>
 Description of widget: This widget is used when we need to use the Uniswap decentralized application for trading one token for another. To create a Uniswap transaction, you need either:
 1.) A token to sell, a token to buy, the transaction keyword "SELLAMOUNT", and an amount to sell, OR
