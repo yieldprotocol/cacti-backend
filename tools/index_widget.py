@@ -16,8 +16,8 @@ import context
 import utils
 import registry
 import streaming
+from integrations import etherscan
 from .index_lookup import IndexLookupTool
-from . import etherscan
 
 
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
