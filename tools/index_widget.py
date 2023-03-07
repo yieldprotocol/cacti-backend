@@ -129,6 +129,12 @@ def replace_match(m: re.Match) -> str:
         return str(context.get_wallet_address())
     elif command == 'fetch-balance':
         return str(fetch_balance(*params))
+    elif command == 'fetch-eth-in':
+        return str(fetch_eth_in(*params))
+    elif command == 'fetch-eth-out':
+        return str(fetch_eth_out(*params))
+    elif command == 'fetch-gas':
+        return str(fetch_gas(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -160,6 +166,19 @@ def safe_eval(params: str) -> str:
 def fetch_balance(token: str, wallet_address: str) -> str:
     contract_address = etherscan.get_contract_address(token)
     return etherscan.get_balance(contract_address, wallet_address)
+
+@error_wrap
+def fetch_eth_in(wallet_address: str) -> str:
+    return etherscan.get_all_eth_to_address(wallet_address)
+
+@error_wrap
+def fetch_eth_out(wallet_address: str) -> str:
+    return etherscan.get_all_eth_from_address(wallet_address)
+
+@error_wrap
+def fetch_gas(wallet_address: str) -> str:
+    return etherscan.get_all_gas_for_address(wallet_address)
+
 
 
 # For now just search one network
