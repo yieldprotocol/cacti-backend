@@ -14,11 +14,8 @@ def get_ABI(contract_address):
 def get_eth_balance(address):
     url = f'https://api.etherscan.io/api?module=account&action=balance&address={address}&tag=latest&apikey={ETHERSCAN_API_KEY}'
     response = requests.get(url)
-    result = 0
-    if response.status_code == 200:
-        result = response.json()['result']
-    else:
-        print(f'Error: {response.status_code}')
+    response.raise_for_status()
+    result = response.json()['result']
     return result
 
 
@@ -63,6 +60,7 @@ def get_all_transactions(address):
     url = f'https://api.etherscan.io/api?module=account&action=getabi&address={address}&apikey={ETHERSCAN_API_KEY}'
     # Make the GET request
     response = requests.get(url)
+    response.raise_for_status()
     # Parse the response
     data = response.json()
     return data
@@ -73,6 +71,7 @@ def get_all_eth_from_address(address):
     url = f'https://api.etherscan.io/api?module=account&action=txlist&address={address}&apikey={ETHERSCAN_API_KEY}&sort=desc'
     # Make the GET request
     response = requests.get(url)
+    response.raise_for_status()
     # Parse the response
     data = response.json()
     transactions = data['result']
@@ -88,6 +87,7 @@ def get_all_eth_to_address(address):
     url = f'https://api.etherscan.io/api?module=account&action=txlist&address={address}&apikey={ETHERSCAN_API_KEY}&sort=desc'
     # Make the GET request
     response = requests.get(url)
+    response.raise_for_status()
     # Parse the response
     data = response.json()
     transactions = data['result']
@@ -112,19 +112,20 @@ def get_all_gas_for_address(address):
     return value
 
 
-def get_token_transafer_history(token_address, address):
+def get_token_transfer_history(token_address, address):
     # Construct the Etherscan API URL
     url = f'https://api.etherscan.io/api?module=account&action=tokentx&address={address}&contractaddress={token_address}&apikey={ETHERSCAN_API_KEY}&sort=desc'
     # Make the GET request
     response = requests.get(url)
+    response.raise_for_status()
     # Parse the response
     data = response.json()
     transactions = data['result']
     return transactions
 
 
-def get_token_transafer_history_to_address(token_address, address):
-    transactions = get_token_transafer_history(token_address, address)
+def get_token_transfer_history_to_address(token_address, address):
+    transactions = get_token_transfer_history(token_address, address)
     result = []
     for trans in transactions:
         if trans['to'].lower() == address.lower():
@@ -132,8 +133,8 @@ def get_token_transafer_history_to_address(token_address, address):
     return result
 
 
-def get_token_transafer_history_from_address(token_address, address):
-    transactions = get_token_transafer_history(token_address, address)
+def get_token_transfer_history_from_address(token_address, address):
+    transactions = get_token_transfer_history(token_address, address)
     result = []
     for trans in transactions:
         if trans['from'].lower() == address.lower():
@@ -141,8 +142,8 @@ def get_token_transafer_history_from_address(token_address, address):
     return result
 
 
-def get_total_token_transafer_history_to_address(token_address, address):
-    transactions = get_token_transafer_history_to_address(token_address,
+def get_total_token_transfer_history_to_address(token_address, address):
+    transactions = get_token_transfer_history_to_address(token_address,
                                                           address)
     value = 0
     for trans in transactions:
@@ -150,39 +151,37 @@ def get_total_token_transafer_history_to_address(token_address, address):
     return value
 
 
-def get_total_token_transafer_history_from_address(token_address, address):
-    transactions = get_token_transafer_history_from_address(token_address,
+def get_total_token_transfer_history_from_address(token_address, address):
+    transactions = get_token_transfer_history_from_address(token_address,
                                                             address)
     value = 0
     for trans in transactions:
         value += int(trans['value'])
     return value
 
-def get_nft_transafer_history(token_address, address):
+def get_nft_transfer_history(token_address, address):
     # Construct the Etherscan API URL
     url = f'https://api.etherscan.io/api?module=account&action=tokennfttx&address={address}&contractaddress={token_address}&apikey={ETHERSCAN_API_KEY}&sort=desc'
     # Make the GET request
     response = requests.get(url)
+    response.raise_for_status()
     # Parse the response
     data = response.json()
     transactions = data['result']
     return transactions
 
-def get_nft_transafer_history_to_address(token_address, address):
-    transactions = get_nft_transafer_history(token_address, address)
+def get_nft_transfer_history_to_address(token_address, address):
+    transactions = get_nft_transfer_history(token_address, address)
     result = []
     for trans in transactions:
         if trans['to'].lower() == address.lower():
             result.append(trans)
     return result
 
-def get_nft_transafer_history_from_address(token_address, address):
-    transactions = get_nft_transafer_history(token_address, address)
+def get_nft_transfer_history_from_address(token_address, address):
+    transactions = get_nft_transfer_history(token_address, address)
     result = []
     for trans in transactions:
         if trans['from'].lower() == address.lower():
             result.append(trans)
     return result
-
-
-
