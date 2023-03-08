@@ -27,10 +27,18 @@ TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget ma
 ---
 {task_info}
 ---
+Use the following format:
+
+Thought: describe what you are trying to solve from input
+Widgets: names of relevant widget magic commands to respond to input
+Parameters: input parameter-value pairs representing inputs to the above widget magic command(s), expressed in the correct format as known info strings, or as calls to other fetch- commands
+Response: tool response to input synthesized using only widget magic commands with their respective input parameters
+... (this Thought/Widgets/Parameters/Response can repeat N times)
+Thought: I have resolved all input parameters to widgets.
 
 Is wallet connected: {connected}
 Tool input: {question}
-Tool response:'''
+Thought:'''
 
 
 @registry.register_class
@@ -140,7 +148,9 @@ def replace_match(m: re.Match) -> str:
     elif command.startswith('display-'):
         return m.group(0)
     else:
-        assert 0, 'unrecognized command: %s' % m.group(0)
+        # unrecognized command, just return for now
+        #assert 0, 'unrecognized command: %s' % m.group(0)
+        return m.group(0)
 
 
 def error_wrap(fn):
