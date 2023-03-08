@@ -114,3 +114,11 @@ Required parameters:
 -{expression}: mathematical expression to calculate
 Return value:
 -the evaluated mathematical expression in numerical form
+---
+Widget magic command: <|fetch-yields({token},{chain},{count})|>
+Description of widget: This widget is used when the user wants the yields for crypto assets. The user may not specify all parameters so do not guess any parameter.
+Connected wallet required: no
+Parameters:
+-{token}: token to get the yield for. Normalize the token name to its popular symbol representation in the ecoystem. Use "*" when parameter not available or the user wants all tokens
+-{chain}: blockchain to get the yield for. Normalize the chain name to its popular representation in the ecosystem. Use "*" when parameter not available or the user wants all chains
+-{count}: number of yield sources. Use "*" when parameter not available

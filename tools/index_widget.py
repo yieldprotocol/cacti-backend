@@ -77,7 +77,7 @@ class IndexWidgetTool(IndexLookupTool):
         super().__init__(
             *args,
             _chain=chain,
-            content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear. You can look up live prices, wallet balances, token contract addresses, do transfers or swaps, or search for NFTs and retrieve data about NFTs. It cannot help the user with understanding how to use the app or how to perform certain actions.",
+            content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear. You can look up live prices, DeFi yields, wallet balances, token contract addresses, do transfers or swaps, or search for NFTs and retrieve data about NFTs. It cannot help the user with understanding how to use the app or how to perform certain actions.",
             input_description="a standalone query phrase with all relevant contextual details mentioned explicitly without using pronouns in order to invoke the right widget",
             output_description="a summarized answer with relevant magic command for widget(s), or a question prompt for more information to be provided",
             **kwargs
@@ -135,6 +135,8 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_eth_out(*params))
     elif command == 'fetch-gas':
         return str(fetch_gas(*params))
+    elif command == 'fetch-yields':
+        return str(fetch_yields(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -167,18 +169,20 @@ def fetch_balance(token: str, wallet_address: str) -> str:
     contract_address = etherscan.get_contract_address(token)
     return etherscan.get_balance(contract_address, wallet_address)
 
+
 @error_wrap
 def fetch_eth_in(wallet_address: str) -> str:
     return etherscan.get_all_eth_to_address(wallet_address)
+
 
 @error_wrap
 def fetch_eth_out(wallet_address: str) -> str:
     return etherscan.get_all_eth_from_address(wallet_address)
 
+
 @error_wrap
 def fetch_gas(wallet_address: str) -> str:
     return etherscan.get_all_gas_for_address(wallet_address)
-
 
 
 # For now just search one network
@@ -191,6 +195,7 @@ NETWORKS = [
     "polygon-mainnet",
 ]
 API_URL = f"https://api.center.dev/v1"
+DEFILLAMA_API_URL = "https://yields.llama.fi"
 
 
 class DescriptiveList(list):
@@ -221,6 +226,17 @@ class NFTAsset:
 
     def __str__(self) -> str:
         return f'An NFT asset on network "{self.network}" with address "{self.address}" and id "{self.token_id}" and name "{self.name}" from collection "{self.collection_name}".'
+
+
+@dataclass
+class Yield:
+    token: str
+    chain: str
+    project: str
+    apy: float
+
+    def __str__(self) -> str:
+        return f"Token: {self.token}, Chain: {self.chain}, Project: {self.project}, APY: {self.apy}%"
 
 
 @error_wrap
@@ -272,3 +288,51 @@ def nftasset(network: str, address: str, token_id: str) -> NFTAsset:
         collection_name=obj['collection_name'],
         name=obj['name'],
     )
+
+
+@error_wrap
+def fetch_yields(token, chain, count) -> List[Union[NFTCollection, NFTAsset]]:
+    url = f"{DEFILLAMA_API_URL}/pools"
+
+    # Convert the inferred canonical chain name to what DefiLlama uses for result filtering
+    if chain.lower() == "binance":
+        chain = "BSC"
+    elif chain.lower() == "mainnet":
+        chain = "Ethereum"
+
+    # If no inferred count, default to 5
+    if count == "*":
+        count = 5
+
+    response = requests.get(url)
+    response.raise_for_status()
+    obj = response.json()
+    yields = obj["data"]
+    filtered_yields = list(filter(lambda yield_obj: _filter_yield_list(token, chain, yield_obj), yields))
+    filtered_yields.sort(key=lambda yield_obj: yield_obj["apy"], reverse=True)
+    selected_yields = filtered_yields[:int(count)]
+
+    answer = "Here are the Yields:"
+    for y in selected_yields:
+        data_obj = Yield(y["symbol"], y["chain"], y["project"], y["apy"])
+        answer += "\n{}".format(data_obj)
+
+    return answer
+
+
+def _filter_yield_list(input_token, input_chain, yield_obj):
+    normalized_symbol = yield_obj["symbol"].lower()
+    normalized_chain = yield_obj["chain"].lower()
+    input_token = input_token.lower()
+    input_chain = input_chain.lower()
+
+    if input_token == "*" and input_chain == "*":
+        return True
+
+    if input_chain == "*":
+        return normalized_symbol == input_token
+
+    if input_token == "*":
+        return normalized_chain == input_chain
+
+    return normalized_symbol == input_token and normalized_chain == input_chain
