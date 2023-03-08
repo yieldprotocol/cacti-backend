@@ -122,3 +122,5 @@ Parameters:
 -{token}: token to get the yield for. Normalize the token name to its popular symbol representation in the ecoystem. Use "*" when parameter not available or the user wants all tokens
 -{chain}: blockchain to get the yield for. Normalize the chain name to its popular representation in the ecosystem. Use "*" when parameter not available or the user wants all chains
 -{count}: number of yield sources. Use "*" when parameter not available
+Return value:
+-a human-readable string with yield information
