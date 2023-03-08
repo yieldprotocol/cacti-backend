@@ -140,12 +140,14 @@ def replace_match(m: re.Match) -> str:
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []
     print('found command:', command, params)
-    if command == 'fetch-nftsearch':
-        return str(nftsearch(*params))
-    elif command == 'fetch-nftcollection':
-        return str(nftcollection(*params))
-    elif command == 'fetch-nftasset':
-        return str(nftasset(*params))
+    if command == 'fetch-nft-search':
+        return str(fetch_nft_search(*params))
+    elif command == 'fetch-nft-collection':
+        return str(fetch_nft_collection(*params))
+    elif command == 'fetch-nft-collection-traits':
+        return str(fetch_nft_collection_traits(*params))
+    elif command == 'fetch-nft-asset':
+        return str(fetch_nft_asset(*params))
     elif command == 'fetch-eval':
         return str(safe_eval(*params))
     elif command == 'fetch-wallet':
@@ -245,6 +247,25 @@ class NFTCollection:
 
 
 @dataclass
+class NFTCollectionTraitValue:
+    count: int
+    value: str
+
+    def __str__(self) -> str:
+        return f'{self.value} (x{self.count})'
+
+
+@dataclass
+class NFTCollectionTrait:
+    trait: str
+    total_values: int
+    values: List[NFTCollectionTraitValue]
+
+    def __str__(self) -> str:
+        return f'An NFT collection trait "{self.trait}" with {self.total_values} values: {", ".join(map(str, self.values))}.'
+
+
+@dataclass
 class NFTAsset:
     network: str
     address: str
@@ -257,7 +278,7 @@ class NFTAsset:
 
 
 @error_wrap
-def nftsearch(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
+def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
     q = urlencode(dict(
         query=search_str,
         type='collection',  # too noisy otherwise
@@ -279,7 +300,7 @@ def nftsearch(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
 
 
 @error_wrap
-def nftcollection(network: str, address: str) -> NFTCollection:
+def fetch_nft_collection(network: str, address: str) -> NFTCollection:
     url = f"{API_URL}/{network}/{address}"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
@@ -293,7 +314,34 @@ def nftcollection(network: str, address: str) -> NFTCollection:
 
 
 @error_wrap
-def nftasset(network: str, address: str, token_id: str) -> NFTAsset:
+def fetch_nft_collection_traits(network: str, address: str) -> NFTCollection:
+    limit = 100
+    offset = 0
+    ret = []
+    while True:
+        q = urlencode(dict(
+            limit=limit,
+            offset=offset,
+        ))
+        url = f"{API_URL}/{network}/{address}/traits?{q}"
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+        obj = response.json()
+        for item in obj['items']:
+            trait = NFTCollectionTrait(
+                trait=item['trait'],
+                values=[NFTCollectionTraitValue(value=v['value'], count=v['count']) for v in item['values']],
+                total_values=item['totalValues'],
+            )
+            ret.append(trait)
+        if obj['onLastPage']:
+            break
+        offset += limit
+    return DescriptiveList(ret)
+
+
+@error_wrap
+def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
     url = f"{API_URL}/{network}/{address}/{token_id}"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
