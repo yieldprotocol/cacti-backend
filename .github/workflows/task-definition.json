@@ -1,0 +1,46 @@
+{
+    "containerDefinitions": [
+        {
+            "name": "chatweb3",
+            "image": "",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "chatweb3-9999-tcp",
+                    "containerPort": 9999,
+                    "hostPort": 9999,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "true",
+                    "awslogs-group": "awslogs-chatweb3-backend",
+                    "awslogs-region": "us-east-2",
+                    "awslogs-stream-prefix": "awslogs-chatweb3-backend"
+                }
+            },
+            "essential": true,
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": []
+        }
+    ],
+    "family": "chatweb3",
+    "networkMode": "bridge",
+    "volumes": [],
+    "placementConstraints": [],
+    "requiresCompatibilities": [
+        "EC2"
+    ],
+    "cpu": "1024",
+    "memory": "1024",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "tags": []
+}
