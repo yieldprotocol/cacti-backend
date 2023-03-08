@@ -16,7 +16,7 @@ import context
 import utils
 import registry
 import streaming
-from integrations import etherscan
+from integrations import etherscan, defillama
 from .index_lookup import IndexLookupTool
 
 
@@ -77,7 +77,7 @@ class IndexWidgetTool(IndexLookupTool):
         super().__init__(
             *args,
             _chain=chain,
-            content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear. You can look up live prices, wallet balances, token contract addresses, do transfers or swaps, or search for NFTs and retrieve data about NFTs. It cannot help the user with understanding how to use the app or how to perform certain actions.",
+            content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear. You can look up live prices, DeFi yields, wallet balances, token contract addresses, do transfers or swaps, or search for NFTs and retrieve data about NFTs. It cannot help the user with understanding how to use the app or how to perform certain actions.",
             input_description="a standalone query phrase with all relevant contextual details mentioned explicitly without using pronouns in order to invoke the right widget",
             output_description="a summarized answer with relevant magic command for widget(s), or a question prompt for more information to be provided",
             **kwargs
@@ -135,6 +135,8 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_eth_out(*params))
     elif command == 'fetch-gas':
         return str(fetch_gas(*params))
+    elif command == 'fetch-yields':
+        return str(fetch_yields(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -167,18 +169,20 @@ def fetch_balance(token: str, wallet_address: str) -> str:
     contract_address = etherscan.get_contract_address(token)
     return etherscan.get_balance(contract_address, wallet_address)
 
+
 @error_wrap
 def fetch_eth_in(wallet_address: str) -> str:
     return etherscan.get_all_eth_to_address(wallet_address)
+
 
 @error_wrap
 def fetch_eth_out(wallet_address: str) -> str:
     return etherscan.get_all_eth_from_address(wallet_address)
 
+
 @error_wrap
 def fetch_gas(wallet_address: str) -> str:
     return etherscan.get_all_gas_for_address(wallet_address)
-
 
 
 # For now just search one network
@@ -272,3 +276,8 @@ def nftasset(network: str, address: str, token_id: str) -> NFTAsset:
         collection_name=obj['collection_name'],
         name=obj['name'],
     )
+
+
+@error_wrap
+def fetch_yields(token, chain, count) -> str:
+    return defillama.fetch_yields(token, chain, count)

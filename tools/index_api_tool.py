@@ -14,11 +14,11 @@ from index.weaviate import WeaviateIndex
 from chains.api_chain import IndexAPIChain
 
 
-CONTENT_DESCRIPTION = "This tool is useful when you need to get current data for a given user query. This user query could be related to live prices, news, DeFi, NFTs and other Web3 information. Do not use any other tool if this tool is used"
+CONTENT_DESCRIPTION = "Only use this tool when you need to get real-time price data for crypto tokens"
 
-INPUT_DESCRIPTION = "a standalone query with all relevant contextual details mentioned in order to invoke the right API to get current and real-time data"
+INPUT_DESCRIPTION = "a standalone query with all relevant contextual details mentioned in order to invoke the right API to get real-time price data"
 
-OUTPUT_DESCRIPTION = "an API spec for an endpoint that can be used to get the data for the user query"
+OUTPUT_DESCRIPTION = "a summarized answer to the user query"
 
 
 @registry.register_class
