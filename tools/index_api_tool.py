@@ -3,6 +3,7 @@ from typing import Any, Optional
 from pydantic import Extra
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
+from gpt_index.utils import ErrorToRetry, retry_on_exceptions_with_backoff
 
 import registry
 import streaming
@@ -45,7 +46,10 @@ class IndexAPITool(IndexLookupTool):
         )
 
     def _run(self, query: str) -> str:
-        docs = self._index.similarity_search(query, k=1, search_distance=0.85)
+        docs = retry_on_exceptions_with_backoff(
+            lambda: self._index.similarity_search(query, k=1, search_distance=0.85),
+            [ErrorToRetry(TypeError)],
+        )
 
         if len(docs) == 0:
             return "Unable to find a relevant source to fulfill request"
@@ -53,7 +57,10 @@ class IndexAPITool(IndexLookupTool):
         api_spec = docs[0].metadata["spec"]
 
         if '__price_context_data__' in api_spec:
-            crypto_tokens_docs = self.crypto_tokens_index.similarity_search(query, k=3)
+            crypto_tokens_docs = retry_on_exceptions_with_backoff(
+                lambda: self.crypto_tokens_index.similarity_search(query, k=3),
+                [ErrorToRetry(TypeError)],
+            )
             context_data = self._build_price_context_data(crypto_tokens_docs)
             api_spec = api_spec.format(__price_context_data__=context_data)
 

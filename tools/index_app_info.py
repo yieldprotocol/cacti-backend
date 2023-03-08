@@ -4,6 +4,7 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
+from gpt_index.utils import ErrorToRetry, retry_on_exceptions_with_backoff
 
 import registry
 import streaming
@@ -58,7 +59,10 @@ class IndexAppInfoTool(IndexLookupTool):
 
     def _run(self, query: str) -> str:
         """Query index and answer question using document chunks."""
-        docs = self._index.similarity_search(query, k=self._top_k)
+        docs = retry_on_exceptions_with_backoff(
+            lambda: self._index.similarity_search(query, k=self._top_k),
+            [ErrorToRetry(TypeError)],
+        )
         task_info = '\n'.join([DOCUMENT_TEMPLATE.format(
             question=doc.page_content,
             answer=doc.metadata[ANSWER_KEY],
