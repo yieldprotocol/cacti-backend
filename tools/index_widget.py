@@ -32,7 +32,7 @@ Use the following format:
 ## Thought: describe what you are trying to solve from input
 ## Widgets: names of relevant widget magic commands to respond to input
 ## Parameters: input parameter-value pairs representing inputs to the above widget magic command(s), expressed in the correct format as known info strings, or as calls to other fetch- commands
-## Response: tool response to input synthesized using only widget magic commands with their respective input parameters
+## Response: tool response to input synthesized using only widget magic commands with their respective input parameters replaced with values
 ... (this Thought/Widgets/Parameters/Response can repeat N times)
 ## Thought: I have resolved all input parameters to widgets.
 
