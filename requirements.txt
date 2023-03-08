@@ -1,4 +1,4 @@
-langchain==0.0.93
+langchain==0.0.103
 openai==0.26.1
 faiss-cpu==1.7.3
 websocket-server==0.6.4
@@ -11,3 +11,4 @@ psycopg2-binary==2.9.5
 qcore==1.8.0
 PyYAML==6.0
 web3==5.31.3
+gpt_index==0.4.23

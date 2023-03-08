@@ -1,6 +1,7 @@
 from typing import Any, Optional
 
 from pydantic import Extra
+from gpt_index.utils import ErrorToRetry, retry_on_exceptions_with_backoff
 
 import registry
 from .base import BaseTool
@@ -51,7 +52,10 @@ class IndexLookupTool(BaseTool):
 
     def _run(self, query: str) -> str:
         """Query index and return concatenated document chunks."""
-        docs = self._index.similarity_search(query, k=self._top_k)
+        docs = retry_on_exceptions_with_backoff(
+            lambda: self._index.similarity_search(query, k=self._top_k),
+            [ErrorToRetry(TypeError)],
+        )
         if self._source_key is not None:
             task_info = '\n'.join([f'Content: {doc.page_content}\nSource: {doc.metadata[self._source_key]}' for doc in docs])
         else:
