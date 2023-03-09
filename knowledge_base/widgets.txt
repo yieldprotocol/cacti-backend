@@ -74,12 +74,6 @@ Required parameters:
 -{transactionKeyword}: either SELLAMOUNT if amount refers to token to sell or BUYAMOUNT if amount refers to token to buy
 -{amount}: amount of token described by transaction keyword that we are trying to buy or sell
 ---
-Widget magic command: <|display-nft-search({searchString})|>
-Description of widget: This widget is used when the user wants to interactively search for NFT collections that match a particular topic or phrase.
-Connected wallet required: no
-Required parameters:
--{searchString}: string of keywords to search NFT collections with
----
 Widget magic command: <|fetch-nft-search({searchString})|>
 Description of widget: This widget is used when we need to search for NFT collections that match a particular topic or phrase.
 Connected wallet required: no
@@ -148,4 +142,4 @@ Connected wallet required: no
 Required Parameters:
 -{domain}: domain name of the account or wallet
 Return value:
--a human-readable string with wallet address 
+-a human-readable string with wallet address

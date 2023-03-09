@@ -1,21 +1,20 @@
 import functools
+import json
 import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 import traceback
 
-import requests
-from urllib.parse import urlencode
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
-from web3 import Web3
 
 import context
 import utils
 import registry
 import streaming
+from chat.container import ContainerMixin
 from integrations import (
     etherscan, defillama, center,
 )
@@ -84,6 +83,10 @@ class IndexWidgetTool(IndexLookupTool):
                         if response_buffer == response_buffer:  # nothing resolved
                             if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
                                 # matching pairs of open/close, just flush
+                                # NB: for better frontend parsing of nested widgets, we need an invariant that
+                                # there are no two independent widgets on the same line, otherwise we can't
+                                # detect the closing tag properly when there is nesting.
+                                response_buffer = response_buffer.replace('|>', '|>\n')
                                 break
                             else:
                                 # keep waiting
@@ -218,33 +221,42 @@ def fetch_gas(wallet_address: str) -> str:
     return etherscan.get_all_gas_for_address(wallet_address)
 
 
-class DescriptiveList(list):
-    def __str__(self) -> str:
-        return "\n".join([
-            f"Here is a list of {len(self)} items:",
-        ] + [str(item) for item in self])
+class ListContainer(ContainerMixin, list):
+    def message_prefix(self) -> str:
+        if len(self) > 0:
+            return f"I found {len(self)} results: "
+        else:
+            return "I did not find any results."
+
+    def container_name(self) -> str:
+        return 'display-list-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            items=[item.struct() for item in self],
+        )
 
 
 @error_wrap
-def fetch_nft_search(search_str: str) -> Any:
+def fetch_nft_search(search_str: str) -> str:
     ret = center.fetch_nft_search(search_str)
-    return DescriptiveList(ret)
+    return str(ListContainer(ret))
 
 
 @error_wrap
-def fetch_nft_collection(network: str, address: str) -> NFTCollection:
-    return center.fetch_nft_collection(network, address)
+def fetch_nft_collection(network: str, address: str) -> str:
+    return str(center.fetch_nft_collection(network, address))
 
 
 @error_wrap
-def fetch_nft_collection_traits(network: str, address: str) -> NFTCollection:
+def fetch_nft_collection_traits(network: str, address: str) -> str:
     ret = center.fetch_nft_collection_traits(network, address)
-    return DescriptiveList(ret)
+    return str(ListContainer(ret))
 
 
 @error_wrap
-def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
-    return center.fetch_nft_asset(network, address)
+def fetch_nft_asset(network: str, address: str, token_id: str) -> str:
+    return str(center.fetch_nft_asset(network, address, token_id))
 
 
 @error_wrap
