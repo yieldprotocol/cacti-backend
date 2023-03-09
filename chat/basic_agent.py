@@ -63,7 +63,7 @@ class BasicAgentChat(BaseChat):
         def system_flush(response):
             nonlocal system_chat_message_id
             send(Response(
-                response=response,
+                response=response.strip(),
                 still_thinking=True,
                 actor='system',
                 operation='replace',
@@ -72,7 +72,7 @@ class BasicAgentChat(BaseChat):
         def bot_flush(response):
             nonlocal bot_chat_message_id
             send(Response(
-                response=response,
+                response=response.strip(),
                 still_thinking=False,
                 actor='bot',
                 operation='replace',
@@ -104,6 +104,9 @@ class BasicAgentChat(BaseChat):
                 system_response = ''
 
             bot_response += token
+            if not bot_response.strip():
+                # don't start returning something until we have the first non-whitespace char
+                return
             bot_chat_message_id = send(Response(
                 response=token,
                 still_thinking=False,
