@@ -124,3 +124,19 @@ Parameters:
 -{count}: number of yield sources. Use "*" when parameter not available
 Return value:
 -a human-readable string with yield information
+---
+Widget magic command: <|ens-lookup({address})|>
+Description of widget: This widget is used when the user wants to convert an address to an ENS domain name (*.eth)
+Connected wallet required: no
+Required Parameters:
+-{address}: address of the account or wallet
+Return value:
+-a human-readable string with ENS domain
+---
+Widget magic command: <|ens-resolve({domain})|>
+Description of widget: This widget is used when the user wants to convert an ENS domain name (*.eth) to an address
+Connected wallet required: no
+Required Parameters:
+-{domain}: domain name of the account or wallet
+Return value:
+-a human-readable string with wallet address 
