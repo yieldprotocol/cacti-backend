@@ -27,10 +27,18 @@ TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget ma
 ---
 {task_info}
 ---
+Use the following format:
+
+## Thought: describe what you are trying to solve from input
+## Widgets: names of relevant widget magic commands to respond to input
+## Parameters: input parameter-value pairs representing inputs to the above widget magic command(s), expressed in the correct format as known info strings, or as calls to other fetch- commands
+## Response: tool response to input synthesized using only widget magic commands with their respective input parameters replaced with values
+... (this Thought/Widgets/Parameters/Response can repeat N times)
+## Thought: I have resolved all input parameters to widgets.
 
 Is wallet connected: {connected}
 Tool input: {question}
-Tool response:'''
+## Thought:'''
 
 
 @registry.register_class
@@ -51,27 +59,43 @@ class IndexWidgetTool(IndexLookupTool):
 
         new_token_handler = kwargs.get('new_token_handler')
         response_buffer = ""
+        response_state = 0  # finite-state machine state
+        response_prefix = "## Response:"
 
         def injection_handler(token):
-            nonlocal new_token_handler, response_buffer
+            nonlocal new_token_handler, response_buffer, response_state, response_prefix
+
             response_buffer += token
-            while '<|' in response_buffer:
-                if '|>' in response_buffer:
-                    # parse fetch command
-                    response_buffer = iterative_evaluate(response_buffer)
-                    if response_buffer == response_buffer:  # nothing resolved
-                        if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
-                            # matching pairs of open/close, just flush
-                            break
-                        else:
-                            # keep waiting
-                            return
-                else:
+            if response_state == 0:  # we are still waiting for response_prefix to appear
+                if response_prefix not in response_buffer:
                     # keep waiting
                     return
-            token = response_buffer
-            response_buffer = ""
-            new_token_handler(token)
+                else:
+                    # we have found the response_prefix, trim everything before that
+                    response_state = 1
+                    response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
+
+            if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
+                while '<|' in response_buffer:
+                    if '|>' in response_buffer:
+                        # parse fetch command
+                        response_buffer = iterative_evaluate(response_buffer)
+                        if response_buffer == response_buffer:  # nothing resolved
+                            if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                                # matching pairs of open/close, just flush
+                                break
+                            else:
+                                # keep waiting
+                                return
+                    else:
+                        # keep waiting
+                        return
+                token = response_buffer
+                response_buffer = ""
+                new_token_handler(token)
+                if '\n' in token:
+                    # we have found a line-break in the response, switch to the terminal state to mask subsequent output
+                    response_state = 2
 
         chain = streaming.get_streaming_chain(prompt, injection_handler)
         super().__init__(
@@ -140,7 +164,9 @@ def replace_match(m: re.Match) -> str:
     elif command.startswith('display-'):
         return m.group(0)
     else:
-        assert 0, 'unrecognized command: %s' % m.group(0)
+        # unrecognized command, just return for now
+        #assert 0, 'unrecognized command: %s' % m.group(0)
+        return m.group(0)
 
 
 def error_wrap(fn):
