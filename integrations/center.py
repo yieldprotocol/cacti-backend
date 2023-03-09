@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
-import json
 
 from urllib.parse import urlencode
 import requests
 
 import utils
+from chat.container import ContainerMixin
 
 
 # For now just search one network
@@ -21,14 +21,24 @@ API_URL = "https://api.center.dev/v1"
 
 
 @dataclass
-class NFTCollection:
+class NFTCollection(ContainerMixin):
     network: str
     address: str
     name: str
     num_assets: int
+    preview_image_url: str
 
-    def __str__(self) -> str:
-        return f'An NFT collection on network "{self.network}" with address "{self.address}" and name "{self.name}" having {self.num_assets} assets.'
+    def container_name(self) -> str:
+        return 'display-nft-collection-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            network=self.network,
+            address=self.address,
+            name=self.name,
+            numAssets=self.num_assets,
+            previewImageUrl=self.preview_image_url,
+        )
 
 
 @dataclass
@@ -51,16 +61,26 @@ class NFTCollectionTrait:
 
 
 @dataclass
-class NFTAsset:
+class NFTAsset(ContainerMixin):
     network: str
     address: str
     token_id: str
     collection_name: str
     name: str
+    preview_image_url: str
 
-    def __str__(self) -> str:
-        return f'An NFT asset on network "{self.network}" with address "{self.address}" and id "{self.token_id}" and name "{self.name}" from collection "{self.collection_name}".'
+    def container_name(self) -> str:
+        return 'display-nft-asset-container'
 
+    def container_params(self) -> Dict:
+        return dict(
+            network=self.network,
+            address=self.address,
+            tokenId=self.token_id,
+            collectionName=self.collection_name,
+            name=self.name,
+            previewImageUrl=self.preview_image_url,
+        )
 
 
 def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
@@ -94,6 +114,7 @@ def fetch_nft_collection(network: str, address: str) -> NFTCollection:
         address=address,
         name=obj['name'],
         num_assets=obj['numAssets'],
+        preview_image_url=obj['smallPreviewImageUrl'],
     )
 
 
@@ -134,4 +155,5 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
         token_id=token_id,
         collection_name=obj['collectionName'],
         name=obj['name'],
+        preview_image_url=obj['mediumPreviewImageUrl'],
     )
