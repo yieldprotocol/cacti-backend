@@ -125,16 +125,16 @@ Parameters:
 Return value:
 -a human-readable string with yield information
 ---
-Widget magic command: <|ens-lookup({address})|>
-Description of widget: This widget is used when the user wants to convert an address to an ENS domain name (*.eth)
+Widget magic command: <|ens-from-address({address})|>
+Description of widget: This widget is used when the user wants the ENS domain name (*.eth) for a wallet address
 Connected wallet required: no
 Required Parameters:
 -{address}: address of the account or wallet
 Return value:
 -a human-readable string with ENS domain
 ---
-Widget magic command: <|ens-resolve({domain})|>
-Description of widget: This widget is used when the user wants to convert an ENS domain name (*.eth) to an address
+Widget magic command: <|address-from-ens({domain})|>
+Description of widget: This widget is used when the user wants the wallet address for an ENS domain name (*.eth)
 Connected wallet required: no
 Required Parameters:
 -{domain}: domain name of the account or wallet

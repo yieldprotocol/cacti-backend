@@ -160,10 +160,10 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
-    elif command == 'ens-lookup':
-        return str(ens_lookup(*params))
-    elif command == 'ens-resolve':
-        return str(ens_resolve(*params))
+    elif command == 'ens-from-address':
+        return str(ens_from_address(*params))
+    elif command == 'address-from-ens':
+        return str(address_from_ens(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -313,7 +313,7 @@ def fetch_yields(token, chain, count) -> str:
 
 
 @error_wrap
-def ens_lookup(address) -> str:
+def ens_from_address(address) -> str:
     try:
         domain = utils.ns.name(address)
         if domain is None:
@@ -328,9 +328,13 @@ def ens_lookup(address) -> str:
 
 
 @error_wrap
-def ens_resolve(domain) -> str:
+def address_from_ens(domain) -> str:
     try:
         address = utils.ns.address(domain)
-        return f"The address for {domain} is {address}"
+        if address is None:
+            return f"No address for {domain}"
+        else:
+            return f"The address for {domain} is {address}"
     except Exception as e:
         traceback.print_exc()
+        return f"Unable to process domain {domain}"
