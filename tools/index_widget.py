@@ -33,7 +33,6 @@ Use the following format:
 ## Widgets: names of relevant widget magic commands to respond to input
 ## Parameters: input parameter-value pairs representing inputs to the above widget magic command(s), expressed in the correct format as known info strings, or as calls to other fetch- commands
 ## Response: tool response to input synthesized using only widget magic commands with their respective input parameters replaced with values
-... (this Thought/Widgets/Parameters/Response can repeat N times)
 ## Thought: I have resolved all input parameters to widgets.
 
 Is wallet connected: {connected}
@@ -101,7 +100,7 @@ class IndexWidgetTool(IndexLookupTool):
         super().__init__(
             *args,
             _chain=chain,
-            content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear. You can look up live prices, DeFi yields, wallet balances, token contract addresses, do transfers or swaps, or search for NFTs and retrieve data about NFTs. It cannot help the user with understanding how to use the app or how to perform certain actions.",
+            content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear. You can look up live prices, DeFi yields, wallet balances, ENS information, token contract addresses, do transfers or swaps, or search for NFTs and retrieve data about NFTs. It cannot help the user with understanding how to use the app or how to perform certain actions.",
             input_description="a standalone query phrase with all relevant contextual details mentioned explicitly without using pronouns in order to invoke the right widget",
             output_description="a summarized answer with relevant magic command for widget(s), or a question prompt for more information to be provided",
             **kwargs
@@ -161,11 +160,15 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
+    elif command == 'ens-from-address':
+        return str(ens_from_address(*params))
+    elif command == 'address-from-ens':
+        return str(address_from_ens(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
         # unrecognized command, just return for now
-        #assert 0, 'unrecognized command: %s' % m.group(0)
+        # assert 0, 'unrecognized command: %s' % m.group(0)
         return m.group(0)
 
 
@@ -307,3 +310,29 @@ def nftasset(network: str, address: str, token_id: str) -> NFTAsset:
 @error_wrap
 def fetch_yields(token, chain, count) -> str:
     return defillama.fetch_yields(token, chain, count)
+
+
+def ens_from_address(address) -> str:
+    try:
+        domain = utils.ns.name(address)
+        if domain is None:
+            return f"No ENS domain for {address}"
+        else:
+            return f"The ENS domain for {address} is {domain}"
+    except ValueError as valueError:
+        return f"Invalid address {address}"
+    except Exception as e:
+        traceback.print_exc()
+        return f"Unable to process address {address}"
+
+
+def address_from_ens(domain) -> str:
+    try:
+        address = utils.ns.address(domain)
+        if address is None:
+            return f"No address for {domain}"
+        else:
+            return f"The address for {domain} is {address}"
+    except Exception as e:
+        traceback.print_exc()
+        return f"Unable to process domain {domain}"

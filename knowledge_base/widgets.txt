@@ -124,3 +124,19 @@ Parameters:
 -{count}: number of yield sources. Use "*" when parameter not available
 Return value:
 -a human-readable string with yield information
+---
+Widget magic command: <|ens-from-address({address})|>
+Description of widget: This widget is used when the user wants the ENS domain name (*.eth) for a wallet address
+Connected wallet required: no
+Required Parameters:
+-{address}: address of the account or wallet
+Return value:
+-a human-readable string with ENS domain
+---
+Widget magic command: <|address-from-ens({domain})|>
+Description of widget: This widget is used when the user wants the wallet address for an ENS domain name (*.eth)
+Connected wallet required: no
+Required Parameters:
+-{domain}: domain name of the account or wallet
+Return value:
+-a human-readable string with wallet address 
