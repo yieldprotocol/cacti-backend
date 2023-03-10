@@ -80,7 +80,18 @@ Connected wallet required: no
 Required parameters:
 -{searchString}: string of keywords to search NFT collections with
 Return value:
--a list of JSON objects NFT collections found, with properties like network, address and name
+-a list of NFT collections
+---
+Widget magic command: <|fetch-nft-search-collection-by-trait({network},{address},{traitName},{traitValue})|>
+Description of widget: This widget is used when we need to search within an NFT collection for assets with a particular trait.
+Connected wallet required: no
+Required parameters:
+-{network}: network of the NFT collection
+-{address}: contract address of the NFT collection
+-{traitName}: name of trait
+-{traitValue}: value of trait
+Return value:
+-a list of NFT assets
 ---
 Widget magic command: <|fetch-nft-collection({network},{address})|>
 Description of widget: This widget is used when we need to retrieve data of an NFT collection given its network and address.

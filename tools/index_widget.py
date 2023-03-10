@@ -147,6 +147,8 @@ def replace_match(m: re.Match) -> str:
     print('found command:', command, params)
     if command == 'fetch-nft-search':
         return str(fetch_nft_search(*params))
+    elif command == 'fetch-nft-search-collection-by-trait':
+        return str(fetch_nft_search_collection_by_trait(*params))
     elif command == 'fetch-nft-collection':
         return str(fetch_nft_collection(*params))
     elif command == 'fetch-nft-collection-traits':
@@ -240,6 +242,12 @@ class ListContainer(ContainerMixin, list):
 @error_wrap
 def fetch_nft_search(search_str: str) -> str:
     ret = center.fetch_nft_search(search_str)
+    return str(ListContainer(ret))
+
+
+@error_wrap
+def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str) -> str:
+    ret = center.fetch_nft_search_collection_by_trait(network, address, trait_name, trait_value)
     return str(ListContainer(ret))
 
 
