@@ -104,6 +104,40 @@ def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
     return ret
 
 
+def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str) -> List[NFTAsset]:
+    payload = {"query": {trait_name: [trait_value]}}
+    headers = {
+        "content-type": "application/json",
+        **HEADERS
+    }
+    limit = 100
+    offset = 0
+    ret = []
+    while True:
+        q = urlencode(dict(
+            limit=limit,
+            offset=offset,
+        ))
+        url = f"{API_URL}/{network}/{address}/assets/searchByTraits?{q}"
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        obj = response.json()
+        for item in obj['items']:
+            asset = NFTAsset(
+                network=network,
+                address=address,
+                token_id=item['tokenId'],
+                collection_name=item['collectionName'],
+                name=item['name'],
+                preview_image_url=item['mediumPreviewImageUrl'],
+            )
+            ret.append(asset)
+        if obj['onLastPage']:
+            break
+        offset += limit
+    return ret
+
+
 def fetch_nft_collection(network: str, address: str) -> NFTCollection:
     url = f"{API_URL}/{network}/{address}"
     response = requests.get(url, headers=HEADERS)
