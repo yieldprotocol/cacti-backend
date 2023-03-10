@@ -8,16 +8,17 @@ import utils
 from chat.container import ContainerMixin
 
 
-# For now just search one network
 HEADERS = {
     "accept": "application/json",
     "X-API-Key": utils.CENTER_API_KEY,
 }
+# For now just search two networks
 NETWORKS = [
     "ethereum-mainnet",
     "polygon-mainnet",
 ]
 API_URL = "https://api.center.dev/v1"
+MAX_RESULTS = 100
 
 
 @dataclass
@@ -113,7 +114,7 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
     limit = 100
     offset = 0
     ret = []
-    while True:
+    while len(ret) < MAX_RESULTS:
         q = urlencode(dict(
             limit=limit,
             offset=offset,
@@ -156,7 +157,7 @@ def fetch_nft_collection_traits(network: str, address: str) -> List[NFTCollectio
     limit = 100
     offset = 0
     ret = []
-    while True:
+    while len(ret) < MAX_RESULTS:
         q = urlencode(dict(
             limit=limit,
             offset=offset,
