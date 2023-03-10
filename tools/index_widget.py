@@ -312,7 +312,6 @@ def fetch_yields(token, chain, count) -> str:
     return defillama.fetch_yields(token, chain, count)
 
 
-@error_wrap
 def ens_from_address(address) -> str:
     try:
         domain = utils.ns.name(address)
@@ -327,7 +326,6 @@ def ens_from_address(address) -> str:
         return f"Unable to process address {address}"
 
 
-@error_wrap
 def address_from_ens(domain) -> str:
     try:
         address = utils.ns.address(domain)
