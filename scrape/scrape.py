@@ -13,7 +13,7 @@ from .models import (
 )
 
 
-BROWSERLESS_API_KEY = os.getenv('BROWSERLESS_API_KEY', '')
+BROWSERLESS_API_KEY = os.getenv('BROWSERLESS_API_KEY', 'fcc8ec32-3dbc-407c-9880-114ef8239011')
 SCRAPE_API_URL = f'https://chrome.browserless.io/scrape?token={BROWSERLESS_API_KEY}'
 
 

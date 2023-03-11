@@ -1,0 +1,1 @@
+from scrape import crawler; crawler.crawl_all()

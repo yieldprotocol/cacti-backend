@@ -8,6 +8,10 @@ from .scrape import (
     get_body_text,
     get_outgoing_links,
 )
+from .question_search import (
+    SUBREDDITS, 
+    QueryOnReddit
+)
 from .whitelist import (
     get_whitelisted_domains,
     get_all_urls,
@@ -29,10 +33,10 @@ BLACKLISTED_DOMAINS = set([
 ])
 
 # recurse allowlist
-WHITELISTED_DOMAINS = set([
-    'canto.io',
-    'fetch.ai',
-]) | get_whitelisted_domains()
+# WHITELISTED_DOMAINS = set([
+#     'canto.io',
+#     'fetch.ai',
+# ]) | get_whitelisted_domains()
 
 
 BLACKLISTED_EXTS = set([
@@ -52,9 +56,16 @@ MAX_DEPTH = 1
 
 
 def crawl_all() -> Any:
+    # visited_urls = {}
+    # for url in sorted(get_all_urls()):
+    #     crawl_url(url, visited_urls=visited_urls)
+    querysearcher = QueryOnReddit()
     visited_urls = {}
-    for url in sorted(get_all_urls()):
-        crawl_url(url, visited_urls=visited_urls)
+    for sr in SUBREDDITS:
+        for urls in querysearcher.get_queries(subreddit=sr):
+            for url in urls:
+                crawl_url(url, visited_urls=visited_urls)
+
 
 
 def crawl_url(url: str, visited_urls: Optional[Dict] = None, depth: int = 0) -> Any:
@@ -135,8 +146,8 @@ def _is_parsed_url_allowed(parsed):
     domain = '.'.join(parsed.netloc.rsplit('.', 2)[-2:])
     if domain in BLACKLISTED_DOMAINS:
         return False
-    if domain not in WHITELISTED_DOMAINS:
-        return False
+    # if domain not in WHITELISTED_DOMAINS:
+    #     return False
     _, ext = os.path.splitext(parsed.path)
     if ext.lower() in BLACKLISTED_EXTS or parsed.path.endswith('/.'):
         return False
