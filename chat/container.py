@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Any, Dict
+from dataclasses import asdict
 import json
 
 
@@ -37,3 +38,23 @@ class ContainerMixin(ABC):
             name=self.container_name(),
             params=self.container_params(),
         )
+
+
+def dataclass_to_container_params(dataclass_instance: Any) -> Dict:
+    """Convert dataclass instance variables to dictionary for container params.
+
+    Also does switching from python snake_case to json camelCase.
+
+    """
+    ret = {}
+    d = asdict(dataclass_instance)
+    for k, v in d.items():
+        ret[snake_case_to_camel(k)] = v
+    return ret
+
+
+def snake_case_to_camel(name: str) -> str:
+    splits = name.split('_')
+    for i in range(1, len(splits)):
+        splits[i] = splits[i][0].upper() + splits[i][1:]
+    return "".join(splits)

@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 import requests
 
 import utils
-from chat.container import ContainerMixin
+from chat.container import ContainerMixin, dataclass_to_container_params
 
 
 HEADERS = {
@@ -33,13 +33,7 @@ class NFTCollection(ContainerMixin):
         return 'display-nft-collection-container'
 
     def container_params(self) -> Dict:
-        return dict(
-            network=self.network,
-            address=self.address,
-            name=self.name,
-            numAssets=self.num_assets,
-            previewImageUrl=self.preview_image_url,
-        )
+        return dataclass_to_container_params(self)
 
 
 @dataclass
@@ -74,14 +68,7 @@ class NFTAsset(ContainerMixin):
         return 'display-nft-asset-container'
 
     def container_params(self) -> Dict:
-        return dict(
-            network=self.network,
-            address=self.address,
-            tokenId=self.token_id,
-            collectionName=self.collection_name,
-            name=self.name,
-            previewImageUrl=self.preview_image_url,
-        )
+        return dataclass_to_container_params(self)
 
 
 def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
