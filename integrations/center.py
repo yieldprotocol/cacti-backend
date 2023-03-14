@@ -37,22 +37,49 @@ class NFTCollection(ContainerMixin):
 
 
 @dataclass
-class NFTCollectionTraitValue:
-    count: int
+class NFTCollectionTraitValue(ContainerMixin):
+    trait: str
     value: str
+    count: int
+    total: int
 
-    def __str__(self) -> str:
-        return f'{self.value} (x{self.count})'
+    def container_name(self) -> str:
+        return 'display-nft-collection-trait-value-container'
+
+    def container_params(self) -> Dict:
+        return dataclass_to_container_params(self)
 
 
 @dataclass
-class NFTCollectionTrait:
+class NFTCollectionTrait(ContainerMixin):
     trait: str
-    total_values: int
     values: List[NFTCollectionTraitValue]
 
-    def __str__(self) -> str:
-        return f'An NFT collection trait "{self.trait}" with {self.total_values} values: {", ".join(map(str, self.values))}.'
+    def container_name(self) -> str:
+        return 'display-nft-collection-trait-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            trait=self.trait,
+            values=[value.struct() for value in self.values],
+        )
+
+
+@dataclass
+class NFTCollectionTraits(ContainerMixin):
+    collection: NFTCollection
+    traits: List[NFTCollectionTrait]
+
+    def message_prefix(self) -> str:
+        return f"The NFT collection, {self.collection.name}, has the following traits:"
+
+    def container_name(self) -> str:
+        return 'list-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            items=[trait.struct() for trait in self.traits],
+        )
 
 
 @dataclass
@@ -140,11 +167,12 @@ def fetch_nft_collection(network: str, address: str) -> NFTCollection:
     )
 
 
-def fetch_nft_collection_traits(network: str, address: str) -> List[NFTCollectionTrait]:
+def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTraits:
+    collection = fetch_nft_collection(network, address)
     limit = 100
     offset = 0
-    ret = []
-    while len(ret) < MAX_RESULTS:
+    traits = []
+    while len(traits) < MAX_RESULTS:
         q = urlencode(dict(
             limit=limit,
             offset=offset,
@@ -154,16 +182,28 @@ def fetch_nft_collection_traits(network: str, address: str) -> List[NFTCollectio
         response.raise_for_status()
         obj = response.json()
         for item in obj['items']:
+            total = 0
+            for v in item['values']:
+                total += v['count']
             trait = NFTCollectionTrait(
                 trait=item['trait'],
-                values=[NFTCollectionTraitValue(value=v['value'], count=v['count']) for v in item['values']],
-                total_values=item['totalValues'],
+                values=[
+                    NFTCollectionTraitValue(
+                        trait=item['trait'],
+                        value=v['value'],
+                        count=v['count'],
+                        total=total,
+                    ) for v in item['values']
+                ],
             )
-            ret.append(trait)
+            traits.append(trait)
         if obj['onLastPage']:
             break
         offset += limit
-    return ret
+    return NFTCollectionTraits(
+        collection=collection,
+        traits=traits,
+    )
 
 
 def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:

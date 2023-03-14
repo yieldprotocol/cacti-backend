@@ -34,7 +34,6 @@ Use the following format:
 ## Widgets: names of relevant widget magic commands to respond to input
 ## Parameters: input parameter-value pairs representing inputs to the above widget magic command(s), expressed in the correct format as known info strings, or as calls to other fetch- commands
 ## Response: tool response to input synthesized using only widget magic commands with their respective input parameters replaced with values
-## Thought: I have resolved all input parameters to widgets.
 
 Is wallet connected: {connected}
 Tool input: {question}
@@ -287,7 +286,7 @@ def fetch_nft_collection(network: str, address: str) -> str:
 @error_wrap
 def fetch_nft_collection_traits(network: str, address: str) -> str:
     ret = center.fetch_nft_collection_traits(network, address)
-    return str(ListContainer(ret))
+    return str(ret)
 
 
 @error_wrap
