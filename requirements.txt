@@ -12,3 +12,4 @@ qcore==1.8.0
 PyYAML==6.0
 web3==5.31.3
 gpt_index==0.4.23
+transformers==4.26.1
