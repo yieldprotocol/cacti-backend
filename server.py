@@ -107,27 +107,15 @@ def _load_existing_history_and_messages(session_id):
     history = chat.ChatHistory.new(session_id)
     messages = []
 
-    last_user_message = None
-    last_bot_message = None
     for message in ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.created).all():
         messages.append(message)
 
-        # register user <-> bot interactions
+        # register user/bot messages to history
         if message.type == 'text':
             if message.actor == 'user':
-                # for now, only restore the last bot message as interaction
-                if last_bot_message is not None:
-                    assert last_user_message is not None
-                    history.add_interaction(last_user_message, last_bot_message)
-                    last_bot_message = None
-                last_user_message = message.payload
-
+                history.add_user_message(message.payload)
             elif message.actor == 'bot':
-                last_bot_message = message.payload
-
-    if last_bot_message is not None:
-        assert last_user_message is not None
-        history.add_interaction(last_user_message, last_bot_message)
+                history.add_bot_message(message.payload)
 
     return history, messages
 

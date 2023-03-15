@@ -49,10 +49,9 @@ class BasicAgentChat(BaseChat):
 
     def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> None:
         userinput = userinput.strip()
-        history_string = ""
-        for interaction in history:
-            history_string += ("User: " + interaction.input + "\n")
-            history_string += ("Assistant: " + interaction.response + "\n")
+        history_string = history.to_string()
+
+        history.add_user_message(userinput)
         start = time.time()
 
         system_chat_message_id = None
@@ -77,7 +76,7 @@ class BasicAgentChat(BaseChat):
                 actor='bot',
                 operation='replace',
             ), last_chat_message_id=bot_chat_message_id)
-            history.add_interaction(userinput, response)
+            history.add_bot_message(response)
 
         def system_new_token_handler(token):
             nonlocal system_chat_message_id, system_response, bot_chat_message_id, bot_response
