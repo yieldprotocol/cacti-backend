@@ -93,10 +93,7 @@ class RephraseChat(BaseChat):
         userinput = userinput.strip()
         if history:
             # First rephrase the question
-            history_string = ""
-            for interaction in history:
-                history_string += ("User: " + interaction.input + "\n")
-                history_string += ("Assistant: " + interaction.response + "\n")
+            history_string = history.to_string()
             question = self.rephrase_chain.run({
                 "history": history_string.strip(),
                 "question": userinput,

@@ -109,10 +109,7 @@ class WidgetSearchChat(BaseChat):
     def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> None:
         userinput = userinput.strip()
         # First identify the question
-        history_string = ""
-        for interaction in history:
-            history_string += ("User: " + interaction.input + "\n")
-            history_string += ("Assistant: " + interaction.response + "\n")
+        history_string = history.to_string()
         start = time.time()
         example = {
             "history": history_string.strip(),

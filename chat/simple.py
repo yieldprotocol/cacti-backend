@@ -41,10 +41,7 @@ class SimpleChat(BaseChat):
     def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> None:
         docs = self.doc_index.similarity_search(userinput, k=self.top_k)
         task_info = ''.join([doc.page_content for doc in docs])
-        history_string = ""
-        for interaction in history:
-            history_string += ("User: " + interaction.input + "\n")
-            history_string += ("Assistant: " + interaction.response + "\n")
+        history_string = history.to_string()
         history_string += ("User: " + userinput )
         result = self.chain.run({
             "task_info": task_info,

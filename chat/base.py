@@ -10,13 +10,6 @@ from langchain.prompts.base import BaseOutputParser
 
 @dataclass_json
 @dataclass
-class Interaction:
-    input: str
-    response: str
-
-
-@dataclass_json
-@dataclass
 class Response:
     response: str
     actor: str = 'bot'
@@ -25,24 +18,46 @@ class Response:
 
 
 @dataclass
+class ChatMessage:
+    actor: str
+    content: str
+
+
+@dataclass
 class ChatHistory:
-    interactions: List[Interaction]
+    messages: List[ChatMessage]
     session_id: uuid.UUID
     wallet_address: Optional[str]
 
     def add_interaction(self, user_input: str, response: str) -> None:
         """Add interaction to history."""
-        self.interactions.append(Interaction(input=user_input, response=response))
+        self.add_user_message(user_input)
+        self.add_bot_message(response)
+
+    def add_user_message(self, text) -> None:
+        """Add user message to history."""
+        self.messages.append(ChatMessage(actor='user', content=text))
+
+    def add_bot_message(self, text) -> None:
+        """Add bot message to history."""
+        self.messages.append(ChatMessage(actor='bot', content=text))
 
     def __bool__(self):
-        return bool(self.interactions)
+        return bool(self.messages)
 
     def __iter__(self):
-        return iter(self.interactions)
+        return iter(self.messages)
+
+    def to_string(self, user_prefix: str = "User", bot_prefix: str = "Assistant") -> str:
+        ret = []
+        for message in self:
+            prefix = user_prefix if message.actor == 'user' else bot_prefix
+            ret.append(f"{prefix}: {message.content}")
+        return "\n".join(ret)
 
     @classmethod
     def new(cls, session_id: uuid.UUID, wallet_address: Optional[str] = None):
-        return cls(interactions=[], session_id=session_id, wallet_address=wallet_address)
+        return cls(messages=[], session_id=session_id, wallet_address=wallet_address)
 
 
 
