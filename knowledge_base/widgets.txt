@@ -12,13 +12,13 @@ Connected wallet required: no
 Required parameters:
 -{baseToken}: token to get the price of
 -{quoteToken}: token to use as units for price
-Return value:
+Return value description:
 -price of a base token in units of a quote token.
 ---
 Widget magic command: <|fetch-wallet()|>
 Description of widget: This widget is used when we need the wallet address.
 Connected wallet required: yes
-Return value:
+Return value description:
 -address of connected wallet
 ---
 Widget magic command: <|fetch-balance({token},{address})|>
@@ -27,7 +27,7 @@ Connected wallet required: no
 Required parameters:
 -{token}: token to get the balance of.
 -{address}: address of the account or wallet to check the balance of
-Return value:
+Return value description:
 -balance of a token in an account or wallet, in decimal units
 ---
 Widget magic command: <|fetch-transactions({address},{last_n})|>
@@ -36,7 +36,7 @@ Connected wallet required: no
 Required parameters:
 -{address}: address of the account or wallet to check the transactions of
 -{last_n}: how many latest transactions the user wants to get.
-Return value:
+Return value description:
 -the transaction details
 ---
 Widget magic command: <|fetch-gas({address})|>
@@ -44,7 +44,7 @@ Description of widget: This widget is used when we need the all gas used for tra
 Connected wallet required: no
 Required parameters:
 -{address}: address of the account or wallet to check the gas of
-Return value:
+Return value description:
 -the gas amount used
 ---
 Widget magic command: <|fetch-eth-in({address})|>
@@ -52,7 +52,7 @@ Description of widget: This widget is used when we need the all ETH inflow into 
 Connected wallet required: no
 Required parameters:
 -{address}: address of the account or wallet to check the inflow ETH
-Return value:
+Return value description:
 -the inflow ETH amount
 ---
 Widget magic command: <|fetch-eth-out({address})|>
@@ -60,7 +60,7 @@ Description of widget: This widget is used when we need the all ETH outflow from
 Connected wallet required: no
 Required parameters:
 -{address}: address of the account or wallet to check the outflow ETH
-Return value:
+Return value description:
 -the outflow ETH amount
 ---
 Widget magic command: <|display-uniswap({tokenToSell},{tokenToBuy},{transactionKeyword},{amount})|>
@@ -79,7 +79,7 @@ Description of widget: This widget is used when we need to search for NFT collec
 Connected wallet required: no
 Required parameters:
 -{searchString}: string of keywords to search NFT collections with
-Return value:
+Return value description:
 -a list of NFT collections
 ---
 Widget magic command: <|fetch-nft-search-collection-by-trait({network},{address},{traitName},{traitValue})|>
@@ -90,7 +90,7 @@ Required parameters:
 -{address}: contract address of the NFT collection
 -{traitName}: name of trait
 -{traitValue}: value of trait
-Return value:
+Return value description:
 -a list of NFT assets
 ---
 Widget magic command: <|fetch-nft-collection({network},{address})|>
@@ -99,7 +99,7 @@ Connected wallet required: no
 Required parameters:
 -{network}: network of the NFT collection
 -{address}: contract address of the NFT collection
-Return value:
+Return value description:
 -JSON object with data about the NFT collection
 ---
 Widget magic command: <|fetch-nft-collection-traits({network},{address})|>
@@ -108,7 +108,7 @@ Connected wallet required: no
 Required parameters:
 -{network}: network of the NFT collection
 -{address}: contract address of the NFT collection
-Return value:
+Return value description:
 -a list of JSON objects representing traits of the NFT collection
 ---
 Widget magic command: <|fetch-nft-collection-trait-values({network},{address},{traitName})|>
@@ -118,7 +118,7 @@ Required parameters:
 -{network}: network of the NFT collection
 -{address}: contract address of the NFT collection
 -{traitName}: name of trait to fetch values of
-Return value:
+Return value description:
 -a list of JSON objects representing values of the trait of the NFT collection
 ---
 Widget magic command: <|fetch-nft-asset({network},{address},{tokenID})|>
@@ -128,7 +128,7 @@ Required parameters:
 -{network}: network of the NFT asset
 -{address}: contract address of the NFT asset
 -{tokenID}: token ID of the asset
-Return value:
+Return value description:
 -JSON object with data about the NFT asset
 ---
 Widget magic command: <|fetch-nft-asset-traits({network},{address},{tokenID})|>
@@ -138,7 +138,7 @@ Required parameters:
 -{network}: network of the NFT asset
 -{address}: contract address of the NFT asset
 -{tokenID}: token ID of the asset
-Return value:
+Return value description:
 -JSON object with trait names and values of the NFT asset
 ---
 Widget magic command: <|fetch-eval({expression})|>
@@ -146,7 +146,7 @@ Description of widget: This widget is used when we need to calculate an arbitrar
 Connected wallet required: no
 Required parameters:
 -{expression}: mathematical expression to calculate
-Return value:
+Return value description:
 -the evaluated mathematical expression in numerical form
 ---
 Widget magic command: <|fetch-yields({token},{network},{count})|>
@@ -156,7 +156,7 @@ Parameters:
 -{token}: token to get the yield for. Normalize the token name to its popular symbol representation in the ecoystem. Use "*" when parameter not available or the user wants all tokens
 -{network}: blockchain to get the yield for. Normalize the network name to its popular representation in the ecosystem. Use "*" when parameter not available or the user wants all networks
 -{count}: number of yield sources. Use "*" when parameter not available
-Return value:
+Return value description:
 -JSON object with yield information
 ---
 Widget magic command: <|ens-from-address({address})|>
@@ -164,7 +164,7 @@ Description of widget: This widget is used when the user wants the ENS domain na
 Connected wallet required: no
 Required Parameters:
 -{address}: address of the account or wallet
-Return value:
+Return value description:
 -a human-readable string with ENS domain
 ---
 Widget magic command: <|address-from-ens({domain})|>
@@ -172,11 +172,11 @@ Description of widget: This widget is used when the user wants the wallet addres
 Connected wallet required: no
 Required Parameters:
 -{domain}: domain name of the account or wallet
-Return value:
+Return value description:
 -a human-readable string with wallet address
 ---
 Widget magic command: <|display-yield-farm({project},{network}, {token}, {amount})|>
-Description of widget: This widget is used when the user wants to put or deposit tokens in a project on a certain network 
+Description of widget: This widget is used when the user wants to put or deposit tokens in a project on a certain network
 Connected wallet required: yes
 Required Parameters:
 -{project}: name of the project to deposit the token in
