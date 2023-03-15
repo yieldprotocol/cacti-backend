@@ -239,6 +239,25 @@ class ListContainer(ContainerMixin, list):
         )
 
 
+@dataclass
+class TableContainer(ContainerMixin):
+    headers: List[str]
+    rows: List[ContainerMixin]
+    message_prefix_str: str = ""
+
+    def message_prefix(self) -> str:
+        return self.message_prefix_str
+
+    def container_name(self) -> str:
+        return 'display-table-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            headers=self.headers,
+            rows=[row.struct() for row in self.rows],
+        )
+
+
 @error_wrap
 def fetch_nft_search(search_str: str) -> str:
     ret = center.fetch_nft_search(search_str)
@@ -268,8 +287,11 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> str:
 
 
 @error_wrap
-def fetch_yields(token, chain, count) -> str:
-    return defillama.fetch_yields(token, chain, count)
+def fetch_yields(token, network, count) -> str:
+    yields = defillama.fetch_yields(token, network, count)
+    # TODO: change headers to a dict with field_name and display_name
+    table_container = TableContainer(headers=["Project", "TVL", "APY", "30 day Avg. APY"], rows=yields)
+    return str(table_container)
 
 
 def ens_from_address(address) -> str:

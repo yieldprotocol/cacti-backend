@@ -129,15 +129,15 @@ Required parameters:
 Return value:
 -the evaluated mathematical expression in numerical form
 ---
-Widget magic command: <|fetch-yields({token},{chain},{count})|>
+Widget magic command: <|fetch-yields({token},{network},{count})|>
 Description of widget: This widget is used when the user wants the yields for crypto assets. The user may not specify all parameters so do not guess any parameter.
 Connected wallet required: no
 Parameters:
 -{token}: token to get the yield for. Normalize the token name to its popular symbol representation in the ecoystem. Use "*" when parameter not available or the user wants all tokens
--{chain}: blockchain to get the yield for. Normalize the chain name to its popular representation in the ecosystem. Use "*" when parameter not available or the user wants all chains
+-{network}: blockchain to get the yield for. Normalize the network name to its popular representation in the ecosystem. Use "*" when parameter not available or the user wants all networks
 -{count}: number of yield sources. Use "*" when parameter not available
 Return value:
--a human-readable string with yield information
+-JSON object with yield information
 ---
 Widget magic command: <|ens-from-address({address})|>
 Description of widget: This widget is used when the user wants the ENS domain name (*.eth) for a wallet address
@@ -154,3 +154,12 @@ Required Parameters:
 -{domain}: domain name of the account or wallet
 Return value:
 -a human-readable string with wallet address
+---
+Widget magic command: <|display-deposit-token({project},{network}, {token}, {amount})|>
+Description of widget: This widget is used when the user wants to put or deposit tokens in a project on a certain network 
+Connected wallet required: yes
+Required Parameters:
+-{project}: name of the project to deposit the token in
+-{network}: network or blockchain of the project. Default to Ethereum if not specified
+-{token}: token to deposit in the project
+-{amount}: amount of token to deposit in the project
