@@ -116,6 +116,33 @@ class NFTAsset(ContainerMixin):
         return dataclass_to_container_params(self)
 
 
+@dataclass
+class NFTAssetTraitValue(ContainerMixin):
+    trait: str
+    value: str
+
+    def container_name(self) -> str:
+        return 'display-nft-asset-trait-value-container'
+
+    def container_params(self) -> Dict:
+        return dataclass_to_container_params(self)
+
+
+@dataclass
+class NFTAssetTraits(ContainerMixin):
+    asset: NFTAsset
+    values: List[NFTAssetTraitValue]
+
+    def container_name(self) -> str:
+        return 'display-nft-asset-traits-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            asset=self.asset.struct(),
+            values=[value.struct() for value in self.values],
+        )
+
+
 def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
     q = urlencode(dict(
         query=search_str,
@@ -273,4 +300,30 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
         collection_name=obj['collectionName'],
         name=obj['name'],
         preview_image_url=obj['mediumPreviewImageUrl'],
+    )
+
+
+def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAssetTraits:
+    url = f"{API_URL}/{network}/{address}/{token_id}"
+    response = requests.get(url, headers=HEADERS)
+    response.raise_for_status()
+    obj = response.json()
+    asset = NFTAsset(
+        network=network,
+        address=address,
+        token_id=token_id,
+        collection_name=obj['collectionName'],
+        name=obj['name'],
+        preview_image_url=obj['mediumPreviewImageUrl'],
+    )
+    values = []
+    for attrib in obj['metadata']['attributes']:
+        value = NFTAssetTraitValue(
+            trait=attrib['trait_type'],
+            value=attrib['value'],
+        )
+        values.append(value)
+    return NFTAssetTraits(
+        asset=asset,
+        values=values,
     )
