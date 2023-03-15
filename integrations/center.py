@@ -70,15 +70,33 @@ class NFTCollectionTraits(ContainerMixin):
     collection: NFTCollection
     traits: List[NFTCollectionTrait]
 
-    def message_prefix(self) -> str:
-        return f"The NFT collection, {self.collection.name}, has the following traits:"
-
     def container_name(self) -> str:
-        return 'list-container'
+        return 'display-nft-collection-traits-container'
 
     def container_params(self) -> Dict:
         return dict(
-            items=[trait.struct() for trait in self.traits],
+            network=self.collection.network,
+            address=self.collection.address,
+            name=self.collection.name,
+            traits=[trait.trait for trait in self.traits],
+        )
+
+
+@dataclass
+class NFTCollectionTraitValues(ContainerMixin):
+    collection: NFTCollection
+    trait: NFTCollectionTrait
+
+    def container_name(self) -> str:
+        return 'display-nft-collection-trait-values-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            network=self.collection.network,
+            address=self.collection.address,
+            name=self.collection.name,
+            trait=self.trait.trait,
+            values=[value.value for value in self.trait.values],
         )
 
 
@@ -203,6 +221,43 @@ def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTrai
     return NFTCollectionTraits(
         collection=collection,
         traits=traits,
+    )
+
+
+def fetch_nft_collection_trait_values(network: str, address: str, trait: str) -> NFTCollectionTraitValues:
+    collection = fetch_nft_collection(network, address)
+    limit = 100
+    offset = 0
+    values = []
+    while len(values) < MAX_RESULTS:
+        q = urlencode(dict(
+            limit=limit,
+            offset=offset,
+        ))
+        url = f"{API_URL}/{network}/{address}/traits/{trait}?{q}"
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+        obj = response.json()
+        total = 0
+        for item in obj['items']:
+            total += item['count']
+        for item in obj['items']:
+            value = NFTCollectionTraitValue(
+                trait=trait,
+                value=item['value'],
+                count=item['count'],
+                total=total,
+            )
+            values.append(value)
+        if obj['onLastPage']:
+            break
+        offset += limit
+    return NFTCollectionTraitValues(
+        collection=collection,
+        trait=NFTCollectionTrait(
+            trait=trait,
+            values=values,
+        ),
     )
 
 

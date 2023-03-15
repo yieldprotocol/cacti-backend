@@ -152,6 +152,8 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_nft_collection(*params))
     elif command == 'fetch-nft-collection-traits':
         return str(fetch_nft_collection_traits(*params))
+    elif command == 'fetch-nft-collection-trait-values':
+        return str(fetch_nft_collection_trait_values(*params))
     elif command == 'fetch-nft-asset':
         return str(fetch_nft_asset(*params))
     elif command == 'fetch-eval':
@@ -286,6 +288,12 @@ def fetch_nft_collection(network: str, address: str) -> str:
 @error_wrap
 def fetch_nft_collection_traits(network: str, address: str) -> str:
     ret = center.fetch_nft_collection_traits(network, address)
+    return str(ret)
+
+
+@error_wrap
+def fetch_nft_collection_trait_values(network: str, address: str, trait: str) -> str:
+    ret = center.fetch_nft_collection_trait_values(network, address, trait)
     return str(ret)
 
 

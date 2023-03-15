@@ -111,6 +111,16 @@ Required parameters:
 Return value:
 -a list of JSON objects representing traits of the NFT collection
 ---
+Widget magic command: <|fetch-nft-collection-trait-values({network},{address},{traitName})|>
+Description of widget: This widget is used when we need to retrieve trait values of a trait of an NFT collection given its network and address.
+Connected wallet required: no
+Required parameters:
+-{network}: network of the NFT collection
+-{address}: contract address of the NFT collection
+-{traitName}: name of trait to fetch values of
+Return value:
+-a list of JSON objects representing values of the trait of the NFT collection
+---
 Widget magic command: <|fetch-nft-asset({network},{address},{tokenID})|>
 Description of widget: This widget is used when we need to retrieve data of an NFT asset in a collection given its network, address, and token ID.
 Connected wallet required: no
