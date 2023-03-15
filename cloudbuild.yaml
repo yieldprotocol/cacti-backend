@@ -1,20 +1,29 @@
- steps:
+steps:
  # Build the container image
  - name: 'gcr.io/cloud-builders/docker'
-   args: ['build', '-t', 'gcr.io/$PROJECT_ID/chatweb3-backend:$COMMIT_SHA', '.']
+   args: ['build', '-t', 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}', '.']
  # Push the container image to Container Registry
  - name: 'gcr.io/cloud-builders/docker'
-   args: ['push', 'gcr.io/$PROJECT_ID/chatweb3-backend:$COMMIT_SHA']
+   args: ['push', 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}']
  # Deploy container image to Cloud Run
  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
    entrypoint: gcloud
    args:
    - 'run'
    - 'deploy'
-   - 'chatweb3-backend'
+   - '${_SERVICE_NAME}'
    - '--image'
-   - 'gcr.io/$PROJECT_ID/chatweb3-backend:$COMMIT_SHA'
+   - 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
    - '--region'
    - 'us-east1'
- images:
- - 'gcr.io/$PROJECT_ID/chatweb3-backend:$COMMIT_SHA'
+
+images:
+ - 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
+
+substitutions:
+  # _ENV_TAG is defined within the build trigger on GCP Cloud Build (e.g. prod, dev)
+  # the fully qualified service name looks something like chatweb3-backend-prod
+  _SERVICE_NAME: 'chatweb3-backend-${_ENV_TAG}'
+
+options:
+    dynamic_substitutions: true
