@@ -40,7 +40,7 @@ def fetch_yields(token, network, count) -> List[Yield]:
     obj = response.json()
     yields = obj["data"]
     filtered_yields = list(filter(lambda yield_obj: _filter_yield_list(token, network, yield_obj), yields))
-    filtered_yields.sort(key=lambda yield_obj: (yield_obj["tvlUsd"], yield_obj["apy"]), reverse=True)
+    filtered_yields.sort(key=lambda yield_obj: (yield_obj["tvlUsd"]), reverse=True)
     selected_yields = filtered_yields[:int(count)]
 
     return [
