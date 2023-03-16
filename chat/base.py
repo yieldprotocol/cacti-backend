@@ -7,6 +7,8 @@ import uuid
 from langchain.schema import AgentAction, AgentFinish, LLMResult
 from langchain.prompts.base import BaseOutputParser
 
+from .display_widgets import parse_widgets_into_text
+
 
 @dataclass_json
 @dataclass
@@ -40,6 +42,7 @@ class ChatHistory:
 
     def add_bot_message(self, text) -> None:
         """Add bot message to history."""
+        text = parse_widgets_into_text(text)
         self.messages.append(ChatMessage(actor='bot', content=text))
 
     def __bool__(self):
