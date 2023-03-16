@@ -1,7 +1,7 @@
 import functools
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional, Union
 import traceback
 
@@ -14,7 +14,7 @@ import context
 import utils
 import registry
 import streaming
-from chat.container import ContainerMixin
+from chat.container import ContainerMixin, dataclass_to_container_params
 from integrations import (
     etherscan, defillama, center,
 )
@@ -239,6 +239,34 @@ class ListContainer(ContainerMixin, list):
         )
 
 
+@dataclass
+class TableHeader:
+    field_name: str
+    display_name: str
+
+    def container_params(self) -> Dict:
+        return dataclass_to_container_params(self)
+
+
+@dataclass
+class TableContainer(ContainerMixin):
+    headers: List[TableHeader]
+    rows: List[ContainerMixin]
+    message_prefix_str: str = ""
+
+    def message_prefix(self) -> str:
+        return self.message_prefix_str
+
+    def container_name(self) -> str:
+        return 'display-table-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            headers=[header.container_params() for header in self.headers],
+            rows=[row.struct() for row in self.rows],
+        )
+
+
 @error_wrap
 def fetch_nft_search(search_str: str) -> str:
     ret = center.fetch_nft_search(search_str)
@@ -268,8 +296,24 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> str:
 
 
 @error_wrap
-def fetch_yields(token, chain, count) -> str:
-    return defillama.fetch_yields(token, chain, count)
+def fetch_yields(token, network, count) -> str:
+    yields = defillama.fetch_yields(token, network, count)
+
+    headers = [
+        TableHeader(field_name="project", display_name="Project"),
+        TableHeader(field_name="tvlUsd", display_name="TVL"),
+        TableHeader(field_name="apy", display_name="APY"),
+        TableHeader(field_name="apyAvg30d", display_name="30 day Avg. APY")
+    ]
+
+    if network == '*':
+        headers = [TableHeader(field_name="network", display_name="Network")] + headers
+
+    if token == '*':
+        headers = [TableHeader(field_name="token", display_name="Token")] + headers
+
+    table_container = TableContainer(headers=headers, rows=yields)
+    return str(table_container)
 
 
 def ens_from_address(address) -> str:
