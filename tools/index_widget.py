@@ -307,10 +307,10 @@ def fetch_yields(token, network, count) -> str:
     ]
 
     if network == '*':
-        headers = TableHeader(field_name="chain", display_name="Chain") + headers
+        headers = [TableHeader(field_name="network", display_name="Network")] + headers
 
     if token == '*':
-        headers = TableHeader(field_name="symbol", display_name="Token") + headers
+        headers = [TableHeader(field_name="token", display_name="Token")] + headers
 
     table_container = TableContainer(headers=headers, rows=yields)
     return str(table_container)
