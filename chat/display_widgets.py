@@ -34,7 +34,13 @@ def _replace_match(m: re.Match) -> str:
 def _widgetize(command: str, params: str, depth: int = 0) -> str:
     command = command.lower().replace('display-', '')
     lines = []
-    if command == 'list-container':
+    if command == 'transfer':
+        items = params.split(",")
+        lines.append(f"A transfer of {items[1]} {items[0]} to {items[2]}")
+    elif command == 'uniswap':
+        items = params.split(",")
+        lines.append(f"A swap of {items[0]} to {items[1]} with transaction keyword {items[2]} and amount {items[3]}")
+    elif command == 'list-container':
         params = json.loads(params)
         items = params['items']
         lines.extend([
@@ -78,6 +84,7 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
         params = json.loads(params)
         lines.append(f"{params['trait']}: {params['value']}")
     else:
-        assert 0, f'unrecognized command: {command}({params})'
+        #assert 0, f'unrecognized command: {command}({params})'
+        lines.append(f"An unrecognized command: {command}({params})")
     indent = "  " * depth
     return indent + f"\n{indent}".join(lines)
