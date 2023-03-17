@@ -45,16 +45,25 @@ class ChatHistory:
         text = parse_widgets_into_text(text)
         self.messages.append(ChatMessage(actor='bot', content=text))
 
+    def add_system_message(self, text) -> None:
+        """Add system message to history."""
+        self.messages.append(ChatMessage(actor='system', content=text))
+
     def __bool__(self):
         return bool(self.messages)
 
     def __iter__(self):
         return iter(self.messages)
 
-    def to_string(self, user_prefix: str = "User", bot_prefix: str = "Assistant") -> str:
+    def to_string(self, user_prefix: str = "User", bot_prefix: str = "Assistant", system_prefix: str = "System") -> str:
         ret = []
         for message in self:
-            prefix = user_prefix if message.actor == 'user' else bot_prefix
+            if message.actor == 'user':
+                prefix = user_prefix
+            elif message.actor == 'system':
+                prefix = system_prefix
+            else:
+                prefix = bot_prefix
             ret.append(f"{prefix}: {message.content}")
         return "\n".join(ret)
 

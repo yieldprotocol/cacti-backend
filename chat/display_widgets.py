@@ -26,7 +26,9 @@ def _parse_args_strip_quotes(args: str) -> List[str]:
 def _replace_match(m: re.Match) -> str:
     command = m.group('command')
     params = m.group('params')
-    return '```\n' + _widgetize(command, params) + '\n```'
+    w = _widgetize(command, params)
+    #return '```\n' + w + '\n```'  # return code block?
+    return w
 
 
 def _widgetize(command: str, params: str, depth: int = 0) -> str:

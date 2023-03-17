@@ -21,11 +21,13 @@ You can delegate your response to the user to any of the following tools which m
 FORMAT_INSTRUCTIONS = """To use a tool, please use the following format and think step by step:
 
 ```
-Thought: you should always think about what to do.
+Thought: you should always think about what to do, explicitly restating the task without pronouns and restating details based on the conversation history and new input.
+Prior Observations: restate verbatim ALL details/names/figures/facts/etc from past observations relevant to the task and ALL related entities.
+Action Reasoning: reasoning about which action/tool would be useful for task given knowledge.
 Action: the action/tool to use, should be one of [{tool_names}]
 Action Input: the input to the action/tool with the thought/intent and all details of relevant facts from conversation history, matching the tool input format.
 Observation: the response to the {human_prefix} from the action.
-... (this Thought/Action/Action Input/Observation can repeat N times)
+... (this Thought/Prior Observations/Action Reasoning/Action/Action Input/Observation can repeat N times)
 Thought: I have nothing more to say to {human_prefix}, or I need more input from the {human_prefix}, or the {human_prefix} has been shown a widget magic command.
 {ai_prefix}: DONE
 ```
@@ -49,7 +51,7 @@ class BasicAgentChat(BaseChat):
 
     def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> None:
         userinput = userinput.strip()
-        history_string = history.to_string()
+        history_string = history.to_string(bot_prefix="Observation", system_prefix="Thought")
 
         history.add_user_message(userinput)
         start = time.time()
@@ -61,17 +63,20 @@ class BasicAgentChat(BaseChat):
 
         def system_flush(response):
             nonlocal system_chat_message_id
+            response = response.strip()
             send(Response(
-                response=response.strip(),
+                response=response,
                 still_thinking=True,
                 actor='system',
                 operation='replace',
             ), last_chat_message_id=system_chat_message_id)
+            history.add_system_message(response)
 
         def bot_flush(response):
             nonlocal bot_chat_message_id
+            response = response.strip()
             send(Response(
-                response=response.strip(),
+                response=response,
                 still_thinking=False,
                 actor='bot',
                 operation='replace',
