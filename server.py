@@ -214,33 +214,6 @@ def _message_received(client, server, message):
         db_session.add(chat_session)
         db_session.flush()
 
-    # check if it is an action
-    if typ == 'action':
-        chat_message_id = uuid.UUID(obj['payload']['messageId'])
-        feedback_status = FeedbackStatus.__members__[obj['payload']['choice']]
-        chat_message_feedback = ChatMessageFeedback.query.filter(ChatMessageFeedback.chat_message_id == chat_message_id).one_or_none()
-        if chat_message_feedback:
-            chat_message_feedback.feedback_status = feedback_status
-        else:
-            chat_message_feedback = ChatMessageFeedback(
-                chat_message_id=chat_message_id,
-                feedback_status=feedback_status,
-            )
-        db_session.add(chat_message_feedback)
-        db_session.commit()
-        return
-
-    # store new user message
-    chat_message = ChatMessage(
-        actor=actor,
-        type=typ,
-        payload=payload,
-        chat_session_id=chat_session.id,
-        system_config_id=system_config_id,
-    )
-    db_session.add(chat_message)
-    db_session.commit()
-
     def send_message(resp, last_chat_message_id=None):
         """Send message function.
 
@@ -264,6 +237,7 @@ def _message_received(client, server, message):
         is being stored in.
 
         """
+        nonlocal server, client
 
         # store response (if not streaming)
         if resp.operation == 'create':
@@ -302,6 +276,58 @@ def _message_received(client, server, message):
         server.send_message(client, msg)
 
         return chat_message_id
+
+    # check if it is an action
+    if typ == 'action':
+        action_type = obj['payload'].get('actionType', 'feedback')
+        if action_type == 'feedback':
+            chat_message_id = uuid.UUID(obj['payload']['messageId'])
+            feedback_status = FeedbackStatus.__members__[obj['payload']['choice']]
+            chat_message_feedback = ChatMessageFeedback.query.filter(ChatMessageFeedback.chat_message_id == chat_message_id).one_or_none()
+            if chat_message_feedback:
+                chat_message_feedback.feedback_status = feedback_status
+            else:
+                chat_message_feedback = ChatMessageFeedback(
+                    chat_message_id=chat_message_id,
+                    feedback_status=feedback_status,
+                )
+            db_session.add(chat_message_feedback)
+            db_session.commit()
+        elif action_type == 'transaction':
+            tx_hash = obj['payload']['hash']
+            success = obj['payload'].get('success')
+            if not success:
+                error = obj['payload'].get('error')
+            # store system message representing transaction outcome
+            tx_message = f"Transaction with hash {tx_hash} "
+            if success:
+                tx_message += "succeeded."
+            else:
+                tx_message += "failed"
+                if error:
+                    tx_message += f" with error {error}."
+
+            send_message(chat.Response(
+                response=tx_message,
+                still_thinking=False,
+                actor='system',
+                operation='create',
+            ), last_chat_message_id=None)
+            history.add_system_message(tx_message)
+        else:
+            assert 0, f'unrecognized action type: {action_type}'
+        return
+
+    # store new user message
+    chat_message = ChatMessage(
+        actor=actor,
+        type=typ,
+        payload=payload,
+        chat_session_id=chat_session.id,
+        system_config_id=system_config_id,
+    )
+    db_session.add(chat_message)
+    db_session.commit()
 
     # set wallet address onto chat history prior to processing input
     history.wallet_address = _get_client_wallet_address(client_id)

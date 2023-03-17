@@ -1,4 +1,4 @@
-from .base import ChatHistory, BaseChat
+from .base import ChatHistory, BaseChat, Response
 
 from . import simple
 from . import rephrase
