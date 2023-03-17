@@ -7,6 +7,7 @@ from langchain.callbacks.base import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 import config
+from agents.conversational import CUSTOM_AGENT_NAME
 from chains import IndexAPIChain
 
 
@@ -62,5 +63,5 @@ def get_streaming_tools(tools, new_token_handler):
 
 def get_streaming_agent(tools, new_token_handler, **agent_kwargs):
     llm = get_streaming_llm(new_token_handler)
-    agent = initialize_agent(tools, llm, agent="conversational-react-description", **agent_kwargs)
+    agent = initialize_agent(tools, llm, agent=CUSTOM_AGENT_NAME, **agent_kwargs)
     return agent

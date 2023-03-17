@@ -116,6 +116,8 @@ def _load_existing_history_and_messages(session_id):
                 history.add_user_message(message.payload)
             elif message.actor == 'bot':
                 history.add_bot_message(message.payload)
+            elif message.actor == 'system':
+                history.add_system_message(message.payload)
 
     return history, messages
 
