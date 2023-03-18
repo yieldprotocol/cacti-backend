@@ -1,6 +1,7 @@
 from typing import Dict
 import json
 import logging
+logging.basicConfig(level=logging.INFO)
 import uuid
 from urllib.parse import urlparse, parse_qs
 

@@ -1,5 +1,8 @@
 FROM python:3.8
 
+ARG ENV_FILENAME
+ENV ENV_FILENAME=$ENV_FILENAME
+
 WORKDIR /usr/src/chatweb3
 
 COPY ./requirements.txt ./
