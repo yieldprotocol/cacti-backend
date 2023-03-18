@@ -155,6 +155,8 @@ def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
         response.raise_for_status()
         obj = response.json()
         for r in obj['results']:
+            if not r.get('previewImageUrl'):
+                continue
             network = r['id'].split('/')[0]
             if r['type'].lower() == 'collection':
                 result = fetch_nft_collection(network, r['address'])
