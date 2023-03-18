@@ -176,7 +176,7 @@ Return value description:
 -a human-readable string with wallet address
 ---
 Widget magic command: <|display-yield-farm({project},{network}, {token}, {amount})|>
-Description of widget: This widget is used when the user wants to put or deposit tokens in a project on a certain network
+Description of widget: This widget is used when the user wants to yield farm by putting tokens or depositing tokens of a certain amount in a project on a network
 Connected wallet required: yes
 Required Parameters:
 -{project}: name of the project to deposit the token in
