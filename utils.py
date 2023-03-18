@@ -5,10 +5,22 @@ import tiktoken
 from langchain.llms import OpenAI
 from ens import ENS
 
+import env
+
+
+def _get_weaviate_url(config):
+    return f"https://{config['user']}:{config['password']}@{config['host']}:{config['port']}"
+
+
+def _get_postgres_table_url(config, table_name):
+    return f"postgresql://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{table_name}"
+
+
+WEAVIATE_URL = _get_weaviate_url(env.env_config['weaviate'])
+CHATDB_URL = _get_postgres_table_url(env.env_config['postgres'], 'chatdb')
+SCRAPEDB_URL = _get_postgres_table_url(env.env_config['postgres'], 'scrapedb')
+
 OPENAI_API_KEY = "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"
-WEAVIATE_URL = "https://chatweb3:q0jficzXOA69T5FWgAeT@chatweb3.func.ai:5050"
-CHATDB_URL = "postgresql://chatdb:lVIu2U0lBctiYBScboAJ@chatweb3.func.ai:5433/chatdb"
-SCRAPEDB_URL = "postgresql://chatdb:lVIu2U0lBctiYBScboAJ@chatweb3.func.ai:5433/scrapedb"
 CENTER_API_KEY = 'key8f1af05afe473107c3ea2556'  # TODO: replace with yield version
 ETHERSCAN_API_KEY = 'ZCUTVCPHAJ5YRNB6SZTJN9ZV24FBEX86GJ'
 

@@ -1,0 +1,13 @@
+# Legacy environment (chatweb3 devbox)
+
+postgres:
+  host: chatweb3.func.ai
+  port: 5433
+  user: chatdb
+  password: lVIu2U0lBctiYBScboAJ
+
+weaviate:
+  host: chatweb3.func.ai
+  port: 5050
+  user: chatweb3
+  password: q0jficzXOA69T5FWgAeT
