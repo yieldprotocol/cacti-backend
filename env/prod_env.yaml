@@ -1,5 +1,6 @@
 # Prod environment
 
+# TODO: switch to GCP SQL prod instance
 # GCP SQL dev instance
 postgres:
   host: 10.68.240.3
@@ -8,6 +9,7 @@ postgres:
   password: lVIu2U0lBctiYBScboAJ
 
 # TODO: set up dedicated weaviate instance
+# use legacy devbox for now
 weaviate:
   host: chatweb3.func.ai
   port: 5050

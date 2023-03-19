@@ -1,11 +1,14 @@
+# Dev environment
+
 # GCP SQL dev instance
 postgres:
-  host: 35.231.150.28
+  host: 10.68.240.3
   port: 5432
   user: chatdb
   password: lVIu2U0lBctiYBScboAJ
 
 # TODO: set up dedicated weaviate instance
+# use legacy devbox for now
 weaviate:
   host: chatweb3.func.ai
   port: 5050

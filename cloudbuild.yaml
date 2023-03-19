@@ -22,16 +22,8 @@ steps:
    - '--region'
    - 'us-east1'
 
+# _SERVICE_NAME and _ENV_FILENAME are custom substitutions defined within
+# the GCP Cloud Build triggers
+
 images:
  - 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
-
-substitutions:
-  # _ENV_TAG is defined within the build trigger on GCP Cloud Build (e.g. prod, dev)
-  # The fully qualified Cloud Run service name looks something like chatweb3-backend-prod
-  _SERVICE_NAME: 'chatweb3-backend-${_ENV_TAG}'
-
-  # The *_env.yaml config file within env/ to use
-  _ENV_FILENAME: '${_ENV_TAG}_env.yaml'
-
-options:
-    dynamic_substitutions: true
