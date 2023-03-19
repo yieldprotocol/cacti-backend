@@ -145,7 +145,7 @@ class BasicAgentChat(BaseChat):
         if bot_chat_message_id is not None:
             bot_flush(result)
         else:
-            if result != 'DONE':
+            if 'DONE' not in result:
                 send(Response(response=result))
 
         send(Response(response=f'Response generation took {duration: .2f}s', actor='system'))
