@@ -74,13 +74,13 @@ Required parameters:
 -{transactionKeyword}: either SELLAMOUNT if amount refers to token to sell or BUYAMOUNT if amount refers to token to buy
 -{amount}: amount of token described by transaction keyword that we are trying to buy or sell
 ---
-Widget magic command: <|fetch-nft-search({searchString})|>
-Description of widget: This widget is used when we need to search for NFT collections that match a particular topic or phrase.
+Widget magic command: <|fetch-nft-search-collection-by-name({searchString})|>
+Description of widget: This widget is used when we need to search for NFT collections with names that match a particular phrase.
 Connected wallet required: no
 Required parameters:
--{searchString}: string of keywords to search NFT collections with
+-{searchString}: string of keywords to search NFT collection names with
 Return value description:
--a list of NFT collections
+-a list of text describing NFT collections
 ---
 Widget magic command: <|fetch-nft-search-collection-by-trait({network},{address},{traitName},{traitValue})|>
 Description of widget: This widget is used when we need to search within an NFT collection for assets with a particular trait.
@@ -91,16 +91,16 @@ Required parameters:
 -{traitName}: name of trait
 -{traitValue}: value of trait
 Return value description:
--a list of NFT assets
+-a list of text describing NFT assets
 ---
-Widget magic command: <|fetch-nft-collection({network},{address})|>
-Description of widget: This widget is used when we need to retrieve data of an NFT collection given its network and address.
+Widget magic command: <|fetch-nft-collection-info({network},{address})|>
+Description of widget: This widget is used when we need to retrieve data and assets of an NFT collection given its network and address.
 Connected wallet required: no
 Required parameters:
 -{network}: network of the NFT collection
 -{address}: contract address of the NFT collection
 Return value description:
--JSON object with data about the NFT collection
+-text with data and some assets of the NFT collection
 ---
 Widget magic command: <|fetch-nft-collection-traits({network},{address})|>
 Description of widget: This widget is used when we need to retrieve traits of an NFT collection given its network and address.
@@ -109,7 +109,7 @@ Required parameters:
 -{network}: network of the NFT collection
 -{address}: contract address of the NFT collection
 Return value description:
--a list of JSON objects representing traits of the NFT collection
+-a list of text describing traits of the NFT collection
 ---
 Widget magic command: <|fetch-nft-collection-trait-values({network},{address},{traitName})|>
 Description of widget: This widget is used when we need to retrieve trait values of a trait of an NFT collection given its network and address.
@@ -119,27 +119,17 @@ Required parameters:
 -{address}: contract address of the NFT collection
 -{traitName}: name of trait to fetch values of
 Return value description:
--a list of JSON objects representing values of the trait of the NFT collection
+-a list of text describing values of the trait of the NFT collection
 ---
-Widget magic command: <|fetch-nft-asset({network},{address},{tokenID})|>
-Description of widget: This widget is used when we need to retrieve data of an NFT asset in a collection given its network, address, and token ID.
+Widget magic command: <|fetch-nft-asset-info({network},{address},{tokenID})|>
+Description of widget: This widget is used when we need to retrieve data and traits of an NFT asset in a collection given its network, address, and token ID.
 Connected wallet required: no
 Required parameters:
 -{network}: network of the NFT asset
 -{address}: contract address of the NFT asset
 -{tokenID}: token ID of the asset
 Return value description:
--JSON object with data about the NFT asset
----
-Widget magic command: <|fetch-nft-asset-traits({network},{address},{tokenID})|>
-Description of widget: This widget is used when we need to retrieve traits of an NFT asset in a collection given its network, address, and token ID.
-Connected wallet required: no
-Required parameters:
--{network}: network of the NFT asset
--{address}: contract address of the NFT asset
--{tokenID}: token ID of the asset
-Return value description:
--JSON object with trait names and values of the NFT asset
+-text with data and list of trait names and values of the NFT asset
 ---
 Widget magic command: <|fetch-eval({expression})|>
 Description of widget: This widget is used when we need to calculate an arbitrary mathematical expression.

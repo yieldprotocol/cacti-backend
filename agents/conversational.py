@@ -20,8 +20,8 @@ class CustomConversationalAgent(ConversationalAgent):
         prior = match.group(1)
         action = match.group(2)
         action_input = match.group(3)
-        action_input = action_input.strip(" ").strip('"')
-        prior = prior.strip(" ").strip('"')
+        action_input = action_input.strip(" ")
+        prior = prior.strip(" ")
         action_input = f"{action_input}, given {prior}"
         return action.strip(), action_input
 

@@ -31,9 +31,9 @@ TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget ma
 Use the following format:
 
 ## Thought: describe what you are trying to solve from input
-## Candidate Widget Commands: relevant widget magic commands to respond to input
-## Known Parameters: input parameter-value pairs representing inputs to the above widget magic command(s), expressed in the correct format as known info strings, or as calls to other fetch- commands
-## Response: final tool response to input, MUST be synthesized using ONLY the correct widget magic commands with ALL their respective input parameter values
+## Widget Command: most relevant widget magic command to respond to input
+## Known Parameters: input parameter-value pairs representing inputs to the above widget magic command, expressed in the correct format as known info strings, or as calls to other fetch- commands
+## Response: final tool response to input as a widget magic command with ALL their respective input parameter values (omit parameter names)
 
 Is wallet connected: {connected}
 Tool input: {question}
@@ -144,19 +144,21 @@ def replace_match(m: re.Match) -> str:
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []
     print('found command:', command, params)
-    if command == 'fetch-nft-search':
+    if command == 'fetch-nft-search-collection-by-name':
         return str(fetch_nft_search(*params))
     elif command == 'fetch-nft-search-collection-by-trait':
         return str(fetch_nft_search_collection_by_trait(*params))
-    elif command == 'fetch-nft-collection':
-        return str(fetch_nft_collection(*params))
+    elif command == 'fetch-nft-collection-info':
+        #return str(fetch_nft_collection(*params))
+        # we also fetch some collection assets as a convenience
+        return str(fetch_nft_collection_assets(*params))
     elif command == 'fetch-nft-collection-traits':
         return str(fetch_nft_collection_traits(*params))
     elif command == 'fetch-nft-collection-trait-values':
         return str(fetch_nft_collection_trait_values(*params))
-    elif command == 'fetch-nft-asset':
-        return str(fetch_nft_asset(*params))
-    elif command == 'fetch-nft-asset-traits':
+    elif command == 'fetch-nft-asset-info':
+        #return str(fetch_nft_asset(*params))
+        # we also fetch traits as a convenience
         return str(fetch_nft_asset_traits(*params))
     elif command == 'fetch-eval':
         return str(safe_eval(*params))
@@ -285,6 +287,12 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
 @error_wrap
 def fetch_nft_collection(network: str, address: str) -> str:
     return str(center.fetch_nft_collection(network, address))
+
+
+@error_wrap
+def fetch_nft_collection_assets(network: str, address: str) -> str:
+    ret = center.fetch_nft_collection_assets(network, address)
+    return str(ret)
 
 
 @error_wrap
