@@ -18,7 +18,8 @@ NETWORKS = [
     "polygon-mainnet",
 ]
 API_URL = "https://api.center.dev/v1"
-MAX_RESULTS = 100
+MAX_RESULTS = 10
+PAGE_LIMIT = 10
 
 
 @dataclass
@@ -143,6 +144,22 @@ class NFTAssetTraits(ContainerMixin):
         )
 
 
+@dataclass
+class NFTCollectionAssets(ContainerMixin):
+    collection: NFTCollection
+    assets: List[NFTAsset]
+
+    def container_name(self) -> str:
+        return 'display-nft-collection-assets-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            collection=self.collection.struct(),
+            assets=[asset.struct() for asset in self.assets],
+        )
+        return dataclass_to_container_params(self)
+
+
 def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
     q = urlencode(dict(
         query=search_str,
@@ -172,7 +189,7 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
         "content-type": "application/json",
         **HEADERS
     }
-    limit = 100
+    limit = PAGE_LIMIT
     offset = 0
     ret = []
     while len(ret) < MAX_RESULTS:
@@ -214,9 +231,42 @@ def fetch_nft_collection(network: str, address: str) -> NFTCollection:
     )
 
 
+def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAssets:
+    collection = fetch_nft_collection(network, address)
+    limit = min(PAGE_LIMIT, collection.num_assets)
+    offset = 0
+    assets = []
+    while offset < min(MAX_RESULTS, collection.num_assets):
+        payload = {"assets": [
+            {"Address": address, "TokenID": str(i + 1)}
+            for i in range(offset, offset + limit)
+        ]}
+        url = f"{API_URL}/{network}/assets"
+        response = requests.post(url, headers=HEADERS, json=payload)
+        response.raise_for_status()
+        obj = response.json()
+        for item in obj:
+            if not item:
+                continue
+            asset = NFTAsset(
+                network=network,
+                address=address,
+                token_id=item['tokenId'],
+                collection_name=item['collectionName'],
+                name=item['name'],
+                preview_image_url=item['mediumPreviewImageUrl'],
+            )
+            assets.append(asset)
+        offset += limit
+    return NFTCollectionAssets(
+        collection=collection,
+        assets=assets,
+    )
+
+
 def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTraits:
     collection = fetch_nft_collection(network, address)
-    limit = 100
+    limit = PAGE_LIMIT
     offset = 0
     traits = []
     while len(traits) < MAX_RESULTS:
@@ -255,7 +305,7 @@ def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTrai
 
 def fetch_nft_collection_trait_values(network: str, address: str, trait: str) -> NFTCollectionTraitValues:
     collection = fetch_nft_collection(network, address)
-    limit = 100
+    limit = PAGE_LIMIT
     offset = 0
     values = []
     while len(values) < MAX_RESULTS:

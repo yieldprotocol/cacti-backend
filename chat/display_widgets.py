@@ -54,6 +54,17 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
         lines.extend([
             f"An NFT collection, named {params['name']}, with network {params['network']} and address {params['address']}, with {params['numAssets']} assets.",
         ])
+    elif command == 'nft-collection-assets-container':
+        params = json.loads(params)
+        collection = params['collection']
+        assets = params['assets']
+        lines.extend([
+            _widgetize(collection['name'], json.dumps(collection['params']), depth=depth + 1),
+            "Here are some of the assets in the collection:",
+        ] + [
+            _widgetize(asset['name'], json.dumps(asset['params']), depth=depth + 1)
+            for asset in assets
+        ])
     elif command == 'nft-collection-traits-container':
         params = json.loads(params)
         lines.extend([
