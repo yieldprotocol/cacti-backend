@@ -131,14 +131,6 @@ Required parameters:
 Return value description:
 -text with data and list of trait names and values of the NFT asset
 ---
-Widget magic command: <|fetch-eval({expression})|>
-Description of widget: This widget is used when we need to calculate an arbitrary mathematical expression.
-Connected wallet required: no
-Required parameters:
--{expression}: mathematical expression to calculate
-Return value description:
--the evaluated mathematical expression in numerical form
----
 Widget magic command: <|fetch-yields({token},{network},{count})|>
 Description of widget: This widget is used when the user wants the yields for crypto assets. The user may not specify all parameters so do not guess any parameter.
 Connected wallet required: no
