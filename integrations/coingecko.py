@@ -19,7 +19,8 @@ def get_top_nft_by_24h_native_token():
     response = requests.get(url)
     response.raise_for_status()
     result = response.json()
-    return result
+    return ','.join(["{name} on address {contract_address}".format(name=item['name'],contract_address=item['contract_address'])  for item in result])
+
 
 """
 List all supported NFT, ordered by floor price of native token
@@ -40,7 +41,8 @@ def get_top_nft_by_floor_price_native_token():
     response = requests.get(url)
     response.raise_for_status()
     result = response.json()
-    return result
+    return ','.join(["{name} on address {contract_address}".format(name=item['name'],contract_address=item['contract_address'])  for item in result])
+
 
 """
 List all supported NFT, ordered by market cap of native token
@@ -61,7 +63,8 @@ def get_top_nft_by_market_cap_native_token():
     response = requests.get(url)
     response.raise_for_status()
     result = response.json()
-    return result
+    return ','.join(["{name} on address {contract_address}".format(name=item['name'],contract_address=item['contract_address'])  for item in result])
+
 
 """
 List all supported NFT, ordered by market cap of USD
@@ -82,7 +85,8 @@ def get_top_nft_by_marketcap_usd():
     response = requests.get(url)
     response.raise_for_status()
     result = response.json()
-    return result
+    return ','.join(["{name} on address {contract_address}".format(name=item['name'],contract_address=item['contract_address'])  for item in result])
+
 
 
 """
@@ -111,7 +115,8 @@ def get_top_searched_token_last_24h():
     response = requests.get(url)
     response.raise_for_status()
     result = response.json()
-    return result
+    return ','.join(["{name} with symbol {symbol}".format(name=item['item']['name'],symbol=item['item']['symbol'])  for item in result])
+
 
 """
 Get Top 100 Cryptocurrency Global Decentralized Finance(defi) data
@@ -187,7 +192,8 @@ def get_top_public_companies_holding_bitcoin():
     response = requests.get(url)
     response.raise_for_status()
     result = response.json()['companies']
-    return result
+    return ','.join(["{name} with total holding of {total_holdings}".format(name=item['name'],total_holdings=item['total_holdings'])  for item in result])
+
 
 
 """
@@ -213,5 +219,6 @@ def get_top_public_companies_holding_eth():
     response = requests.get(url)
     response.raise_for_status()
     result = response.json()['companies']
-    return result
+    return ','.join(["{name} with total holding of {total_holdings}".format(name=item['name'],total_holdings=item['total_holdings'])  for item in result])
+
 
