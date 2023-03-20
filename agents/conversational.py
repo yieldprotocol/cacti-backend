@@ -13,7 +13,7 @@ class CustomConversationalAgent(ConversationalAgent):
     def _extract_tool_and_input(self, llm_output: str) -> Optional[Tuple[str, str]]:
         if f"{self.ai_prefix}:" in llm_output:
             return self.ai_prefix, llm_output.split(f"{self.ai_prefix}:")[-1].strip()
-        regex = r"Prior Observations: (.*?)[\n]*Action Reasoning: .*?[\n]*Action: (.*?)[\n]*Action Input: (.*)"
+        regex = r"Prior Observations: (.*?)[\n]*Action: (.*?)[\n]*Action Input: (.*)"
         match = re.search(regex, llm_output)
         if not match:
             raise ValueError(f"Could not parse LLM output: `{llm_output}`")
