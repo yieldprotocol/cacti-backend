@@ -51,7 +51,7 @@ class IndexAppInfoTool(IndexLookupTool):
         super().__init__(
             *args,
             _chain=chain,
-            content_description="common questions and answers about the app, what it can do, how to interact with it, how to perform certain actions. It does not know general information about the web3 ecosystem.",
+            content_description="common questions and answers about the chat assistant app, what it can do, how to interact with it, at a high-level. Only useful for questions about the chat app experience. It does not know specific information about the web3 ecosystem, of tokens or NFTs or contracts, or access to live data and APIs.",
             input_description="a standalone query with all relevant contextual details pertaining to the chat web application",
             output_description="an answer to the question, with suggested follow-up questions if available",
             **kwargs
