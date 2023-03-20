@@ -1,6 +1,5 @@
 Widget magic command: <|display-transfer({token},{amount},{address})|>
 Description of widget: This widget is used to transfer a token from a user's wallet to another address.
-Connected wallet required: yes
 Required parameters:
 -{token}: symbol of the token being transferred
 -{amount}: quantity to transfer
@@ -8,31 +7,29 @@ Required parameters:
 ---
 Widget magic command: <|fetch-price({baseToken},{quoteToken})|>
 Description of widget: This widget is used to get the price of a token.
-Connected wallet required: no
 Required parameters:
 -{baseToken}: token to get the price of
 -{quoteToken}: token to use as units for price
 Return value description:
 -price of a base token in units of a quote token.
 ---
-Widget magic command: <|fetch-wallet()|>
-Description of widget: This widget is used when we need the wallet address.
-Connected wallet required: yes
-Return value description:
--address of connected wallet
----
 Widget magic command: <|fetch-balance({token},{address})|>
 Description of widget: This widget is used when we need the balance of a token in an account or wallet
-Connected wallet required: no
 Required parameters:
 -{token}: token to get the balance of.
 -{address}: address of the account or wallet to check the balance of
 Return value description:
 -balance of a token in an account or wallet, in decimal units
 ---
+Widget magic command: <|fetch-my-balance({token})|>
+Description of widget: This widget is used when we need the balance of a token in the user's connected wallet
+Required parameters:
+-{token}: token to get the balance of.
+Return value description:
+-balance of a token in connected wallet, in decimal units
+---
 Widget magic command: <|fetch-transactions({address},{last_n})|>
 Description of widget: This widget is used when we need the transaction details in an account or wallet
-Connected wallet required: no
 Required parameters:
 -{address}: address of the account or wallet to check the transactions of
 -{last_n}: how many latest transactions the user wants to get.
@@ -41,7 +38,6 @@ Return value description:
 ---
 Widget magic command: <|fetch-gas({address})|>
 Description of widget: This widget is used when we need the all gas used for transactions in an account or wallet
-Connected wallet required: no
 Required parameters:
 -{address}: address of the account or wallet to check the gas of
 Return value description:
@@ -49,7 +45,6 @@ Return value description:
 ---
 Widget magic command: <|fetch-eth-in({address})|>
 Description of widget: This widget is used when we need the all ETH inflow into an account or wallet
-Connected wallet required: no
 Required parameters:
 -{address}: address of the account or wallet to check the inflow ETH
 Return value description:
@@ -57,7 +52,6 @@ Return value description:
 ---
 Widget magic command: <|fetch-eth-out({address})|>
 Description of widget: This widget is used when we need the all ETH outflow from an account or wallet
-Connected wallet required: no
 Required parameters:
 -{address}: address of the account or wallet to check the outflow ETH
 Return value description:
@@ -67,7 +61,6 @@ Widget magic command: <|display-uniswap({tokenToSell},{tokenToBuy},{transactionK
 Description of widget: This widget is used when we need to use the Uniswap decentralized application for trading one token for another. To create a Uniswap transaction, you need either:
 1.) A token to sell, a token to buy, the transaction keyword "SELLAMOUNT", and an amount to sell, OR
 2.) A token to sell, a token to buy, the transaction keyword "BUYAMOUNT", and an amount to buy.
-Connected wallet required: yes
 Required parameters:
 -{tokenToSell}: token to sell in the swap transaction
 -{tokenToBuy}: token to buy in the swap transaction
@@ -76,7 +69,6 @@ Required parameters:
 ---
 Widget magic command: <|fetch-nft-search-collection-by-name({searchString})|>
 Description of widget: This widget is used when we need to search for NFT collections with names that match a particular phrase.
-Connected wallet required: no
 Required parameters:
 -{searchString}: string of keywords to search NFT collection names with
 Return value description:
@@ -84,7 +76,6 @@ Return value description:
 ---
 Widget magic command: <|fetch-nft-search-collection-by-trait({network},{address},{traitName},{traitValue})|>
 Description of widget: This widget is used when we need to search within an NFT collection for assets with a particular trait.
-Connected wallet required: no
 Required parameters:
 -{network}: network of the NFT collection
 -{address}: contract address of the NFT collection
@@ -95,7 +86,6 @@ Return value description:
 ---
 Widget magic command: <|fetch-nft-collection-info({network},{address})|>
 Description of widget: This widget is used when we need to retrieve data and assets of an NFT collection given its network and address.
-Connected wallet required: no
 Required parameters:
 -{network}: network of the NFT collection
 -{address}: contract address of the NFT collection
@@ -104,7 +94,6 @@ Return value description:
 ---
 Widget magic command: <|fetch-nft-collection-traits({network},{address})|>
 Description of widget: This widget is used when we need to retrieve traits of an NFT collection given its network and address.
-Connected wallet required: no
 Required parameters:
 -{network}: network of the NFT collection
 -{address}: contract address of the NFT collection
@@ -113,7 +102,6 @@ Return value description:
 ---
 Widget magic command: <|fetch-nft-collection-trait-values({network},{address},{traitName})|>
 Description of widget: This widget is used when we need to retrieve trait values of a trait of an NFT collection given its network and address.
-Connected wallet required: no
 Required parameters:
 -{network}: network of the NFT collection
 -{address}: contract address of the NFT collection
@@ -123,7 +111,6 @@ Return value description:
 ---
 Widget magic command: <|fetch-nft-asset-info({network},{address},{tokenID})|>
 Description of widget: This widget is used when we need to retrieve data and traits of an NFT asset in a collection given its network, address, and token ID.
-Connected wallet required: no
 Required parameters:
 -{network}: network of the NFT asset
 -{address}: contract address of the NFT asset
@@ -133,7 +120,6 @@ Return value description:
 ---
 Widget magic command: <|fetch-yields({token},{network},{count})|>
 Description of widget: This widget is used when the user wants the yields for crypto assets. The user may not specify all parameters so do not guess any parameter.
-Connected wallet required: no
 Parameters:
 -{token}: token to get the yield for. Normalize the token name to its popular symbol representation in the ecoystem. Use "*" when parameter not available or the user wants all tokens
 -{network}: blockchain to get the yield for. Normalize the network name to its popular representation in the ecosystem. Use "*" when parameter not available or the user wants all networks
@@ -143,7 +129,6 @@ Return value description:
 ---
 Widget magic command: <|ens-from-address({address})|>
 Description of widget: This widget is used when the user wants the ENS domain name (*.eth) for a wallet address
-Connected wallet required: no
 Required Parameters:
 -{address}: address of the account or wallet
 Return value description:
@@ -151,7 +136,6 @@ Return value description:
 ---
 Widget magic command: <|address-from-ens({domain})|>
 Description of widget: This widget is used when the user wants the wallet address for an ENS domain name (*.eth)
-Connected wallet required: no
 Required Parameters:
 -{domain}: domain name of the account or wallet
 Return value description:
@@ -159,7 +143,6 @@ Return value description:
 ---
 Widget magic command: <|display-yield-farm({project},{network}, {token}, {amount})|>
 Description of widget: This widget is used when the user wants to yield farm by putting tokens or depositing tokens of a certain amount in a project on a network
-Connected wallet required: yes
 Required Parameters:
 -{project}: name of the project to deposit the token in
 -{network}: network or blockchain of the project. Default to Ethereum if not specified
