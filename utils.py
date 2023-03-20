@@ -12,8 +12,8 @@ def _get_weaviate_url(config):
     return f"https://{config['user']}:{config['password']}@{config['host']}:{config['port']}"
 
 
-def _get_postgres_table_url(config, table_name):
-    return f"postgresql://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{table_name}"
+def _get_postgres_table_url(config, database_name):
+    return f"postgresql://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{database_name}"
 
 
 WEAVIATE_URL = _get_weaviate_url(env.env_config['weaviate'])

@@ -1,6 +1,7 @@
 import os
 import logging
 log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 import pathlib
 
 import yaml
