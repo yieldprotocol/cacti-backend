@@ -24,7 +24,11 @@ from .index_lookup import IndexLookupTool
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
 
 
-TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget magic commands that you can delegate work to, by invoking them and chaining them together, to provide a response to an input query. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>" specifying the command and its input parameters. They can only be used with all parameters having known and assigned values, otherwise, they have to be kept secret. The command may either have a display- or a fetch- prefix. When you return a display- command, the user will see data, an interaction box, or other inline item rendered in its place. When you return a fetch- command, data is fetched over an API and injected in place. Fetch- commands can be nested in other magic commands, and will be resolved recursively, for example, "<|command1(parameter1, <|command2(parameter2)|>)|>". Users cannot type or use magic commands, so do not tell them to use them. Fill in the command with parameters as inferred from the input. If there are missing parameters, do not use magic commands but mention what parameters are needed instead. If the widget requires a connected wallet that is not available, state that a connected wallet is needed, and don't use any magic commands. If there is no appropriate widget available, explain that more information is needed. Do not make up a non-existent widget magic command, only use the applicable ones for the situation, and only if all parameters are available. You might need to use the output of widget magic commands as the input to another to get your final answer. Here are the widgets that may be relevant:
+class ConnectedWalletRequired(Exception):
+    pass
+
+
+TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget magic commands that you can delegate work to, by invoking them and chaining them together, to provide a response to an input query. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>" specifying the command and its input parameters. They can only be used with all parameters having known and assigned values, otherwise, they have to be kept secret. The command may either have a display- or a fetch- prefix. When you return a display- command, the user will see data, an interaction box, or other inline item rendered in its place. When you return a fetch- command, data is fetched over an API and injected in place. Users cannot type or use magic commands, so do not tell them to use them. Fill in the command with parameters as inferred from the input. If there are missing parameters, do not use magic commands but mention what parameters are needed instead. If there is no appropriate widget available, explain that more information is needed. Do not make up a non-existent widget magic command, only use the applicable ones for the situation, and only if all parameters are available. You might need to use the output of widget magic commands as the input to another to get your final answer. Here are the widgets that may be relevant:
 ---
 {task_info}
 ---
@@ -32,10 +36,9 @@ Use the following format:
 
 ## Thought: describe what you are trying to solve from input
 ## Widget Command: most relevant widget magic command to respond to input
-## Known Parameters: input parameter-value pairs representing inputs to the above widget magic command, expressed in the correct format as known info strings, or as calls to other fetch- commands
-## Response: final tool response to input as a widget magic command with ALL their respective input parameter values (omit parameter names)
+## Known Parameters: input parameter-value pairs representing inputs to the above widget magic command
+## Response: final tool response to input as a widget magic command with ALL its respective input parameter values (omit parameter names)
 
-Is wallet connected: {connected}
 Tool input: {question}
 ## Thought:'''
 
@@ -52,7 +55,7 @@ class IndexWidgetTool(IndexLookupTool):
             **kwargs
     ) -> None:
         prompt = PromptTemplate(
-            input_variables=["task_info", "question", "connected"],
+            input_variables=["task_info", "question"],
             template=TEMPLATE,
         )
 
@@ -116,7 +119,6 @@ class IndexWidgetTool(IndexLookupTool):
         example = {
             "task_info": task_info,
             "question": query,
-            "connected": "Yes" if context.get_wallet_address() else "No",
             "stop": "User",
         }
         result = self._chain.run(example)
@@ -160,10 +162,10 @@ def replace_match(m: re.Match) -> str:
         #return str(fetch_nft_asset(*params))
         # we also fetch traits as a convenience
         return str(fetch_nft_asset_traits(*params))
-    elif command == 'fetch-wallet':
-        return str(context.get_wallet_address())
     elif command == 'fetch-balance':
         return str(fetch_balance(*params))
+    elif command == 'fetch-my-balance':
+        return str(fetch_my_balance(*params))
     elif command == 'fetch-eth-in':
         return str(fetch_eth_in(*params))
     elif command == 'fetch-eth-out':
@@ -189,6 +191,8 @@ def error_wrap(fn):
     def wrapped_fn(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
+        except ConnectedWalletRequired:
+            return "A connected wallet is required. Please connect one and try again."
         except Exception as e:
             traceback.print_exc()
             return f'Got exception evaluating {fn.__name__}(args={args}, kwargs={kwargs}): {e}'
@@ -199,6 +203,14 @@ def error_wrap(fn):
 def fetch_balance(token: str, wallet_address: str) -> str:
     contract_address = etherscan.get_contract_address(token)
     return etherscan.get_balance(contract_address, wallet_address)
+
+
+@error_wrap
+def fetch_my_balance(token: str) -> str:
+    wallet_address = context.get_wallet_address()
+    if not wallet_address:
+        raise ConnectedWalletRequired
+    return fetch_balance(token, wallet_address)
 
 
 @error_wrap
