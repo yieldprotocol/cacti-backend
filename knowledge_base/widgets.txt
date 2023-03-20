@@ -141,6 +141,50 @@ Required parameters:
 Return value description:
 -JSON object with trait names and values of the NFT asset
 ---
+Widget magic command: <|fetch-nft-list-order-by-trading-volume-native-token()|>
+Description of widget: List all supported NFT, ordered by 24h trading volume of native token
+Connected wallet required: no
+---
+Widget magic command: <|fetch-nft-list-order-by-floor-price()|>
+Description of widget: List all supported NFT, ordered by floor price of native token
+Connected wallet required: no
+---
+Widget magic command: <|fetch-nft-list-order-by-market-cap-native-token()|>
+Description of widget: List all supported NFT, ordered by market cap of native token
+Connected wallet required: no
+---
+Widget magic command: <|fetch-nft-list-order-by-market-cap-usd()|>
+Description of widget: List all supported NFT, ordered by market cap of USD
+Connected wallet required: no
+---
+Widget magic command: <|fetch-top-searched-token()|>
+Description of widget: Top-7 trending coins on CoinGecko as searched by users in the last 24 hours (Ordered by most popular first)
+Connected wallet required: no
+---
+Widget magic command: <|fetch-defi-market-cap()|>
+Description of widget: Get Defi Market Cap
+Connected wallet required: no
+---
+Widget magic command: <|fetch-ether-market-cap()|>
+Description of widget: Get Ether Market Cap
+Connected wallet required: no
+---
+Widget magic command: <|fetch-trading-volume-last-24h()|>
+Description of widget: Get Trading Volume in the last 24h
+Connected wallet required: no
+---
+Widget magic command: <|fetch-top-coin-volume()|>
+Description of widget: Get Top Coin Volume
+Connected wallet required: no
+---
+Widget magic command: <|fetch-top-public-companies-holding-bitcoin()|>
+Description of widget: Get public companies bitcoin holdings (Ordered by total holdings descending)
+Connected wallet required: no
+---
+Widget magic command: <|fetch-top-public-companies-holding-ether()|>
+Description of widget: Get public companies ethereum holdings (Ordered by total holdings descending)
+Connected wallet required: no
+---
 Widget magic command: <|fetch-eval({expression})|>
 Description of widget: This widget is used when we need to calculate an arbitrary mathematical expression.
 Connected wallet required: no

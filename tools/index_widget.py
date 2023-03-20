@@ -18,6 +18,11 @@ from chat.container import ContainerMixin, dataclass_to_container_params
 from integrations import (
     etherscan, defillama, center,
 )
+from integrations.coingecko import get_top_nft_by_24h_native_token, \
+    get_top_nft_by_floor_price_native_token, get_top_nft_by_market_cap_native_token, \
+    get_top_nft_by_marketcap_usd, get_top_searched_token_last_24h, get_defi_market_cap, \
+    get_eth_market_cap, get_trading_volume_last_24h, get_top_coin_name, \
+    get_top_public_companies_holding_bitcoin, get_top_public_companies_holding_eth
 from .index_lookup import IndexLookupTool
 
 
@@ -158,6 +163,28 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_nft_asset(*params))
     elif command == 'fetch-nft-asset-traits':
         return str(fetch_nft_asset_traits(*params))
+    elif command == 'fetch-nft-list-order-by-trading-volume-native-token':
+        return str(get_top_nft_by_24h_native_token())
+    elif command == 'fetch-nft-list-order-by-floor-price':
+        return str(get_top_nft_by_floor_price_native_token())
+    elif command == 'fetch-nft-list-order-by-market-cap-native-token':
+        return str(get_top_nft_by_market_cap_native_token())
+    elif command == 'fetch-nft-list-order-by-market-cap-usd':
+        return str(get_top_nft_by_marketcap_usd())
+    elif command == 'fetch-top-searched-token':
+        return str(get_top_searched_token_last_24h())
+    elif command == 'fetch-defi-market-cap':
+        return str(get_defi_market_cap())
+    elif command == 'fetch-ether-market-cap':
+        return str(get_eth_market_cap())
+    elif command == 'fetch-trading-volume-last-24h':
+        return str(get_trading_volume_last_24h())
+    elif command == 'fetch-top-coin-volume':
+        return str(get_top_coin_name())
+    elif command == 'fetch-top-public-companies-holding-bitcoin':
+        return str(get_top_public_companies_holding_bitcoin())
+    elif command == 'fetch-top-public-companies-holding-ether':
+        return str(get_top_public_companies_holding_eth())
     elif command == 'fetch-eval':
         return str(safe_eval(*params))
     elif command == 'fetch-wallet':
