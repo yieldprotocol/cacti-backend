@@ -34,13 +34,12 @@ TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget ma
 ---
 Use the following format:
 
-## Thought: describe what you are trying to solve from input
 ## Widget Command: most relevant widget magic command to respond to input
 ## Known Parameters: input parameter-value pairs representing inputs to the above widget magic command
-## Response: final tool response to input as a widget magic command with ALL its respective input parameter values (omit parameter names)
+## Response: return the widget magic command with ALL its respective input parameter values (omit parameter names)
 
 Tool input: {question}
-## Thought:'''
+## Widget Command:'''
 
 
 @registry.register_class
@@ -146,9 +145,9 @@ def replace_match(m: re.Match) -> str:
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []
     print('found command:', command, params)
-    if command == 'fetch-nft-search-collection-by-name':
+    if command == 'fetch-nft-search':
         return str(fetch_nft_search(*params))
-    elif command == 'fetch-nft-search-collection-by-trait':
+    elif command == 'fetch-nft-collection-assets-by-trait':
         return str(fetch_nft_search_collection_by_trait(*params))
     elif command == 'fetch-nft-collection-info':
         #return str(fetch_nft_collection(*params))
