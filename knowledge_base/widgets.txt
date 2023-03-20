@@ -67,22 +67,22 @@ Required parameters:
 -{transactionKeyword}: either SELLAMOUNT if amount refers to token to sell or BUYAMOUNT if amount refers to token to buy
 -{amount}: amount of token described by transaction keyword that we are trying to buy or sell
 ---
-Widget magic command: <|fetch-nft-search-collection-by-name({searchString})|>
-Description of widget: This widget is used when we need to search for NFT collections with names that match a particular phrase.
+Widget magic command: <|fetch-nft-search({query})|>
+Description of widget: This widget is used when we need to search for NFT collections given a query phrase, a description, or a name.
 Required parameters:
--{searchString}: string of keywords to search NFT collection names with
+-{query}: string of keywords to describe the kind of NFT collections to find
 Return value description:
--a list of text describing NFT collections
+-a list of text describing NFT collections that were found
 ---
-Widget magic command: <|fetch-nft-search-collection-by-trait({network},{address},{traitName},{traitValue})|>
-Description of widget: This widget is used when we need to search within an NFT collection for assets with a particular trait.
+Widget magic command: <|fetch-nft-collection-assets-by-trait({network},{address},{traitName},{traitValue})|>
+Description of widget: This widget is used when we need to list assets with a particular trait name and value from a specific NFT collection given its network and address. Don't use this if we don't have the collection network and address.
 Required parameters:
 -{network}: network of the NFT collection
 -{address}: contract address of the NFT collection
 -{traitName}: name of trait
 -{traitValue}: value of trait
 Return value description:
--a list of text describing NFT assets
+-a list of text describing NFT assets that match the trait value
 ---
 Widget magic command: <|fetch-nft-collection-info({network},{address})|>
 Description of widget: This widget is used when we need to retrieve data and assets of an NFT collection given its network and address.
