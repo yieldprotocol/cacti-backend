@@ -229,8 +229,9 @@ def fetch_gas(wallet_address: str) -> str:
 
 class ListContainer(ContainerMixin, list):
     def message_prefix(self) -> str:
-        if len(self) > 0:
-            return f"I found {len(self)} results: "
+        num = len(self)
+        if num > 0:
+            return f"I found {num} result{'s' if num > 1 else ''}: "
         else:
             return "I did not find any results."
 
