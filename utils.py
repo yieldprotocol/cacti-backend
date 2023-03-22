@@ -23,6 +23,7 @@ SCRAPEDB_URL = _get_postgres_table_url(env.env_config['postgres'], 'scrapedb')
 OPENAI_API_KEY = "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"
 CENTER_API_KEY = 'key8f1af05afe473107c3ea2556'  # TODO: replace with yield version
 ETHERSCAN_API_KEY = 'ZCUTVCPHAJ5YRNB6SZTJN9ZV24FBEX86GJ'
+OPENSEA_API_KEY = os.getenv('OPENSEA_API_KEY', '')
 
 
 def set_api_key():
