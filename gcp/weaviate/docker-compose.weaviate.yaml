@@ -1,0 +1,34 @@
+# docker-compose.yaml file for running Weaviate on GCP
+
+# In order for changes to be reflected within the Weaviate instances running on GCP:
+# - Upload this file to cloud storage:
+#     gcloud storage cp docker-compose.weaviate.yaml gs://chatweb3/docker-compose.weaviate.yaml
+# - Reset the relevant weaviate VM instances (weaviate-dev, weaviate-prod). This can be done
+#   through the GCP console.
+#   Upon restarting, the VM will spin up Weaviate using the updated
+#   docker-compose.yaml file.
+
+---
+version: '3.4'
+services:
+  weaviate:
+    volumes:
+    - /mnt/data/weaviate:/var/lib/weaviate
+    command:
+    - --host
+    - 0.0.0.0
+    - --port
+    - '8080'
+    - --scheme
+    - http
+    image: semitechnologies/weaviate:1.17.1
+    ports:
+    - 8080:8080
+    restart: on-failure:0
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'text2vec-openai'
+      ENABLE_MODULES: 'text2vec-openai'
+      CLUSTER_HOSTNAME: 'node1'
