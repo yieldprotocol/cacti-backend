@@ -9,7 +9,7 @@ import env
 
 
 def _get_weaviate_url(config):
-    return f"https://{config['user']}:{config['password']}@{config['host']}:{config['port']}"
+    return f"{config.get('protocol', 'https')}://{config['user']}:{config['password']}@{config['host']}:{config['port']}"
 
 
 def _get_postgres_table_url(config, database_name):
