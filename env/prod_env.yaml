@@ -2,15 +2,16 @@
 
 # GCP SQL instance: chat-db-prod
 postgres:
-  host: 10.68.240.10
+  host: 34.23.222.69
   port: 5432
   user: chatdb
   password: lVIu2U0lBctiYBScboAJ
 
-# TODO: set up dedicated weaviate instance
-# use legacy devbox for now
+# TODO: set up https
+# GCP VM: weaviate-prod
 weaviate:
-  host: chatweb3.func.ai
-  port: 5050
+  protocol: http
+  host: 35.231.214.53
+  port: 8080
   user: chatweb3
   password: q0jficzXOA69T5FWgAeT
