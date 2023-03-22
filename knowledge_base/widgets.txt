@@ -118,7 +118,7 @@ Required parameters:
 Return value description:
 -a list of text describing values of the trait of the NFT collection
 ---
-Widget magic command: <|fetch-nft-asset-info({network},{address},{tokenID})|>
+Widget magic command: <|fetch-nft-asset-traits({network},{address},{tokenID})|>
 Description of widget: This widget is used when we need to retrieve data and traits of an NFT asset in a collection given its network, address, and token ID.
 Required parameters:
 -{network}: network of the NFT asset

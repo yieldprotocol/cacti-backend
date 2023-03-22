@@ -157,9 +157,9 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_nft_collection_traits(*params))
     elif command == 'fetch-nft-collection-trait-values':
         return str(fetch_nft_collection_trait_values(*params))
-    elif command == 'fetch-nft-asset-info':
-        #return str(fetch_nft_asset(*params))
-        # we also fetch traits as a convenience
+    #elif command == 'fetch-nft-asset-info':
+    #    return str(fetch_nft_asset(*params))
+    elif command == 'fetch-nft-asset-traits':
         return str(fetch_nft_asset_traits(*params))
     elif command == 'fetch-nft-buy':
         return str(fetch_nft_buy(*params))
