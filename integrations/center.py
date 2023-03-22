@@ -12,10 +12,9 @@ HEADERS = {
     "accept": "application/json",
     "X-API-Key": utils.CENTER_API_KEY,
 }
-# For now just search two networks
 NETWORKS = [
     "ethereum-mainnet",
-    "polygon-mainnet",
+    #"polygon-mainnet",
 ]
 API_URL = "https://api.center.dev/v1"
 MAX_RESULTS = 10

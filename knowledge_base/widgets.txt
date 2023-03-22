@@ -67,6 +67,15 @@ Required parameters:
 -{transactionKeyword}: either SELLAMOUNT if amount refers to token to sell or BUYAMOUNT if amount refers to token to buy
 -{amount}: amount of token described by transaction keyword that we are trying to buy or sell
 ---
+Widget magic command: <|fetch-nft-buy({network},{address},{tokenID})|>
+Description of widget: This widget is used when we need to buy an NFT asset of a collection on the OpenSea marketplace, given its network, address, and token ID.
+Required parameters:
+-{network}: network of the NFT asset
+-{address}: contract address of the NFT asset
+-{tokenID}: token ID of the asset
+Return value description:
+-a transaction dialog for purchase of the NFT
+---
 Widget magic command: <|fetch-nft-search({query})|>
 Description of widget: This widget is used when we need to search for NFT collections given a query phrase, a description, or a name.
 Required parameters:
