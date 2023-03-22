@@ -16,7 +16,7 @@ import registry
 import streaming
 from chat.container import ContainerMixin, dataclass_to_container_params
 from integrations import (
-    etherscan, defillama, center,
+    etherscan, defillama, center, opensea,
 )
 from .index_lookup import IndexLookupTool
 
@@ -161,6 +161,8 @@ def replace_match(m: re.Match) -> str:
         #return str(fetch_nft_asset(*params))
         # we also fetch traits as a convenience
         return str(fetch_nft_asset_traits(*params))
+    elif command == 'fetch-nft-buy':
+        return str(fetch_nft_buy(*params))
     elif command == 'fetch-balance':
         return str(fetch_balance(*params))
     elif command == 'fetch-my-balance':
@@ -315,6 +317,12 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> str:
 @error_wrap
 def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> str:
     return str(center.fetch_nft_asset_traits(network, address, token_id))
+
+
+@error_wrap
+def fetch_nft_buy(network: str, address: str, token_id: str) -> str:
+    ret = opensea.fetch_nft_buy(network, address, token_id)
+    return ret
 
 
 @error_wrap
