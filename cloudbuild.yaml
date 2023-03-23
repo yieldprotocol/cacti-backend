@@ -4,7 +4,7 @@ steps:
    args: [
     'build', '-t',
     'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}',
-    '--build-arg=ENV_FILENAME=${_ENV_FILENAME}',
+    '--build-arg=ENV_TAG=${_ENV_TAG}',
     '.',
    ]
  # Push the container image to Container Registry
@@ -22,7 +22,7 @@ steps:
    - '--region'
    - 'us-east1'
 
-# _SERVICE_NAME and _ENV_FILENAME are custom substitutions defined within
+# _SERVICE_NAME and _ENV_TAG are custom substitutions defined within
 # the GCP Cloud Build triggers
 
 images:

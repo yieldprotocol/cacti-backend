@@ -1,3 +1,15 @@
+__doc__ = """
+
+Module for handling environment settings
+
+Specify which environment to use via the ENV_TAG environment variable
+e.g. ENV_TAG=dev ./start.sh
+
+To add a new environment, simply cargo-cult an existing .yaml config file
+within this directory and name it <ENV>.yaml.
+
+"""
+
 import os
 import logging
 log = logging.getLogger(__name__)
@@ -7,7 +19,7 @@ import pathlib
 import yaml
 
 
-DEFAULT_ENV_FILENAME = 'legacy_env.yaml'
+DEFAULT_ENV_TAG = 'legacy'
 
 
 def _load_env_file(env_file_path):
@@ -16,7 +28,11 @@ def _load_env_file(env_file_path):
         return yaml.safe_load(f)
 
 
+def _get_env_file_path(env_tag):
+    env_filename = f'{env_tag}.yaml'
+    return pathlib.Path(__file__).parent / env_filename
+
+
 env_config = _load_env_file(
-    pathlib.Path(__file__).parent /
-    os.environ.get('ENV_FILENAME', DEFAULT_ENV_FILENAME)
+    _get_env_file_path(os.environ.get('ENV_TAG', DEFAULT_ENV_TAG))
 )
