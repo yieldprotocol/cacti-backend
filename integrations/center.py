@@ -20,7 +20,7 @@ NETWORKS = [
 ]
 API_URL = "https://api.center.dev/v1"
 MAX_RESULTS = 10
-PAGE_LIMIT = 100
+PAGE_LIMIT = 10
 
 
 @dataclass
@@ -110,6 +110,7 @@ class NFTAsset(ContainerMixin):
     collection_name: str
     name: str
     preview_image_url: str
+    price: Optional[str] = None
 
     def container_name(self) -> str:
         return 'display-nft-asset-container'
@@ -193,8 +194,8 @@ def _is_valid_collection(collection: NFTCollection) -> bool:
     if not collection_traits.traits:
         return False
     # should have listed and valid assets
-    collection_assets = fetch_nft_collection_assets(collection.network, collection.address)
-    if not collection_assets.assets:
+    assets_for_sale = fetch_nft_collection_assets_for_sale(collection.network, collection.address)
+    if not assets_for_sale:
         return False
     return True
 
@@ -213,12 +214,11 @@ def _is_valid_asset(asset: NFTAsset) -> bool:
     return True
 
 
-def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str) -> List[NFTAsset]:
+def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> List[NFTAsset]:
     if network == "ethereum-mainnet":
-        listings = opensea.fetch_contract_listings_with_retries(address)
-        token_ids = set([listing.token_id for listing in listings])
+        token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
     else:
-        token_ids = None
+        token_prices = None
 
     payload = {"query": {trait_name: [trait_value]}}
     headers = {
@@ -238,16 +238,23 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
         response.raise_for_status()
         obj = response.json()
         for item in obj['items']:
+            token_id = item['tokenId']
+            if token_prices is not None:
+                if for_sale_only and token_id not in token_prices:
+                    # filter to only for-sale assets
+                    continue
+                price = token_prices.get(token_id, 'unlisted')
+            else:
+                price = None
             asset = NFTAsset(
                 network=network,
                 address=address,
-                token_id=item['tokenId'],
+                token_id=token_id,
                 collection_name=item['collectionName'],
                 name=item['name'],
                 preview_image_url=item['mediumPreviewImageUrl'],
+                price=price,
             )
-            if token_ids is not None and asset.token_id not in token_ids:
-                continue
             ret.append(asset)
         if obj['onLastPage']:
             break
@@ -271,10 +278,62 @@ def fetch_nft_collection(network: str, address: str) -> NFTCollection:
 
 def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAssets:
     collection = fetch_nft_collection(network, address)
+    token_ids = [str(i + 1) for i in range(collection.num_assets)]
     if collection.network == "ethereum-mainnet":
-        listings = opensea.fetch_contract_listings_with_retries(collection.address)
-        token_ids = list(sorted(set([listing.token_id for listing in listings]), key=lambda token_id: int(token_id)))
+        token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
     else:
+        token_prices = None
+
+    limit = min(PAGE_LIMIT, len(token_ids))
+    offset = 0
+    assets = []
+    while len(assets) < MAX_RESULTS and offset < len(token_ids):
+        payload = {"assets": [
+            {"Address": address, "TokenID": token_id}
+            for token_id in token_ids[offset: offset + limit]
+        ]}
+        url = f"{API_URL}/{network}/assets"
+        response = requests.post(url, headers=HEADERS, json=payload)
+        response.raise_for_status()
+        obj = response.json()
+        for item in obj:
+            if not item:
+                continue
+            token_id = item['tokenId']
+            if token_prices is not None:
+                price = token_prices.get(token_id, 'unlisted')
+            else:
+                price = None
+            asset = NFTAsset(
+                network=network,
+                address=address,
+                token_id=token_id,
+                collection_name=item['collectionName'],
+                name=item['name'],
+                preview_image_url=item['mediumPreviewImageUrl'],
+                price=price,
+            )
+            if not _is_valid_asset(asset):
+                continue
+            assets.append(asset)
+        offset += limit
+    assets = assets[:MAX_RESULTS]
+    return NFTCollectionAssets(
+        collection=collection,
+        assets=assets,
+    )
+
+
+def fetch_nft_collection_assets_for_sale(network: str, address: str) -> List[NFTAsset]:
+    collection = fetch_nft_collection(network, address)
+    if collection.network == "ethereum-mainnet":
+        token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
+        token_ids = list(token_prices.keys())
+        token_ids.sort(key=lambda token_id: int(token_id))
+    else:
+        #assert 0, f'unsupported network: {collection.network}'
+        # for now, we fall back to showing some results
+        token_prices = None
         token_ids = [str(i + 1) for i in range(collection.num_assets)]
 
     limit = min(PAGE_LIMIT, len(token_ids))
@@ -292,23 +351,26 @@ def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAsse
         for item in obj:
             if not item:
                 continue
+            token_id = item['tokenId']
+            if token_prices is not None:
+                price = token_prices.get(token_id, 'unlisted')
+            else:
+                price = None
             asset = NFTAsset(
                 network=network,
                 address=address,
-                token_id=item['tokenId'],
+                token_id=token_id,
                 collection_name=item['collectionName'],
                 name=item['name'],
                 preview_image_url=item['mediumPreviewImageUrl'],
+                price=price,
             )
             if not _is_valid_asset(asset):
                 continue
             assets.append(asset)
         offset += limit
     assets = assets[:MAX_RESULTS]
-    return NFTCollectionAssets(
-        collection=collection,
-        assets=assets,
-    )
+    return assets
 
 
 def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTraits:

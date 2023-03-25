@@ -67,8 +67,8 @@ Required parameters:
 -{transactionKeyword}: either SELLAMOUNT if amount refers to token to sell or BUYAMOUNT if amount refers to token to buy
 -{amount}: amount of token described by transaction keyword that we are trying to buy or sell
 ---
-Widget magic command: <|fetch-nft-buy({network},{address},{tokenID})|>
-Description of widget: This widget is used when we need to buy an NFT asset of a collection on the OpenSea marketplace, given its network, address, and token ID.
+Widget magic command: <|fetch-nft-buy-asset({network},{address},{tokenID})|>
+Description of widget: This widget is used when we need to buy an NFT asset of a collection on the OpenSea marketplace, given its network, address, and token ID. Don't use this if we don't have the collection network and address and token ID of the asset we want to purchase.
 Required parameters:
 -{network}: network of the NFT asset
 -{address}: contract address of the NFT asset
@@ -93,6 +93,16 @@ Required parameters:
 Return value description:
 -a list of text describing NFT assets that match the trait value
 ---
+Widget magic command: <|fetch-nft-collection-assets-for-sale-by-trait({network},{address},{traitName},{traitValue})|>
+Description of widget: This widget is used when we need to list assets available for purchase with a particular trait name and value from a specific NFT collection given its network and address. Don't use this if we don't have the collection network and address.
+Required parameters:
+-{network}: network of the NFT collection
+-{address}: contract address of the NFT collection
+-{traitName}: name of trait
+-{traitValue}: value of trait
+Return value description:
+-a list of text describing NFT assets for sale/available for purchase that match the trait value
+---
 Widget magic command: <|fetch-nft-collection-info({network},{address})|>
 Description of widget: This widget is used when we need to retrieve data and assets of an NFT collection given its network and address.
 Required parameters:
@@ -100,6 +110,14 @@ Required parameters:
 -{address}: contract address of the NFT collection
 Return value description:
 -text with data and some assets of the NFT collection
+---
+Widget magic command: <|fetch-nft-collection-assets-for-sale({network},{address})|>
+Description of widget: This widget is used when we need to retrieve assets available for purchase of an NFT collection given its network and address.
+Required parameters:
+-{network}: network of the NFT collection
+-{address}: contract address of the NFT collection
+Return value description:
+-text with assets of the NFT collection that are for sale/available for purchase
 ---
 Widget magic command: <|fetch-nft-collection-traits({network},{address})|>
 Description of widget: This widget is used when we need to retrieve traits of an NFT collection given its network and address.
