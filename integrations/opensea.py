@@ -46,6 +46,8 @@ class NFTListing:
     chain: str
     address: str
     token_id: str
+    price_str: str
+    price_value: int
 
 
 def fetch_contract(address: str) -> NFTContract:
@@ -79,10 +81,19 @@ def fetch_all_listings(slug: str) -> List[NFTListing]:
         obj = response.json()
         for item in obj['listings']:
             offer = item["protocol_data"]["parameters"]["offer"][0]
+            current_price = item["price"]["current"]
+            currency = current_price["currency"]
+            price_value = int(current_price['value'])
+            if currency == "eth":
+                price_str = f"{utils.w3.fromWei(price_value, 'ether')} {currency}"
+            else:
+                price_str = f"{price_value / 10 ** current_price['decimals']} {currency}"
             listing = NFTListing(
                 chain=item["chain"],
                 address=offer["token"],
                 token_id=offer["identifierOrCriteria"],
+                price_str=price_str,
+                price_value=price_value,
             )
             ret.append(listing)
         next_cursor = obj.get("next")
@@ -91,14 +102,18 @@ def fetch_all_listings(slug: str) -> List[NFTListing]:
     return ret
 
 
-def fetch_contract_listings_with_retries(address: str) -> List[NFTListing]:
+def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, str]:
 
-    def _get_listings():
+    def _get_listing_prices():
         contract = fetch_contract(address)
         listings = fetch_all_listings(contract.slug)
-        return listings
+        ret = {}
+        for listing in listings:
+            if listing.token_id not in ret or ret[listing.token_id].price_value > listing.price_value:
+                ret[listing.token_id] = listing
+        return {token_id: listing.price_str for token_id, listing in ret.items()}
 
     return retry_on_exceptions_with_backoff(
-        _get_listings,
+        _get_listing_prices,
         [ErrorToRetry(requests.exceptions.HTTPError)],
     )

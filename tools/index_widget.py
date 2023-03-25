@@ -148,11 +148,15 @@ def replace_match(m: re.Match) -> str:
     if command == 'fetch-nft-search':
         return str(fetch_nft_search(*params))
     elif command == 'fetch-nft-collection-assets-by-trait':
-        return str(fetch_nft_search_collection_by_trait(*params))
+        return str(fetch_nft_search_collection_by_trait(*params, for_sale_only=False))
+    elif command == 'fetch-nft-collection-assets-for-sale-by-trait':
+        return str(fetch_nft_search_collection_by_trait(*params, for_sale_only=True))
     elif command == 'fetch-nft-collection-info':
         #return str(fetch_nft_collection(*params))
         # we also fetch some collection assets as a convenience
         return str(fetch_nft_collection_assets(*params))
+    elif command == 'fetch-nft-collection-assets-for-sale':
+        return str(fetch_nft_collection_assets_for_sale(*params))
     elif command == 'fetch-nft-collection-traits':
         return str(fetch_nft_collection_traits(*params))
     elif command == 'fetch-nft-collection-trait-values':
@@ -161,7 +165,7 @@ def replace_match(m: re.Match) -> str:
     #    return str(fetch_nft_asset(*params))
     elif command == 'fetch-nft-asset-traits':
         return str(fetch_nft_asset_traits(*params))
-    elif command == 'fetch-nft-buy':
+    elif command == 'fetch-nft-buy-asset':
         return str(fetch_nft_buy(*params))
     elif command == 'fetch-balance':
         return str(fetch_balance(*params))
@@ -281,8 +285,8 @@ def fetch_nft_search(search_str: str) -> str:
 
 
 @error_wrap
-def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str) -> str:
-    ret = center.fetch_nft_search_collection_by_trait(network, address, trait_name, trait_value)
+def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> str:
+    ret = center.fetch_nft_search_collection_by_trait(network, address, trait_name, trait_value, for_sale_only=for_sale_only)
     return str(ListContainer(ret))
 
 
@@ -295,6 +299,12 @@ def fetch_nft_collection(network: str, address: str) -> str:
 def fetch_nft_collection_assets(network: str, address: str) -> str:
     ret = center.fetch_nft_collection_assets(network, address)
     return str(ret)
+
+
+@error_wrap
+def fetch_nft_collection_assets_for_sale(network: str, address: str) -> str:
+    ret = center.fetch_nft_collection_assets_for_sale(network, address)
+    return str(ListContainer(ret))
 
 
 @error_wrap
