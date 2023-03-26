@@ -41,6 +41,9 @@ New input: {input}
 Thought: {agent_scratchpad}"""
 
 
+HISTORY_TOKEN_LIMIT = 2500
+
+
 @registry.register_class
 class BasicAgentChat(BaseChat):
     def __init__(self, tools: List[BaseTool], show_thinking: bool = True) -> None:
@@ -50,7 +53,7 @@ class BasicAgentChat(BaseChat):
 
     def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> None:
         userinput = userinput.strip()
-        history_string = history.to_string(bot_prefix="Observation", system_prefix="Thought")
+        history_string = history.to_string(bot_prefix="Observation", system_prefix="Thought", token_limit=HISTORY_TOKEN_LIMIT)
 
         history.add_user_message(userinput)
         start = time.time()
