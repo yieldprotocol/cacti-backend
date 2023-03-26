@@ -62,7 +62,7 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
             _widgetize(collection['name'], json.dumps(collection['params']), depth=depth + 1),
             "Here are some of the assets in the collection:",
         ] + [
-            _widgetize(asset['name'], json.dumps(asset['params']), depth=depth + 1)
+            _widgetize(asset['name'] + '-brief', json.dumps(asset['params']), depth=depth + 1)
             for asset in assets
         ])
     elif command == 'nft-collection-traits-container':
@@ -77,8 +77,15 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
         ])
     elif command == 'nft-asset-container':
         params = json.loads(params)
+        price_info = _get_price_info(params.get('price'))
         lines.extend([
-            f"An NFT asset, named {params['name']}, with token ID {params['tokenId']}, from collection {params['collectionName']} with network {params['network']} and address {params['address']}.",
+            f"An NFT asset, named {params['name']}, with token ID {params['tokenId']}, from collection {params['collectionName']} with network {params['network']} and address {params['address']}{price_info}.",
+        ])
+    elif command == 'nft-asset-container-brief':
+        params = json.loads(params)
+        price_info = _get_price_info(params.get('price'))
+        lines.extend([
+            f"An NFT asset, named {params['name']}, with token ID {params['tokenId']}{price_info}.",
         ])
     elif command == 'nft-asset-traits-container':
         params = json.loads(params)
@@ -99,3 +106,14 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
         lines.append(f"An unrecognized command: {command}({params})")
     indent = "  " * depth
     return indent + f"\n{indent}".join(lines)
+
+
+def _get_price_info(price):
+    if price:
+        if price == 'unlisted':
+            price_info = ', and is not for sale'
+        else:
+            price_info = f', and for sale for {price}'
+    else:
+        price_info = ''
+    return price_info
