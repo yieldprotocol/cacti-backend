@@ -7,6 +7,7 @@ import uuid
 from langchain.schema import AgentAction, AgentFinish, LLMResult
 from langchain.prompts.base import BaseOutputParser
 
+import utils
 from .display_widgets import parse_widgets_into_text
 
 
@@ -55,7 +56,7 @@ class ChatHistory:
     def __iter__(self):
         return iter(self.messages)
 
-    def to_string(self, user_prefix: str = "User", bot_prefix: str = "Assistant", system_prefix: str = "System") -> str:
+    def to_string(self, user_prefix: str = "User", bot_prefix: str = "Assistant", system_prefix: str = "System", token_limit: Optional[int] = None) -> str:
         ret = []
         for message in self:
             if message.actor == 'user':
@@ -65,6 +66,14 @@ class ChatHistory:
             else:
                 prefix = bot_prefix
             ret.append(f"{prefix}: {message.content}")
+        if token_limit is not None:
+            total_count = 0
+            for idx in reversed(range(len(ret))):
+                count = utils.get_token_len(ret[idx])
+                if total_count + count > token_limit:
+                    ret = ret[idx + 1:]
+                    break
+                total_count += count
         return "\n".join(ret)
 
     @classmethod
