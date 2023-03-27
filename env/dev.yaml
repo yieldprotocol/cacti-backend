@@ -1,8 +1,15 @@
 # Dev environment
 
-# GCP SQL instance: chat-db-dev
-postgres:
-  host: 34.23.31.248
+# GCP SQL instance: chatdb-dev
+chatdb:
+  host: 34.139.225.26
+  port: 5432
+  user: chatdb
+  password: lVIu2U0lBctiYBScboAJ
+
+# GCP SQL instance: scrapedb
+scrapedb:
+  host: 34.23.168.19
   port: 5432
   user: chatdb
   password: lVIu2U0lBctiYBScboAJ
@@ -11,7 +18,7 @@ postgres:
 # GCP VM: weaviate-dev
 weaviate:
   protocol: http
-  host: 35.243.192.205
+  host: 35.231.214.53
   port: 8080
   user: chatweb3
   password: q0jficzXOA69T5FWgAeT
