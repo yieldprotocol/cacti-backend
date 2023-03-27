@@ -18,7 +18,7 @@ scrapedb:
 # GCP VM: weaviate-dev
 weaviate:
   protocol: http
-  host: 35.231.214.53
+  host: 35.211.169.16
   port: 8080
   user: chatweb3
   password: q0jficzXOA69T5FWgAeT
