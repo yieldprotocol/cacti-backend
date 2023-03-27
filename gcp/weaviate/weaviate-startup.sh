@@ -11,4 +11,5 @@ apt -y update
 apt -y install docker.io
 apt -y install docker-compose
 gcloud storage cp gs://chatweb3/docker-compose.weaviate.yaml ./docker-compose.yaml
+docker-compose down
 docker-compose up -d

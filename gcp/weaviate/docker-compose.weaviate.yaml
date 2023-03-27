@@ -21,7 +21,7 @@ services:
     - '8080'
     - --scheme
     - http
-    image: semitechnologies/weaviate:1.17.1
+    image: semitechnologies/weaviate:1.18.1
     ports:
     - 8080:8080
     restart: on-failure:0
@@ -30,5 +30,8 @@ services:
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
       DEFAULT_VECTORIZER_MODULE: 'text2vec-openai'
-      ENABLE_MODULES: 'text2vec-openai'
+      ENABLE_MODULES: 'text2vec-openai,backup-gcs'
       CLUSTER_HOSTNAME: 'node1'
+
+      BACKUP_GCS_BUCKET: 'chatweb3'
+      BACKUP_GCS_PATH: 'weaviate/backups/'
