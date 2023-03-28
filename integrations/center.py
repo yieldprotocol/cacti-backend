@@ -465,6 +465,10 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
 
 
 def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAssetTraits:
+    if network == "ethereum-mainnet":
+        token_price = opensea.fetch_asset_listing_prices_with_retries(address, token_id) or 'unlisted'
+    else:
+        token_price = None
     url = f"{API_URL}/{network}/{address}/{token_id}"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
@@ -476,6 +480,7 @@ def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAsse
         collection_name=obj['collectionName'],
         name=obj['name'],
         preview_image_url=obj['mediumPreviewImageUrl'],
+        price=token_price,
     )
     values = []
     for attrib in obj.get('metadata', {}).get('attributes', []):
