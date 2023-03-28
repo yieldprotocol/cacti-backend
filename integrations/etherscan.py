@@ -47,7 +47,7 @@ TOKEN_TO_CONTRACT_ADDRESS = {
 
 
 def get_contract_address(token):
-    contract_address = TOKEN_TO_CONTRACT_ADDRESS.get(token)
+    contract_address = TOKEN_TO_CONTRACT_ADDRESS.get(token.upper())
     return contract_address
 
 
