@@ -19,8 +19,8 @@ NETWORKS = [
     #"polygon-mainnet",
 ]
 API_URL = "https://api.center.dev/v1"
-MAX_RESULTS = 10
-PAGE_LIMIT = 10
+MAX_RESULTS = 12
+PAGE_LIMIT = 12
 
 
 @dataclass
