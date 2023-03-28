@@ -1,4 +1,5 @@
 # Legacy environment (chatweb3 devbox)
+# TODO: remove this file
 
 chatdb:
   host: chatweb3.func.ai
