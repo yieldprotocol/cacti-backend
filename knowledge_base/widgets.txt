@@ -14,7 +14,7 @@ Return value description:
 -price of a base token in units of a quote token.
 ---
 Widget magic command: <|fetch-balance({token},{address})|>
-Description of widget: This widget is used when we need the balance of a token in an account or wallet
+Description of widget: This widget is used when we need the balance of a token in an account or wallet. Don't use this if we don't have the address.
 Required parameters:
 -{token}: token to get the balance of.
 -{address}: address of the account or wallet to check the balance of

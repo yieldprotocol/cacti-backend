@@ -28,6 +28,10 @@ class ConnectedWalletRequired(Exception):
     pass
 
 
+class FetchError(Exception):
+    pass
+
+
 TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget magic commands that you can delegate work to, by invoking them and chaining them together, to provide a response to an input query. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>" specifying the command and its input parameters. They can only be used with all parameters having known and assigned values, otherwise, they have to be kept secret. The command may either have a display- or a fetch- prefix. When you return a display- command, the user will see data, an interaction box, or other inline item rendered in its place. When you return a fetch- command, data is fetched over an API and injected in place. Users cannot type or use magic commands, so do not tell them to use them. Fill in the command with parameters as inferred from the input. If there are missing parameters, do not use magic commands but mention what parameters are needed instead. If there is no appropriate widget available, explain that more information is needed. Do not make up a non-existent widget magic command, only use the applicable ones for the situation, and only if all parameters are available. You might need to use the output of widget magic commands as the input to another to get your final answer. Here are the widgets that may be relevant:
 ---
 {task_info}
@@ -198,6 +202,8 @@ def error_wrap(fn):
             return fn(*args, **kwargs)
         except ConnectedWalletRequired:
             return "A connected wallet is required. Please connect one and try again."
+        except FetchError as e:
+            return str(e)
         except Exception as e:
             traceback.print_exc()
             return f'Got exception evaluating {fn.__name__}(args={args}, kwargs={kwargs}): {e}'
@@ -206,7 +212,11 @@ def error_wrap(fn):
 
 @error_wrap
 def fetch_balance(token: str, wallet_address: str) -> str:
+    if not wallet_address or wallet_address == 'None':
+        raise FetchError(f"Please specify the wallet address to check the token balance of.")
     contract_address = etherscan.get_contract_address(token)
+    if not contract_address:
+        raise FetchError(f"Could not look up contract address of {token}. Please try a different one.")
     return etherscan.get_balance(contract_address, wallet_address)
 
 
