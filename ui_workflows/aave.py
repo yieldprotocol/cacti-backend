@@ -1,4 +1,3 @@
-import pyperclip
 from logging import basicConfig, INFO
 
 import registry
@@ -21,7 +20,7 @@ class AaveUIWorkflow(BaseUIWorkflow):
         page.get_by_role("button", name="wallet", exact=True).click()
         page.get_by_role("button", name="WalletConnect browser wallet icon").click()
         page.get_by_text("Copy to clipboard").click()
-        wc_uri = pyperclip.paste()
+        wc_uri = page.evaluate("() => navigator.clipboard.readText()")
 
         self.start_listener(wc_uri)
 
