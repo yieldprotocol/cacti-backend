@@ -168,6 +168,18 @@ Required Parameters:
 Return value description:
 -a human-readable string with wallet address
 ---
+Widget magic command: <|exec-aave-deposit({token},{amount})|>
+Description of widget: This widget is used when the user wants to deposit tokens to AAVE.
+Required Parameters:
+-{token}: token to deposit
+-{amount}: quantity to deposit
+---
+Widget magic command: <|exec-aave-borrow({token},{amount})|>
+Description of widget: This widget is used when the user wants to borrow tokens from AAVE.
+Required Parameters:
+-{token}: token to borrow
+-{amount}: quantity to borrow
+---
 Widget magic command: <|display-yield-farm({project},{network}, {token}, {amount})|>
 Description of widget: This widget is used when the user wants to yield farm by putting tokens or depositing tokens of a certain amount in a project on a network
 Required Parameters:
