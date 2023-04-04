@@ -12,14 +12,14 @@ from playwright.sync_api import Playwright, sync_playwright, Page
 class BaseUIWorkflow(ABC):
     """Common interface for UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str):
+    def __init__(self, wallet_chain_id: int, wallet_address: str) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
         self.thread = None
         self.result_container = []
 
     @abstractmethod
-    def run_page(self, page: Page) -> Any:
+    def _run_page(self, page: Page) -> Any:
         """Accept user input and return responses via the send_message function."""
 
     def run(self) -> Any:
@@ -30,7 +30,7 @@ class BaseUIWorkflow(ABC):
             context.grant_permissions(["clipboard-read", "clipboard-write"])
             page = context.new_page()
 
-            ret = self.run_page(page)
+            ret = self._run_page(page)
 
             context.close()
             browser.close()

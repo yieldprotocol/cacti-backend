@@ -18,6 +18,9 @@ from chat.container import ContainerMixin, dataclass_to_container_params
 from integrations import (
     etherscan, defillama, center, opensea,
 )
+from ui_workflows import (
+    aave,
+)
 from .index_lookup import IndexLookupTool
 
 
@@ -29,6 +32,10 @@ class ConnectedWalletRequired(Exception):
 
 
 class FetchError(Exception):
+    pass
+
+
+class ExecError(Exception):
     pass
 
 
@@ -183,6 +190,10 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
+    elif command == 'exec-aave-deposit':
+        return str(exec_aave_operation(*params, operation='Supply'))
+    elif command == 'exec-aave-borrow':
+        return str(exec_aave_operation(*params, operation='Borrow'))
     elif command == 'ens-from-address':
         return str(ens_from_address(*params))
     elif command == 'address-from-ens':
@@ -203,6 +214,8 @@ def error_wrap(fn):
         except ConnectedWalletRequired:
             return "A connected wallet is required. Please connect one and try again."
         except FetchError as e:
+            return str(e)
+        except ExecError as e:
             return str(e)
         except Exception as e:
             traceback.print_exc()
@@ -390,3 +403,15 @@ def address_from_ens(domain) -> str:
     except Exception as e:
         traceback.print_exc()
         return f"Unable to process domain {domain}"
+
+
+@error_wrap
+def exec_aave_operation(token: str, amount: str, operation: str = '') -> str:
+    if not operation:
+        raise ExecError("Operation needs to be specified.")
+    wallet_chain_id = 1
+    wallet_address = context.get_wallet_address()
+    if not wallet_address:
+        raise ConnectedWalletRequired
+    wf = aave.AaveUIWorkflow(wallet_chain_id, wallet_address, token, operation, float(amount))
+    return wf.run()
