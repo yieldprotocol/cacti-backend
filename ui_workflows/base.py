@@ -27,6 +27,7 @@ class BaseUIWorkflow(ABC):
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
             context = browser.new_context()
+            context.grant_permissions(["clipboard-read", "clipboard-write"])
             page = context.new_page()
 
             ret = self.run_page(page)
