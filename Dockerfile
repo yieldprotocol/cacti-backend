@@ -7,6 +7,9 @@ WORKDIR /usr/src/chatweb3
 
 COPY ./requirements.txt ./
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN playwright install
+RUN playwright install-deps
+RUN apt install xauth xvfb xclip
 
 COPY . ./
 EXPOSE 9999
