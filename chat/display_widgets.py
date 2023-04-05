@@ -95,6 +95,9 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
     elif command == 'nft-asset-trait-value-container':
         params = json.loads(params)
         lines.append(f"{params['trait']}: {params['value']}")
+    elif command == 'transaction-for-signing-container':
+        params = json.loads(params)
+        lines.append(f"A transaction was presented for signing: {params['description']}.")
     else:
         #assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
