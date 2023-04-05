@@ -62,13 +62,14 @@ class BasicAgentChat(BaseChat):
         system_response = ''
         bot_chat_message_id = None
         bot_response = ''
+        has_sent_bot_response = False
 
         def system_flush(response):
-            nonlocal system_chat_message_id
+            nonlocal system_chat_message_id, has_sent_bot_response
             response = response.strip()
             send(Response(
                 response=response,
-                still_thinking=True,
+                still_thinking=not has_sent_bot_response,
                 actor='system',
                 operation='replace',
             ), last_chat_message_id=system_chat_message_id)
@@ -86,7 +87,7 @@ class BasicAgentChat(BaseChat):
             history.add_bot_message(response)
 
         def system_new_token_handler(token):
-            nonlocal system_chat_message_id, system_response, bot_chat_message_id, bot_response
+            nonlocal system_chat_message_id, system_response, bot_chat_message_id, bot_response, has_sent_bot_response
 
             if bot_chat_message_id is not None:
                 bot_flush(bot_response)
@@ -96,13 +97,13 @@ class BasicAgentChat(BaseChat):
             system_response += token
             system_chat_message_id = send(Response(
                 response=token,
-                still_thinking=True,
+                still_thinking=not has_sent_bot_response,
                 actor='system',
                 operation='append' if system_chat_message_id is not None else 'create',
             ), last_chat_message_id=system_chat_message_id)
 
         def bot_new_token_handler(token):
-            nonlocal bot_chat_message_id, bot_response, system_chat_message_id, system_response
+            nonlocal bot_chat_message_id, bot_response, system_chat_message_id, system_response, has_sent_bot_response
 
             if system_chat_message_id is not None:
                 system_flush(system_response)
@@ -119,6 +120,7 @@ class BasicAgentChat(BaseChat):
                 actor='bot',
                 operation='append' if bot_chat_message_id is not None else 'create',
             ), last_chat_message_id=bot_chat_message_id)
+            has_sent_bot_response = True
 
         tools = streaming.get_streaming_tools(self.tools, bot_new_token_handler)
         agent = streaming.get_streaming_agent(
