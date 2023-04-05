@@ -405,8 +405,26 @@ def address_from_ens(domain) -> str:
         return f"Unable to process domain {domain}"
 
 
+@dataclass
+class TransactionForSigning(ContainerMixin):
+    gas: str
+    value: str
+    from_address: str
+    to_address: str
+    data: str
+
+    def message_prefix(self) -> str:
+        return "Please sign the following transaction to complete your request. "
+
+    def container_name(self) -> str:
+        return 'display-transaction-for-signing-container'
+
+    def container_params(self) -> Dict:
+        return dataclass_to_container_params(self)
+
+
 @error_wrap
-def exec_aave_operation(token: str, amount: str, operation: str = '') -> str:
+def exec_aave_operation(token: str, amount: str, operation: str = '') -> TransactionForSigning:
     if not operation:
         raise ExecError("Operation needs to be specified.")
     wallet_chain_id = 1
@@ -414,4 +432,11 @@ def exec_aave_operation(token: str, amount: str, operation: str = '') -> str:
     if not wallet_address:
         raise ConnectedWalletRequired
     wf = aave.AaveUIWorkflow(wallet_chain_id, wallet_address, token, operation, float(amount))
-    return wf.run()
+    tx = wf.run()[0]
+    return TransactionForSigning(
+        gas=tx["gas"],
+        value=tx["value"],
+        from_address=tx["from"],
+        to_address=tx["to"],
+        data=tx["data"],
+    )
