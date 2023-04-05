@@ -1,6 +1,6 @@
 from logging import basicConfig, INFO
 
-from .base import BaseUIWorkflow
+from .base import BaseUIWorkflow, handle_rpc_node_reqs
 
 basicConfig(level=INFO)
 
