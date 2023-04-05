@@ -412,6 +412,7 @@ class TransactionForSigning(ContainerMixin):
     from_address: str
     to_address: str
     data: str
+    description: str
 
     def message_prefix(self) -> str:
         return "Please sign the following transaction to complete your request. "
@@ -439,4 +440,5 @@ def exec_aave_operation(token: str, amount: str, operation: str = '') -> Transac
         from_address=tx["from"],
         to_address=tx["to"],
         data=tx["data"],
+        description=f"Transaction on AAVE to {operation.lower()} {amount} {token}",
     )
