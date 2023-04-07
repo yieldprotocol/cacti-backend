@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union, Literal
+from dataclasses import dataclass
 import threading
 import time
 import sys
@@ -7,6 +8,14 @@ import sys
 import requests
 from pywalletconnect.client import WCClient
 from playwright.sync_api import Playwright, sync_playwright, Page
+
+
+@dataclass
+class Result:
+    status: Literal['success', 'error']
+    tx: any = None
+    is_approval_tx: bool = False
+    error_msg: Optional[str] = None
 
 
 class BaseUIWorkflow(ABC):
@@ -17,6 +26,7 @@ class BaseUIWorkflow(ABC):
         self.wallet_address = wallet_address
         self.thread = None
         self.result_container = []
+        self.thread_event = threading.Event()
 
     @abstractmethod
     def _run_page(self, page: Page) -> Any:
@@ -40,12 +50,13 @@ class BaseUIWorkflow(ABC):
         assert self.thread is None, 'not expecting a thread to be started'
         self.thread = threading.Thread(
             target=wc_listen_for_messages,
-            args=(wc_uri, self.wallet_chain_id, self.wallet_address, self.result_container),
+            args=(self.thread_event, wc_uri, self.wallet_chain_id, self.wallet_address, self.result_container),
         )
         self.thread.start()
 
     def stop_listener(self) -> Any:
         if self.thread:
+            self.thread_event.set()
             self.thread.join()
             self.thread = None
         if self.result_container:
@@ -65,7 +76,8 @@ def handle_rpc_node_reqs(route, request):
     route.fulfill(body=data.text)
 
 
-def wc_listen_for_messages(wc_uri: str, wallet_chain_id: int, wallet_address: str, result_container: List):
+def wc_listen_for_messages(
+        thread_event: threading.Event, wc_uri: str, wallet_chain_id: int, wallet_address: str, result_container: List):
     # Connect to WC URI using wallet address
     wclient = WCClient.from_wc_uri(wc_uri)
     print("Connecting with the Dapp ...")
@@ -75,7 +87,7 @@ def wc_listen_for_messages(wc_uri: str, wallet_chain_id: int, wallet_address: st
 
     print(" To quit : Hit CTRL+C, or disconnect from Dapp.")
     print("Now waiting for dapp messages ...")
-    while True:
+    while not thread_event.is_set():
         try:
             time.sleep(0.3)
             # get_message return : (id, method, params) or (None, "", [])
