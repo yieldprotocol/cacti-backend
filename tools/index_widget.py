@@ -2,7 +2,7 @@ import functools
 import json
 import re
 from dataclasses import dataclass, asdict
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Literal, TypedDict
 import traceback
 
 from langchain.llms import OpenAI
@@ -163,7 +163,7 @@ def replace_match(m: re.Match) -> str:
     elif command == 'fetch-nft-collection-assets-for-sale-by-trait':
         return str(fetch_nft_search_collection_by_trait(*params, for_sale_only=True))
     elif command == 'fetch-nft-collection-info':
-        #return str(fetch_nft_collection(*params))
+        # return str(fetch_nft_collection(*params))
         # we also fetch some collection assets as a convenience
         return str(fetch_nft_collection_assets(*params))
     elif command == 'fetch-nft-collection-assets-for-sale':
@@ -172,7 +172,7 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_nft_collection_traits(*params))
     elif command == 'fetch-nft-collection-trait-values':
         return str(fetch_nft_collection_trait_values(*params))
-    #elif command == 'fetch-nft-asset-info':
+    # elif command == 'fetch-nft-asset-info':
     #    return str(fetch_nft_asset(*params))
     elif command == 'fetch-nft-asset-traits':
         return str(fetch_nft_asset_traits(*params))
@@ -190,10 +190,14 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
-    elif command == 'exec-aave-deposit':
-        return str(exec_aave_operation(*params, operation='Supply'))
-    elif command == 'exec-aave-borrow':
-        return str(exec_aave_operation(*params, operation='Borrow'))
+    elif command == 'exec-lending-project-deposit':
+        return str(exec_lending_project_operation(*params, operation='Supply'))
+    elif command == 'exec-lending-project-borrow':
+        return str(exec_lending_project_operation(*params, operation='Borrow'))
+    elif command == 'exec-lending-project-repay':
+        return str(exec_lending_project_operation(*params, operation='Repay'))
+    elif command == 'exec-lending-project-withdraw':
+        return str(exec_lending_project_operation(*params, operation='Withdraw'))
     elif command == 'ens-from-address':
         return str(ens_from_address(*params))
     elif command == 'address-from-ens':
@@ -308,8 +312,10 @@ def fetch_nft_search(search_str: str) -> str:
 
 
 @error_wrap
-def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> str:
-    ret = center.fetch_nft_search_collection_by_trait(network, address, trait_name, trait_value, for_sale_only=for_sale_only)
+def fetch_nft_search_collection_by_trait(
+        network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> str:
+    ret = center.fetch_nft_search_collection_by_trait(
+        network, address, trait_name, trait_value, for_sale_only=for_sale_only)
     return str(ListContainer(ret))
 
 
@@ -406,26 +412,32 @@ def address_from_ens(domain) -> str:
 
 
 @dataclass
-class TransactionForSigning(ContainerMixin):
-    gas: str
-    value: str
-    from_address: str
-    to_address: str
-    data: str
-    description: str
+class PayloadForSigning(ContainerMixin):
+    status: Literal['success', 'error']
+    tx: Optional[dict] = None  # from, to, value, data, gas
+    is_approval_tx: bool = False
+    error_msg: Optional[str] = None
+    description: str = ''
 
     def message_prefix(self) -> str:
         return "Please sign the following transaction to complete your request. "
 
     def container_name(self) -> str:
-        return 'display-transaction-for-signing-container'
+        return 'display-payload-for-signing-container'
 
     def container_params(self) -> Dict:
         return dataclass_to_container_params(self)
 
 
 @error_wrap
-def exec_aave_operation(token: str, amount: str, operation: str = '') -> TransactionForSigning:
+def exec_lending_project_operation(project: str, token: str, amount: str, operation: str = '') -> PayloadForSigning:
+    if project.lower() == 'aave':
+        return exec_aave_operation(token, amount, operation)
+    else:
+        return "Project not supported."
+
+
+def exec_aave_operation(token: str, amount: str, operation: str = '') -> PayloadForSigning:
     if not operation:
         raise ExecError("Operation needs to be specified.")
     wallet_chain_id = 1
@@ -433,12 +445,11 @@ def exec_aave_operation(token: str, amount: str, operation: str = '') -> Transac
     if not wallet_address:
         raise ConnectedWalletRequired
     wf = aave.AaveUIWorkflow(wallet_chain_id, wallet_address, token, operation, float(amount))
-    tx = wf.run()[0]
-    return TransactionForSigning(
-        gas=tx["gas"],
-        value=tx["value"],
-        from_address=tx["from"],
-        to_address=tx["to"],
-        data=tx["data"],
-        description=f"Transaction on AAVE to {operation.lower()} {amount} {token}",
+    result = wf.run()
+    return PayloadForSigning(
+        tx=result.tx,
+        status=result.status,
+        is_approval_tx=result.is_approval_tx,
+        error_msg=result.error_msg,
+        description=f"Transaction on AAVE to {operation.lower()} {amount} {token}"
     )

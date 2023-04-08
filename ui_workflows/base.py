@@ -32,7 +32,7 @@ class BaseUIWorkflow(ABC):
     def _run_page(self, page: Page) -> Any:
         """Accept user input and return responses via the send_message function."""
 
-    def run(self) -> Any:
+    def run(self) -> Result:
         """Spin up headless browser and call run_page function on page."""
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())

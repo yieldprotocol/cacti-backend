@@ -61,7 +61,7 @@ class AaveUIWorkflow(BaseUIWorkflow):
             # Arbitrary wait to allow WC to relay info to our client
             page.wait_for_timeout(5000)
             tx = self.stop_listener()
-            return Result(status="success", tx=tx, is_approval_tx=is_approval_tx)
+            return Result(status="success", tx=tx[0], is_approval_tx=is_approval_tx)
         except Exception as e:
             self.stop_listener()
             return Result(status="error", error_msg=e.args[0])
