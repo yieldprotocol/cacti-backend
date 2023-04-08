@@ -190,14 +190,14 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
-    elif command == 'exec-lending-project-deposit':
-        return str(exec_lending_project_operation(*params, operation='Supply'))
-    elif command == 'exec-lending-project-borrow':
-        return str(exec_lending_project_operation(*params, operation='Borrow'))
-    elif command == 'exec-lending-project-repay':
-        return str(exec_lending_project_operation(*params, operation='Repay'))
-    elif command == 'exec-lending-project-withdraw':
-        return str(exec_lending_project_operation(*params, operation='Withdraw'))
+    elif command == 'exec-project-deposit':
+        return str(exec_project_operation(*params, operation='Supply'))
+    elif command == 'exec-project-borrow':
+        return str(exec_project_operation(*params, operation='Borrow'))
+    elif command == 'exec-project-repay':
+        return str(exec_project_operation(*params, operation='Repay'))
+    elif command == 'exec-project-withdraw':
+        return str(exec_project_operation(*params, operation='Withdraw'))
     elif command == 'ens-from-address':
         return str(ens_from_address(*params))
     elif command == 'address-from-ens':
@@ -430,7 +430,7 @@ class PayloadForSigning(ContainerMixin):
 
 
 @error_wrap
-def exec_lending_project_operation(project: str, token: str, amount: str, operation: str = '') -> PayloadForSigning:
+def exec_project_operation(project: str, token: str, amount: str, operation: str = '') -> PayloadForSigning:
     if project.lower() == 'aave':
         return exec_aave_operation(token, amount, operation)
     else:

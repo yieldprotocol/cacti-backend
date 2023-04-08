@@ -168,28 +168,28 @@ Required Parameters:
 Return value description:
 -a human-readable string with wallet address
 ---
-Widget magic command: <|exec-lending-project-deposit({project},{token},{amount})|>
+Widget magic command: <|exec-project-deposit({project},{token},{amount})|>
 Description of widget: This widget is used when the user wants to deposit tokens into a project. Not to be used with the Compound project
 Required Parameters:
 -{project}: name of the project
 -{token}: token to deposit
 -{amount}: quantity to deposit
 ---
-Widget magic command: <|exec-lending-project-borrow({project},{token},{amount})|>
+Widget magic command: <|exec-project-borrow({project},{token},{amount})|>
 Description of widget: This widget is used when the user wants to borrow tokens from a project.
 Required Parameters:
 -{project}: name of the project
 -{token}: token to borrow
 -{amount}: quantity to borrow
 ---
-Widget magic command: <|exec-lending-project-repay({project},{token},{amount})|>
+Widget magic command: <|exec-project-repay({project},{token},{amount})|>
 Description of widget: This widget is used when the user wants to repay back borrowed tokens from a project.
 Required Parameters:
 -{project}: name of the project
 -{token}: token to borrow
 -{amount}: quantity to borrow
 ---
-Widget magic command: <|exec-lending-project-withdraw({project},{token},{amount})|>
+Widget magic command: <|exec-project-withdraw({project},{token},{amount})|>
 Description of widget: This widget is used when the user wants to withdraw deposited tokens from a project.
 Required Parameters:
 -{project}: name of the project
