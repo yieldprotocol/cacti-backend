@@ -412,7 +412,7 @@ def address_from_ens(domain) -> str:
 
 
 @dataclass
-class PayloadForSigning(ContainerMixin):
+class TxPayloadForSending(ContainerMixin):
     status: Literal['success', 'error']
     tx: Optional[dict] = None  # from, to, value, data, gas
     is_approval_tx: bool = False
@@ -423,21 +423,21 @@ class PayloadForSigning(ContainerMixin):
         return "Please sign the following transaction to complete your request. "
 
     def container_name(self) -> str:
-        return 'display-payload-for-signing-container'
+        return 'display-tx-payload-for-sending-container'
 
     def container_params(self) -> Dict:
         return dataclass_to_container_params(self)
 
 
 @error_wrap
-def exec_project_operation(project: str, token: str, amount: str, operation: str = '') -> PayloadForSigning:
+def exec_project_operation(project: str, token: str, amount: str, operation: str = '') -> TxPayloadForSending:
     if project.lower() == 'aave':
         return exec_aave_operation(token, amount, operation)
     else:
         return "Project not supported."
 
 
-def exec_aave_operation(token: str, amount: str, operation: str = '') -> PayloadForSigning:
+def exec_aave_operation(token: str, amount: str, operation: str = '') -> TxPayloadForSending:
     if not operation:
         raise ExecError("Operation needs to be specified.")
     wallet_chain_id = 1
@@ -446,7 +446,7 @@ def exec_aave_operation(token: str, amount: str, operation: str = '') -> Payload
         raise ConnectedWalletRequired
     wf = aave.AaveUIWorkflow(wallet_chain_id, wallet_address, token, operation, float(amount))
     result = wf.run()
-    return PayloadForSigning(
+    return TxPayloadForSending(
         tx=result.tx,
         status=result.status,
         is_approval_tx=result.is_approval_tx,
