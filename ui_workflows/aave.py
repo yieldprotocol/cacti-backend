@@ -8,8 +8,8 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 class AaveUIWorkflow(BaseUIWorkflow):
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, token: str, operation: str, amount: float) -> None:
-        self.description = f"Transaction on AAVE to {operation.lower()} {amount} {token}"
-        super().__init__(wallet_chain_id, wallet_address, self.description)
+        description = f"Transaction on AAVE to {operation.lower()} {amount} {token}"
+        super().__init__(wallet_chain_id, wallet_address, description)
         assert operation in ("Supply", "Borrow", "Repay", "Withdraw"), operation
         self.token = token
         self.operation = operation
@@ -17,7 +17,6 @@ class AaveUIWorkflow(BaseUIWorkflow):
         self.is_approval_tx = False
 
     def _run_page(self, page):
-        is_approval_tx = False
         try:
             page.goto("https://app.aave.com/")
 
@@ -62,7 +61,7 @@ class AaveUIWorkflow(BaseUIWorkflow):
             # Arbitrary wait to allow WC to relay info to our client
             page.wait_for_timeout(5000)
             tx = self.stop_listener()
-            return Result(status="success", tx=tx[0], is_approval_tx=is_approval_tx, description=self.description)
+            return Result(status="success", tx=tx[0], is_approval_tx=self.is_approval_tx, description=self.description)
         except Exception as e:
             self.stop_listener()
             return Result(status="error", error_msg=e.args[0], description=self.description)
