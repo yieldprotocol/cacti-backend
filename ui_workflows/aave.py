@@ -8,6 +8,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 class AaveUIWorkflow(BaseUIWorkflow):
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, token: str, operation: str, amount: float) -> None:
+        token = token.upper()
         description = f"Transaction on AAVE to {operation.lower()} {amount} {token}"
         super().__init__(wallet_chain_id, wallet_address, description)
         assert operation in ("Supply", "Borrow", "Repay", "Withdraw"), operation
