@@ -9,6 +9,8 @@ import requests
 from pywalletconnect.client import WCClient
 from playwright.sync_api import Playwright, sync_playwright, Page
 
+from utils import TENDERLY_FORK_URL
+
 
 @dataclass
 class Result:
@@ -76,7 +78,7 @@ def _check_headless_allowed():
 def handle_rpc_node_reqs(route, request):
     post_body = route.request.post_data
     # Forward request to Tenderly RPC node
-    data = requests.post("https://rpc.tenderly.co/fork/902db63e-9c5e-415b-b883-5701c77b3aa7", data=post_body)
+    data = requests.post(TENDERLY_FORK_URL, data=post_body)
     route.fulfill(body=data.text)
 
 
