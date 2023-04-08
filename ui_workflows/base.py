@@ -25,10 +25,10 @@ class BaseUIWorkflow(ABC):
     def __init__(self, wallet_chain_id: int, wallet_address: str, description: str) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
+        self.description = description
         self.thread = None
         self.result_container = []
         self.thread_event = threading.Event()
-        self.description = description
 
     @abstractmethod
     def _run_page(self, page: Page) -> Any:
