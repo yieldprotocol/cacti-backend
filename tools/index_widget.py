@@ -451,5 +451,5 @@ def exec_aave_operation(token: str, amount: str, operation: str = '') -> Payload
         status=result.status,
         is_approval_tx=result.is_approval_tx,
         error_msg=result.error_msg,
-        description=f"Transaction on AAVE to {operation.lower()} {amount} {token}"
+        description=result.description
     )

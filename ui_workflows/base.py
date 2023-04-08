@@ -13,6 +13,7 @@ from playwright.sync_api import Playwright, sync_playwright, Page
 @dataclass
 class Result:
     status: Literal['success', 'error']
+    description: str
     tx: any = None
     is_approval_tx: bool = False
     error_msg: Optional[str] = None
@@ -21,12 +22,13 @@ class Result:
 class BaseUIWorkflow(ABC):
     """Common interface for UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, description: str) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
         self.thread = None
         self.result_container = []
         self.thread_event = threading.Event()
+        self.description = description
 
     @abstractmethod
     def _run_page(self, page: Page) -> Any:
@@ -34,6 +36,7 @@ class BaseUIWorkflow(ABC):
 
     def run(self) -> Result:
         """Spin up headless browser and call run_page function on page."""
+        print(f"Running UI workflow: {self.description}")
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
             context = browser.new_context()
@@ -44,6 +47,7 @@ class BaseUIWorkflow(ABC):
 
             context.close()
             browser.close()
+        print(f"UI workflow finished: {self.description}")
         return ret
 
     def start_listener(self, wc_uri: str) -> None:
