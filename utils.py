@@ -25,13 +25,15 @@ CENTER_API_KEY = os.getenv('CENTER_API_KEY', 'key8f1af05afe473107c3ea2556')
 ETHERSCAN_API_KEY = 'ZCUTVCPHAJ5YRNB6SZTJN9ZV24FBEX86GJ'
 OPENSEA_API_KEY = os.getenv('OPENSEA_API_KEY', '')
 
+TENDERLY_FORK_URL = "https://rpc.tenderly.co/fork/902db63e-9c5e-415b-b883-5701c77b3aa7"
+
 
 def set_api_key():
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
     OpenAI.api_key = OPENAI_API_KEY
 
 
-w3 = Web3(Web3.HTTPProvider('https://rpc.tenderly.co/fork/8c2fe457-1702-42f8-a1a3-a5f24b606f36'))
+w3 = Web3(Web3.HTTPProvider(TENDERLY_FORK_URL))
 tokenizer = tiktoken.encoding_for_model("text-davinci-003")
 ns = ENS.fromWeb3(w3)
 

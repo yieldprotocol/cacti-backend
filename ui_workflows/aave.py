@@ -1,67 +1,91 @@
+import re
 from logging import basicConfig, INFO
 
-from .base import BaseUIWorkflow, handle_rpc_node_reqs
-
-basicConfig(level=INFO)
+from .base import BaseUIWorkflow, handle_rpc_node_reqs, Result
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 
 class AaveUIWorkflow(BaseUIWorkflow):
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, token: str, operation: str, amount: float) -> None:
-        super().__init__(wallet_chain_id, wallet_address)
-        assert operation in ("Supply", "Borrow"), operation
+        token = token.upper()
+        description = f"Transaction on AAVE to {operation.lower()} {amount} {token}"
+        super().__init__(wallet_chain_id, wallet_address, description)
+        assert operation in ("Supply", "Borrow", "Repay", "Withdraw"), operation
         self.token = token
         self.operation = operation
         self.amount = amount
+        self.is_approval_tx = False
 
     def _run_page(self, page):
-        page.goto("https://app.aave.com/")
+        try:
+            page.goto("https://app.aave.com/")
 
-        # Intercept protocol's requests to its own RPC node
-        page.route("https://eth-mainnet.gateway.pokt.network/**/*", handle_rpc_node_reqs)
-        page.route("https://rpc.ankr.com/**/*", handle_rpc_node_reqs)
+            # Intercept protocol's requests to its own RPC node
+            page.route("https://eth-mainnet.gateway.pokt.network/**/*", handle_rpc_node_reqs)
+            page.route("https://rpc.ankr.com/**/*", handle_rpc_node_reqs)
 
-        # Find connect wallet button and retrieve WC URI
-        page.get_by_role("button", name="wallet", exact=True).click()
-        page.get_by_role("button", name="WalletConnect browser wallet icon").click()
-        page.get_by_text("Copy to clipboard").click()
-        wc_uri = page.evaluate("() => navigator.clipboard.readText()")
+            # Find connect wallet button and retrieve WC URI
+            page.get_by_role("button", name="wallet", exact=True).click()
+            page.get_by_role("button", name="WalletConnect browser wallet icon").click()
+            page.get_by_text("Copy to clipboard").click()
+            wc_uri = page.evaluate("() => navigator.clipboard.readText()")
 
-        self.start_listener(wc_uri)
+            self.start_listener(wc_uri)
 
-        # Trigger operation
-        if self.operation == "Supply":
-            page.get_by_text(self.token, exact=True).first.click()
-            page.get_by_role("button", name=self.token, exact=True).click()
-        elif self.operation == "Borrow":
-            page.get_by_role("link", name=self.token).click()
-        else:
-            assert 0, f"unrecognized operation: {self.operation}"
-        page.get_by_role("button", name=self.operation).click()
-        page.get_by_placeholder("0.00").fill(str(self.amount))
-        page.get_by_role("button", name=f"{self.operation} {self.token}").click()
+            # After WC is connected, wait for page to load user's profile
+            page.get_by_text("Your supplies").wait_for()
 
-        # Arbitrary wait to allow WC to relay info to our client
-        page.wait_for_timeout(5000)
+            # Find token for an operation and click it
+            try:
+                page.locator("div").filter(
+                    has_text=re.compile(
+                        r"^{token}.*{operation}.*$".format(token=self.token, operation=self.operation))).get_by_role(
+                    "button", name=self.operation).click()
+            except PlaywrightTimeoutError:
+                raise Exception(f"Token {self.token} not found")
 
-        result = self.stop_listener()
-        assert result
-        return result
+            # Fill in the amount
+            page.get_by_placeholder("0.00").fill(str(self.amount))
+
+            # If non-ETH token, check for approval
+            if self.operation == "Withdraw" or (self.operation in ["Supply", "Repay"] and self.token != "ETH"):
+                try:
+                    page.get_by_role("button", name="Approve").click()
+                    self.is_approval_tx = True
+                except PlaywrightTimeoutError:
+                    # If timeout error, assume approval given
+                    page.get_by_role("button", name=self.operation).click()
+            else:
+                page.get_by_role("button", name=self.operation).click()
+
+            # Arbitrary wait to allow WC to relay info to our client
+            page.wait_for_timeout(5000)
+            tx = self.stop_listener()
+            return Result(status="success", tx=tx[0], is_approval_tx=self.is_approval_tx, description=self.description)
+        except Exception as e:
+            self.stop_listener()
+            return Result(status="error", error_msg=e.args[0], description=self.description)
 
 
 # Invoke this with python3 -m ui_workflows.aave
-
 if __name__ == "__main__":
     wallet_chain_id = 1  # Tenderly Mainnet Fork
     wallet_address = "0x5f5326CF5304fDD5c0B1308911D183aEc274536A"
-    token = "ETH"
-    operation = "Supply"
-    amount = 0.1
-    #wf = AaveUIWorkflow(wallet_chain_id, wallet_address, token, operation, amount)
-    #print(wf.run())
+    # token = "ETH"
+    # operation = "Supply"
+    # amount = 0.1
 
-    token = "USDC"
-    operation = "Borrow"
-    amount = 0.1
+    # token = "USDC"
+    # operation = "Borrow"
+    # amount = 0.1
+
+    # token = "USDC"
+    # operation = "Repay"
+    # amount = 200
+
+    token = "ETH"
+    operation = "Withdraw"
+    amount = 0.2
     wf = AaveUIWorkflow(wallet_chain_id, wallet_address, token, operation, amount)
     print(wf.run())

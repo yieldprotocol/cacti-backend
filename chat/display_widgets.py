@@ -27,7 +27,7 @@ def _replace_match(m: re.Match) -> str:
     command = m.group('command')
     params = m.group('params')
     w = _widgetize(command, params)
-    #return '```\n' + w + '\n```'  # return code block?
+    # return '```\n' + w + '\n```'  # return code block?
     return w
 
 
@@ -95,11 +95,11 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
     elif command == 'nft-asset-trait-value-container':
         params = json.loads(params)
         lines.append(f"{params['trait']}: {params['value']}")
-    elif command == 'transaction-for-signing-container':
+    elif command == 'display-tx-payload-for-sending-container':
         params = json.loads(params)
-        lines.append(f"A transaction was presented for signing: {params['description']}.")
+        lines.append(f"A transaction was presented for sending: {params['description']}.")
     else:
-        #assert 0, f'unrecognized command: {command}({params})'
+        # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
     indent = "  " * depth
     return indent + f"\n{indent}".join(lines)

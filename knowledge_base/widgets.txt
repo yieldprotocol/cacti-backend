@@ -168,20 +168,36 @@ Required Parameters:
 Return value description:
 -a human-readable string with wallet address
 ---
-Widget magic command: <|exec-aave-deposit({token},{amount})|>
-Description of widget: This widget is used when the user wants to deposit tokens to AAVE.
+Widget magic command: <|exec-project-deposit({project},{token},{amount})|>
+Description of widget: This widget is used when the user wants to deposit tokens into a project. Not to be used with the Compound project
 Required Parameters:
+-{project}: name of the project
 -{token}: token to deposit
 -{amount}: quantity to deposit
 ---
-Widget magic command: <|exec-aave-borrow({token},{amount})|>
-Description of widget: This widget is used when the user wants to borrow tokens from AAVE.
+Widget magic command: <|exec-project-borrow({project},{token},{amount})|>
+Description of widget: This widget is used when the user wants to borrow tokens from a project.
 Required Parameters:
+-{project}: name of the project
+-{token}: token to borrow
+-{amount}: quantity to borrow
+---
+Widget magic command: <|exec-project-repay({project},{token},{amount})|>
+Description of widget: This widget is used when the user wants to repay back borrowed tokens from a project.
+Required Parameters:
+-{project}: name of the project
+-{token}: token to borrow
+-{amount}: quantity to borrow
+---
+Widget magic command: <|exec-project-withdraw({project},{token},{amount})|>
+Description of widget: This widget is used when the user wants to withdraw deposited tokens from a project.
+Required Parameters:
+-{project}: name of the project
 -{token}: token to borrow
 -{amount}: quantity to borrow
 ---
 Widget magic command: <|display-yield-farm({project},{network}, {token}, {amount})|>
-Description of widget: This widget is used when the user wants to yield farm by putting tokens or depositing tokens of a certain amount in a project on a network
+Description of widget: This widget is only to be used for the Compound project to allow the user to yield farm by putting tokens or depositing tokens of a certain amount into the Compound project
 Required Parameters:
 -{project}: name of the project to deposit the token in
 -{network}: network or blockchain of the project. Default to Ethereum if not specified

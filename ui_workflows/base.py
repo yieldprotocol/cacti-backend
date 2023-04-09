@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union, Literal
+from dataclasses import dataclass
 import threading
 import time
 import sys
@@ -8,22 +9,36 @@ import requests
 from pywalletconnect.client import WCClient
 from playwright.sync_api import Playwright, sync_playwright, Page
 
+from utils import TENDERLY_FORK_URL
+
+
+@dataclass
+class Result:
+    status: Literal['success', 'error']
+    description: str
+    tx: any = None
+    is_approval_tx: bool = False
+    error_msg: Optional[str] = None
+
 
 class BaseUIWorkflow(ABC):
     """Common interface for UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, description: str) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
+        self.description = description
         self.thread = None
         self.result_container = []
+        self.thread_event = threading.Event()
 
     @abstractmethod
     def _run_page(self, page: Page) -> Any:
         """Accept user input and return responses via the send_message function."""
 
-    def run(self) -> Any:
+    def run(self) -> Result:
         """Spin up headless browser and call run_page function on page."""
+        print(f"Running UI workflow: {self.description}")
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
             context = browser.new_context()
@@ -34,18 +49,20 @@ class BaseUIWorkflow(ABC):
 
             context.close()
             browser.close()
+        print(f"UI workflow finished: {self.description}")
         return ret
 
     def start_listener(self, wc_uri: str) -> None:
         assert self.thread is None, 'not expecting a thread to be started'
         self.thread = threading.Thread(
             target=wc_listen_for_messages,
-            args=(wc_uri, self.wallet_chain_id, self.wallet_address, self.result_container),
+            args=(self.thread_event, wc_uri, self.wallet_chain_id, self.wallet_address, self.result_container),
         )
         self.thread.start()
 
     def stop_listener(self) -> Any:
         if self.thread:
+            self.thread_event.set()
             self.thread.join()
             self.thread = None
         if self.result_container:
@@ -61,11 +78,12 @@ def _check_headless_allowed():
 def handle_rpc_node_reqs(route, request):
     post_body = route.request.post_data
     # Forward request to Tenderly RPC node
-    data = requests.post("https://rpc.tenderly.co/fork/902db63e-9c5e-415b-b883-5701c77b3aa7", data=post_body)
+    data = requests.post(TENDERLY_FORK_URL, data=post_body)
     route.fulfill(body=data.text)
 
 
-def wc_listen_for_messages(wc_uri: str, wallet_chain_id: int, wallet_address: str, result_container: List):
+def wc_listen_for_messages(
+        thread_event: threading.Event, wc_uri: str, wallet_chain_id: int, wallet_address: str, result_container: List):
     # Connect to WC URI using wallet address
     wclient = WCClient.from_wc_uri(wc_uri)
     print("Connecting with the Dapp ...")
@@ -75,7 +93,7 @@ def wc_listen_for_messages(wc_uri: str, wallet_chain_id: int, wallet_address: st
 
     print(" To quit : Hit CTRL+C, or disconnect from Dapp.")
     print("Now waiting for dapp messages ...")
-    while True:
+    while not thread_event.is_set():
         try:
             time.sleep(0.3)
             # get_message return : (id, method, params) or (None, "", [])
