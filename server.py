@@ -1,22 +1,20 @@
-from typing import Dict
-import json
-import logging
-logging.basicConfig(level=logging.INFO)
-import uuid
-from urllib.parse import urlparse, parse_qs
-
-from websocket_server import WebsocketServer
-
-import chat
-import index
-import system
-import config
+from utils import set_api_key
 from database.models import (
     db_session, FeedbackStatus,
     ChatSession, ChatMessage, ChatMessageFeedback,
     SystemConfig,
 )
-from utils import set_api_key
+import config
+import system
+import index
+import chat
+from websocket_server import WebsocketServer
+from urllib.parse import urlparse, parse_qs
+import uuid
+from typing import Dict
+import json
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 set_api_key()
@@ -102,13 +100,14 @@ print(f'The default system config id is: {default_system_config.id}')
 _register_system(default_system_config.id, default_system_config.json)
 
 
-
 def _load_existing_history_and_messages(session_id):
     """Given an existing session_id, recreate the ChatHistory instance along with the individual Messages"""
     history = chat.ChatHistory.new(session_id)
     messages = []
 
-    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.created).all():
+    for message in ChatMessage.query.filter(
+            ChatMessage.chat_session_id == session_id).order_by(
+            ChatMessage.created).all():
         messages.append(message)
 
         # register user/bot messages to history
@@ -149,7 +148,7 @@ def _message_received(client, server, message):
 
     # set wallet status
     if typ == 'wallet':
-        #print(client_id, payload)
+        # print(client_id, payload)
         _set_client_wallet_address(client_id, payload.get('walletAddress'))
         return
 
@@ -175,19 +174,18 @@ def _message_received(client, server, message):
         if resume_from_message_id is None:
             message_start_idx = 0
         else:
-            message_start_indexes = [i for i, message in enumerate(messages) if str(message.id) == resume_from_message_id]
+            message_start_indexes = [i for i, message in enumerate(
+                messages) if str(message.id) == resume_from_message_id]
             assert len(message_start_indexes) == 1, f'expected one message to match id ${resume_from_message_id}'
             message_start_idx = message_start_indexes[0] + 1
 
         for i in range(message_start_idx, len(messages)):
             message = messages[i]
-            msg = json.dumps({
-                'messageId': str(message.id),
-                'actor': message.actor,
-                'type': message.type,
-                'payload': message.payload,
-                'feedback': str(message.chat_message_feedback.feedback_status.name) if message.chat_message_feedback else 'none',
-            })
+            msg = json.dumps(
+                {'messageId': str(message.id),
+                 'actor': message.actor, 'type': message.type, 'payload': message.payload,
+                 'feedback': str(message.chat_message_feedback.feedback_status.name)
+                 if message.chat_message_feedback else 'none', })
             server.send_message(client, msg)
         return
 
@@ -206,8 +204,6 @@ def _message_received(client, server, message):
             'feedback': 'n/a',
         })
         server.send_message(client, msg)
-
-    assert actor == 'user', obj
 
     chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
     if not chat_session:
@@ -284,7 +280,8 @@ def _message_received(client, server, message):
         if action_type == 'feedback':
             chat_message_id = uuid.UUID(obj['payload']['messageId'])
             feedback_status = FeedbackStatus.__members__[obj['payload']['choice']]
-            chat_message_feedback = ChatMessageFeedback.query.filter(ChatMessageFeedback.chat_message_id == chat_message_id).one_or_none()
+            chat_message_feedback = ChatMessageFeedback.query.filter(
+                ChatMessageFeedback.chat_message_id == chat_message_id).one_or_none()
             if chat_message_feedback:
                 chat_message_feedback.feedback_status = feedback_status
             else:

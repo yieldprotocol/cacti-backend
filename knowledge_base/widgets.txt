@@ -169,7 +169,7 @@ Return value description:
 -a human-readable string with wallet address
 ---
 Widget magic command: <|exec-project-deposit({project},{token},{amount})|>
-Description of widget: This widget is used when the user wants to deposit tokens into a project. Not to be used with the Compound project
+Description of widget: This widget is used when the user wants to supply or deposit tokens into a project. Not to be used with the Compound project
 Required Parameters:
 -{project}: name of the project
 -{token}: token to deposit

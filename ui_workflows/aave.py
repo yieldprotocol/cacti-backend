@@ -9,8 +9,8 @@ class AaveUIWorkflow(BaseUIWorkflow):
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, token: str, operation: str, amount: float) -> None:
         token = token.upper()
-        description = f"Transaction on AAVE to {operation.lower()} {amount} {token}"
-        super().__init__(wallet_chain_id, wallet_address, description)
+        parsedUserRequest = f"{operation.capitalize()} {amount} {token} on AAVE"
+        super().__init__(wallet_chain_id, wallet_address, parsedUserRequest)
         assert operation in ("Supply", "Borrow", "Repay", "Withdraw"), operation
         self.token = token
         self.operation = operation
@@ -62,10 +62,21 @@ class AaveUIWorkflow(BaseUIWorkflow):
             # Arbitrary wait to allow WC to relay info to our client
             page.wait_for_timeout(5000)
             tx = self.stop_listener()
-            return Result(status="success", tx=tx[0], is_approval_tx=self.is_approval_tx, description=self.description)
+
+            if self.is_approval_tx:
+                description = f"Approval transaction on AAVE to {self.operation.lower()} {self.amount} {self.token}"
+            else:
+                description = f"Transaction on AAVE to {self.operation.lower()} {self.amount} {self.token}"
+
+            return Result(
+                status="success", tx=tx[0],
+                is_approval_tx=self.is_approval_tx, parsedUserRequest=self.parsedUserRequest,
+                description=description)
         except Exception as e:
             self.stop_listener()
-            return Result(status="error", error_msg=e.args[0], description=self.description)
+            return Result(
+                status="error", error_msg=e.args[0],
+                parsedUserRequest=self.parsedUserRequest, description=self.parsedUserRequest)
 
 
 # Invoke this with python3 -m ui_workflows.aave

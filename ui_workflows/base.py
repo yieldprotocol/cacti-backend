@@ -15,6 +15,7 @@ from utils import TENDERLY_FORK_URL
 @dataclass
 class Result:
     status: Literal['success', 'error']
+    parsedUserRequest: str
     description: str
     tx: any = None
     is_approval_tx: bool = False
@@ -24,10 +25,10 @@ class Result:
 class BaseUIWorkflow(ABC):
     """Common interface for UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, description: str) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, parsedUserRequest: str) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
-        self.description = description
+        self.parsedUserRequest = parsedUserRequest
         self.thread = None
         self.result_container = []
         self.thread_event = threading.Event()
@@ -38,7 +39,7 @@ class BaseUIWorkflow(ABC):
 
     def run(self) -> Result:
         """Spin up headless browser and call run_page function on page."""
-        print(f"Running UI workflow: {self.description}")
+        print(f"Running UI workflow: {self.parsedUserRequest}")
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
             context = browser.new_context()
@@ -49,7 +50,7 @@ class BaseUIWorkflow(ABC):
 
             context.close()
             browser.close()
-        print(f"UI workflow finished: {self.description}")
+        print(f"UI workflow finished: {self.parsedUserRequest}")
         return ret
 
     def start_listener(self, wc_uri: str) -> None:
