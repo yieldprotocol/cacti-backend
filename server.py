@@ -207,7 +207,7 @@ def _message_received(client, server, message):
         })
         server.send_message(client, msg)
 
-    assert actor == 'user', obj
+    assert actor == 'user' or (actor == 'system' and typ == 'replay-user-msg')
 
     chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
     if not chat_session:
