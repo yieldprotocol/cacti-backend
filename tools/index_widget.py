@@ -413,8 +413,8 @@ def address_from_ens(domain) -> str:
 
 @dataclass
 class TxPayloadForSending(ContainerMixin):
-    userRequestStatus: Literal['success', 'error']
-    parsedUserRequest: str = ''
+    user_request_status: Literal['success', 'error']
+    parsed_user_request: str = ''
     tx: Optional[dict] = None  # from, to, value, data, gas
     is_approval_tx: bool = False
     error_msg: Optional[str] = None
@@ -445,8 +445,8 @@ def exec_aave_operation(token: str, amount: str, operation: str = '') -> TxPaylo
     wf = aave.AaveUIWorkflow(wallet_chain_id, wallet_address, token, operation, float(amount))
     result = wf.run()
     return TxPayloadForSending(
-        userRequestStatus=result.status,
-        parsedUserRequest=result.parsedUserRequest,
+        user_request_status=result.status,
+        parsed_user_request=result.parsed_user_request,
         tx=result.tx,
         is_approval_tx=result.is_approval_tx,
         error_msg=result.error_msg,

@@ -9,8 +9,8 @@ class AaveUIWorkflow(BaseUIWorkflow):
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, token: str, operation: str, amount: float) -> None:
         token = token.upper()
-        parsedUserRequest = f"{operation.capitalize()} {amount} {token} on AAVE"
-        super().__init__(wallet_chain_id, wallet_address, parsedUserRequest)
+        parsed_user_request = f"{operation.capitalize()} {amount} {token} on AAVE"
+        super().__init__(wallet_chain_id, wallet_address, parsed_user_request)
         assert operation in ("Supply", "Borrow", "Repay", "Withdraw"), operation
         self.token = token
         self.operation = operation
@@ -70,13 +70,13 @@ class AaveUIWorkflow(BaseUIWorkflow):
 
             return Result(
                 status="success", tx=tx[0],
-                is_approval_tx=self.is_approval_tx, parsedUserRequest=self.parsedUserRequest,
+                is_approval_tx=self.is_approval_tx, parsed_user_request=self.parsed_user_request,
                 description=description)
         except Exception as e:
             self.stop_listener()
             return Result(
                 status="error", error_msg=e.args[0],
-                parsedUserRequest=self.parsedUserRequest, description=self.parsedUserRequest)
+                parsed_user_request=self.parsed_user_request, description=self.parsed_user_request)
 
 
 # Invoke this with python3 -m ui_workflows.aave
@@ -87,16 +87,16 @@ if __name__ == "__main__":
     # operation = "Supply"
     # amount = 0.1
 
-    # token = "USDC"
-    # operation = "Borrow"
-    # amount = 0.1
+    token = "USDT"
+    operation = "Borrow"
+    amount = 1
 
     # token = "USDC"
     # operation = "Repay"
     # amount = 200
 
-    token = "ETH"
-    operation = "Withdraw"
-    amount = 0.2
+    # token = "ETH"
+    # operation = "Withdraw"
+    # amount = 0.2
     wf = AaveUIWorkflow(wallet_chain_id, wallet_address, token, operation, amount)
     print(wf.run())
