@@ -331,16 +331,24 @@ def _message_received(client, server, message):
 
         return
 
-    # here this could be regular user message
-    # or an edited user message
-    # or a system message replay
+    # NB: here this could be regular user message or a system message replay
 
     # store new user message
     message_id = send_message(chat.Response(
         response=payload,
         still_thinking=True,
         actor=actor,
-        operation='create_then_replace',  # the frontend already appends immediately
+        # NB: the frontend already appends a placeholder message immediately
+        # as part of an optimistic update for smooth UX purposes, but
+        # that one does not have the message_id since that is only obtained
+        # after a db write. Hence, we have a hybrid operation here, where we
+        # do a 'create' behavior in the backend (create a message in the db),
+        # but we do a 'replace' behavior in the frontend, to replace the
+        # placeholder message with one that now contains the message_id. We
+        # need message_id to be present on all user messages, so that when
+        # they get edited, we know at which point to truncate subsequent
+        # messages.
+        operation='create_then_replace',
     ), last_chat_message_id=None)
 
     system.chat.receive_input(history, payload, send_message, message_id=message_id)
