@@ -2,7 +2,8 @@
 
 import os
 import time
-from typing import Any, Callable, List
+import uuid
+from typing import Any, Callable, List, Optional
 
 import context
 import registry
@@ -51,11 +52,11 @@ class BasicAgentChat(BaseChat):
         self.tools = tools
         self.show_thinking = show_thinking
 
-    def receive_input(self, history: ChatHistory, userinput: str, send: Callable) -> None:
+    def receive_input(self, history: ChatHistory, userinput: str, send: Callable, message_id: Optional[uuid.UUID] = None) -> None:
         userinput = userinput.strip()
         history_string = history.to_string(bot_prefix="Observation", system_prefix="Thought", token_limit=HISTORY_TOKEN_LIMIT)
 
-        history.add_user_message(userinput)
+        history.add_user_message(userinput, message_id=message_id)
         start = time.time()
 
         system_chat_message_id = None
@@ -73,7 +74,7 @@ class BasicAgentChat(BaseChat):
                 actor='system',
                 operation='replace',
             ), last_chat_message_id=system_chat_message_id)
-            history.add_system_message(response)
+            history.add_system_message(response, message_id=system_chat_message_id)
 
         def bot_flush(response):
             nonlocal bot_chat_message_id
@@ -84,7 +85,7 @@ class BasicAgentChat(BaseChat):
                 actor='bot',
                 operation='replace',
             ), last_chat_message_id=bot_chat_message_id)
-            history.add_bot_message(response)
+            history.add_bot_message(response, message_id=bot_chat_message_id)
 
         def system_new_token_handler(token):
             nonlocal system_chat_message_id, system_response, bot_chat_message_id, bot_response, has_sent_bot_response
@@ -152,4 +153,6 @@ class BasicAgentChat(BaseChat):
             if 'DONE' not in result:
                 send(Response(response=result))
 
-        send(Response(response=f'Response generation took {duration: .2f}s', actor='system'))
+        response = f'Response generation took {duration: .2f}s'
+        system_chat_message_id = send(Response(response=response, actor='system'))
+        history.add_system_message(response, message_id=system_chat_message_id)

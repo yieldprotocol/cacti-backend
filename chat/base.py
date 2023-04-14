@@ -24,6 +24,7 @@ class Response:
 class ChatMessage:
     actor: str
     content: str
+    message_id: Optional[uuid.UUID]
 
 
 @dataclass
@@ -37,18 +38,27 @@ class ChatHistory:
         self.add_user_message(user_input)
         self.add_bot_message(response)
 
-    def add_user_message(self, text) -> None:
+    def add_user_message(self, text: str, message_id: Optional[uuid.UUID] = None) -> None:
         """Add user message to history."""
-        self.messages.append(ChatMessage(actor='user', content=text))
+        self.messages.append(ChatMessage(actor='user', content=text, message_id=message_id))
 
-    def add_bot_message(self, text) -> None:
+    def add_bot_message(self, text: str, message_id: Optional[uuid.UUID] = None) -> None:
         """Add bot message to history."""
         text = parse_widgets_into_text(text)
-        self.messages.append(ChatMessage(actor='bot', content=text))
+        self.messages.append(ChatMessage(actor='bot', content=text, message_id=message_id))
 
-    def add_system_message(self, text) -> None:
+    def add_system_message(self, text: str, message_id: Optional[uuid.UUID] = None) -> None:
         """Add system message to history."""
-        self.messages.append(ChatMessage(actor='system', content=text))
+        self.messages.append(ChatMessage(actor='system', content=text, message_id=message_id))
+
+    def truncate_from_message(self, message_id: uuid.UUID) -> List[uuid.UUID]:
+        """Truncate history from given message id onwards. Returns list of removed IDs."""
+        for idx in range(len(self.messages)):
+            if self.messages[idx].message_id == message_id:
+                removed_ids = [msg.message_id for msg in self.messages[idx:]]
+                self.messages = self.messages[:idx]
+                return removed_ids
+        return []
 
     def __bool__(self):
         return bool(self.messages)
@@ -86,7 +96,7 @@ class BaseChat(ABC):
     """Common interface for chat."""
 
     @abstractmethod
-    def receive_input(self, history: ChatHistory, user_input: str, send_message: Callable) -> None:
+    def receive_input(self, history: ChatHistory, user_input: str, send_message: Callable, message_id: Optional[uuid.UUID]) -> None:
         """Accept user input and return responses via the send_message function."""
 
 
