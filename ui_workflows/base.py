@@ -7,7 +7,7 @@ import sys
 
 import requests
 from pywalletconnect.client import WCClient
-from playwright.sync_api import Playwright, sync_playwright, Page
+from playwright.sync_api import Playwright, sync_playwright, Page, BrowserContext
 
 from utils import TENDERLY_FORK_URL
 
@@ -32,9 +32,11 @@ class BaseUIWorkflow(ABC):
         self.thread = None
         self.result_container = []
         self.thread_event = threading.Event()
+        self.is_approval_tx = False
+        self.storage = {}
 
     @abstractmethod
-    def _run_page(self, page: Page) -> Any:
+    def _run_page(self, page: Page, context: BrowserContext) -> Any:
         """Accept user input and return responses via the send_message function."""
 
     def run(self) -> Result:
@@ -42,11 +44,11 @@ class BaseUIWorkflow(ABC):
         print(f"Running UI workflow: {self.parsed_user_request}")
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
-            context = browser.new_context()
+            context = browser.new_context(storage_state=self.storage_stage)
             context.grant_permissions(["clipboard-read", "clipboard-write"])
             page = context.new_page()
 
-            ret = self._run_page(page)
+            ret = self._run_page(page, context)
 
             context.close()
             browser.close()
@@ -80,7 +82,7 @@ def handle_rpc_node_reqs(route, request):
     post_body = route.request.post_data
     # Forward request to Tenderly RPC node
     data = requests.post(TENDERLY_FORK_URL, data=post_body)
-    route.fulfill(body=data.text)
+    route.fulfill(body=data.text, headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})
 
 
 def wc_listen_for_messages(
