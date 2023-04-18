@@ -50,7 +50,7 @@ def _deregister_client_history(client_id):
 
 def new_client(client, server):
     history = _get_client_history(client['id'])
-    assert history is None, f'existing chat history session ${history.session_id} for new client connection'
+    assert history is None, f'existing chat history session {history.session_id} for new client connection'
 
 
 def client_left(client, server):
@@ -157,7 +157,7 @@ def _message_received(client, server, message):
 
     # resume an existing chat history session, given a session id
     if typ == 'init':
-        assert history is None, f'received a session resume request for existing session ${history.session_id}'
+        assert history is None, f'received a session resume request for existing session {history.session_id}'
 
         # HACK: legacy payload is a query string of the format '?s=some_session_id', temporarily preserve backwards compatibility
         if isinstance(payload, str):
@@ -178,7 +178,7 @@ def _message_received(client, server, message):
             message_start_idx = 0
         else:
             message_start_indexes = [i for i, message in enumerate(messages) if str(message.id) == resume_from_message_id]
-            assert len(message_start_indexes) == 1, f'expected one message to match id ${resume_from_message_id}'
+            assert len(message_start_indexes) == 1, f'expected one message to match id {resume_from_message_id}'
             message_start_idx = message_start_indexes[0] + 1
 
         for i in range(message_start_idx, len(messages)):
