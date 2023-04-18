@@ -34,6 +34,11 @@ class FeedbackStatus(enum.IntEnum):
     bad = 3
     neutral = 4
 
+class WorkflowStepStatus(enum.IntEnum):
+    pending = 1
+    success = 2
+    error = 3
+    user_interrupt = 4
 
 class SystemConfig(Base, Timestamp):  # type: ignore
     __tablename__ = 'system_config'
@@ -76,3 +81,22 @@ class ChatMessageFeedback(Base, Timestamp):  # type: ignore
                         cascade='delete'))
 
     feedback_status = Column(ChoiceType(FeedbackStatus, impl=Integer()), default=FeedbackStatus.none, nullable=False)
+
+
+class Workflow(Base, Timestamp):
+    __tablename__ = 'workflow'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id = Column(UUID(as_uuid=True), ForeignKey('chat_session.id'), nullable=False)
+    message_id = Column(UUID(as_uuid=True), ForeignKey('chat_message.id'), nullable=False)
+    operation = Column(String, nullable=False)
+    params = Column(JSONB, nullable=True)
+
+
+class WorkflowStep(Base, Timestamp):
+    __tablename__ = 'workflow_step'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    workflow_id = Column(UUID(as_uuid=True), ForeignKey('workflow.id'), nullable=False)
+    step = Column(String, nullable=False)
+    status = Column(ChoiceType(WorkflowStepStatus, impl=Integer()), default=WorkflowStepStatus.pending, nullable=False)
+    status_message = Column(String, nullable=True)
+    step_state = Column(JSONB, nullable=True)

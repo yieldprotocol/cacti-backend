@@ -351,6 +351,21 @@ def _message_received(client, server, message):
         operation='create_then_replace',
     ), last_chat_message_id=None)
 
+    # TODO: Bypass the flow here for multi-step workflows based on type of message
+
+    """
+    
+    { 
+    actor: 'system', 
+    type: 'workflow', 
+    payload: {
+        workflow_id: '123',
+        latest_step: 'step1'
+        step_status: 'success'
+        step_message: ''
+    }
+    """
+
     system.chat.receive_input(history, payload, send_message, message_id=message_id)
 
 
