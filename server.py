@@ -114,11 +114,11 @@ def _load_existing_history_and_messages(session_id):
         # register user/bot messages to history
         if message.type == 'text':
             if message.actor == 'user':
-                history.add_user_message(message.payload)
+                history.add_user_message(message.payload, message_id=message.id)
             elif message.actor == 'bot':
-                history.add_bot_message(message.payload)
+                history.add_bot_message(message.payload, message_id=message.id)
             elif message.actor == 'system':
-                history.add_system_message(message.payload)
+                history.add_system_message(message.payload, message_id=message.id)
 
     return history, messages
 
@@ -132,8 +132,6 @@ def message_received(client, server, message):
 
 def _message_received(client, server, message):
     client_id = client['id']
-    system_config_id = _get_client_system_config(client_id)
-    history = _get_client_history(client_id)
     obj = json.loads(message)
     assert isinstance(obj, dict), obj
     actor = obj['actor']
@@ -146,6 +144,10 @@ def _message_received(client, server, message):
             system_config_id = int(payload['systemConfigId'])
             _set_client_system_config(client_id, system_config_id)
         return
+
+    history = _get_client_history(client_id)
+    system_config_id = _get_client_system_config(client_id)
+    system = _get_system(system_config_id)
 
     # set wallet status
     if typ == 'wallet':
@@ -207,7 +209,10 @@ def _message_received(client, server, message):
         })
         server.send_message(client, msg)
 
-    assert actor == 'user' or (actor == 'system' and typ == 'replay-user-msg')
+    assert actor == 'user' or (actor == 'system' and typ == 'replay-user-msg'), obj
+
+    # set wallet address onto chat history prior to processing input
+    history.wallet_address = _get_client_wallet_address(client_id)
 
     chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
     if not chat_session:
@@ -241,7 +246,7 @@ def _message_received(client, server, message):
         nonlocal server, client
 
         # store response (if not streaming)
-        if resp.operation == 'create':
+        if resp.operation in ('create', 'create_then_replace'):
             chat_message = ChatMessage(
                 actor=resp.actor,
                 type='text',
@@ -308,33 +313,45 @@ def _message_received(client, server, message):
                 if error:
                     tx_message += f" with error {error}."
 
-            send_message(chat.Response(
+            message_id = send_message(chat.Response(
                 response=tx_message,
                 still_thinking=False,
                 actor='system',
                 operation='create',
             ), last_chat_message_id=None)
-            history.add_system_message(tx_message)
+            history.add_system_message(tx_message, message_id=message_id)
+        elif action_type == 'edit':
+            edit_message_id = obj['payload']['messageId']
+            removed_message_ids = history.truncate_from_message(uuid.UUID(edit_message_id))
+            for removed_id in removed_message_ids:
+                ChatMessage.query.filter(ChatMessage.id == removed_id).delete()
+            db_session.commit()
         else:
             assert 0, f'unrecognized action type: {action_type}'
+
         return
 
+    # NB: here this could be regular user message or a system message replay
+
     # store new user message
-    chat_message = ChatMessage(
+    message_id = send_message(chat.Response(
+        response=payload,
+        still_thinking=True,
         actor=actor,
-        type=typ,
-        payload=payload,
-        chat_session_id=chat_session.id,
-        system_config_id=system_config_id,
-    )
-    db_session.add(chat_message)
-    db_session.commit()
+        # NB: the frontend already appends a placeholder message immediately
+        # as part of an optimistic update for smooth UX purposes, but
+        # that one does not have the message_id since that is only obtained
+        # after a db write. Hence, we have a hybrid operation here, where we
+        # do a 'create' behavior in the backend (create a message in the db),
+        # but we do a 'replace' behavior in the frontend, to replace the
+        # placeholder message with one that now contains the message_id. We
+        # need message_id to be present on all user messages, so that when
+        # they get edited, we know at which point to truncate subsequent
+        # messages.
+        operation='create_then_replace',
+    ), last_chat_message_id=None)
 
-    # set wallet address onto chat history prior to processing input
-    history.wallet_address = _get_client_wallet_address(client_id)
-
-    system = _get_system(system_config_id)
-    system.chat.receive_input(history, payload, send_message)
+    system.chat.receive_input(history, payload, send_message, message_id=message_id)
 
 
 server = WebsocketServer(host='0.0.0.0', port=9999, loglevel=logging.INFO)
