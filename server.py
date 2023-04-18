@@ -6,6 +6,7 @@ import uuid
 from urllib.parse import urlparse, parse_qs
 
 from websocket_server import WebsocketServer
+from sqlalchemy import func
 
 import chat
 import index
@@ -108,7 +109,7 @@ def _load_existing_history_and_messages(session_id):
     history = chat.ChatHistory.new(session_id)
     messages = []
 
-    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.created).all():
+    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.sequence_number, ChatMessage.created).all():
         messages.append(message)
 
         # register user/bot messages to history
@@ -220,7 +221,7 @@ def _message_received(client, server, message):
         db_session.add(chat_session)
         db_session.flush()
 
-    def send_message(resp, last_chat_message_id=None):
+    def send_message(resp, last_chat_message_id=None, before_message_id=None):
         """Send message function.
 
         This function is passed into the chat module, to be called when the
@@ -236,6 +237,8 @@ def _message_received(client, server, message):
             logic of when a new record should be created (by passing a
             response with operation 'create'), or when one should be
             appended to or replaced (with 'append' and 'replace' respectively).
+        before_message_id: The id of the database record before which we
+            should be inserting our current message.
 
         Returns
         -------
@@ -247,10 +250,21 @@ def _message_received(client, server, message):
 
         # store response (if not streaming)
         if resp.operation in ('create', 'create_then_replace'):
+            # figure out the current sequence number
+            if before_message_id:
+                seq_num = ChatMessage.query.get(before_message_id).sequence_number
+                # bump sequence number of everything else
+                for message in ChatMessage.query.filter(ChatMessage.chat_session_id == chat_session.id, ChatMessage.sequence_number >= seq_num).all():
+                    message.sequence_number += 1
+                    db_session.add(message)
+            else:
+                seq_num = (db_session.query(func.max(ChatMessage.sequence_number)).filter(ChatMessage.chat_session_id == chat_session.id).scalar() or 0) + 1
+
             chat_message = ChatMessage(
                 actor=resp.actor,
                 type='text',
                 payload=resp.response,
+                sequence_number=seq_num,
                 chat_session_id=chat_session.id,
                 system_config_id=system_config_id,
             )
@@ -270,6 +284,7 @@ def _message_received(client, server, message):
         else:
             assert 0, f'unrecognized operation: {resp.operation}'
 
+        before_message_id_kwargs = {'beforeMessageId': str(before_message_id)} if before_message_id is not None else {}
         msg = json.dumps({
             'messageId': str(chat_message_id),
             'actor': resp.actor,
@@ -278,6 +293,7 @@ def _message_received(client, server, message):
             'stillThinking': resp.still_thinking,
             'operation': resp.operation,
             'feedback': 'none',
+            **before_message_id_kwargs,
         })
         server.send_message(client, msg)
 
@@ -320,11 +336,25 @@ def _message_received(client, server, message):
                 operation='create',
             ), last_chat_message_id=None)
             history.add_system_message(tx_message, message_id=message_id)
-        elif action_type == 'edit':
-            edit_message_id = obj['payload']['messageId']
-            removed_message_ids = history.truncate_from_message(uuid.UUID(edit_message_id))
+        elif action_type in ('edit', 'regenerate'):
+            edit_message_id = uuid.UUID(obj['payload']['messageId'])
+            chat_message = ChatMessage.query.get(edit_message_id)
+            if action_type == 'edit':
+                payload = obj['payload']['text']
+                chat_message.payload = payload
+            else:
+                payload = chat_message.payload
+            before_message_id = history.find_next_user_message(edit_message_id)
+            removed_message_ids = history.truncate_from_message(edit_message_id, before_message_id=before_message_id)
             for removed_id in removed_message_ids:
-                ChatMessage.query.filter(ChatMessage.id == removed_id).delete()
+                if removed_id == edit_message_id:  # don't remove the message being edited/regenerated from db
+                    continue
+                db_session.delete(ChatMessage.query.get(removed_id))  # use this delete approach to have cascade
+            system.chat.receive_input(
+                history, payload, send_message,
+                message_id=edit_message_id,
+                before_message_id=before_message_id,
+            )
             db_session.commit()
         else:
             assert 0, f'unrecognized action type: {action_type}'
