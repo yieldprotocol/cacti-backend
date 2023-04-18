@@ -52,6 +52,7 @@ class ChatMessage(Base, Timestamp):  # type: ignore
     actor = Column(String, nullable=False)
     type = Column(String, nullable=False)
     payload = Column(String, nullable=False)
+    sequence_number = Column(Integer, nullable=False, default=0)
 
     chat_session_id = Column(UUID(as_uuid=True), ForeignKey('chat_session.id'), nullable=False)
     chat_session = relationship(
@@ -63,7 +64,7 @@ class ChatMessage(Base, Timestamp):  # type: ignore
     system_config_id = Column(Integer, ForeignKey('system_config.id'), nullable=False)
 
 
-Index('chat_message_by_session', ChatMessage.chat_session_id, ChatMessage.created)
+Index('chat_message_by_sequence_number', ChatMessage.chat_session_id, ChatMessage.sequence_number, ChatMessage.created)
 
 
 class ChatMessageFeedback(Base, Timestamp):  # type: ignore
@@ -73,6 +74,6 @@ class ChatMessageFeedback(Base, Timestamp):  # type: ignore
         ChatMessage,
         backref=backref('chat_message_feedback',
                         uselist=False,
-                        cascade='delete'))
+                        cascade='delete,all'))
 
     feedback_status = Column(ChoiceType(FeedbackStatus, impl=Integer()), default=FeedbackStatus.none, nullable=False)
