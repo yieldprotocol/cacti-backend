@@ -252,14 +252,15 @@ def _message_received(client, server, message):
         if resp.operation in ('create', 'create_then_replace'):
             # figure out the current sequence number
             if before_message_id:
-                seq_num = ChatMessage.query.get(before_message_id).sequence_number
-                # bump sequence number of everything else
-                for message in ChatMessage.query.filter(ChatMessage.chat_session_id == chat_session.id, ChatMessage.sequence_number >= seq_num).all():
-                    message.sequence_number += 1
-                    db_session.add(message)
+                before_seq_num = ChatMessage.query.get(before_message_id).sequence_number
+                seq_num = (db_session.query(func.max(ChatMessage.sequence_number)).filter(ChatMessage.chat_session_id == chat_session.id, ChatMessage.sequence_number < before_seq_num).scalar() or 0) + 1
+                if seq_num >= before_seq_num:
+                    # bump sequence number of everything else
+                    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == chat_session.id, ChatMessage.sequence_number >= before_seq_num).all():
+                        message.sequence_number += 1
+                        db_session.add(message)
             else:
                 seq_num = (db_session.query(func.max(ChatMessage.sequence_number)).filter(ChatMessage.chat_session_id == chat_session.id).scalar() or 0) + 1
-
             chat_message = ChatMessage(
                 actor=resp.actor,
                 type='text',
@@ -350,12 +351,12 @@ def _message_received(client, server, message):
                 if removed_id == edit_message_id:  # don't remove the message being edited/regenerated from db
                     continue
                 db_session.delete(ChatMessage.query.get(removed_id))  # use this delete approach to have cascade
+            db_session.commit()
             system.chat.receive_input(
                 history, payload, send_message,
                 message_id=edit_message_id,
                 before_message_id=before_message_id,
             )
-            db_session.commit()
         else:
             assert 0, f'unrecognized action type: {action_type}'
 
