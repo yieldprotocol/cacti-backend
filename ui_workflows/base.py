@@ -33,18 +33,23 @@ class BaseUIWorkflow(ABC):
         self.result_container = []
         self.thread_event = threading.Event()
         self.is_approval_tx = False
-        self.storage = {}
+        self.browser_storage_state = {}
 
     @abstractmethod
     def _run_page(self, page: Page, context: BrowserContext) -> Any:
         """Accept user input and return responses via the send_message function."""
+    
+    def _before_run(self) -> None:
+        """Do any setup before running the workflow."""
+        pass
 
     def run(self) -> Result:
         """Spin up headless browser and call run_page function on page."""
         print(f"Running UI workflow: {self.parsed_user_request}")
+        self._before_run()
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
-            context = browser.new_context(storage_state=self.storage_stage)
+            context = browser.new_context(storage_state=self.browser_storage_state)
             context.grant_permissions(["clipboard-read", "clipboard-write"])
             page = context.new_page()
 

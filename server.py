@@ -357,12 +357,18 @@ def _message_received(client, server, message):
     
     { 
     actor: 'system', 
-    type: 'workflow', 
+    type: 'mutlistep-workflow', 
     payload: {
-        workflow_id: '123',
-        latest_step: 'step1'
-        step_status: 'success'
-        step_message: ''
+    workflow: {
+        id: '123',
+        operation: 'ens_registration',
+        step: {
+            id: '456',
+            name: 'request_register',
+            status: 'success',
+            status_message: ''
+        }
+    
     }
     """
 
