@@ -51,6 +51,10 @@ class ChatHistory:
         """Add system message to history."""
         self._add_message(text, 'system', message_id=message_id, before_message_id=before_message_id)
 
+    def add_commenter_message(self, text: str, message_id: Optional[uuid.UUID] = None, before_message_id: Optional[uuid.UUID] = None) -> None:
+        """Add commenter message to history."""
+        self._add_message(text, 'commenter', message_id=message_id, before_message_id=before_message_id)
+
     def _add_message(self, text: str, actor: str, message_id: Optional[uuid.UUID] = None, before_message_id: Optional[uuid.UUID] = None) -> None:
         """Add message to history with given message id if specified, before message id if specified."""
         insert_idx = None
@@ -65,20 +69,20 @@ class ChatHistory:
         else:
             self.messages.append(chat_message)
 
-    def find_next_user_message(self, message_id: uuid.UUID) -> Optional[uuid.UUID]:
-        """Find the ID of the next user message after the specified one, if any."""
+    def find_next_human_message(self, message_id: uuid.UUID) -> Optional[uuid.UUID]:
+        """Find the ID of the next human message after the specified one, if any."""
         next_user_message_id = None
         for idx in range(len(self.messages)):
             if self.messages[idx].message_id == message_id:
                 for idx2 in range(idx + 1, len(self.messages)):
-                    if self.messages[idx2].actor == 'user':
+                    if self.messages[idx2].actor in ('user', 'commenter'):
                         next_user_message_id = self.messages[idx2].message_id
                         break
                 break
         return next_user_message_id
 
     def truncate_from_message(self, message_id: uuid.UUID, before_message_id: Optional[uuid.UUID] = None) -> List[uuid.UUID]:
-        """Truncate history from given message id onwards, up to a certain message id if specified.
+        """Truncate history from given message id onwards (inclusive), up to a certain message id if specified.
 
         Returns list of removed IDs.
 
@@ -115,8 +119,13 @@ class ChatHistory:
                 prefix = user_prefix
             elif message.actor == 'system':
                 prefix = system_prefix
-            else:
+            elif message.actor == 'bot':
                 prefix = bot_prefix
+            elif message.actor == 'commenter':
+                # ignore these
+                continue
+            else:
+                assert 0, f'unrecognized actor: {message.actor}'
             ret.append(f"{prefix}: {message.content}")
         if token_limit is not None:
             total_count = 0
