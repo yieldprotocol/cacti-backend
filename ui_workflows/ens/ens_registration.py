@@ -12,9 +12,9 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 import env
 from utils import TENDERLY_FORK_URL, w3
-from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepWorkflow, WorkflowStepClientPayload, StepProcessingResult
+from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepWorkflow, WorkflowStepClientPayload, StepProcessingResult, tenderly_simulate_tx, setup_mock_db_objects
 from database.models import (
-    db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType
+    db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
 
 TWO_MINUTES = 120000
@@ -114,89 +114,43 @@ class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
         
         return StepProcessingResult(status='success', description=description)
 
-# def tenderly_simulate_tx(tx):
-#     payload = {
-#       "save": True, 
-#       "save_if_fails": True, 
-#       "simulation_type": "full",
-#       'network_id': '1',
-#       'from': wallet_address,
-#       'to': tx['to'],
-#       'input': tx['data'],
-#       'gas': int(tx['gas'], 16)
-#     }
-
-#     res = requests.post(tenderly_url, json=payload, headers={'X-Access-Key': tenderly_api_access_key })
-#     print("Tenderly Simulation ID: ", res.json()["simulation"]["id"])
 
 
 # Invoke this with python3 -m ui_workflows.ens.ens_registration 
 if __name__ == "__main__":
-    domain_to_register = "testing2304212.eth"
-    wallet_address = "0x50b435d1F3C80b1015a212c6aeF29d2fa5FC1117"
+    tenderly_api_access_key = os.environ.get("TENDERLY_API_ACCESS_KEY", None)
+    domain_to_register = "testing2304213.eth"
+    wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
     wallet_chain_id = 1  # Tenderly Mainnet Fork
     workflow_type = "register-ens-domain"
     params = {
         "domain": domain_to_register,
     }
-    message_id = 'a44f1e34-4a06-411d-87f7-971ed78d7ddf'
+    mock_db_objects = setup_mock_db_objects()
+    mock_chat_message = mock_db_objects['mock_chat_message']
+    mock_message_id = mock_chat_message.id
 
-    tx = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, message_id, workflow_type, None, params, None).run()
-    print(tx)
+    print("Step 1: Request to register ENS domain...")
 
-    # workflow_id = "a518de70-c753-4b7d-b656-acf67050ec8a"
-    # curr_step_client_payload = {
-    #     "id": "76d24109-8b7a-431e-9967-98ae7769ebe6",
-    #     "type": "request_register",
-    #     "status": "success",
-    #     "status_message": "TX successfully sent",
-    #     "user_action_data": "TX HASH 123"
-    # }
-
-    # tx = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, message_id, workflow_type, workflow_id, params, curr_step_client_payload).run()
-    # print(tx)
-
-    #     workflow: {
-    #     id: '123',
-    #     operation: 'ens_registration',
-    #     step: {
-    #         id: '456',
-    #         name: 'request_register',
-    #         status: 'success',
-    #         status_message: ''
-    #     }
+    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, None, params, None).run()
     
-    # }
+    tenderly_simulate_tx(tenderly_api_access_key, wallet_address, multiStepResult.tx)
+    
+    print("Step 2: Confirm registration")
 
-    # domain_to_register = "testing2304181.eth"
-    # wallet_address = "0x50b435d1F3C80b1015a212c6aeF29d2fa5FC1117"
-    # tenderly_api_access_key = os.environ.get("TENDERLY_API_ACCESS_KEY", None)
+    workflow_id = multiStepResult.workflow_id
+    curr_step_client_payload = {
+        "id": multiStepResult.step_id,
+        "type": multiStepResult.step_type,
+        "status": multiStepResult.status,
+        "status_message": "TX successfully sent",
+        "user_action_data": "TX HASH 123"
+    }
 
-    # print("Start ETH Balance:", w3.eth.get_balance(wallet_address))
+    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, workflow_id, params, curr_step_client_payload).run()
+    
+    tenderly_simulate_tx(tenderly_api_access_key, wallet_address, multiStepResult.tx)
 
-    # tenderly_url = f"https://api.tenderly.co/api/v1/account/Yield/project/chatweb3/fork/902db63e-9c5e-415b-b883-5701c77b3aa7/simulate"
-    # wallet_chain_id = 1  # Tenderly Mainnet Fork
+    print(multiStepResult)
 
-    # workflow_id = str(uuid.uuid4())
-    # operation = "register"
-    # params = {
-    #     "ens_domain": domain_to_register,
-    # }
-    # print("Registering ENS domain: ", domain_to_register)
-
-    # print("Step 1: Request to register ENS domain...")
-    # tx = ENSUIWorkflow(wallet_chain_id, wallet_address, workflow_id, operation, params).run()[0]
-    # tenderly_simulate_tx(tx)
-    # print("Step 1: Request successfull")
-    # print("Current ETH Balance:", w3.eth.get_balance(wallet_address))
-
-    # print("Step 2: Confirm registration")
-
-    # mock_db[workflow_id] = WorkflowState(workflow_id, operation, params, 'request_register', {
-    #     'request_register': {
-    #         'storage_stage': temp_storage_state
-    #     }
-    # })
-    # tx = ENSUIWorkflow(wallet_chain_id, wallet_address, workflow_id, operation, params).run()[0]
-    # tenderly_simulate_tx(tx)
-    # print("Domain registered!")
+    print("Domain registered successfully")

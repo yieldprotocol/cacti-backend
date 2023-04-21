@@ -12,7 +12,7 @@ from playwright.sync_api import Playwright, sync_playwright, Page, BrowserContex
 
 import env
 from utils import TENDERLY_FORK_URL
-from database.models import db_session, WorkflowStep, WorkflowStepStatus, MultiStepWorkflow
+from database.models import db_session, WorkflowStep, WorkflowStepStatus, MultiStepWorkflow, ChatMessage, ChatSession, SystemConfig
 
 
 class WorkflowStepClientPayload(TypedDict):
@@ -70,17 +70,16 @@ class BaseUIWorkflow(ABC):
     def _run_page(self, page: Page, context: BrowserContext) -> Any:
         """Accept user input and return responses via the send_message function."""
     
-    @abstractmethod
     def _before_page_run(self) -> bool:
         """Do any setup before running the workflow on the page"""
-        pass
+        return True
 
     def _dev_mode_intercept_rpc(self, page) -> None:
         """Intercept RPC calls in dev mode"""
         for url in self.rpc_urls_to_intercept:
             page.route(url, self._handle_rpc_node_reqs)
 
-    def run(self) -> Result:
+    def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
         try:
             print(f"Running UI workflow: {self.parsed_user_request}")
@@ -308,3 +307,49 @@ def wc_listen_for_messages(
             break
     wclient.close()
     print("WC disconnected.")
+
+
+def tenderly_simulate_tx(tenderly_api_access_key, wallet_address, tx):
+    tenderly_simulate_url = 'https://api.tenderly.co/api/v1/account/Yield/project/chatweb3/fork/902db63e-9c5e-415b-b883-5701c77b3aa7/simulate'
+
+    payload = {
+      "save": True, 
+      "save_if_fails": True, 
+      "simulation_type": "full",
+      'network_id': '1',
+      'from': wallet_address,
+      'to': tx['to'],
+      'input': tx['data'],
+      'gas': int(tx['gas'], 16),
+      'value': int(tx['value'], 16),
+    }
+
+    res = requests.post(tenderly_simulate_url, json=payload, headers={'X-Access-Key': tenderly_api_access_key })
+    res.raise_for_status()
+
+    print("Tenderly Simulation ID: ", res.json()["simulation"]["id"])
+
+
+def setup_mock_db_objects() -> Dict:
+    mock_system_config = SystemConfig(json={})
+    db_session.add(mock_system_config)
+    db_session.commit()
+
+    mock_chat_session = ChatSession()
+    db_session.add(mock_chat_session)
+    db_session.commit()
+    
+    mock_chat_message = ChatMessage(
+        actor="user",
+        type='text',
+        payload="sample text",
+        chat_session_id=mock_chat_session.id,
+        system_config_id=mock_system_config.id,
+    )
+    db_session.add(mock_chat_message)
+    db_session.commit()
+    return  {
+        'mock_system_config': mock_system_config,
+        'mock_chat_session': mock_chat_session,
+        'mock_chat_message': mock_chat_message
+    }

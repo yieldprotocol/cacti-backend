@@ -1,7 +1,7 @@
 import re
 from logging import basicConfig, INFO
 
-from .base import BaseUIWorkflow, handle_rpc_node_reqs, Result
+from .base import BaseUIWorkflow, Result
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 
@@ -10,7 +10,8 @@ class AaveUIWorkflow(BaseUIWorkflow):
     def __init__(self, wallet_chain_id: int, wallet_address: str, token: str, operation: str, amount: float) -> None:
         token = token.upper()
         parsed_user_request = f"{operation.capitalize()} {amount} {token} on AAVE"
-        super().__init__(wallet_chain_id, wallet_address, parsed_user_request)
+        rpc_urls_to_intercept = ["https://eth-mainnet.gateway.pokt.network/**/*", "https://rpc.ankr.com/**/*"]
+        super().__init__(wallet_chain_id, wallet_address, parsed_user_request, rpc_urls_to_intercept)
         assert operation in ("Supply", "Borrow", "Repay", "Withdraw"), operation
         self.token = token
         self.operation = operation
@@ -20,10 +21,6 @@ class AaveUIWorkflow(BaseUIWorkflow):
     def _run_page(self, page, context):
         try:
             page.goto("https://app.aave.com/")
-
-            # Intercept protocol's requests to its own RPC node
-            page.route("https://eth-mainnet.gateway.pokt.network/**/*", handle_rpc_node_reqs)
-            page.route("https://rpc.ankr.com/**/*", handle_rpc_node_reqs)
 
             # Find connect wallet button and retrieve WC URI
             page.get_by_role("button", name="wallet", exact=True).click()
