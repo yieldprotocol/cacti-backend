@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Callabl
 from utils import error_wrap, ConnectedWalletRequired, FetchError, ExecError
 from chat.container import ContainerMixin, dataclass_to_container_params
 from ui_workflows import (
-    aave, ens
+    aave, ens, base
 )
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus
@@ -17,16 +17,10 @@ from database.models import (
 
 REGISTER_ENS_DOMAIN_WF_TYPE = 'register-ens-domain'
 
-class WorkflowStepClientPayload(TypedDict):
-    id: str
-    type: str
-    status: Literal['pending', 'success', 'error', 'user_interrupt']
-    status_message: str
-
 class WorkflowClientPayload(TypedDict):
     id: str
     type: str
-    step: WorkflowStepClientPayload
+    step: base.WorkflowStepClientPayload
 
 class MessagePayload(TypedDict):
     workflow: WorkflowClientPayload
@@ -62,17 +56,20 @@ def process_multistep_workflow(payload: MessagePayload, send_message: Callable):
     user_chat_message_id = workflow_db_obj.chat_message_id
 
     if workflow_type == REGISTER_ENS_DOMAIN_WF_TYPE:
-        result = str(register_ens_domain(workflow_params['domain'], user_chat_message_id, workflow_id, step))
-        send_message(chat.Response(
-                response=result,
-                still_thinking=False,
-                actor='bot',
-                operation='create',
-        ), last_chat_message_id=None)
+        result = register_ens_domain(workflow_params['domain'], user_chat_message_id, workflow_id, step)
+
+        # Terminate if there is no result as workflow may have completed or encountered an error
+        if result:
+            send_message(chat.Response(
+                    response=str(result),
+                    still_thinking=False,
+                    actor='bot',
+                    operation='create',
+            ), last_chat_message_id=None)
 
 
 @error_wrap
-def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow_id: Optional[str] = None, wf_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> MultiStepPayload:
+def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow_id: Optional[str] = None, wf_step_client_payload: Optional[base.WorkflowStepClientPayload] = None) -> MultiStepPayload:
     wallet_chain_id = 1 # TODO: get constant from utils
     wallet_address = context.get_wallet_address()
     user_chat_message_id = context.get_user_chat_message_id() or user_chat_message_id
@@ -82,6 +79,9 @@ def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow
 
     wf = ens.ENSRegistrationWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, REGISTER_ENS_DOMAIN_WF_TYPE, workflow_id, {'domain': domain}, wf_step_client_payload)
     result = wf.run()
+
+    if not result:
+        return None
 
     return MultiStepPayload(
         status=result.status,

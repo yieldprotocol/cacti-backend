@@ -3,37 +3,36 @@ from logging import basicConfig, INFO
 import time
 import json
 import uuid
-import requests
-from dataclasses import dataclass, asdict
-from typing import Any, Dict, List, Optional, Union, Literal, TypedDict
-from ..base import BaseUIWorkflow, MultiStepResult
-from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
-from utils import TENDERLY_FORK_URL, w3
 import os
+import requests
+from typing import Any, Dict, List, Optional, Union, Literal, TypedDict
+from dataclasses import dataclass, asdict
+
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+
 import env
+from utils import TENDERLY_FORK_URL, w3
+from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepWorkflow, WorkflowStepClientPayload, StepProcessingResult
 from database.models import (
-    db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus
+    db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType
 )
 
-
 TWO_MINUTES = 120000
+TEN_SECONDS = 10000
+
+class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
+
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_id: Optional[str], workflow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload]) -> None:
+        self.ens_domain = workflow_params['domain']
+        rpc_urls_to_intercept = ["https://web3.ens.domains/v1/mainnet"]
+        total_steps = 2
+        
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow_id, workflow_params, curr_step_client_payload, rpc_urls_to_intercept, total_steps)
 
 
-class ENSRegistrationWorkflow(BaseUIWorkflow):
+    def _handle_rpc_node_reqs(self, route):
+        """Override to intercept requests to ENS API and modify response to simulate block production"""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_id: Optional[str], params: Dict, curr_step_client_payload: Optional[Dict]) -> None:
-        self.chat_message_id = chat_message_id
-        self.workflow_id = workflow_id or str(uuid.uuid4())
-        self.curr_step_client_payload = curr_step_client_payload
-        self.workflow_type = workflow_type
-        self.params = params
-        self.curr_step = None
-        self.ens_domain = params['domain']
-
-        parsed_user_request = f"chat_message_id: {self.chat_message_id}, wf_id: {self.workflow_id}, workflow_type: {self.workflow_type}, params: {self.params}"
-        super().__init__(wallet_chain_id, wallet_address, parsed_user_request)
-
-    def _intercept_for_register_op(self, route):
         # eth_getBlockByNumber
         post_body = route.request.post_data
         
@@ -45,108 +44,75 @@ class ENSRegistrationWorkflow(BaseUIWorkflow):
             json_dict["result"]["timestamp"] = curr_time_hex
             data = json_dict
             res_text = json.dumps(data)
+            route.fulfill(body=res_text, headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})
         else:
-            data = requests.post(TENDERLY_FORK_URL, data=post_body)
-            res_text = data.text
-        route.fulfill(body=res_text, headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})
+            super()._handle_rpc_node_reqs(route)
 
-    def _before_page_run(self) -> None:
-        # Retrive any browser storage state for the step and update the step status
-        if self.curr_step_client_payload:
-            self.curr_step = WorkflowStep.query.filter(WorkflowStep.id == self.curr_step_client_payload['id']).first()
-            self.browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
-            self.curr_step.status = WorkflowStepStatus[self.curr_step_client_payload['status']]
-            self.curr_step.status_message = self.curr_step_client_payload['status_message']
-            db_session.commit()
-    
-    def _run_page(self, page, context) -> MultiStepResult:
+    def _goto_page_and_setup_walletconnect(self, page):
+        """Override to go to ENS app and setup WalletConnect"""
+
+        page.goto(f"https://app.ens.domains/name/{self.ens_domain}/register")
+
+        # Search for WalletConnect and open QRCode modal
+        page.get_by_text("Connect", exact=True).click()
+        page.get_by_text("WalletConnect", exact=True).click()
+        self._connect_to_walletconnect_modal(page)
+
+
+    def _initialize_workflow_for_first_step(self, page, context) -> StepProcessingResult:
+        """Initialize workflow and create first step"""
+
+        description = f"ENS domain {self.ens_domain} request registration"
+
+        # Create first step to request registration
+        self._create_new_curr_step("request_register", 1, WorkflowStepUserActionType.tx)
+
+        # Check for failure cases early so check if domain is already registered
         try:
-            # Intercept protocol's requests to its own RPC node
-            if not env.is_prod():
-                page.route("https://web3.ens.domains/v1/mainnet", self._intercept_for_register_op)
+            page.get_by_text("already register").wait_for()
+            return StepProcessingResult(status='error', description=description, error_msg="Domain is already registered")
+        except PlaywrightTimeoutError:
+            # Domain is not registered
+            pass
 
+        # Find and click request registration button
+        selector = '[data-testid="request-register-button"][type="primary"]'
+        page.wait_for_selector(selector, timeout=TWO_MINUTES)
+        page.click(selector)
 
-            page.goto(f"https://app.ens.domains/name/{self.ens_domain}/register")
+        # Get browser storage to save protocol-specific attribute
+        storage_state = self._get_browser_cookies_and_storage(context)
+        local_storage = storage_state['origins'][0]['localStorage']
+        progress_item = None
+        for item in local_storage:
+            if item['name'] == 'progress':
+                progress_item = item
+                break
+        storage_state_to_save = {'origins': [{'origin': 'https://app.ens.domains', 'localStorage': [progress_item]}]}
 
-            # Find connect wallet and retrieve WC URI
-            page.get_by_text("Connect", exact=True).click()
-            page.get_by_text("WalletConnect", exact=True).click()
-            page.get_by_text("Copy to clipboard").click()
-            wc_uri = page.evaluate("() => navigator.clipboard.readText()")
-            self.start_listener(wc_uri)
-            
-            description = ''
-            if not self.curr_step:
-                # create new step
-                # Request to register button
+        step_state = {
+            "browser_storage_state": storage_state_to_save
+        }
 
-                # Button is not using html standard disabled property, instead using "type" attribute
-                selector = '[data-testid="request-register-button"][type="primary"]'
+        self._update_step_state(step_state)
+
+        return StepProcessingResult(status='success', description=description)
+    
+    def _perform_next_steps(self, page) -> StepProcessingResult:
+        """Plan next steps based on successful execution of current step"""
+
+        if self.curr_step.type == 'request_register':
+                # Next step is to confirm registration
+                self._create_new_curr_step("confirm_register", 2, WorkflowStepUserActionType.tx)
+                
+                # Find register button
+                selector = '[data-testid="register-button"][type="primary"]'
                 page.wait_for_selector(selector, timeout=TWO_MINUTES)
                 page.click(selector)
 
-                # TODO: persist storage state in new DB table "workflow_state", temorarily save to temp_storage_state
-                storage_state = context.storage_state()
-                local_storage = storage_state['origins'][0]['localStorage']
-
-                progress_item = None
-                for item in local_storage:
-                    if item['name'] == 'progress':
-                        progress_item = item
-                        break
-                storage_state_to_save = {'origins': [{'origin': 'https://app.ens.domains', 'localStorage': [progress_item]}]}
-                workflow = MultiStepWorkflow(
-                    id=self.workflow_id,
-                    chat_message_id=self.chat_message_id,
-                    type=self.workflow_type,
-                    params=self.params,
-                )
-                workflow_step = WorkflowStep(
-                    workflow_id=workflow.id,
-                    type="request_register",
-                    status=WorkflowStepStatus.pending,
-                    step_state={
-                        "browser_storage_state": storage_state_to_save
-                    }
-                )
-                db_session.add_all([workflow, workflow_step])
-                db_session.commit()
-                self.curr_step = workflow_step
-                description = f"Step 1: ENS domain {self.ens_domain} request registration"
-            
-            elif self.curr_step.type == 'request_register':
-                # Process and update payload
-                if self.curr_step.status == WorkflowStepStatus.success:
-                    # Confirm register button
-                    selector = '[data-testid="register-button"][type="primary"]'
-                    page.wait_for_selector(selector, timeout=TWO_MINUTES)
-                    page.click(selector)
-                    workflow_step = WorkflowStep(
-                        workflow_id=self.workflow_id,
-                        type="confirm_register",
-                        status=WorkflowStepStatus.pending,
-                    )
-                    db_session.add(workflow_step)
-                    db_session.commit()
-                    self.curr_step = workflow_step
-                    description = f"Step 2: ENS domain {self.ens_domain} confirm registration"
-
-
-            page.wait_for_timeout(5000)
-            tx = self.stop_listener()
-            return MultiStepResult(
-                status='success',
-                workflow_id=str(self.workflow_id),
-                workflow_type=self.workflow_type,
-                step_id=str(self.curr_step.id),
-                step_type=self.curr_step.type,
-                user_action_type="tx",
-                tx=tx,
-                description=description
-            )
-        except Exception as e:
-            print(e)
-            self.stop_listener()
+                description = f"ENS domain {self.ens_domain} confirm registration"
+        
+        return StepProcessingResult(status='success', description=description)
 
 # def tenderly_simulate_tx(tx):
 #     payload = {
@@ -166,29 +132,29 @@ class ENSRegistrationWorkflow(BaseUIWorkflow):
 
 # Invoke this with python3 -m ui_workflows.ens.ens_registration 
 if __name__ == "__main__":
-    domain_to_register = "testing2304201.eth"
-    wallet_address = "0xA7EdB4fb2543faca974030580691229F9076F5b7"
+    domain_to_register = "testing2304212.eth"
+    wallet_address = "0x50b435d1F3C80b1015a212c6aeF29d2fa5FC1117"
     wallet_chain_id = 1  # Tenderly Mainnet Fork
     workflow_type = "register-ens-domain"
     params = {
         "domain": domain_to_register,
     }
     message_id = 'a44f1e34-4a06-411d-87f7-971ed78d7ddf'
-     
 
-    # tx = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, message_id, workflow_type, None, params, None).run()
-    # print(tx)
-
-    workflow_id = 'e3e166a6-8e35-437a-adcc-965611a938be'
-    curr_step_client_payload = {
-        "id": "9b2b056a-86ae-4d8e-adb0-928e45db5505",
-        "type": "request_register",
-        "status": "success",
-        "status_message": ""
-    }
-
-    tx = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, message_id, workflow_type, workflow_id, params, curr_step_client_payload).run()
+    tx = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, message_id, workflow_type, None, params, None).run()
     print(tx)
+
+    # workflow_id = "a518de70-c753-4b7d-b656-acf67050ec8a"
+    # curr_step_client_payload = {
+    #     "id": "76d24109-8b7a-431e-9967-98ae7769ebe6",
+    #     "type": "request_register",
+    #     "status": "success",
+    #     "status_message": "TX successfully sent",
+    #     "user_action_data": "TX HASH 123"
+    # }
+
+    # tx = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, message_id, workflow_type, workflow_id, params, curr_step_client_payload).run()
+    # print(tx)
 
     #     workflow: {
     #     id: '123',

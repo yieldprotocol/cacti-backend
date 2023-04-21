@@ -40,6 +40,11 @@ class WorkflowStepStatus(enum.IntEnum):
     error = 3
     user_interrupt = 4
 
+class WorkflowStepUserActionType(enum.IntEnum):
+    none = 1
+    tx = 2
+    acknowledge = 3
+
 class SystemConfig(Base, Timestamp):  # type: ignore
     __tablename__ = 'system_config'
     id = Column(Integer, primary_key=True)
@@ -87,6 +92,8 @@ class MultiStepWorkflow(Base, Timestamp):
     __tablename__ = 'multistep_workflow'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     chat_message_id = Column(UUID(as_uuid=True), ForeignKey('chat_message.id'), nullable=False)
+    wallet_address = Column(String, nullable=False)
+    wallet_chain_id = Column(Integer, nullable=False)
     type = Column(String, nullable=False)
     params = Column(JSONB, nullable=True)
 
@@ -96,10 +103,9 @@ class WorkflowStep(Base, Timestamp):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     workflow_id = Column(UUID(as_uuid=True), ForeignKey('multistep_workflow.id'), nullable=False)
     type = Column(String, nullable=False)
+    step_number = Column(Integer, nullable=False)
+    user_action_type = Column(ChoiceType(WorkflowStepUserActionType, impl=Integer()), default=WorkflowStepUserActionType.none, nullable=False)
+    user_action_data = Column(String, nullable=True)
     status = Column(ChoiceType(WorkflowStepStatus, impl=Integer()), default=WorkflowStepStatus.pending, nullable=False)
     status_message = Column(String, nullable=True)
     step_state = Column(JSONB, nullable=True)
-
-# TODO: store user action type, user action type value, stepNumber
-# TODO: add wallet address
-# TODO: add index on workflow_id
