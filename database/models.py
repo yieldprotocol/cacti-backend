@@ -83,22 +83,23 @@ class ChatMessageFeedback(Base, Timestamp):  # type: ignore
     feedback_status = Column(ChoiceType(FeedbackStatus, impl=Integer()), default=FeedbackStatus.none, nullable=False)
 
 
-class Workflow(Base, Timestamp):
-    __tablename__ = 'workflow'
+class MultiStepWorkflow(Base, Timestamp):
+    __tablename__ = 'multistep_workflow'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(UUID(as_uuid=True), ForeignKey('chat_session.id'), nullable=False)
-    message_id = Column(UUID(as_uuid=True), ForeignKey('chat_message.id'), nullable=False)
-    operation = Column(String, nullable=False)
+    chat_message_id = Column(UUID(as_uuid=True), ForeignKey('chat_message.id'), nullable=False)
+    type = Column(String, nullable=False)
     params = Column(JSONB, nullable=True)
 
 
 class WorkflowStep(Base, Timestamp):
     __tablename__ = 'workflow_step'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    workflow_id = Column(UUID(as_uuid=True), ForeignKey('workflow.id'), nullable=False)
-    name = Column(String, nullable=False)
+    workflow_id = Column(UUID(as_uuid=True), ForeignKey('multistep_workflow.id'), nullable=False)
+    type = Column(String, nullable=False)
     status = Column(ChoiceType(WorkflowStepStatus, impl=Integer()), default=WorkflowStepStatus.pending, nullable=False)
     status_message = Column(String, nullable=True)
     step_state = Column(JSONB, nullable=True)
 
+# TODO: store user action type and user action type value
+# TODO: add wallet address
 # TODO: add index on workflow_id

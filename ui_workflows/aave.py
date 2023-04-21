@@ -17,7 +17,7 @@ class AaveUIWorkflow(BaseUIWorkflow):
         self.amount = amount
         self.is_approval_tx = False
 
-    def _run_page(self, page):
+    def _run_page(self, page, context):
         try:
             page.goto("https://app.aave.com/")
 
@@ -69,7 +69,7 @@ class AaveUIWorkflow(BaseUIWorkflow):
                 description = f"Transaction on AAVE to {self.operation.lower()} {self.amount} {self.token}"
 
             return Result(
-                status="success", tx=tx[0],
+                status="success", tx=tx,
                 is_approval_tx=self.is_approval_tx, parsed_user_request=self.parsed_user_request,
                 description=description)
         except Exception as e:
@@ -83,13 +83,13 @@ class AaveUIWorkflow(BaseUIWorkflow):
 if __name__ == "__main__":
     wallet_chain_id = 1  # Tenderly Mainnet Fork
     wallet_address = "0x5f5326CF5304fDD5c0B1308911D183aEc274536A"
-    # token = "ETH"
-    # operation = "Supply"
-    # amount = 0.1
+    token = "ETH"
+    operation = "Supply"
+    amount = 0.1
 
-    token = "USDT"
-    operation = "Borrow"
-    amount = 1
+    # token = "USDT"
+    # operation = "Borrow"
+    # amount = 1
 
     # token = "USDC"
     # operation = "Repay"

@@ -21,6 +21,17 @@ class Result:
     is_approval_tx: bool = False
     error_msg: Optional[str] = None
 
+@dataclass
+class MultiStepResult:
+    status: Literal['success', 'error']
+    workflow_id: str
+    workflow_type: str
+    step_id: str
+    step_type: str
+    user_action_type: Literal['tx', 'acknowledge']
+    tx: Optional[dict] = None
+    error_msg: Optional[str] = None
+    description: str = ''
 
 class BaseUIWorkflow(ABC):
     """Common interface for UI workflow."""
@@ -39,14 +50,14 @@ class BaseUIWorkflow(ABC):
     def _run_page(self, page: Page, context: BrowserContext) -> Any:
         """Accept user input and return responses via the send_message function."""
     
-    def _before_run(self) -> None:
-        """Do any setup before running the workflow."""
+    def _before_page_run(self) -> None:
+        """Do any setup before running the workflow on the page"""
         pass
 
     def run(self) -> Result:
         """Spin up headless browser and call run_page function on page."""
         print(f"Running UI workflow: {self.parsed_user_request}")
-        self._before_run()
+        self._before_page_run()
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
             context = browser.new_context(storage_state=self.browser_storage_state)
@@ -113,7 +124,7 @@ def wc_listen_for_messages(
                     read_data[1] == "eth_sendTransaction"
                 ):
                     # Get transaction params
-                    tx = read_data[2]
+                    tx = read_data[2][0]
                     print("TX:", tx)
                     result_container.append(tx)
                     break

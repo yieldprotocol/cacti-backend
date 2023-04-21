@@ -140,7 +140,7 @@ class BasicAgentChat(BaseChat):
             'input': userinput,
             'chat_history': history_string,
         }
-        with context.with_wallet_address(history.wallet_address):
+        with context.with_request_context(history.wallet_address, message_id):
             result = agent.run(example).strip()
         duration = time.time() - start
 

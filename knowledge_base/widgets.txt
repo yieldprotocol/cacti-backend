@@ -168,6 +168,11 @@ Required Parameters:
 Return value description:
 -a human-readable string with wallet address
 ---
+Widget magic command: <|register-ens-domain({domain})|>
+Description of widget: This widget is used when the user wants to register an ENS domain that ends with *.eth
+Required Parameters:
+-{domain}: domain name to register
+---
 Widget magic command: <|exec-project-deposit({project},{token},{amount})|>
 Description of widget: This widget is used when the user wants to supply or deposit tokens into a project. Not to be used with the Compound project
 Required Parameters:
