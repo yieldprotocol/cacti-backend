@@ -54,7 +54,7 @@ class ENSRegistrationWorkflow(BaseUIWorkflow):
         # Retrive any browser storage state for the step and update the step status
         if self.curr_step_client_payload:
             self.curr_step = WorkflowStep.query.filter(WorkflowStep.id == self.curr_step_client_payload['id']).first()
-            self.browser_storage_state = self.curr_step.step_state['browser_storage_state']
+            self.browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
             self.curr_step.status = WorkflowStepStatus[self.curr_step_client_payload['status']]
             self.curr_step.status_message = self.curr_step_client_payload['status_message']
             db_session.commit()
@@ -95,7 +95,6 @@ class ENSRegistrationWorkflow(BaseUIWorkflow):
                         progress_item = item
                         break
                 storage_state_to_save = {'origins': [{'origin': 'https://app.ens.domains', 'localStorage': [progress_item]}]}
-                print("progress_item: ", progress_item)
                 workflow = MultiStepWorkflow(
                     id=self.workflow_id,
                     chat_message_id=self.chat_message_id,

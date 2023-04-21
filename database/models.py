@@ -100,6 +100,6 @@ class WorkflowStep(Base, Timestamp):
     status_message = Column(String, nullable=True)
     step_state = Column(JSONB, nullable=True)
 
-# TODO: store user action type and user action type value
+# TODO: store user action type, user action type value, stepNumber
 # TODO: add wallet address
 # TODO: add index on workflow_id
