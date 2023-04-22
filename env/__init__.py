@@ -19,7 +19,7 @@ import pathlib
 import yaml
 
 
-DEFAULT_ENV_TAG = 'local'
+DEFAULT_ENV_TAG = 'dev'
 
 
 def _load_env_file(env_file_path):
