@@ -368,7 +368,13 @@ def tenderly_simulate_tx(tenderly_api_access_key, wallet_address, tx):
     res = requests.post(tenderly_simulate_url, json=payload, headers={'X-Access-Key': tenderly_api_access_key })
     res.raise_for_status()
 
-    print("Tenderly Simulation ID: ", res.json()["simulation"]["id"])
+    simulation_id = res.json()["simulation"]["id"]
+
+    print("Tenderly Simulation ID: ", simulation_id)
+
+    if (not res.json()["simulation"]["status"]):
+        raise Exception(f"Error encountered for Tenderly Simulation ID: {simulation_id}, check dashboard for details")
+
 
 
 def setup_mock_db_objects() -> Dict:
