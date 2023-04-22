@@ -26,12 +26,14 @@ class MessagePayload(TypedDict):
     workflow: WorkflowClientPayload
 
 @dataclass
-class MultiStepPayload(ContainerMixin):
+class MultiStepPayloadContainer(ContainerMixin):
     status: Literal['success', 'error']
     workflow_id: str
     workflow_type: str
     step_id: str
     step_type: str
+    step_number: int
+    total_steps: int
     user_action_type: str
     tx: Optional[dict] = None  # from, to, value, data, gas
     error_msg: Optional[str] = None
@@ -68,7 +70,7 @@ def process_multistep_workflow(payload: MessagePayload, send_message: Callable):
 
 
 @error_wrap
-def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow: Optional[MultiStepWorkflow] = None, wf_step_client_payload: Optional[base.WorkflowStepClientPayload] = None) -> MultiStepPayload:
+def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow: Optional[MultiStepWorkflow] = None, wf_step_client_payload: Optional[base.WorkflowStepClientPayload] = None) -> MultiStepPayloadContainer:
     wallet_chain_id = 1 # TODO: get constant from utils
     wallet_address = context.get_wallet_address()
     user_chat_message_id = context.get_user_chat_message_id() or user_chat_message_id
@@ -79,12 +81,14 @@ def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow
     wf = ens.ENSRegistrationWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, REGISTER_ENS_DOMAIN_WF_TYPE, {'domain': domain}, workflow, wf_step_client_payload)
     result = wf.run()
 
-    return MultiStepPayload(
+    return MultiStepPayloadContainer(
         status=result.status,
         workflow_id=result.workflow_id,
         workflow_type=result.workflow_type,
         step_id=result.step_id,
         step_type=result.step_type,
+        step_number=result.step_number,
+        total_steps=result.total_steps,
         user_action_type=result.user_action_type,
         tx=result.tx,
         error_msg=result.error_msg,

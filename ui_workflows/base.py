@@ -132,39 +132,31 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         self.workflow_type = workflow_type
         self.workflow_params = worfklow_params
         self.total_steps = total_steps
+        self.curr_step_client_payload = curr_step_client_payload
 
         self.curr_step = None
         self.curr_step_description = None
         browser_storage_state = None
-
-        if not workflow:
-            # Create new workflow in DB
-            self.workflow = MultiStepWorkflow(
-                chat_message_id=self.chat_message_id,
-                wallet_chain_id=wallet_chain_id,
-                wallet_address=wallet_address,
-                type=self.workflow_type,
-                params=self.workflow_params,
-            )
-            self._save_to_db([self.workflow])
-        
-        if curr_step_client_payload:
-            self.curr_step = WorkflowStep.query.filter(WorkflowStep.id == curr_step_client_payload['id']).first()
-            # Retrive browser storage state from DB for next step
-            browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
-
-            # Save current step status and user action data to DB that we receive from client
-            self.curr_step.status = WorkflowStepStatus[curr_step_client_payload['status']]
-            self.curr_step.status_message = curr_step_client_payload['status_message']
-            self.curr_step.user_action_data = curr_step_client_payload['user_action_data']
-            self._save_to_db([self.curr_step])
-
-        parsed_user_request = f"chat_message_id: {self.chat_message_id}, wf_id: {self.workflow.id}, workflow_type: {self.workflow_type}, curr_step_type: {self.curr_step.type if self.curr_step else None} params: {self.workflow_params}"
+        parsed_user_request = None
 
         super().__init__(wallet_chain_id, wallet_address, parsed_user_request, rpc_urls_to_intercept, browser_storage_state)
 
+    @abstractmethod
+    def _goto_page_and_setup_walletconnect(self,page):
+        """Go to page and setup walletconnect"""
+
+    @abstractmethod
+    def _initialize_workflow_for_first_step(self, page, context) -> StepProcessingResult:
+        """Initialize workflow and create first step"""
+
+    @abstractmethod
+    def _perform_next_steps(self, page) -> StepProcessingResult:
+        """Plan next steps based on successful execution of current step"""
+
     def run(self) -> Any:
         try:
+            self._setup_workflow()
+
             if(not self._validate_before_page_run()):
                 print("Multi-step Workflow terminated before page run")
                 return MultiStepResult(
@@ -179,8 +171,9 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
                     tx=None,
                     description=self.curr_step_description
                 )
+            
             return super().run()
-        except Exception as e:
+        except Exception:
             print("MULTISTEP WORKFLOW EXCEPTION")
             traceback.print_exc()
             self.stop_listener()
@@ -198,18 +191,37 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
                 description=self.curr_step_description
             )
 
+    def _setup_workflow(self):
+        """
+        This setup function does the following primary tasks:
+        1. Create new workflow in DB if not already created
+        2. Use current step payload/feedback from client to get the step's browser storage state so that it can be injected into the browser context to be used in next step
+        3. User current step payload/feedback from client and save it to DB
+        4. Set parsed_user_request to be used for logging
+        """
+        if not self.workflow:
+            # Create new workflow in DB
+            self.workflow = MultiStepWorkflow(
+                chat_message_id=self.chat_message_id,
+                wallet_chain_id=self.wallet_chain_id,
+                wallet_address=self.wallet_address,
+                type=self.workflow_type,
+                params=self.workflow_params,
+            )
+            self._save_to_db([self.workflow])
+        
+        if self.curr_step_client_payload:
+            self.curr_step = WorkflowStep.query.filter(WorkflowStep.id == self.curr_step_client_payload['id']).first()
+            # Retrive browser storage state from DB for next step
+            self.browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
 
-    @abstractmethod
-    def _goto_page_and_setup_walletconnect(self,page):
-        """Go to page and setup walletconnect"""
+            # Save current step status and user action data to DB that we receive from client
+            self.curr_step.status = WorkflowStepStatus[self.curr_step_client_payload['status']]
+            self.curr_step.status_message = self.curr_step_client_payload['statusMessage']
+            self.curr_step.user_action_data = self.curr_step_client_payload['userActionData']
+            self._save_to_db([self.curr_step])
 
-    @abstractmethod
-    def _initialize_workflow_for_first_step(self, page, context) -> StepProcessingResult:
-        """Initialize workflow and create first step"""
-
-    @abstractmethod
-    def _perform_next_steps(self, page) -> StepProcessingResult:
-        """Plan next steps based on successful execution of current step"""
+        self.parsed_user_request = f"chat_message_id: {self.chat_message_id}, wf_id: {self.workflow.id}, workflow_type: {self.workflow_type}, curr_step_type: {self.curr_step.type if self.curr_step else None} params: {self.workflow_params}"
 
     def _validate_before_page_run(self) -> bool:
         # Perform validation to check if we can continue with next step
@@ -236,6 +248,7 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
             self.curr_step.status_message = processing_result.error_msg
             self._save_to_db([self.curr_step])
         
+        # Arbitrary wait to allow for enough time for WalletConnect relay to send our client the tx data
         page.wait_for_timeout(5000)
         tx = self.stop_listener()
         return MultiStepResult(
