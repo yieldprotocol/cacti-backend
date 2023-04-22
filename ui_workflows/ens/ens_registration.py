@@ -22,12 +22,12 @@ TEN_SECONDS = 10000
 
 class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_id: Optional[str], workflow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload]) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
         self.ens_domain = workflow_params['domain']
         rpc_urls_to_intercept = ["https://web3.ens.domains/v1/mainnet"]
         total_steps = 2
         
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow_id, workflow_params, curr_step_client_payload, rpc_urls_to_intercept, total_steps)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow, workflow_params, curr_step_client_payload, rpc_urls_to_intercept, total_steps)
 
 
     def _handle_rpc_node_reqs(self, route):
@@ -65,12 +65,12 @@ class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
         description = f"ENS domain {self.ens_domain} request registration"
 
         # Create first step to request registration
-        self._create_new_curr_step("request_register", 1, WorkflowStepUserActionType.tx)
+        self._create_new_curr_step("request_register", 1, WorkflowStepUserActionType.tx, description)
 
         # Check for failure cases early so check if domain is already registered
         try:
             page.get_by_text("already register").wait_for()
-            return StepProcessingResult(status='error', description=description, error_msg="Domain is already registered")
+            return StepProcessingResult(status='error', error_msg="Domain is already registered")
         except PlaywrightTimeoutError:
             # Domain is not registered
             pass
@@ -96,23 +96,24 @@ class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
 
         self._update_step_state(step_state)
 
-        return StepProcessingResult(status='success', description=description)
+        return StepProcessingResult(status='success')
     
     def _perform_next_steps(self, page) -> StepProcessingResult:
         """Plan next steps based on successful execution of current step"""
 
         if self.curr_step.type == 'request_register':
                 # Next step is to confirm registration
-                self._create_new_curr_step("confirm_register", 2, WorkflowStepUserActionType.tx)
+                description = f"ENS domain {self.ens_domain} confirm registration"
+
+                self._create_new_curr_step("confirm_register", 2, WorkflowStepUserActionType.tx, description)
                 
                 # Find register button
                 selector = '[data-testid="register-button"][type="primary"]'
                 page.wait_for_selector(selector, timeout=TWO_MINUTES)
                 page.click(selector)
 
-                description = f"ENS domain {self.ens_domain} confirm registration"
         
-        return StepProcessingResult(status='success', description=description)
+        return StepProcessingResult(status='success')
 
 
 
@@ -123,7 +124,7 @@ if __name__ == "__main__":
     wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
     wallet_chain_id = 1  # Tenderly Mainnet Fork
     workflow_type = "register-ens-domain"
-    params = {
+    worfklow_params = {
         "domain": domain_to_register,
     }
     mock_db_objects = setup_mock_db_objects()
@@ -132,7 +133,7 @@ if __name__ == "__main__":
 
     print("Step 1: Request to register ENS domain...")
 
-    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, None, params, None).run()
+    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, None, None).run()
     
     tenderly_simulate_tx(tenderly_api_access_key, wallet_address, multiStepResult.tx)
     
@@ -144,13 +145,27 @@ if __name__ == "__main__":
         "type": multiStepResult.step_type,
         "status": multiStepResult.status,
         "status_message": "TX successfully sent",
-        "user_action_data": "TX HASH 123"
+        "user_action_data": "Sample TX HASH"
     }
 
-    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, workflow_id, params, curr_step_client_payload).run()
-    
+    workflow = MultiStepWorkflow.query.filter(MultiStepWorkflow.id == workflow_id).first()
+
+    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, workflow, curr_step_client_payload).run()
+
     tenderly_simulate_tx(tenderly_api_access_key, wallet_address, multiStepResult.tx)
 
+    print("Final checks")
+
+    curr_step_client_payload = {
+        "id": multiStepResult.step_id,
+        "type": multiStepResult.step_type,
+        "status": multiStepResult.status,
+        "status_message": "TX successfully sent",
+        "user_action_data": "Sample TX HASH"
+    }   
+
+    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, workflow, curr_step_client_payload).run()
+    
     print(multiStepResult)
 
     print("Domain registered successfully")

@@ -56,10 +56,9 @@ def process_multistep_workflow(payload: MessagePayload, send_message: Callable):
     user_chat_message_id = workflow_db_obj.chat_message_id
 
     if workflow_type == REGISTER_ENS_DOMAIN_WF_TYPE:
-        result = register_ens_domain(workflow_params['domain'], user_chat_message_id, workflow_id, step)
+        result = register_ens_domain(workflow_params['domain'], user_chat_message_id, workflow_db_obj, step)
 
-        # Terminate if there is no result as workflow may have completed or encountered an error
-        if result:
+        if result.status != 'terminated':
             send_message(chat.Response(
                     response=str(result),
                     still_thinking=False,
@@ -69,7 +68,7 @@ def process_multistep_workflow(payload: MessagePayload, send_message: Callable):
 
 
 @error_wrap
-def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow_id: Optional[str] = None, wf_step_client_payload: Optional[base.WorkflowStepClientPayload] = None) -> MultiStepPayload:
+def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow: Optional[MultiStepWorkflow] = None, wf_step_client_payload: Optional[base.WorkflowStepClientPayload] = None) -> MultiStepPayload:
     wallet_chain_id = 1 # TODO: get constant from utils
     wallet_address = context.get_wallet_address()
     user_chat_message_id = context.get_user_chat_message_id() or user_chat_message_id
@@ -77,11 +76,8 @@ def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow
     if not wallet_address:
         raise ConnectedWalletRequired
 
-    wf = ens.ENSRegistrationWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, REGISTER_ENS_DOMAIN_WF_TYPE, workflow_id, {'domain': domain}, wf_step_client_payload)
+    wf = ens.ENSRegistrationWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, REGISTER_ENS_DOMAIN_WF_TYPE, {'domain': domain}, workflow, wf_step_client_payload)
     result = wf.run()
-
-    if not result:
-        return None
 
     return MultiStepPayload(
         status=result.status,

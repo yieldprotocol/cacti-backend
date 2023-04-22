@@ -5,7 +5,7 @@ import threading
 import time
 import sys
 import uuid
-
+import traceback
 import requests
 from pywalletconnect.client import WCClient
 from playwright.sync_api import Playwright, sync_playwright, Page, BrowserContext
@@ -34,7 +34,7 @@ class Result:
 
 @dataclass
 class MultiStepResult:
-    status: Literal['success', 'error']
+    status: Literal['success', 'error', 'terminated']
     workflow_id: str
     workflow_type: str
     step_id: str
@@ -49,30 +49,25 @@ class MultiStepResult:
 @dataclass
 class StepProcessingResult:
     status: Literal['success', 'error']
-    description: str
     error_msg: Optional[str] = None
 
 class BaseUIWorkflow(ABC):
     """Common interface for UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, parsed_user_request: str, rpc_urls_to_intercept: List[str]) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, parsed_user_request: str, rpc_urls_to_intercept: List[str], browser_storage_state=None) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
         self.parsed_user_request = parsed_user_request
+        self.rpc_urls_to_intercept = rpc_urls_to_intercept
+        self.browser_storage_state = browser_storage_state
         self.thread = None
         self.result_container = []
         self.thread_event = threading.Event()
         self.is_approval_tx = False
-        self.browser_storage_state = {}
-        self.rpc_urls_to_intercept = rpc_urls_to_intercept
 
     @abstractmethod
     def _run_page(self, page: Page, context: BrowserContext) -> Any:
         """Accept user input and return responses via the send_message function."""
-    
-    def _before_page_run(self) -> bool:
-        """Do any setup before running the workflow on the page"""
-        return True
 
     def _dev_mode_intercept_rpc(self, page) -> None:
         """Intercept RPC calls in dev mode"""
@@ -81,32 +76,24 @@ class BaseUIWorkflow(ABC):
 
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
-        try:
-            print(f"Running UI workflow: {self.parsed_user_request}")
+        print(f"Running UI workflow: {self.parsed_user_request}")
 
-            should_continue = self._before_page_run()
-            if not should_continue:
-                return None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=_check_headless_allowed())
+            context = browser.new_context(storage_state=self.browser_storage_state)
+            context.grant_permissions(["clipboard-read", "clipboard-write"])
+            page = context.new_page()
 
-            with sync_playwright() as playwright:
-                browser = playwright.chromium.launch(headless=_check_headless_allowed())
-                context = browser.new_context(storage_state=self.browser_storage_state)
-                context.grant_permissions(["clipboard-read", "clipboard-write"])
-                page = context.new_page()
+            if not env.is_prod():
+                self._dev_mode_intercept_rpc(page)
 
-                if not env.is_prod():
-                    self._dev_mode_intercept_rpc(page)
+            ret = self._run_page(page, context)
 
-                ret = self._run_page(page, context)
+            context.close()
+            browser.close()
+        print(f"UI workflow finished: {self.parsed_user_request}")
+        return ret
 
-                context.close()
-                browser.close()
-            print(f"UI workflow finished: {self.parsed_user_request}")
-            return ret
-        except Exception as e:
-            print("MULTISTEP WORKFLOW EXCEPTION", e)
-            self.stop_listener()
-            return None
 
     def start_listener(self, wc_uri: str) -> None:
         assert self.thread is None, 'not expecting a thread to be started'
@@ -139,30 +126,77 @@ class BaseUIWorkflow(ABC):
 class BaseMultiStepWorkflow(BaseUIWorkflow):
     """Common interface for multi-step UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_id: Optional[str], params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], rpc_urls_to_intercept: List[str], total_steps: int) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], rpc_urls_to_intercept: List[str], total_steps: int) -> None:
         self.chat_message_id = chat_message_id
-        self.workflow_id = workflow_id or str(uuid.uuid4())
-        self.curr_step_client_payload = curr_step_client_payload
+        self.workflow = workflow
         self.workflow_type = workflow_type
-        self.params = params
-        self.curr_step = None
+        self.workflow_params = worfklow_params
         self.total_steps = total_steps
 
-        parsed_user_request = f"chat_message_id: {self.chat_message_id}, wf_id: {self.workflow_id}, workflow_type: {self.workflow_type}, curr_step_type: {self.curr_step.type if self.curr_step else None} params: {self.params}"
+        self.curr_step = None
+        self.curr_step_description = None
+        browser_storage_state = None
 
-        if not workflow_id:
+        if not workflow:
             # Create new workflow in DB
-            workflow = MultiStepWorkflow(
-                id=self.workflow_id,
+            self.workflow = MultiStepWorkflow(
                 chat_message_id=self.chat_message_id,
                 wallet_chain_id=wallet_chain_id,
                 wallet_address=wallet_address,
                 type=self.workflow_type,
-                params=self.params,
+                params=self.workflow_params,
             )
-            self._save_to_db([workflow])
+            self._save_to_db([self.workflow])
+        
+        if curr_step_client_payload:
+            self.curr_step = WorkflowStep.query.filter(WorkflowStep.id == curr_step_client_payload['id']).first()
+            # Retrive browser storage state from DB for next step
+            browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
 
-        super().__init__(wallet_chain_id, wallet_address, parsed_user_request, rpc_urls_to_intercept)
+            # Save current step status and user action data to DB that we receive from client
+            self.curr_step.status = WorkflowStepStatus[curr_step_client_payload['status']]
+            self.curr_step.status_message = curr_step_client_payload['status_message']
+            self.curr_step.user_action_data = curr_step_client_payload['user_action_data']
+            self._save_to_db([self.curr_step])
+
+        parsed_user_request = f"chat_message_id: {self.chat_message_id}, wf_id: {self.workflow.id}, workflow_type: {self.workflow_type}, curr_step_type: {self.curr_step.type if self.curr_step else None} params: {self.workflow_params}"
+
+        super().__init__(wallet_chain_id, wallet_address, parsed_user_request, rpc_urls_to_intercept, browser_storage_state)
+
+    def run(self) -> Any:
+        try:
+            if(not self._validate_before_page_run()):
+                print("Multi-step Workflow terminated before page run")
+                return MultiStepResult(
+                    status='terminated',
+                    workflow_id=str(self.workflow.id),
+                    workflow_type=self.workflow_type,
+                    step_id=str(self.curr_step.id),
+                    step_type=self.curr_step.type,
+                    user_action_type=self.curr_step.user_action_type.name,
+                    step_number=self.curr_step.step_number,
+                    total_steps=self.total_steps,
+                    tx=None,
+                    description=self.curr_step_description
+                )
+            return super().run()
+        except Exception as e:
+            print("MULTISTEP WORKFLOW EXCEPTION")
+            traceback.print_exc()
+            self.stop_listener()
+            return MultiStepResult(
+                status='error',
+                workflow_id=str(self.workflow.id),
+                workflow_type=self.workflow_type,
+                step_id=str(self.curr_step.id),
+                step_type=self.curr_step.type,
+                user_action_type=self.curr_step.user_action_type.name,
+                step_number=self.curr_step.step_number,
+                total_steps=self.total_steps,
+                tx=None,
+                error_msg="Unexpected error",
+                description=self.curr_step_description
+            )
 
 
     @abstractmethod
@@ -177,22 +211,15 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
     def _perform_next_steps(self, page) -> StepProcessingResult:
         """Plan next steps based on successful execution of current step"""
 
-    def _before_page_run(self) -> bool:
-        if self.curr_step_client_payload:
-            self.curr_step = WorkflowStep.query.filter(WorkflowStep.id == self.curr_step_client_payload['id']).first()
-            # Retrive browser storage state from DB for next step
-            self.browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
-
-            # Save current step status and user action data to DB that we receive from client
-            self.curr_step.status = WorkflowStepStatus[self.curr_step_client_payload['status']]
-            self.curr_step.status_message = self.curr_step_client_payload['status_message']
-            self.curr_step.user_action_data = self.curr_step_client_payload['user_action_data']
-            self._save_to_db([self.curr_step])
-
+    def _validate_before_page_run(self) -> bool:
+        # Perform validation to check if we can continue with next step
+        if self.curr_step:
             if self.curr_step.status != WorkflowStepStatus.success:
+                print("Workflow step recorded an unsuccessful status from client")
                 return False
             
             if self.curr_step.step_number == self.total_steps:
+                print("Workflow has completed all steps")
                 return False
         return True
     
@@ -213,7 +240,7 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         tx = self.stop_listener()
         return MultiStepResult(
             status=processing_result.status,
-            workflow_id=str(self.workflow_id),
+            workflow_id=str(self.workflow.id),
             workflow_type=self.workflow_type,
             step_id=str(self.curr_step.id),
             step_type=self.curr_step.type,
@@ -222,16 +249,16 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
             total_steps=self.total_steps,
             tx=tx,
             error_msg=processing_result.error_msg,
-            description=processing_result.description
+            description=self.curr_step_description
         )
 
     def _save_to_db(self, models: List[any]) -> None:
         db_session.add_all(models)
         db_session.commit()
 
-    def _create_new_curr_step(self, step_type: str, step_number: int, user_action_type: Literal['tx', 'acknowledge'], step_state: Dict = None) -> WorkflowStep:
+    def _create_new_curr_step(self, step_type: str, step_number: int, user_action_type: Literal['tx', 'acknowledge'], step_description, step_state: Dict = None) -> WorkflowStep:
         workflow_step = WorkflowStep(
-            workflow_id=self.workflow_id,
+            workflow_id=self.workflow.id,
             type=step_type,
             step_number=step_number,
             status=WorkflowStepStatus.pending,
@@ -240,6 +267,7 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         )
         self._save_to_db([workflow_step])
         self.curr_step = workflow_step
+        self.curr_step_description = step_description
         return workflow_step
     
     def _get_step_by_id(self, step_id: str) -> WorkflowStep:
@@ -321,7 +349,7 @@ def tenderly_simulate_tx(tenderly_api_access_key, wallet_address, tx):
       'to': tx['to'],
       'input': tx['data'],
       'gas': int(tx['gas'], 16),
-      'value': int(tx['value'], 16),
+      'value': int(tx['value'], 16) if 'value' in tx else 0,
     }
 
     res = requests.post(tenderly_simulate_url, json=payload, headers={'X-Access-Key': tenderly_api_access_key })
