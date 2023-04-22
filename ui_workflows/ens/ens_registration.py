@@ -136,8 +136,6 @@ if __name__ == "__main__":
     multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, None, None).run()
     
     tenderly_simulate_tx(tenderly_api_access_key, wallet_address, multiStepResult.tx)
-
-    exit(0)
     
     print("Step 2: Confirm registration")
 
