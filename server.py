@@ -120,6 +120,10 @@ def _load_existing_history_and_messages(session_id):
                 history.add_bot_message(message.payload, message_id=message.id)
             elif message.actor == 'system':
                 history.add_system_message(message.payload, message_id=message.id)
+            elif message.actor == 'commenter':
+                history.add_commenter_message(message.payload, message_id=message.id)
+            else:
+                assert 0, f'unrecognized actor: {message.actor}'
 
     return history, messages
 
@@ -210,7 +214,7 @@ def _message_received(client, server, message):
         })
         server.send_message(client, msg)
 
-    assert actor == 'user' or (actor == 'system' and typ == 'replay-user-msg'), obj
+    assert actor in ('user', 'commenter') or (actor == 'system' and typ == 'replay-user-msg'), obj
 
     # set wallet address onto chat history prior to processing input
     history.wallet_address = _get_client_wallet_address(client_id)
@@ -345,18 +349,29 @@ def _message_received(client, server, message):
                 chat_message.payload = payload
             else:
                 payload = chat_message.payload
-            before_message_id = history.find_next_user_message(edit_message_id)
-            removed_message_ids = history.truncate_from_message(edit_message_id, before_message_id=before_message_id)
+            if chat_message.actor == 'user':
+                before_message_id = history.find_next_human_message(edit_message_id)
+                removed_message_ids = history.truncate_from_message(edit_message_id, before_message_id=before_message_id)
+                for removed_id in removed_message_ids:
+                    if removed_id == edit_message_id:  # don't remove the message being edited/regenerated from db
+                        continue
+                    db_session.delete(ChatMessage.query.get(removed_id))  # use this delete approach to have cascade
+                db_session.commit()
+                system.chat.receive_input(
+                    history, payload, send_message,
+                    message_id=edit_message_id,
+                    before_message_id=before_message_id,
+                )
+            else:
+                db_session.commit()
+        elif action_type == 'delete':
+            delete_message_id = uuid.UUID(obj['payload']['messageId'])
+            chat_message = ChatMessage.query.get(delete_message_id)
+            before_message_id = history.find_next_human_message(delete_message_id)
+            removed_message_ids = history.truncate_from_message(delete_message_id, before_message_id=before_message_id)
             for removed_id in removed_message_ids:
-                if removed_id == edit_message_id:  # don't remove the message being edited/regenerated from db
-                    continue
                 db_session.delete(ChatMessage.query.get(removed_id))  # use this delete approach to have cascade
             db_session.commit()
-            system.chat.receive_input(
-                history, payload, send_message,
-                message_id=edit_message_id,
-                before_message_id=before_message_id,
-            )
         else:
             assert 0, f'unrecognized action type: {action_type}'
 
@@ -364,10 +379,11 @@ def _message_received(client, server, message):
 
     # NB: here this could be regular user message or a system message replay
 
-    # store new user message
+    # store new user/commenter message
+    still_thinking = True if actor == 'user' else False
     message_id = send_message(chat.Response(
         response=payload,
-        still_thinking=True,
+        still_thinking=still_thinking,
         actor=actor,
         # NB: the frontend already appends a placeholder message immediately
         # as part of an optimistic update for smooth UX purposes, but
@@ -382,7 +398,8 @@ def _message_received(client, server, message):
         operation='create_then_replace',
     ), last_chat_message_id=None)
 
-    system.chat.receive_input(history, payload, send_message, message_id=message_id)
+    if actor == 'user':
+        system.chat.receive_input(history, payload, send_message, message_id=message_id)
 
 
 server = WebsocketServer(host='0.0.0.0', port=9999, loglevel=logging.INFO)
