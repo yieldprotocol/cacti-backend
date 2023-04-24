@@ -72,12 +72,13 @@ class ChatHistory:
     def find_next_human_message(self, message_id: uuid.UUID) -> Optional[uuid.UUID]:
         """Find the ID of the next human message after the specified one, if any."""
         next_user_message_id = None
-        for idx in range(len(self.messages)):
-            if self.messages[idx].message_id == message_id:
-                for idx2 in range(idx + 1, len(self.messages)):
-                    if self.messages[idx2].actor in ('user', 'commenter'):
-                        next_user_message_id = self.messages[idx2].message_id
-                        break
+        start_message_found = False
+        for idx, message in enumerate(self.messages):
+            if message.message_id == message_id:
+                start_message_found = True
+                continue
+            if start_message_found and message.actor in ('user', 'commenter'):
+                next_user_message_id = message.message_id
                 break
         return next_user_message_id
 
