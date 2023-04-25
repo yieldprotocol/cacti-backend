@@ -54,6 +54,7 @@ class ENSSetText():
         self.wallet_address = wallet_address
         self.chat_message_id = chat_message_id
         self.params = params
+        self.parsed_user_request = f"{params["name"]}: set {params["key"]} to {params["value"]}"
 
 
     def run() -> Result:
@@ -62,11 +63,26 @@ class ENSSetText():
         # Create a contract object
         contract = w3.eth.contract(address=Web3.toChecksumAddress(contract_address), abi=contract_abi_dict)
         # Construct the transaction input data
-        tx_input = contract.encodeABI(fn_name='setText', args=[node, key, value])
+        tx = contract.encodeABI(fn_name='setText', args=[node, key, value])
         # return the transaction input
 
-        box = ”””
-            ### You are updating {key} to {value} for name: {name}
-        ”””
+        return Result(
+                status="success", 
+                tx=tx,
+                is_approval_tx=False, 
+                parsed_user_request=self.parsed_user_request,
+                description=description
+            )
 
-            return (tx_input, box)
+
+# Invoke this with python3 -m ui_workflows.ens.ens_setText
+if __name__ == "__main__":
+    tenderly_api_access_key = os.environ.get("TENDERLY_API_ACCESS_KEY", None)
+    ens_to_set = "vitalik.eth"
+    wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+    wallet_chain_id = 1  # Tenderly Mainnet Fork
+    params: Dict = {"name": "vitalik.eth", "key":"url", "value":"https://twitter.com/VitalikButerin"}
+    result: Result = ENSSetText(wallet_chain_id, wallet_address, mock_message_id, params)
+
+    tenderly_simulate_tx(tenderly_api_access_key, wallet_address, result.tx)
+    print(result)
