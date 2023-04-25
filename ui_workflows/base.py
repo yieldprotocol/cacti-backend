@@ -5,6 +5,7 @@ import threading
 import time
 import sys
 import uuid
+import json
 import traceback
 import requests
 from pywalletconnect.client import WCClient
@@ -47,6 +48,13 @@ class MultiStepResult:
     description: str = ''
 
 @dataclass
+class RunnableStep:
+    type: str
+    user_action_type: Literal['tx', 'acknowledge']
+    description: str
+    function: Callable
+
+@dataclass
 class StepProcessingResult:
     status: Literal['success', 'error']
     error_msg: Optional[str] = None
@@ -71,8 +79,8 @@ class BaseUIWorkflow(ABC):
 
     def _dev_mode_intercept_rpc(self, page) -> None:
         """Intercept RPC calls in dev mode"""
-        for url in self.rpc_urls_to_intercept:
-            page.route(url, self._handle_rpc_node_reqs)
+        
+        page.route("**/*", self._intercept_rpc_node_reqs)
 
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
@@ -112,26 +120,39 @@ class BaseUIWorkflow(ABC):
             return self.result_container[-1]
         return None
     
-    def _handle_rpc_node_reqs(self, route):
-        post_body = route.request.post_data
-        # Forward request to Tenderly RPC node
-        data = requests.post(TENDERLY_FORK_URL, data=post_body)
-        route.fulfill(body=data.text, headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})
-    
     def _connect_to_walletconnect_modal(self, page):
         page.get_by_text("Copy to clipboard").click()
         wc_uri = page.evaluate("() => navigator.clipboard.readText()")
         self.start_listener(wc_uri)
 
+    def _is_web3_call(self, request):
+        try:
+            payload = json.loads(request.post_data)
+            if "method" in payload and payload["method"].startswith("eth_"):
+                return True
+        except:
+            pass
+        return False
+    
+    def _forward_rpc_node_reqs(self, route):
+        route.continue_(url=TENDERLY_FORK_URL)
+
+    def _intercept_rpc_node_reqs(self, route):
+        if self._is_web3_call(route.request):
+            self._forward_rpc_node_reqs(route)
+        else:
+            route.continue_()
+
 class BaseMultiStepWorkflow(BaseUIWorkflow):
     """Common interface for multi-step UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], rpc_urls_to_intercept: List[str], total_steps: int) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], rpc_urls_to_intercept: List[str], runnable_steps: List[RunnableStep]) -> None:
         self.chat_message_id = chat_message_id
         self.workflow = workflow
         self.workflow_type = workflow_type
         self.workflow_params = worfklow_params
-        self.total_steps = total_steps
+        self.runnable_steps = runnable_steps
+        self.total_steps = len(runnable_steps)
         self.curr_step_client_payload = curr_step_client_payload
 
         self.curr_step = None
@@ -145,13 +166,27 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
     def _goto_page_and_setup_walletconnect(self,page):
         """Go to page and setup walletconnect"""
 
-    @abstractmethod
-    def _initialize_workflow_for_first_step(self, page, context) -> StepProcessingResult:
-        """Initialize workflow and create first step"""
+    def _run_first_step(self, page, context) -> StepProcessingResult:
+        """Run first step"""
+        first_step = self.runnable_steps[0]
 
-    @abstractmethod
-    def _perform_next_steps(self, page) -> StepProcessingResult:
-        """Plan next steps based on successful execution of current step"""
+        # Save step to DB and set current step
+        self._create_new_curr_step(first_step.type, 1, first_step.user_action_type, first_step.description)
+
+        return self.runnable_steps[0].function(page, context)
+
+    def _run_next_steps(self, page, context) -> StepProcessingResult:
+        """Find the next step to run based on the current successful step from client response"""
+
+        curr_runnable_step_index = [i for i,s in enumerate(self.runnable_steps) if s.type == self.curr_step.type][0]
+        next_step_to_run_index = curr_runnable_step_index + 1
+        next_step_to_run = self.runnable_steps[next_step_to_run_index]
+
+        # Save step to DB and reset current step
+        self._create_new_curr_step(next_step_to_run.type, next_step_to_run_index + 1, next_step_to_run.user_action_type, next_step_to_run.description)
+
+        return next_step_to_run.function(page, context)
+
 
     def run(self) -> Any:
         try:
@@ -181,10 +216,10 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
                 status='error',
                 workflow_id=str(self.workflow.id),
                 workflow_type=self.workflow_type,
-                step_id=str(self.curr_step.id),
-                step_type=self.curr_step.type,
-                user_action_type=self.curr_step.user_action_type.name,
-                step_number=self.curr_step.step_number,
+                step_id=str(self.curr_step.id) if self.curr_step else None,
+                step_type=self.curr_step.type if self.curr_step else None,
+                user_action_type=self.curr_step.user_action_type.name if self.curr_step else None,
+                step_number=self.curr_step.step_number if self.curr_step else None,
                 total_steps=self.total_steps,
                 tx=None,
                 error_msg="Unexpected error",
@@ -239,9 +274,9 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         self._goto_page_and_setup_walletconnect(page)
         
         if not self.curr_step:
-            processing_result = self._initialize_workflow_for_first_step(page, context)
+            processing_result = self._run_first_step(page, context)
         else:
-            processing_result = self._perform_next_steps(page)
+            processing_result = self._run_next_steps(page, context)
 
         if processing_result.status == 'error':
             self.curr_step.status = WorkflowStepStatus.error
@@ -269,7 +304,24 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         db_session.add_all(models)
         db_session.commit()
 
-    def _create_new_curr_step(self, step_type: str, step_number: int, user_action_type: Literal['tx', 'acknowledge'], step_description, step_state: Dict = None) -> WorkflowStep:
+    def _preserve_browser_local_storage_item(self, context, key):
+        storage_state = self._get_browser_cookies_and_storage(context)
+        local_storage = storage_state['origins'][0]['localStorage']
+        origin = storage_state['origins'][0]['origin']
+        item_to_preserve = None
+        for item in local_storage:
+            if item['name'] == key:
+                item_to_preserve = item
+                break
+        storage_state_to_save = {'origins': [{'origin': origin, 'localStorage': [item_to_preserve]}]}
+
+        step_state = {
+            "browser_storage_state": storage_state_to_save
+        }
+
+        self._update_step_state(step_state)
+
+    def _create_new_curr_step(self, step_type: str, step_number: int, user_action_type: Literal['tx', 'acknowledge'], step_description, step_state: Dict = {}) -> WorkflowStep:
         workflow_step = WorkflowStep(
             workflow_id=self.workflow.id,
             type=step_type,

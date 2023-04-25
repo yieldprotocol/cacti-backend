@@ -5,14 +5,14 @@ import json
 import uuid
 import os
 import requests
-from typing import Any, Dict, List, Optional, Union, Literal, TypedDict
+from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Callable
 from dataclasses import dataclass, asdict
 
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 import env
 from utils import TENDERLY_FORK_URL, w3
-from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepWorkflow, WorkflowStepClientPayload, StepProcessingResult, tenderly_simulate_tx, setup_mock_db_objects
+from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep, tenderly_simulate_tx, setup_mock_db_objects
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
@@ -25,12 +25,16 @@ class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
         self.ens_domain = workflow_params['domain']
         rpc_urls_to_intercept = ["https://web3.ens.domains/v1/mainnet"]
-        total_steps = 2
+
+        step1 = RunnableStep("request_register", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} request registration", self.step_1_request_register)
+        step2 = RunnableStep("confirm_register", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} confirm registration", self.step_2_confirm_registration)
+
+        steps = [step1, step2]
         
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow, workflow_params, curr_step_client_payload, rpc_urls_to_intercept, total_steps)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow, workflow_params, curr_step_client_payload, rpc_urls_to_intercept, steps)
 
 
-    def _handle_rpc_node_reqs(self, route):
+    def _forward_rpc_node_reqs(self, route):
         """Override to intercept requests to ENS API and modify response to simulate block production"""
 
         # eth_getBlockByNumber
@@ -46,26 +50,21 @@ class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
             res_text = json.dumps(data)
             route.fulfill(body=res_text, headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})
         else:
-            super()._handle_rpc_node_reqs(route)
+            super()._forward_rpc_node_reqs(route)
 
     def _goto_page_and_setup_walletconnect(self, page):
         """Override to go to ENS app and setup WalletConnect"""
 
-        page.goto(f"https://app.ens.domains/name/{self.ens_domain}/register")
+        page.goto(f"https://legacy.ens.domains/name/{self.ens_domain}/register")
 
         # Search for WalletConnect and open QRCode modal
-        page.get_by_text("Connect", exact=True).click()
+        page.get_by_role("navigation").get_by_text("Connect").click()
         page.get_by_text("WalletConnect", exact=True).click()
         self._connect_to_walletconnect_modal(page)
 
 
-    def _initialize_workflow_for_first_step(self, page, context) -> StepProcessingResult:
-        """Initialize workflow and create first step"""
-
-        description = f"ENS domain {self.ens_domain} request registration"
-
-        # Create first step to request registration
-        self._create_new_curr_step("request_register", 1, WorkflowStepUserActionType.tx, description)
+    def step_1_request_register(self, page, context) -> StepProcessingResult:
+        """Step 1: Request registration"""
 
         # Check for failure cases early so check if domain is already registered
         try:
@@ -80,42 +79,22 @@ class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
         page.wait_for_selector(selector, timeout=TWO_MINUTES)
         page.click(selector)
 
-        # Get browser storage to save protocol-specific attribute
-        storage_state = self._get_browser_cookies_and_storage(context)
-        local_storage = storage_state['origins'][0]['localStorage']
-        progress_item = None
-        for item in local_storage:
-            if item['name'] == 'progress':
-                progress_item = item
-                break
-        storage_state_to_save = {'origins': [{'origin': 'https://app.ens.domains', 'localStorage': [progress_item]}]}
-
-        step_state = {
-            "browser_storage_state": storage_state_to_save
-        }
-
-        self._update_step_state(step_state)
+        # Preserve browser local storage item to allow protocol to recreate the correct state
+        self._preserve_browser_local_storage_item(context, 'progress')
 
         return StepProcessingResult(status='success')
     
-    def _perform_next_steps(self, page) -> StepProcessingResult:
-        """Plan next steps based on successful execution of current step"""
+    def step_2_confirm_registration(self, page, context) -> StepProcessingResult:
+        """Step 2: Confirm registration"""
 
-        if self.curr_step.type == 'request_register':
-                # Next step is to confirm registration
-                description = f"ENS domain {self.ens_domain} confirm registration"
+        # Find register button
+        selector = '[data-testid="register-button"][type="primary"]'
 
-                self._create_new_curr_step("confirm_register", 2, WorkflowStepUserActionType.tx, description)
-                
-                # Find register button
-                selector = '[data-testid="register-button"][type="primary"]'
-                page.wait_for_selector(selector, timeout=TWO_MINUTES)
-                page.click(selector)
+        # The 2 minutes timeout allows for the ENS 1 minute wait time to be completed
+        page.wait_for_selector(selector, timeout=TWO_MINUTES)
+        page.click(selector)
 
-        
         return StepProcessingResult(status='success')
-
-
 
 # Invoke this with python3 -m ui_workflows.ens.ens_registration 
 if __name__ == "__main__":
