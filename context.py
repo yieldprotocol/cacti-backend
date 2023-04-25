@@ -13,13 +13,17 @@ _request_context = _RequestContext()
 @contextlib.contextmanager
 def with_request_context(wallet_address: str, user_chat_message_id: str) -> Any:
     global _request_context
-    prev_wallet_address = _request_context.wallet_address
+
+    if _request_context.wallet_address is not None:
+        raise RuntimeError('Request context already set')
+
     _request_context.wallet_address = wallet_address
     _request_context.user_chat_message_id = user_chat_message_id
     try:
         yield
     finally:
-        _request_context.wallet_address = prev_wallet_address
+        _request_context.wallet_address = None
+        _request_context.user_chat_message_id = None
 
 
 def get_wallet_address() -> Optional[str]:
