@@ -6,6 +6,7 @@ import uuid
 from urllib.parse import urlparse, parse_qs
 
 from websocket_server import WebsocketServer
+from sqlalchemy import func
 
 import chat
 import index
@@ -51,7 +52,7 @@ def _deregister_client_history(client_id):
 
 def new_client(client, server):
     history = _get_client_history(client['id'])
-    assert history is None, f'existing chat history session ${history.session_id} for new client connection'
+    assert history is None, f'existing chat history session {history.session_id} for new client connection'
 
 
 def client_left(client, server):
@@ -109,7 +110,7 @@ def _load_existing_history_and_messages(session_id):
     history = chat.ChatHistory.new(session_id)
     messages = []
 
-    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.created).all():
+    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.sequence_number, ChatMessage.created).all():
         messages.append(message)
 
         # register user/bot messages to history
@@ -120,6 +121,10 @@ def _load_existing_history_and_messages(session_id):
                 history.add_bot_message(message.payload, message_id=message.id)
             elif message.actor == 'system':
                 history.add_system_message(message.payload, message_id=message.id)
+            elif message.actor == 'commenter':
+                history.add_commenter_message(message.payload, message_id=message.id)
+            else:
+                assert 0, f'unrecognized actor: {message.actor}'
 
     return history, messages
 
@@ -158,7 +163,7 @@ def _message_received(client, server, message):
 
     # resume an existing chat history session, given a session id
     if typ == 'init':
-        assert history is None, f'received a session resume request for existing session ${history.session_id}'
+        assert history is None, f'received a session resume request for existing session {history.session_id}'
 
         # HACK: legacy payload is a query string of the format '?s=some_session_id', temporarily preserve backwards compatibility
         if isinstance(payload, str):
@@ -179,7 +184,7 @@ def _message_received(client, server, message):
             message_start_idx = 0
         else:
             message_start_indexes = [i for i, message in enumerate(messages) if str(message.id) == resume_from_message_id]
-            assert len(message_start_indexes) == 1, f'expected one message to match id ${resume_from_message_id}'
+            assert len(message_start_indexes) == 1, f'expected one message to match id {resume_from_message_id}'
             message_start_idx = message_start_indexes[0] + 1
 
         for i in range(message_start_idx, len(messages)):
@@ -210,7 +215,7 @@ def _message_received(client, server, message):
         })
         server.send_message(client, msg)
 
-    assert actor == 'user' or (actor == 'system' and (typ == 'replay-user-msg' or typ == 'multistep-workflow')), obj
+    assert actor in ('user', 'commenter') or (actor == 'system' and (typ == 'replay-user-msg' or typ == 'multistep-workflow')), obj
 
     # set wallet address onto chat history prior to processing input
     history.wallet_address = _get_client_wallet_address(client_id)
@@ -221,7 +226,7 @@ def _message_received(client, server, message):
         db_session.add(chat_session)
         db_session.flush()
 
-    def send_message(resp, last_chat_message_id=None):
+    def send_message(resp, last_chat_message_id=None, before_message_id=None):
         """Send message function.
 
         This function is passed into the chat module, to be called when the
@@ -237,6 +242,8 @@ def _message_received(client, server, message):
             logic of when a new record should be created (by passing a
             response with operation 'create'), or when one should be
             appended to or replaced (with 'append' and 'replace' respectively).
+        before_message_id: The id of the database record before which we
+            should be inserting our current message.
 
         Returns
         -------
@@ -248,10 +255,22 @@ def _message_received(client, server, message):
 
         # store response (if not streaming)
         if resp.operation in ('create', 'create_then_replace'):
+            # figure out the current sequence number
+            if before_message_id:
+                before_seq_num = ChatMessage.query.get(before_message_id).sequence_number
+                seq_num = (db_session.query(func.max(ChatMessage.sequence_number)).filter(ChatMessage.chat_session_id == chat_session.id, ChatMessage.sequence_number < before_seq_num).scalar() or 0) + 1
+                if seq_num >= before_seq_num:
+                    # bump sequence number of everything else
+                    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == chat_session.id, ChatMessage.sequence_number >= before_seq_num).all():
+                        message.sequence_number += 1
+                        db_session.add(message)
+            else:
+                seq_num = (db_session.query(func.max(ChatMessage.sequence_number)).filter(ChatMessage.chat_session_id == chat_session.id).scalar() or 0) + 1
             chat_message = ChatMessage(
                 actor=resp.actor,
                 type='text',
                 payload=resp.response,
+                sequence_number=seq_num,
                 chat_session_id=chat_session.id,
                 system_config_id=system_config_id,
             )
@@ -271,6 +290,7 @@ def _message_received(client, server, message):
         else:
             assert 0, f'unrecognized operation: {resp.operation}'
 
+        before_message_id_kwargs = {'beforeMessageId': str(before_message_id)} if before_message_id is not None else {}
         msg = json.dumps({
             'messageId': str(chat_message_id),
             'actor': resp.actor,
@@ -279,6 +299,7 @@ def _message_received(client, server, message):
             'stillThinking': resp.still_thinking,
             'operation': resp.operation,
             'feedback': 'none',
+            **before_message_id_kwargs,
         })
         server.send_message(client, msg)
 
@@ -327,11 +348,36 @@ def _message_received(client, server, message):
                 operation='create',
             ), last_chat_message_id=None)
             history.add_system_message(tx_message, message_id=message_id)
-        elif action_type == 'edit':
-            edit_message_id = obj['payload']['messageId']
-            removed_message_ids = history.truncate_from_message(uuid.UUID(edit_message_id))
+        elif action_type in ('edit', 'regenerate'):
+            edit_message_id = uuid.UUID(obj['payload']['messageId'])
+            chat_message = ChatMessage.query.get(edit_message_id)
+            if action_type == 'edit':
+                payload = obj['payload']['text']
+                chat_message.payload = payload
+            else:
+                payload = chat_message.payload
+            if chat_message.actor == 'user':
+                before_message_id = history.find_next_human_message(edit_message_id)
+                removed_message_ids = history.truncate_from_message(edit_message_id, before_message_id=before_message_id)
+                for removed_id in removed_message_ids:
+                    if removed_id == edit_message_id:  # don't remove the message being edited/regenerated from db
+                        continue
+                    db_session.delete(ChatMessage.query.get(removed_id))  # use this delete approach to have cascade
+                db_session.commit()
+                system.chat.receive_input(
+                    history, payload, send_message,
+                    message_id=edit_message_id,
+                    before_message_id=before_message_id,
+                )
+            else:
+                db_session.commit()
+        elif action_type == 'delete':
+            delete_message_id = uuid.UUID(obj['payload']['messageId'])
+            chat_message = ChatMessage.query.get(delete_message_id)
+            before_message_id = history.find_next_human_message(delete_message_id)
+            removed_message_ids = history.truncate_from_message(delete_message_id, before_message_id=before_message_id)
             for removed_id in removed_message_ids:
-                ChatMessage.query.filter(ChatMessage.id == removed_id).delete()
+                db_session.delete(ChatMessage.query.get(removed_id))  # use this delete approach to have cascade
             db_session.commit()
         else:
             assert 0, f'unrecognized action type: {action_type}'
@@ -340,10 +386,11 @@ def _message_received(client, server, message):
 
     # NB: here this could be regular user message or a system message replay
 
-    # store new user message
+    # store new user/commenter message
+    still_thinking = True if actor == 'user' else False
     message_id = send_message(chat.Response(
         response=payload,
-        still_thinking=True,
+        still_thinking=still_thinking,
         actor=actor,
         # NB: the frontend already appends a placeholder message immediately
         # as part of an optimistic update for smooth UX purposes, but
@@ -358,7 +405,8 @@ def _message_received(client, server, message):
         operation='create_then_replace',
     ), last_chat_message_id=None)
 
-    system.chat.receive_input(history, payload, send_message, message_id=message_id)
+    if actor == 'user':
+        system.chat.receive_input(history, payload, send_message, message_id=message_id)
 
 
 server = WebsocketServer(host='0.0.0.0', port=9999, loglevel=logging.INFO)
