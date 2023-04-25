@@ -54,18 +54,29 @@ class ENSSetText():
         self.wallet_address = wallet_address
         self.chat_message_id = chat_message_id
         self.params = params
-        self.parsed_user_request = f"{params["name"]}: set {params["key"]} to {params["value"]}"
+        self.parsed_user_request = f"{params['name']}: set {params['key']} to {params['value']}"
+        with open('./ui_workflows/ens/ENS_resolver.abi', 'r') as f:
+            self.contract_abi_dict = json.load(f)
 
 
-    def run() -> Result:
-        node = namehash(name)
+    def run(self) -> Result:
+        node = namehash(self.params['name'])
         contract_address = "0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41"
         # Create a contract object
-        contract = w3.eth.contract(address=Web3.toChecksumAddress(contract_address), abi=contract_abi_dict)
+        contract = w3.eth.contract(address=w3.toChecksumAddress(contract_address), abi=self.contract_abi_dict)
         # Construct the transaction input data
-        tx = contract.encodeABI(fn_name='setText', args=[node, key, value])
-        # return the transaction input
+        tx_input = contract.encodeABI(fn_name='setText', args=[node, self.params['key'], self.params['value']])
 
+        tx = {
+         'gas': '0x14e1c',  #we need a way to set gas correctly?
+         'from': self.wallet_address, 
+         'to': contract_address, 
+         'data': tx_input
+         }
+
+
+        # return the transaction input
+        description = f"Transaction on ENS to set field {params['key']} to  {params['value']} for ENS name {params['name']}"
         return Result(
                 status="success", 
                 tx=tx,
@@ -81,8 +92,9 @@ if __name__ == "__main__":
     ens_to_set = "vitalik.eth"
     wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
     wallet_chain_id = 1  # Tenderly Mainnet Fork
+    mock_chat_session = ChatSession()
     params: Dict = {"name": "vitalik.eth", "key":"url", "value":"https://twitter.com/VitalikButerin"}
-    result: Result = ENSSetText(wallet_chain_id, wallet_address, mock_message_id, params)
+    result: Result = ENSSetText(wallet_chain_id, wallet_address, mock_chat_session.id, params).run()
 
     tenderly_simulate_tx(tenderly_api_access_key, wallet_address, result.tx)
     print(result)
