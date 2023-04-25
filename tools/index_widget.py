@@ -24,7 +24,7 @@ from ui_workflows import (
 )
 from .index_lookup import IndexLookupTool
 
-from ui_workflows.multistep_handler import register_ens_domain
+from ui_workflows.multistep_handler import register_ens_domain, ens_domain_setText
 
 
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
@@ -195,6 +195,8 @@ def replace_match(m: re.Match) -> str:
         return str(address_from_ens(*params))
     elif command == 'register-ens-domain':
         return str(register_ens_domain(*params))
+    elif command == 'set-ens-text':
+        return str(ens_domain_setText(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
