@@ -163,8 +163,8 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         super().__init__(wallet_chain_id, wallet_address, parsed_user_request, rpc_urls_to_intercept, browser_storage_state)
 
     @abstractmethod
-    def _goto_page_and_setup_walletconnect(self,page):
-        """Go to page and setup walletconnect"""
+    def _goto_page_and_open_walletconnect(self,page):
+        """Go to page and open walletconnect"""
 
     def _run_first_step(self, page, context) -> StepProcessingResult:
         """Run first step"""
@@ -271,8 +271,9 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         return True
     
     def _run_page(self, page, context) -> MultiStepResult:
-        self._goto_page_and_setup_walletconnect(page)
-        
+        self._goto_page_and_open_walletconnect(page)
+        self._connect_to_walletconnect_modal(page)
+
         if not self.curr_step:
             processing_result = self._run_first_step(page, context)
         else:
