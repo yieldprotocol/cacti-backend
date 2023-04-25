@@ -172,7 +172,7 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         # Save step to DB and set current step
         self._create_new_curr_step(first_step.type, 1, first_step.user_action_type, first_step.description)
 
-        return self.runnable_steps[0].function(page, context)
+        return first_step.function(page, context)
 
     def _run_next_steps(self, page, context) -> StepProcessingResult:
         """Find the next step to run based on the current successful step from client response"""

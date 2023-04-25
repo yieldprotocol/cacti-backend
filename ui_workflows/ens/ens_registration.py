@@ -25,8 +25,8 @@ class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
         self.ens_domain = workflow_params['domain']
 
-        step1 = RunnableStep("request_register", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} request registration", self.step_1_request_register)
-        step2 = RunnableStep("confirm_register", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} confirm registration", self.step_2_confirm_registration)
+        step1 = RunnableStep("request_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} request registration", self.step_1_request_registration)
+        step2 = RunnableStep("confirm_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} confirm registration", self.step_2_confirm_registration)
 
         steps = [step1, step2]
         
@@ -58,7 +58,7 @@ class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
         page.get_by_role("navigation").get_by_text("Connect").click()
         page.get_by_text("WalletConnect", exact=True).click()
 
-    def step_1_request_register(self, page, context) -> StepProcessingResult:
+    def step_1_request_registration(self, page, context) -> StepProcessingResult:
         """Step 1: Request registration"""
 
         # Check for failure cases early so check if domain is already registered
