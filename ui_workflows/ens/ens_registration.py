@@ -24,23 +24,20 @@ class ENSRegistrationWorkflow(BaseMultiStepWorkflow):
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
         self.ens_domain = workflow_params['domain']
-        rpc_urls_to_intercept = ["https://web3.ens.domains/v1/mainnet"]
 
         step1 = RunnableStep("request_register", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} request registration", self.step_1_request_register)
         step2 = RunnableStep("confirm_register", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} confirm registration", self.step_2_confirm_registration)
 
         steps = [step1, step2]
         
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow, workflow_params, curr_step_client_payload, rpc_urls_to_intercept, steps)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow, workflow_params, curr_step_client_payload, steps)
 
 
     def _forward_rpc_node_reqs(self, route):
         """Override to intercept requests to ENS API and modify response to simulate block production"""
-
-        # eth_getBlockByNumber
         post_body = route.request.post_data
         
-        # Interepting below request to modify timestamp to be 5 minutes in the future to simulate block production and allow ENS web app to not be stuck in waiting loop
+        # Intercepting below request to modify timestamp to be 5 minutes in the future to simulate block production and allow ENS web app to not be stuck in waiting loop
         if "eth_getBlockByNumber" in post_body:
             curr_time_hex = hex(int(time.time()) + 300)
             data = requests.post(TENDERLY_FORK_URL, data=post_body)

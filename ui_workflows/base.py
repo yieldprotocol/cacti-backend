@@ -62,11 +62,10 @@ class StepProcessingResult:
 class BaseUIWorkflow(ABC):
     """Common interface for UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, parsed_user_request: str, rpc_urls_to_intercept: List[str], browser_storage_state=None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, parsed_user_request: str, browser_storage_state=None) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
         self.parsed_user_request = parsed_user_request
-        self.rpc_urls_to_intercept = rpc_urls_to_intercept
         self.browser_storage_state = browser_storage_state
         self.thread = None
         self.result_container = []
@@ -146,7 +145,7 @@ class BaseUIWorkflow(ABC):
 class BaseMultiStepWorkflow(BaseUIWorkflow):
     """Common interface for multi-step UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], rpc_urls_to_intercept: List[str], runnable_steps: List[RunnableStep]) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], runnable_steps: List[RunnableStep]) -> None:
         self.chat_message_id = chat_message_id
         self.workflow = workflow
         self.workflow_type = workflow_type
@@ -160,7 +159,7 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         browser_storage_state = None
         parsed_user_request = None
 
-        super().__init__(wallet_chain_id, wallet_address, parsed_user_request, rpc_urls_to_intercept, browser_storage_state)
+        super().__init__(wallet_chain_id, wallet_address, parsed_user_request, browser_storage_state)
 
     @abstractmethod
     def _goto_page_and_open_walletconnect(self,page):

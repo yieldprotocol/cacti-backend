@@ -91,7 +91,7 @@ class ChatMessageFeedback(Base, Timestamp):  # type: ignore
 class MultiStepWorkflow(Base, Timestamp):
     __tablename__ = 'multistep_workflow'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    chat_message_id = Column(UUID(as_uuid=True), ForeignKey('chat_message.id'), nullable=False)
+    chat_message_id = Column(UUID(as_uuid=True), nullable=True)
     wallet_address = Column(String, nullable=False)
     wallet_chain_id = Column(Integer, nullable=False)
     type = Column(String, nullable=False)

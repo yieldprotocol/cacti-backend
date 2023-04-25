@@ -10,8 +10,7 @@ class AaveUIWorkflow(BaseUIWorkflow):
     def __init__(self, wallet_chain_id: int, wallet_address: str, token: str, operation: str, amount: float) -> None:
         token = token.upper()
         parsed_user_request = f"{operation.capitalize()} {amount} {token} on AAVE"
-        rpc_urls_to_intercept = ["https://eth-mainnet.gateway.pokt.network/**/*", "https://rpc.ankr.com/**/*"]
-        super().__init__(wallet_chain_id, wallet_address, parsed_user_request, rpc_urls_to_intercept)
+        super().__init__(wallet_chain_id, wallet_address, parsed_user_request)
         assert operation in ("Supply", "Borrow", "Repay", "Withdraw"), operation
         self.token = token
         self.operation = operation
@@ -79,7 +78,7 @@ class AaveUIWorkflow(BaseUIWorkflow):
 # Invoke this with python3 -m ui_workflows.aave
 if __name__ == "__main__":
     wallet_chain_id = 1  # Tenderly Mainnet Fork
-    wallet_address = "0x5f5326CF5304fDD5c0B1308911D183aEc274536A"
+    wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
     token = "ETH"
     operation = "Supply"
     amount = 0.1
