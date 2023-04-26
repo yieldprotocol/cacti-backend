@@ -62,7 +62,7 @@ class StepProcessingResult:
 class BaseUIWorkflow(ABC):
     """Common interface for UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, parsed_user_request: str, browser_storage_state=None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, parsed_user_request: str, browser_storage_state: Optional[Dict] = None) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
         self.parsed_user_request = parsed_user_request
@@ -129,7 +129,7 @@ class BaseUIWorkflow(ABC):
             payload = json.loads(request.post_data)
             if "method" in payload and payload["method"].startswith("eth_"):
                 return True
-        except:
+        except Exception:
             pass
         return False
     
