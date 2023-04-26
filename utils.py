@@ -4,6 +4,8 @@ from web3 import Web3
 import tiktoken
 from langchain.llms import OpenAI
 from ens import ENS
+import functools
+import traceback
 
 import env
 
@@ -40,3 +42,32 @@ ns = ENS.fromWeb3(w3)
 
 def get_token_len(s: str) -> int:
     return len(tokenizer.encode(s))
+
+
+# Error handling
+class ConnectedWalletRequired(Exception):
+    pass
+
+
+class FetchError(Exception):
+    pass
+
+
+class ExecError(Exception):
+    pass
+
+def error_wrap(fn):
+    @functools.wraps(fn)
+    def wrapped_fn(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except ConnectedWalletRequired:
+            return "A connected wallet is required. Please connect one and try again."
+        except FetchError as e:
+            return str(e)
+        except ExecError as e:
+            return str(e)
+        except Exception as e:
+            traceback.print_exc()
+            return f'Got exception evaluating {fn.__name__}(args={args}, kwargs={kwargs}): {e}'
+    return wrapped_fn

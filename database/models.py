@@ -34,6 +34,16 @@ class FeedbackStatus(enum.IntEnum):
     bad = 3
     neutral = 4
 
+class WorkflowStepStatus(enum.IntEnum):
+    pending = 1
+    success = 2
+    error = 3
+    user_interrupt = 4
+
+class WorkflowStepUserActionType(enum.IntEnum):
+    none = 1
+    tx = 2
+    acknowledge = 3
 
 class SystemConfig(Base, Timestamp):  # type: ignore
     __tablename__ = 'system_config'
@@ -77,3 +87,26 @@ class ChatMessageFeedback(Base, Timestamp):  # type: ignore
                         cascade='delete,all'))
 
     feedback_status = Column(ChoiceType(FeedbackStatus, impl=Integer()), default=FeedbackStatus.none, nullable=False)
+
+
+class MultiStepWorkflow(Base, Timestamp):
+    __tablename__ = 'multistep_workflow'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    chat_message_id = Column(UUID(as_uuid=True), nullable=True)
+    wallet_address = Column(String, nullable=False)
+    wallet_chain_id = Column(Integer, nullable=False)
+    type = Column(String, nullable=False)
+    params = Column(JSONB, nullable=True)
+
+
+class WorkflowStep(Base, Timestamp):
+    __tablename__ = 'workflow_step'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    workflow_id = Column(UUID(as_uuid=True), ForeignKey('multistep_workflow.id'), nullable=False)
+    type = Column(String, nullable=False)
+    step_number = Column(Integer, nullable=False)
+    user_action_type = Column(ChoiceType(WorkflowStepUserActionType, impl=Integer()), default=WorkflowStepUserActionType.none, nullable=False)
+    user_action_data = Column(String, nullable=True)
+    status = Column(ChoiceType(WorkflowStepStatus, impl=Integer()), default=WorkflowStepStatus.pending, nullable=False)
+    status_message = Column(String, nullable=True)
+    step_state = Column(JSONB, nullable=True)

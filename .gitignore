@@ -4,3 +4,5 @@ docker/nginx/certs
 .ipynb_checkpoints
 crypto_tokens.json
 .vscode
+local.yaml
+docker-compose.local.yml

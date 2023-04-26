@@ -18,7 +18,8 @@ from database.models import (
     SystemConfig,
 )
 from utils import set_api_key
-
+from ui_workflows.multistep_handler import process_multistep_workflow
+import context
 
 set_api_key()
 
@@ -214,7 +215,7 @@ def _message_received(client, server, message):
         })
         server.send_message(client, msg)
 
-    assert actor in ('user', 'commenter') or (actor == 'system' and typ == 'replay-user-msg'), obj
+    assert actor in ('user', 'commenter') or (actor == 'system' and (typ == 'replay-user-msg' or typ == 'multistep-workflow')), obj
 
     # set wallet address onto chat history prior to processing input
     history.wallet_address = _get_client_wallet_address(client_id)
@@ -304,6 +305,12 @@ def _message_received(client, server, message):
 
         return chat_message_id
 
+    # Handle multi-step workflows
+    if typ == 'multistep-workflow':
+        with context.with_request_context(history.wallet_address, None):
+            process_multistep_workflow(payload, send_message)
+        return
+    
     # check if it is an action
     if typ == 'action':
         action_type = obj['payload'].get('actionType', 'feedback')

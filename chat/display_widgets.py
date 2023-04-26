@@ -98,6 +98,9 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
     elif command == 'display-tx-payload-for-sending-container':
         params = json.loads(params)
         lines.append(f"A transaction was presented for sending: {params['description']}.")
+    elif command == 'display-multistep-payload-container':
+        params = json.loads(params)
+        lines.append(f"A workflow step was presented: {params['description']}.")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
