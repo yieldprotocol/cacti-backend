@@ -4,8 +4,8 @@ from web3 import Web3
 import json
 
 # Set up the ZeroMQ context and socket
-context = zmq.Context()
-socket = context.socket(zmq.REP)
+zcontext = zmq.Context()
+socket = zcontext.socket(zmq.REP)
 socket.bind("tcp://*:5555")
 
 
@@ -31,6 +31,7 @@ def _intercept_rpc_node_reqs(route):
 
 
 def main():
+    url = None
     # Set up Playwright
     with sync_playwright() as playwright:
         chromium = playwright.chromium
@@ -42,13 +43,15 @@ def main():
 
         while True:
             # Wait for a message from the client
-            message = socket.recv_string()
+            message = socket.recv_json()
 
             # Perform the corresponding action based on the message
-            if message == "Open Google":
-                page.goto("https://www.google.com/")
-                socket.send_string("Google opened successfully")
-            elif message == "Exit":
+            if message["command"] == "Open":
+                url = message["url"]
+                print(f"Received URL: {url}")
+                page.goto(url)
+                socket.send_string("Website opened successfully")     
+            elif message["command"] == "Exit":
                 socket.send_string("Exiting")
                 break
             else:
@@ -59,8 +62,9 @@ def main():
 
     # Clean up ZeroMQ
     socket.close()
-    context.term()
+    zcontext.term()
 
-# Invoke this with: python3 -m discovery.playwright2
+
+# Invoke this with: python3 -m discovery.playwright
 if __name__ == "__main__":
     main()
