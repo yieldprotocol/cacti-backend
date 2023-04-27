@@ -6,6 +6,7 @@ from langchain.llms import OpenAI
 from ens import ENS
 import functools
 import traceback
+import json
 
 import env
 
@@ -56,6 +57,7 @@ class FetchError(Exception):
 class ExecError(Exception):
     pass
 
+
 def error_wrap(fn):
     @functools.wraps(fn)
     def wrapped_fn(*args, **kwargs):
@@ -71,3 +73,7 @@ def error_wrap(fn):
             traceback.print_exc()
             return f'Got exception evaluating {fn.__name__}(args={args}, kwargs={kwargs}): {e}'
     return wrapped_fn
+
+
+def load_json(path) -> str:
+    return json.dumps(path)
