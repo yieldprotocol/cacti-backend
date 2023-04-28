@@ -94,3 +94,44 @@ def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow
         error_msg=result.error_msg,
         description=result.description
     )
+
+
+@dataclass
+class TxPayloadForSending(ContainerMixin):
+    user_request_status: Literal['success', 'error']
+    parsed_user_request: str = ''
+    tx: Optional[dict] = None  # from, to, value, data, gas
+    is_approval_tx: bool = False
+    error_msg: Optional[str] = None
+    description: str = ''
+
+    def container_name(self) -> str:
+        return 'display-tx-payload-for-sending-container'
+
+    def container_params(self) -> Dict:
+        return dataclass_to_container_params(self)
+
+
+@error_wrap
+def ens_domain_setText(domain: str, 
+                       user_chat_message_id: str = None,  
+                       workflow: Optional[MultiStepWorkflow] = None,
+                       wf_step_client_payload: Optional[base.WorkflowStepClientPayload] = None
+                       ) ->TxPayloadForSending:
+    wallet_chain_id = 1 # TODO: get constant from utils
+    wallet_address = context.get_wallet_address()
+    user_chat_message_id = context.get_user_chat_message_id() or user_chat_message_id
+
+    if not wallet_address:
+        raise ConnectedWalletRequired
+
+    wf = ens.ENSSetText(wallet_chain_id, wallet_address, user_chat_message_id, params)
+    result = wf.run()
+
+    return TxPayloadForSending(
+        status=result.status,
+        parsed_user_request=result.parsed_user_request,
+        tx=result.tx,
+        error_msg=result.error_msg,
+        description=result.description
+    )
