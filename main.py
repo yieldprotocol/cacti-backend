@@ -8,14 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import server
 import chat
+import env
 
 
 app = FastAPI()
 
-origins = [
-    'https://ironclad-parent.netlify.app/',
-    'https://dev--ironclad-parent.netlify.app/',
-]
+origins = env.env_config['server']['origins']
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,7 +34,7 @@ class ClientState:
     wallet_address: Optional[str] = None
 
 
-@app.websocket("/")
+@app.websocket("/chat")
 async def websocket_chat(websocket: WebSocket):
     await websocket.accept()
     websockets.add(websocket)
