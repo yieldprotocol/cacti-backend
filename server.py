@@ -5,7 +5,6 @@ logging.basicConfig(level=logging.INFO)
 import uuid
 from urllib.parse import urlparse, parse_qs
 
-from websocket_server import WebsocketServer
 from sqlalchemy import func
 
 import chat
@@ -26,57 +25,6 @@ set_api_key()
 
 # in-memory mapping of system config id to initialized systems
 _system_config_id_to_system: Dict[int, system.System] = {}
-
-# in-memory mapping of connected clients to their associated ChatHistory instance and system config id
-# these might be initialized independently
-_client_id_to_chat_history: Dict[str, chat.ChatHistory] = {}
-_client_id_to_system_config_id: Dict[str, int] = {}
-_client_id_to_wallet_address: Dict[str, str] = {}
-
-
-def _register_client_history(client_id, history):
-    global _client_id_to_chat_history
-    assert client_id not in _client_id_to_chat_history
-    _client_id_to_chat_history[client_id] = history
-
-
-def _get_client_history(client_id):
-    global _client_id_to_chat_history
-    return _client_id_to_chat_history.get(client_id)
-
-
-def _deregister_client_history(client_id):
-    global _client_id_to_chat_history
-    return _client_id_to_chat_history.pop(client_id, None)
-
-
-def new_client(client, server):
-    history = _get_client_history(client['id'])
-    assert history is None, f'existing chat history session {history.session_id} for new client connection'
-
-
-def client_left(client, server):
-    _deregister_client_history(client['id'])
-
-
-def _set_client_system_config(client_id, system_config_id):
-    global _client_id_to_system_config_id
-    _client_id_to_system_config_id[client_id] = system_config_id
-
-
-def _get_client_system_config(client_id):
-    global _client_id_to_system_config_id
-    return _client_id_to_system_config_id.get(client_id, default_system_config.id)
-
-
-def _set_client_wallet_address(client_id, wallet_address):
-    global _client_id_to_wallet_address
-    _client_id_to_wallet_address[client_id] = wallet_address
-
-
-def _get_client_wallet_address(client_id):
-    global _client_id_to_wallet_address
-    return _client_id_to_wallet_address.get(client_id)
 
 
 def _get_system(system_config_id):
@@ -129,15 +77,14 @@ def _load_existing_history_and_messages(session_id):
     return history, messages
 
 
-def message_received(client, server, message):
+def message_received(*args, **kwargs):
     try:
-        _message_received(client, server, message)
+        _message_received(*args, **kwargs)
     finally:
         db_session.close()
 
 
-def _message_received(client, server, message):
-    client_id = client['id']
+def _message_received(client_state, send_response, message):
     obj = json.loads(message)
     assert isinstance(obj, dict), obj
     actor = obj['actor']
@@ -148,17 +95,16 @@ def _message_received(client, server, message):
     if typ == 'cfg':
         if 'systemConfigId' in payload and bool(payload['systemConfigId']):
             system_config_id = int(payload['systemConfigId'])
-            _set_client_system_config(client_id, system_config_id)
+            client_state.system_config_id = system_config_id
         return
 
-    history = _get_client_history(client_id)
-    system_config_id = _get_client_system_config(client_id)
+    history = client_state.chat_history
+    system_config_id = client_state.system_config_id or default_system_config.id
     system = _get_system(system_config_id)
 
     # set wallet status
     if typ == 'wallet':
-        #print(client_id, payload)
-        _set_client_wallet_address(client_id, payload.get('walletAddress'))
+        client_state.wallet_address = payload.get('walletAddress')
         return
 
     # resume an existing chat history session, given a session id
@@ -177,7 +123,8 @@ def _message_received(client, server, message):
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)
-        _register_client_history(client_id, history)
+        assert client_state.chat_history is None
+        client_state.chat_history = history
 
         # reconstruct the chat history for the client, starting right after resume_from_message_id
         if resume_from_message_id is None:
@@ -196,14 +143,15 @@ def _message_received(client, server, message):
                 'payload': message.payload,
                 'feedback': str(message.chat_message_feedback.feedback_status.name) if message.chat_message_feedback else 'none',
             })
-            server.send_message(client, msg)
+            send_response(msg)
         return
 
     # first message received - first create a new session history instance
     if history is None:
         session_id = uuid.uuid4()
         history = chat.ChatHistory.new(session_id)
-        _register_client_history(client_id, history)
+        assert client_state.chat_history is None
+        client_state.chat_history = history
 
         # inform client of the newly created session id
         msg = json.dumps({
@@ -213,12 +161,12 @@ def _message_received(client, server, message):
             'payload': str(session_id),
             'feedback': 'n/a',
         })
-        server.send_message(client, msg)
+        send_response(msg)
 
     assert actor in ('user', 'commenter') or (actor == 'system' and (typ == 'replay-user-msg' or typ == 'multistep-workflow')), obj
 
     # set wallet address onto chat history prior to processing input
-    history.wallet_address = _get_client_wallet_address(client_id)
+    history.wallet_address = client_state.wallet_address
 
     chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
     if not chat_session:
@@ -251,7 +199,7 @@ def _message_received(client, server, message):
         is being stored in.
 
         """
-        nonlocal server, client
+        nonlocal send_response
 
         # store response (if not streaming)
         if resp.operation in ('create', 'create_then_replace'):
@@ -301,7 +249,7 @@ def _message_received(client, server, message):
             'feedback': 'none',
             **before_message_id_kwargs,
         })
-        server.send_message(client, msg)
+        send_response(msg)
 
         return chat_message_id
 
@@ -310,7 +258,7 @@ def _message_received(client, server, message):
         with context.with_request_context(history.wallet_address, None):
             process_multistep_workflow(payload, send_message)
         return
-    
+
     # check if it is an action
     if typ == 'action':
         action_type = obj['payload'].get('actionType', 'feedback')
@@ -407,10 +355,3 @@ def _message_received(client, server, message):
 
     if actor == 'user':
         system.chat.receive_input(history, payload, send_message, message_id=message_id)
-
-
-server = WebsocketServer(host='0.0.0.0', port=9999, loglevel=logging.INFO)
-server.set_fn_new_client(new_client)
-server.set_fn_message_received(message_received)
-server.set_fn_client_left(client_left)
-server.run_forever()
