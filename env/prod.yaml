@@ -22,3 +22,8 @@ weaviate:
   port: 8080
   user: chatweb3
   password: q0jficzXOA69T5FWgAeT
+
+# FastAPI server
+server:
+  origins:
+  - https://ironclad-parent.netlify.app/
