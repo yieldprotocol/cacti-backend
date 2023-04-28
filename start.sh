@@ -2,5 +2,11 @@
 
 export LANGCHAIN_HANDLER=langchain
 xvfb_cmd=xvfb-run
+start_cmd="uvicorn main:app --host 0.0.0.0 --port 9999"
 
-[[ $(type -P "$xvfb_cmd") ]] && $xvfb_cmd python3 server.py || python3 server.py
+if [[ $(type -P "$xvfb_cmd") ]]
+then
+    $xvfb_cmd $start_cmd
+else
+    $start_cmd
+fi
