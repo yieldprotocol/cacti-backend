@@ -89,7 +89,7 @@ def fetch_listings(address: str, token_id: str) -> List[NFTListing]:
             offer = item["protocol_data"]["parameters"]["offer"][0]
             price_value = int(item["current_price"])
             currency = "eth"
-            price_str = f"{utils.w3.fromWei(price_value, 'ether')} {currency}"
+            price_str = f"{utils.w3.from_wei(price_value, 'ether')} {currency}"
             listing = NFTListing(
                 chain=chain,
                 address=address,
@@ -125,7 +125,7 @@ def fetch_all_listings(slug: str) -> List[NFTListing]:
             currency = current_price["currency"]
             price_value = int(current_price['value'])
             if currency == "eth":
-                price_str = f"{utils.w3.fromWei(price_value, 'ether')} {currency}"
+                price_str = f"{utils.w3.from_wei(price_value, 'ether')} {currency}"
             else:
                 price_str = f"{price_value / 10 ** current_price['decimals']} {currency}"
             listing = NFTListing(
