@@ -24,13 +24,13 @@ erc_20_abi = get_ABI("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
 def get_balance(contract_address, account_address):
     contract = w3.eth.contract(
-        address=w3.toChecksumAddress(contract_address),
+        address=w3.to_checksum_address(contract_address),
         abi=erc_20_abi,
     )
     if is_zero_address(contract_address):
         return get_eth_balance(account_address)
     return contract.functions.balanceOf(
-        w3.toChecksumAddress(account_address)).call()
+        w3.to_checksum_address(account_address)).call()
 
 
 TOKEN_TO_CONTRACT_ADDRESS = {
