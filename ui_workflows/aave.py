@@ -17,18 +17,13 @@ class AaveUIWorkflow(BaseUIWorkflow):
         self.amount = amount
         self.is_approval_tx = False
 
+    def _goto_page_and_open_walletconnect(self, page):
+        page.goto("https://app.aave.com/")
+        page.get_by_role("button", name="wallet", exact=True).click()
+        page.get_by_role("button", name="WalletConnect browser wallet icon").click()
+
     def _run_page(self, page, context):
         try:
-            page.goto("https://app.aave.com/")
-
-            # Find connect wallet button and retrieve WC URI
-            page.get_by_role("button", name="wallet", exact=True).click()
-            page.get_by_role("button", name="WalletConnect browser wallet icon").click()
-            page.get_by_text("Copy to clipboard").click()
-            wc_uri = page.evaluate("() => navigator.clipboard.readText()")
-
-            self.start_listener(wc_uri)
-
             # After WC is connected, wait for page to load user's profile
             page.get_by_text("Your supplies").wait_for()
 
