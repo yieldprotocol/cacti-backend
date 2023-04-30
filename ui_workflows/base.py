@@ -544,3 +544,6 @@ def setup_mock_db_objects() -> Dict:
 def _validate_non_zero_eth_balance(wallet_address):
     if (w3.eth.get_balance(w3.toChecksumAddress(wallet_address)) == 0):
         raise WorkflowValidationError("Wallet address has zero ETH balance")
+    
+def estimate_gas(tx):
+    return hex(w3.eth.estimate_gas(tx))

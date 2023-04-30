@@ -10,7 +10,7 @@ from dataclasses import dataclass, asdict
 
 import env
 from utils import TENDERLY_FORK_URL, w3
-from ..base import tenderly_simulate_tx, Result, BaseContractSingleStepWorkflow, tenderly_simulate_tx, WorkflowValidationError
+from ..base import tenderly_simulate_tx, Result, BaseContractSingleStepWorkflow, WorkflowValidationError, estimate_gas
 from .ens_utils import ENS_PUBLIC_RESOLVER_ADDRESS, ENS_REGISTRY_ADDRESS, get_node_namehash, is_domain_registered
 
 class ENSSetTextWorkflow(BaseContractSingleStepWorkflow):
@@ -42,10 +42,13 @@ class ENSSetTextWorkflow(BaseContractSingleStepWorkflow):
         tx_input = contract.encodeABI(fn_name='setText', args=[node, self.key, self.value])
 
         tx = {
-         'from': self.wallet_address, 
-         'to': self.contract_address, 
-         'data': tx_input
-         }
+            'from': self.wallet_address, 
+            'to': self.contract_address, 
+            'data': tx_input,
+            'value': '0x0',
+        }
+        
+        tx['gas'] = estimate_gas(tx)
 
         return Result(
                 status="success", 
