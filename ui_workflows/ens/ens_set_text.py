@@ -22,7 +22,7 @@ class ENSSetTextWorkflow(BaseContractSingleStepWorkflow):
         self.key = workflow_params['key']
         self.value = workflow_params['value']
     
-        user_description = f"Transaction on ENS to set field {self.key} to {self.value} for ENS name {self.domain}"
+        user_description = f"Set field {self.key} to {self.value} for ENS domain {self.domain}"
 
         contract_address = ENS_PUBLIC_RESOLVER_ADDRESS
         abi_path = './ui_workflows/ens/abis/ens_resolver.abi'

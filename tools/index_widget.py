@@ -12,7 +12,7 @@ from langchain.prompts.base import BaseOutputParser
 
 import context
 import utils
-from utils import error_wrap, ConnectedWalletRequired, FetchError, ExecError
+from utils import error_wrap, check_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
 import registry
 import streaming
 from chat.container import ContainerMixin, dataclass_to_container_params
@@ -25,9 +25,6 @@ from ui_workflows import (
 from .index_lookup import IndexLookupTool
 
 from ui_workflows.multistep_handler import register_ens_domain
-
-from ui_workflows.multistep_handler import register_ens_domain, ens_domain_setText
-
 
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
 
@@ -198,7 +195,7 @@ def replace_match(m: re.Match) -> str:
     elif command == 'register-ens-domain':
         return str(register_ens_domain(*params))
     elif command == 'set-ens-text':
-        return str(ens_domain_setText(*params))
+        return str(set_ens_text(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -427,6 +424,29 @@ def exec_aave_operation(token: str, amount: str, operation: str = '') -> TxPaylo
         parsed_user_request=result.parsed_user_request,
         tx=result.tx,
         is_approval_tx=result.is_approval_tx,
+        error_msg=result.error_msg,
+        description=result.description
+    )
+
+@error_wrap
+@check_wallet_connected
+def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
+    wallet_chain_id = 1 # TODO: get from context
+    wallet_address = context.get_wallet_address()
+    user_chat_message_id = context.get_user_chat_message_id() or user_chat_message_id
+
+    params = {
+        'domain': domain,
+        'key': key,
+        'value': value,
+    }
+
+    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, 'set-ens-text', params)
+    result = wf.run()
+
+    return TxPayloadForSending(
+        user_request_status=result.status,
+        tx=result.tx,
         error_msg=result.error_msg,
         description=result.description
     )
