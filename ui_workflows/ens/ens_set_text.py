@@ -35,7 +35,7 @@ class ENSSetTextWorkflow(BaseContractSingleStepWorkflow):
 
     def _run(self) -> Result:
         # Create a contract object
-        contract = w3.eth.contract(address=w3.toChecksumAddress(self.contract_address), abi=self.contract_abi_dict)
+        contract = w3.eth.contract(address=self.contract_address, abi=self.contract_abi_dict)
         
         # Construct the transaction input data
         node = get_node_namehash(self.domain)

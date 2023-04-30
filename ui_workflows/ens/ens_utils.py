@@ -9,7 +9,7 @@ from utils import w3
 
 # ENS contract addresses - https://legacy.ens.domains/name/ens.eth/subdomains
 ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
-ENS_PUBLIC_RESOLVER_ADDRESS = "0x226159d592E2b063810a10Ebf6dcbADA94Ed68b8"
+ENS_PUBLIC_RESOLVER_ADDRESS = "0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41"
 
 def keccak_256(data):
     k = sha3.keccak_256()
