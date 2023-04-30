@@ -13,11 +13,15 @@ from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDic
 import requests
 from web3 import Web3
 
+import asyncio
+from playwright.async_api import async_playwright
+import zmq.asyncio
+
 
 # Set up the ZeroMQ context and socket
-zcontext = zmq.Context()
-socket = zcontext.socket(zmq.REP)
-socket.bind("tcp://*:5556")
+# zcontext = zmq.Context()
+# socket = zcontext.socket(zmq.REP)
+# socket.bind("tcp://*:5557")
 thread=None
 
 thread_event = threading.Event()
@@ -108,7 +112,7 @@ def _is_web3_call(request):
             payload = json.loads(json_string)
             # payload = json.loads(request.post_data)
             if "method" in payload and payload["method"].startswith("eth_"):
-                ignore = ["eth_chainId", "eth_gasPrice"]
+                ignore = ["eth_chainId", "eth_gasPrice", "eth_blockNumber"]
                 if payload["method"] in ignore:
                     return False
                 
@@ -119,32 +123,47 @@ def _is_web3_call(request):
             print(str(e))
     return False
 
-def _forward_rpc_node_reqs(route):
+async def _forward_rpc_node_reqs(route):
     print(f"Route forwarded to Tenderly: {route.request}")
-    route.continue_(url=TENDERLY_FORK_URL, headers={"X-Access-Key": tenderly_api_access_key})
+    await route.continue_(url=TENDERLY_FORK_URL, headers={"X-Access-Key": tenderly_api_access_key})
 
-def _intercept_rpc_node_reqs(route):
+async def _async_forward_rpc_node_reqs(route):
+    request = route.request
+    data = json.loads(request.post_data)
+    response = requests.post(TENDERLY_FORK_URL, json=data, headers=request.headers)
+    await route.fulfill(
+        status=response.status_code,
+        headers=dict(response.headers),
+        body=response.content
+    )
+
+
+
+async def _intercept_rpc_node_reqs(route):
     if route.request.post_data and _is_web3_call(route.request):
         print(f"Forwarding:{route.request.url}")
-        _forward_rpc_node_reqs(route)
+        await _async_forward_rpc_node_reqs(route)
     else:
         # print(f'Request URL: {route.request.url}')
         # print(f'Request Headers: {route.request.headers}')
         # print(f'Request Post Data: {route.request.post_data}')
         print(f"Continuing:{route.request.url}")
-        route.continue_()
+        await route.continue_()
 
-
-def main():
+async def main():
     url = None
+    zcontext = zmq.asyncio.Context()
+    socket = zcontext.socket(zmq.REP)
+    socket.bind("tcp://*:5558")
+
     # Set up Playwright
-    with sync_playwright() as playwright:
+    async with async_playwright() as playwright:
         chromium = playwright.chromium
-        browser = chromium.launch(headless = False)
+        browser = await chromium.launch(headless = False)
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
-        context = browser.new_context(user_agent=user_agent)
-        context.route("**/*",  _intercept_rpc_node_reqs)
-        page = context.new_page()
+        context = await browser.new_context(user_agent=user_agent)
+        await context.route("**/*",  _intercept_rpc_node_reqs)
+        page = await context.new_page()
 
         def print_console_msg(msg):
             print(msg.text)
@@ -152,14 +171,14 @@ def main():
         page.on("console", print_console_msg)
         while True:
             # Wait for a message from the client
-            message = socket.recv_json()
+            message = await socket.recv_json()
 
             # Perform the corresponding action based on the message
             if message["command"] == "Open":
                 url = message["url"]
                 print(f"Received URL: {url}")
-                page.goto(url)
-                socket.send_string("Website opened successfully")    
+                await page.goto(url)
+                await socket.send_string("Website opened successfully")    
             elif message["command"] == "WC":
                 wc = message["wc"]
                 start_listener(
@@ -169,15 +188,15 @@ def main():
                     wallet_address, 
                     result_container 
                 )
-                socket.send_string("WalletConnect started")    
+                await socket.send_string("WalletConnect started")    
             elif message["command"] == "Exit":
-                socket.send_string("Exiting")
+                await socket.send_string("Exiting")
                 break
             else:
-                socket.send_string("Unknown command")
+                await socket.send_string("Unknown command")
 
         # Clean up
-        browser.close()
+        await browser.close()
     # close walletconnect
     stop_listener()
 
@@ -188,4 +207,4 @@ def main():
 
 # Invoke this with: python3 -m discovery.playwright
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
