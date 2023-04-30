@@ -42,7 +42,6 @@ class ENSSetTextWorkflow(BaseContractSingleStepWorkflow):
         tx_input = contract.encodeABI(fn_name='setText', args=[node, self.key, self.value])
 
         tx = {
-         'gas': '0x14e1c',
          'from': self.wallet_address, 
          'to': self.contract_address, 
          'data': tx_input
@@ -53,16 +52,3 @@ class ENSSetTextWorkflow(BaseContractSingleStepWorkflow):
                 tx=tx,
                 description=self.user_description
             )
-
-
-# Invoke this with python3 -m ui_workflows.ens.ens_set_text
-if __name__ == "__main__":
-    domain = "owocki.gitcoin.eth"
-    wallet_address = "0xDDF369C3bf18b1B12EA295d597B943b955eF4671"
-    wallet_chain_id = 1  # Tenderly Mainnet Fork
-    workflow_type = 'ens_set_text'
-    params: Dict = {"domain": domain, "key":"url", "value":"http://example.net"}
-
-    result: Result = ENSSetTextWorkflow(wallet_chain_id, wallet_address, workflow_type, params).run()
-
-    tenderly_simulate_tx(wallet_address, result.tx)

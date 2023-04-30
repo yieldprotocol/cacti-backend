@@ -507,9 +507,14 @@ def tenderly_simulate_tx(wallet_address, tx):
     }
     res = requests.post(TENDERLY_FORK_URL, json=payload)
     res.raise_for_status()
-    print("Tenderly RPC Response: ", res.text)
-    # TODO: decipher response
-    return res.text
+
+    tx_hash = res.json()['result']
+    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    print("Tenderly TxHash:", tx_hash)
+
+    if receipt['status'] == 0:
+        raise Exception(f"Transaction failed, tx_hash: {tx_hash}, check Tenderly dashboard for more details")
 
 def setup_mock_db_objects() -> Dict:
     mock_system_config = SystemConfig(json={})
