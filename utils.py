@@ -37,7 +37,7 @@ def set_api_key():
 
 w3 = Web3(Web3.HTTPProvider(TENDERLY_FORK_URL))
 tokenizer = tiktoken.encoding_for_model("text-davinci-003")
-ns = ENS.fromWeb3(w3)
+ns = ENS.from_web3(w3)
 
 
 def get_token_len(s: str) -> int:
