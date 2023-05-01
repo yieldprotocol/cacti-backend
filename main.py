@@ -1,10 +1,12 @@
 import asyncio
 from dataclasses import dataclass
 import json
+import secrets
 from typing import Optional, Set
 
-from fastapi import FastAPI, Response, Body, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, Response, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 import server
 import chat
@@ -22,6 +24,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=env.env_config['server']['secret_key'],
+    max_age=None,
+    same_site='lax',
+    https_only=False,
+)
 
 
 websockets: Set[WebSocket] = set()
@@ -34,8 +43,41 @@ class ClientState:
     wallet_address: Optional[str] = None
 
 
+@app.get("/nonce")
+async def nonce(request: Request):
+    # TODO: should there be a time-expiry?
+    nonce = secrets.token_urlsafe()
+    request.session["nonce"] = nonce
+    return nonce
+
+
+@app.post("/login")
+async def login(request: Request, eip_string: str, signature: str):
+    nonce = request.session.get("nonce")
+    if not nonce:
+        return
+
+    # verify eip_string and signature, get wallet address
+    # TODO
+
+    # set authenticated wallet address is session
+    request.session["wallet_address"] = wallet_address
+
+
+@app.post("/logout")
+async def logout(request: Request):
+    request.session["nonce"] = None
+    request.session["wallet_address"] = None
+
+
 @app.websocket("/chat")
 async def websocket_chat(websocket: WebSocket):
+    # Get authenticated wallet address
+    wallet_address = websocket.session.get("wallet_address")
+    if not wallet_address:
+        # Only allow authenticated wallet to chat
+        return
+
     await websocket.accept()
     websockets.add(websocket)
     try:
