@@ -70,7 +70,7 @@ class BaseContractWorkflow(ABC):
     def __init__(self, wallet_chain_id: int, wallet_address: str, contract_address: str, abi_path: str, workflow_type: str, workflow_params: Dict) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
-        self.contract_address = w3.toChecksumAddress(contract_address)
+        self.contract_address = w3.to_checksum_address(contract_address)
         self.abi_path = abi_path
         self.workflow_type = workflow_type
         self.workflow_params = workflow_params
@@ -542,7 +542,7 @@ def setup_mock_db_objects() -> Dict:
 
 
 def _validate_non_zero_eth_balance(wallet_address):
-    if (w3.eth.get_balance(w3.toChecksumAddress(wallet_address)) == 0):
+    if (w3.eth.get_balance(w3.to_checksum_address(wallet_address)) == 0):
         raise WorkflowValidationError("Wallet address has zero ETH balance")
     
 def estimate_gas(tx):

@@ -42,6 +42,6 @@ def is_domain_registered(domain) -> bool:
 
     with open(os.path.join(curr_script_dir, "./abis/ens_registry.abi"), 'r') as f:
         contract_abi_dict = json.load(f)
-    contract = w3.eth.contract(address=w3.toChecksumAddress(ENS_REGISTRY_ADDRESS), abi=contract_abi_dict)
+    contract = w3.eth.contract(address=w3.to_checksum_address(ENS_REGISTRY_ADDRESS), abi=contract_abi_dict)
     address = contract.functions.owner(node).call()
     return web3.constants.ADDRESS_ZERO != address
