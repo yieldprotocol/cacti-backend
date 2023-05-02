@@ -1,18 +1,19 @@
-from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
-from dataclasses import dataclass
 import threading
 import time
 import sys
 import uuid
+import os
 import json
 import traceback
 import requests
+from abc import ABC, abstractmethod
+from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
+from dataclasses import dataclass
 from pywalletconnect.client import WCClient
 from playwright.sync_api import Playwright, sync_playwright, Page, BrowserContext
 
 import env
-from utils import TENDERLY_FORK_URL
+from utils import TENDERLY_FORK_URL, w3
 from database.models import db_session, WorkflowStep, WorkflowStepStatus, MultiStepWorkflow, ChatMessage, ChatSession, SystemConfig
 
 
@@ -27,11 +28,11 @@ class WorkflowStepClientPayload(TypedDict):
 @dataclass
 class Result:
     status: Literal['success', 'error']
-    parsed_user_request: str
     description: str
     tx: any = None
-    is_approval_tx: bool = False
     error_msg: Optional[str] = None
+    is_approval_tx: bool = False # NOTE: Field deprecated, use Multi-step workflow approach
+    parsed_user_request: str = '' # NOTE: Field deprecated, use Multi-step workflow approach
 
 @dataclass
 class MultiStepResult:
@@ -59,6 +60,75 @@ class StepProcessingResult:
     status: Literal['success', 'error']
     error_msg: Optional[str] = None
 
+class WorkflowValidationError(Exception):
+    pass
+
+
+class BaseContractWorkflow(ABC):
+    """Common interface for UI workflow."""
+
+    def __init__(self, wallet_chain_id: int, wallet_address: str, contract_address: str, abi_path: str, workflow_type: str, workflow_params: Dict) -> None:
+        self.wallet_chain_id = wallet_chain_id
+        self.wallet_address = wallet_address
+        self.contract_address = w3.to_checksum_address(contract_address)
+        self.abi_path = abi_path
+        self.workflow_type = workflow_type
+        self.workflow_params = workflow_params
+        self.parsed_user_request = f"wf_type:{self.workflow_type}, wf_params:{self.workflow_params}"
+
+    @abstractmethod
+    def _run(self) -> Any:
+        """Implement the contract interaction logic here."""
+
+    @abstractmethod
+    def _pre_workflow_validation(self):
+        """Perform any validation before running the workflow."""
+
+    def _load_contract_abi(self):
+        """Load contract ABI from file."""
+        with open(self.abi_path, 'r') as f:
+            self.contract_abi_dict = json.load(f)
+
+    def run(self) -> Any:
+        """Main function to call to run the workflow."""
+        print(f"Running contract workflow, {self.parsed_user_request}")
+
+        self._load_contract_abi()
+
+        _validate_non_zero_eth_balance(self.wallet_address)
+        self._pre_workflow_validation()
+
+        ret = self._run()
+
+        print(f"Contract workflow finished, {self.parsed_user_request}")
+        return ret
+
+class BaseContractSingleStepWorkflow(BaseContractWorkflow):
+    def __init__(self, wallet_chain_id: int, wallet_address: str, contract_address: str, abi_path: str, user_description: str, workflow_type: str, workflow_params: Dict) -> None:
+        self.user_description = user_description
+        super().__init__(wallet_chain_id, wallet_address, contract_address, abi_path, workflow_type, workflow_params)
+
+    def run(self) -> Result:
+        try:
+            return super().run()
+        except WorkflowValidationError as e:
+            print("CONTRACT SINGLE STEP WORKFLOW VALIDATION ERROR")
+            traceback.print_exc()
+            return Result(
+                status="error", 
+                error_msg=e.args[0],
+                description=self.user_description
+            )
+        except Exception as e:
+            print("CONTRACT SINGLE STEP WORKFLOW EXCEPTION")
+            traceback.print_exc()
+            return Result(
+                status="error", 
+                error_msg="Unexpected error. Check with support.",
+                description=self.user_description
+            )
+
+
 class BaseUIWorkflow(ABC):
     """Common interface for UI workflow."""
 
@@ -76,14 +146,17 @@ class BaseUIWorkflow(ABC):
     def _run_page(self, page: Page, context: BrowserContext) -> Any:
         """Accept user input and return responses via the send_message function."""
 
+    @abstractmethod
+    def _goto_page_and_open_walletconnect(self,page):
+        """Go to page and open walletconnect"""
+
     def _dev_mode_intercept_rpc(self, page) -> None:
         """Intercept RPC calls in dev mode"""
-        
         page.route("**/*", self._intercept_rpc_node_reqs)
 
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
-        print(f"Running UI workflow: {self.parsed_user_request}")
+        print(f"Running UI workflow, {self.parsed_user_request}")
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
@@ -94,11 +167,14 @@ class BaseUIWorkflow(ABC):
             if not env.is_prod():
                 self._dev_mode_intercept_rpc(page)
 
+            self._goto_page_and_open_walletconnect(page)
+            self._connect_to_walletconnect_modal(page)
+
             ret = self._run_page(page, context)
 
             context.close()
             browser.close()
-        print(f"UI workflow finished: {self.parsed_user_request}")
+        print(f"UI workflow finished, {self.parsed_user_request}")
         return ret
 
 
@@ -124,21 +200,41 @@ class BaseUIWorkflow(ABC):
         wc_uri = page.evaluate("() => navigator.clipboard.readText()")
         self.start_listener(wc_uri)
 
-    def _is_web3_call(self, request):
-        try:
-            payload = json.loads(request.post_data)
-            if "method" in payload and payload["method"].startswith("eth_"):
-                return True
-        except Exception:
-            pass
-        return False
+    def _is_web3_call(self, request) -> Dict[bool, bool]:
+        has_list_payload = False
+        if request.post_data:
+            try:
+                payload = json.loads(request.post_data)
+                obj_to_check = payload
+                if isinstance(payload, list):
+                    has_list_payload = True
+                    obj_to_check = payload[0]
+
+                if "method" in obj_to_check and obj_to_check["method"].startswith("eth_"):
+                    return dict(is_web3_call=True, has_list_payload=has_list_payload)
+            except Exception:
+                pass
+        return dict(is_web3_call=False, has_list_payload=has_list_payload)
     
     def _forward_rpc_node_reqs(self, route):
         route.continue_(url=TENDERLY_FORK_URL)
 
+    def _handle_batch_web3_call(self, route):
+        payload = json.loads(route.request.post_data)
+        batch_result = []
+        for obj in payload:
+            response = requests.post(TENDERLY_FORK_URL, json=obj)
+            response.raise_for_status()
+            batch_result.append(response.json())
+        route.fulfill(body=json.dumps(batch_result), headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})
+
     def _intercept_rpc_node_reqs(self, route):
-        if self._is_web3_call(route.request):
-            self._forward_rpc_node_reqs(route)
+        result = self._is_web3_call(route.request)
+        if result['is_web3_call']:
+            if result['has_list_payload']:
+                self._handle_batch_web3_call(route)                
+            else:
+                self._forward_rpc_node_reqs(route)
         else:
             route.continue_()
 
@@ -160,10 +256,6 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         parsed_user_request = None
 
         super().__init__(wallet_chain_id, wallet_address, parsed_user_request, browser_storage_state)
-
-    @abstractmethod
-    def _goto_page_and_open_walletconnect(self,page):
-        """Go to page and open walletconnect"""
 
     def _run_first_step(self, page, context) -> StepProcessingResult:
         """Run first step"""
@@ -221,7 +313,7 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
                 step_number=self.curr_step.step_number if self.curr_step else None,
                 total_steps=self.total_steps,
                 tx=None,
-                error_msg="Unexpected error",
+                error_msg="Unexpected error. Check with support.",
                 description=self.curr_step_description
             )
 
@@ -270,9 +362,6 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         return True
     
     def _run_page(self, page, context) -> MultiStepResult:
-        self._goto_page_and_open_walletconnect(page)
-        self._connect_to_walletconnect_modal(page)
-
         if not self.curr_step:
             processing_result = self._run_first_step(page, context)
         else:
@@ -402,32 +491,30 @@ def wc_listen_for_messages(
     print("WC disconnected.")
 
 
-def tenderly_simulate_tx(tenderly_api_access_key, wallet_address, tx):
-    tenderly_simulate_url = 'https://api.tenderly.co/api/v1/account/Yield/project/chatweb3/fork/902db63e-9c5e-415b-b883-5701c77b3aa7/simulate'
-
+def tenderly_simulate_tx(wallet_address, tx):
     payload = {
-      "save": True, 
-      "save_if_fails": True, 
-      "simulation_type": "full",
-      'network_id': '1',
-      'from': wallet_address,
-      'to': tx['to'],
-      'input': tx['data'],
-      'gas': int(tx['gas'], 16),
-      'value': int(tx['value'], 16) if 'value' in tx else 0,
+    "id": 0,
+    "jsonrpc": "2.0",
+    "method": "eth_sendTransaction",
+        "params": [
+            {
+            "from": wallet_address,
+            "to": tx['to'],
+            "value": tx['value'] if 'value' in tx else "0x0",
+            "data": tx['data'],
+            }
+        ]
     }
-
-    res = requests.post(tenderly_simulate_url, json=payload, headers={'X-Access-Key': tenderly_api_access_key })
+    res = requests.post(TENDERLY_FORK_URL, json=payload)
     res.raise_for_status()
 
-    simulation_id = res.json()["simulation"]["id"]
+    tx_hash = res.json()['result']
+    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
-    print("Tenderly Simulation ID: ", simulation_id)
+    print("Tenderly TxHash:", tx_hash)
 
-    if (not res.json()["simulation"]["status"]):
-        raise Exception(f"Error encountered for Tenderly Simulation ID: {simulation_id}, check dashboard for details")
-
-
+    if receipt['status'] == 0:
+        raise Exception(f"Transaction failed, tx_hash: {tx_hash}, check Tenderly dashboard for more details")
 
 def setup_mock_db_objects() -> Dict:
     mock_system_config = SystemConfig(json={})
@@ -452,3 +539,15 @@ def setup_mock_db_objects() -> Dict:
         'mock_chat_session': mock_chat_session,
         'mock_chat_message': mock_chat_message
     }
+
+
+def _validate_non_zero_eth_balance(wallet_address):
+    if (w3.eth.get_balance(w3.to_checksum_address(wallet_address)) == 0):
+        raise WorkflowValidationError("Wallet address has zero ETH balance")
+    
+def estimate_gas(tx):
+    return hex(w3.eth.estimate_gas(tx))
+
+
+def compute_abi_abspath(wf_file_path, abi_relative_path):
+    return os.path.join(os.path.dirname(os.path.abspath(wf_file_path)), abi_relative_path)

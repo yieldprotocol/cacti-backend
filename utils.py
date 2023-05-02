@@ -6,7 +6,7 @@ from langchain.llms import OpenAI
 from ens import ENS
 import functools
 import traceback
-
+import context
 import env
 
 
@@ -70,4 +70,13 @@ def error_wrap(fn):
         except Exception as e:
             traceback.print_exc()
             return f'Got exception evaluating {fn.__name__}(args={args}, kwargs={kwargs}): {e}'
+    return wrapped_fn
+
+
+def ensure_wallet_connected(fn):
+    @functools.wraps(fn)
+    def wrapped_fn(*args, **kwargs):
+        if not context.get_wallet_address():
+            raise ConnectedWalletRequired()
+        return fn(*args, **kwargs)
     return wrapped_fn

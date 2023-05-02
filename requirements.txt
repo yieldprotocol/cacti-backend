@@ -17,3 +17,5 @@ playwright==1.32.1
 fastapi==0.95.0
 uvicorn==0.21.1
 websockets==11.0.2
+pysha3==1.0.2
+idna==3.4

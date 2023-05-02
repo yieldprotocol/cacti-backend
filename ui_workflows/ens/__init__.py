@@ -1,1 +1,2 @@
 from .ens_registration import ENSRegistrationWorkflow
+from .ens_set_text import ENSSetTextWorkflow
