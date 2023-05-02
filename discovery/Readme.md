@@ -8,10 +8,19 @@ Discovery consists of two scripts "streamlit.py" and "playwright.py". You will n
 
 First start playwright.py
 '''
-python3 -m discovery.playwright
+python3 -m discovery.a_playwright
 '''
 
 then launch
 '''
 streamlit run ./discovery/streamlit.py
 '''
+
+## Using Playwright Inspect  with Discovery
+
+You can launch Playwright Inspect along with Discovery for recording interactions with a page. To do so, uncomment the following line in a_playwright:
+'''
+os.environ["PWDEBUG"] = "1"
+'''
+
+Please note that Inspect defaults to debugging the "a_playwright.py" script, and so you will need to step over the current breakpoint to load a page and start recording interactions. 

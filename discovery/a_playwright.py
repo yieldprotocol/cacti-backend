@@ -30,6 +30,7 @@ thread_event = threading.Event()
 wallet_chain_id = 1 
 wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
 result_container = []
+forkID = "902db63e-9c5e-415b-b883-5701c77b3aa7"
 
 TENDERLY_FORK_URL = "https://rpc.tenderly.co/fork/902db63e-9c5e-415b-b883-5701c77b3aa7"
 tenderly_api_access_key = os.environ.get("TENDERLY_API_ACCESS_KEY", None)
@@ -153,6 +154,7 @@ async def _intercept_rpc_node_reqs(route):
         await route.continue_()
 
 async def main():
+    global forkID
     url = None
     zcontext = zmq.asyncio.Context()
     socket = zcontext.socket(zmq.REP)
@@ -195,6 +197,20 @@ async def main():
                     result_container 
                 )
                 await socket.send_string("WalletConnect started")    
+            elif message["command"] == "GetForkID":
+                message = {
+                    "id": forkID
+                }
+                await socket.send_json(message)
+            elif message["command"] == "ForkID":
+                forkID = message["id"]
+                await socket.send_string(f"New fork ID: {forkID}") 
+            elif message["command"] == "NewFork":
+                forkID = "124358929583"
+                message = {
+                    "id": forkID
+                }
+                await socket.send_json(message)
             elif message["command"] == "Forward":
                 await context.route("**/*",  _intercept_rpc_node_reqs)
                 await socket.send_string("Forwarding Started") 
@@ -209,7 +225,6 @@ async def main():
 
         # Stop trace
         # await context.tracing.stop(path='trace.zip')
-        print("Tracing should have worked!")
         # Clean up
         await browser.close()
     # close walletconnect
@@ -220,6 +235,6 @@ async def main():
     zcontext.term()
 
 
-# Invoke this with: python3 -m discovery.playwright
+# Invoke this with: python3 -m discovery.a_playwright
 if __name__ == "__main__":
     asyncio.run(main())
