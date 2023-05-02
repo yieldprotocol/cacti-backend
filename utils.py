@@ -73,7 +73,7 @@ def error_wrap(fn):
     return wrapped_fn
 
 
-def check_wallet_connected(fn):
+def ensure_wallet_connected(fn):
     @functools.wraps(fn)
     def wrapped_fn(*args, **kwargs):
         if not context.get_wallet_address():

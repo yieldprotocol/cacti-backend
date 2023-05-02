@@ -74,7 +74,7 @@ class BaseContractWorkflow(ABC):
         self.abi_path = abi_path
         self.workflow_type = workflow_type
         self.workflow_params = workflow_params
-        self.parsed_user_request = f"wf_type: {self.workflow_type}: wf_params:{self.workflow_params}"
+        self.parsed_user_request = f"wf_type:{self.workflow_type}, wf_params:{self.workflow_params}"
 
     @abstractmethod
     def _run(self) -> Any:
@@ -91,7 +91,7 @@ class BaseContractWorkflow(ABC):
 
     def run(self) -> Any:
         """Main function to call to run the workflow."""
-        print(f"Running contract workflow: {self.parsed_user_request}")
+        print(f"Running contract workflow, {self.parsed_user_request}")
 
         self._load_contract_abi()
 
@@ -100,7 +100,7 @@ class BaseContractWorkflow(ABC):
 
         ret = self._run()
 
-        print(f"Contract workflow finished: {self.parsed_user_request}")
+        print(f"Contract workflow finished, {self.parsed_user_request}")
         return ret
 
 class BaseContractSingleStepWorkflow(BaseContractWorkflow):
@@ -156,7 +156,7 @@ class BaseUIWorkflow(ABC):
 
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
-        print(f"Running UI workflow: {self.parsed_user_request}")
+        print(f"Running UI workflow, {self.parsed_user_request}")
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
@@ -174,7 +174,7 @@ class BaseUIWorkflow(ABC):
 
             context.close()
             browser.close()
-        print(f"UI workflow finished: {self.parsed_user_request}")
+        print(f"UI workflow finished, {self.parsed_user_request}")
         return ret
 
 
@@ -547,3 +547,7 @@ def _validate_non_zero_eth_balance(wallet_address):
     
 def estimate_gas(tx):
     return hex(w3.eth.estimate_gas(tx))
+
+
+def compute_abi_abspath(wf_file_path, abi_relative_path):
+    return os.path.join(os.path.dirname(os.path.abspath(wf_file_path)), abi_relative_path)

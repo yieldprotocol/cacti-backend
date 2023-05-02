@@ -12,7 +12,7 @@ from langchain.prompts.base import BaseOutputParser
 
 import context
 import utils
-from utils import error_wrap, check_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
+from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
 import registry
 import streaming
 from chat.container import ContainerMixin, dataclass_to_container_params
@@ -429,7 +429,7 @@ def exec_aave_operation(token: str, amount: str, operation: str = '') -> TxPaylo
     )
 
 @error_wrap
-@check_wallet_connected
+@ensure_wallet_connected
 def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
     wallet_chain_id = 1 # TODO: get from context
     wallet_address = context.get_wallet_address()

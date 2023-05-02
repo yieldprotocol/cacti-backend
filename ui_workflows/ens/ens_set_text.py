@@ -10,7 +10,7 @@ from dataclasses import dataclass, asdict
 
 import env
 from utils import TENDERLY_FORK_URL, w3
-from ..base import tenderly_simulate_tx, Result, BaseContractSingleStepWorkflow, WorkflowValidationError, estimate_gas
+from ..base import tenderly_simulate_tx, Result, BaseContractSingleStepWorkflow, WorkflowValidationError, estimate_gas, compute_abi_abspath
 from .ens_utils import ENS_PUBLIC_RESOLVER_ADDRESS, ENS_REGISTRY_ADDRESS, get_node_namehash, is_domain_registered
 
 class ENSSetTextWorkflow(BaseContractSingleStepWorkflow):
@@ -25,7 +25,8 @@ class ENSSetTextWorkflow(BaseContractSingleStepWorkflow):
         user_description = f"Set field {self.key} to {self.value} for ENS domain {self.domain}"
 
         contract_address = ENS_PUBLIC_RESOLVER_ADDRESS
-        abi_path = './ui_workflows/ens/abis/ens_resolver.abi'
+
+        abi_path = compute_abi_abspath(__file__, './abis/ens_resolver.abi')
         super().__init__(wallet_chain_id, wallet_address, contract_address, abi_path, user_description, workflow_type, workflow_params)
         
     def _pre_workflow_validation(self):
