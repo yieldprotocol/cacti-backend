@@ -17,6 +17,8 @@ import asyncio
 from playwright.async_api import async_playwright
 import zmq.asyncio
 
+# Enable PWDEBUG to launch Inspector with the app
+os.environ["PWDEBUG"] = "1"
 
 # Set up the ZeroMQ context and socket
 # zcontext = zmq.Context()
@@ -167,6 +169,7 @@ async def main():
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
         context = await browser.new_context(user_agent=user_agent)
         page = await context.new_page()
+        # await context.tracing.start(name='trace', screenshots=True, snapshots=True)
 
         def print_console_msg(msg):
             print(msg.text)
@@ -204,6 +207,9 @@ async def main():
             else:
                 await socket.send_string("Unknown command")
 
+        # Stop trace
+        # await context.tracing.stop(path='trace.zip')
+        print("Tracing should have worked!")
         # Clean up
         await browser.close()
     # close walletconnect
