@@ -27,7 +27,7 @@ if send_button and url_input:
 else:
     st.info("Please enter a URL and press the Send URL button.")
 
-
+st.markdown('### WalletConnect')
 wc_input = st.text_input("Enter the walletconnect uri:", "wc:xyz")
 wc_button = st.button("Start WC")
 
@@ -41,10 +41,36 @@ if wc_button and wc_input:
     st.success(f"wc sent: {url_input}")
     response = socket.recv_string()
     st.write(response)
-else:
-    st.info("Please enter a WalletConnect URI and presss Start WC button.")
+# else:
+#    st.info("Please enter a WalletConnect URI and presss Start WC button.")
 
-if st.button("Exit"):
+
+st.markdown('### Forwarding Traffic to Tenderly')
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("Forward"):
+        # Send a message to the server to exit
+        message = {
+            "command": "Forward"
+        }
+        socket.send_json(message)
+        response = socket.recv_string()
+        st.write(response)
+
+
+with col2:
+    if st.button("End Forward"):
+        # Send a message to the server to exit
+        message = {
+            "command": "endForward"
+        }
+        socket.send_json(message)
+        response = socket.recv_string()
+        st.write(response)
+
+st.markdown('### Close Playwright App')
+if st.button("Close"):
     # Send a message to the server to exit
     message = {
         "command": "Exit"

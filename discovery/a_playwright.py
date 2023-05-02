@@ -156,13 +156,16 @@ async def main():
     socket = zcontext.socket(zmq.REP)
     socket.bind("tcp://*:5558")
 
+    # Define a flag to track request interception
+    is_intercepting = False
+
+
     # Set up Playwright
     async with async_playwright() as playwright:
         chromium = playwright.chromium
         browser = await chromium.launch(headless = False)
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
         context = await browser.new_context(user_agent=user_agent)
-        await context.route("**/*",  _intercept_rpc_node_reqs)
         page = await context.new_page()
 
         def print_console_msg(msg):
@@ -189,6 +192,12 @@ async def main():
                     result_container 
                 )
                 await socket.send_string("WalletConnect started")    
+            elif message["command"] == "Forward":
+                await context.route("**/*",  _intercept_rpc_node_reqs)
+                await socket.send_string("Forwarding Started") 
+            elif message["command"] == "endForward":
+                await context.unroute("**/*",  _intercept_rpc_node_reqs)
+                await socket.send_string("Forwarding Ended") 
             elif message["command"] == "Exit":
                 await socket.send_string("Exiting")
                 break

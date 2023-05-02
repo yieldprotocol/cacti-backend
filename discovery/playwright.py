@@ -17,7 +17,7 @@ from web3 import Web3
 # Set up the ZeroMQ context and socket
 zcontext = zmq.Context()
 socket = zcontext.socket(zmq.REP)
-socket.bind("tcp://*:5556")
+socket.bind("tcp://*:5555")
 thread=None
 
 thread_event = threading.Event()
