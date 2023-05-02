@@ -17,6 +17,12 @@ import asyncio
 from playwright.async_api import async_playwright
 import zmq.asyncio
 
+import concurrent.futures
+executor = concurrent.futures.ThreadPoolExecutor()
+thread = None
+loop = asyncio.get_event_loop()
+
+
 # Enable PWDEBUG to launch Inspector with the app
 os.environ["PWDEBUG"] = "1"
 
@@ -24,7 +30,7 @@ os.environ["PWDEBUG"] = "1"
 # zcontext = zmq.Context()
 # socket = zcontext.socket(zmq.REP)
 # socket.bind("tcp://*:5557")
-thread=None
+
 
 thread_event = threading.Event()
 wallet_chain_id = 1 
@@ -61,7 +67,6 @@ def wc_listen_for_messages(
                     tx = read_data[2][0]
                     print("TX:", tx)
                     result_container.append(tx)
-                    break
 
                 # Detect quit
                 #  v1 disconnect
@@ -80,10 +85,13 @@ def wc_listen_for_messages(
         except KeyboardInterrupt:
             print("Demo interrupted.")
             break
+        except Exception as e:
+            # if an error occurs, it will be caught here
+            print(f"An error occurred in walletConnect: {e}")
     wclient.close()
     print("WC disconnected.")
 
-
+'''
 def start_listener(wc_uri: str, thread_event: threading.Event, wallet_chain_id: int, wallet_address: str, result_container: List ) -> None:
     global thread
     if thread:
@@ -104,6 +112,26 @@ def stop_listener() -> Any:
     if result_container:
         return result_container[-1]
     return None
+'''
+
+async def start_listener(wc_uri: str, thread_event: threading.Event, wallet_chain_id: int, wallet_address: str, result_container: List ) -> None:
+    global thread
+    if thread:
+        await stop_listener()
+        print("Thread already running!")
+    thread = loop.run_in_executor(executor, wc_listen_for_messages, thread_event, wc_uri, wallet_chain_id, wallet_address, result_container)
+
+async def stop_listener() -> Any:
+    global thread
+    if thread:
+        thread_event.set()
+        thread.result()  # This will block until the thread finishes.
+        thread = None
+    if result_container:
+        return result_container[-1]
+    return None
+
+
 
 def _is_web3_call(request):
     if request.post_data:
@@ -155,6 +183,7 @@ async def _intercept_rpc_node_reqs(route):
 
 async def main():
     global forkID
+    global TENDERLY_FORK_URL
     url = None
     zcontext = zmq.asyncio.Context()
     socket = zcontext.socket(zmq.REP)
@@ -189,7 +218,9 @@ async def main():
                 await socket.send_string("Website opened successfully")    
             elif message["command"] == "WC":
                 wc = message["wc"]
-                start_listener(
+                if thread:
+                    await stop_listener()
+                await start_listener(
                     wc, 
                     thread_event, 
                     wallet_chain_id, 
@@ -204,6 +235,7 @@ async def main():
                 await socket.send_json(message)
             elif message["command"] == "ForkID":
                 forkID = message["id"]
+                TENDERLY_FORK_URL = f"https://rpc.tenderly.co/fork/{forkID}"
                 await socket.send_string(f"New fork ID: {forkID}") 
             elif message["command"] == "NewFork":
                 forkID = "124358929583"

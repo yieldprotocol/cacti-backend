@@ -89,6 +89,8 @@ with col1:
 with col2:
     if st.button("New Fork"):
         # Send message to server to create new fork and receive unique ID
+        st.write(f"Not yet implemented")
+        '''
         message = {
                 "command": "NewFork"
         }
@@ -98,7 +100,7 @@ with col2:
         # Populate input box with new unique ID
         # st.write(f"New Fork: {response['id']}")
         st.experimental_rerun()
-        
+        '''
 
 
 st.markdown('### Forwarding Traffic to Tenderly')
