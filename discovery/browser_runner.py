@@ -13,20 +13,35 @@ from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDic
 import requests
 from web3 import Web3
 
+import asyncio
+from playwright.async_api import async_playwright
+import zmq.asyncio
+
+import concurrent.futures
+executor = concurrent.futures.ThreadPoolExecutor()
+thread = None
+loop = asyncio.get_event_loop()
+
+
+# Enable PWDEBUG to launch Inspector with the app
+# os.environ["PWDEBUG"] = "1"
 
 # Set up the ZeroMQ context and socket
-zcontext = zmq.Context()
-socket = zcontext.socket(zmq.REP)
-socket.bind("tcp://*:5555")
-thread=None
+# zcontext = zmq.Context()
+# socket = zcontext.socket(zmq.REP)
+# socket.bind("tcp://*:5557")
+
 
 thread_event = threading.Event()
 wallet_chain_id = 1 
 wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
 result_container = []
+forkID = "902db63e-9c5e-415b-b883-5701c77b3aa7"
 
 TENDERLY_FORK_URL = "https://rpc.tenderly.co/fork/902db63e-9c5e-415b-b883-5701c77b3aa7"
 tenderly_api_access_key = os.environ.get("TENDERLY_API_ACCESS_KEY", None)
+
+w3 = Web3(Web3.HTTPProvider(TENDERLY_FORK_URL))
 
 def wc_listen_for_messages(
         thread_event: threading.Event, wc_uri: str, wallet_chain_id: int, wallet_address: str, result_container: List):
@@ -53,8 +68,8 @@ def wc_listen_for_messages(
                     # Get transaction params
                     tx = read_data[2][0]
                     print("TX:", tx)
-                    result_container.append(tx)
-                    break
+                    
+                    tenderly_simulate_tx(wallet_address, tx)
 
                 # Detect quit
                 #  v1 disconnect
@@ -73,10 +88,13 @@ def wc_listen_for_messages(
         except KeyboardInterrupt:
             print("Demo interrupted.")
             break
+        except Exception as e:
+            # if an error occurs, it will be caught here
+            print(f"An error occurred in walletConnect: {e}")
     wclient.close()
     print("WC disconnected.")
 
-
+'''
 def start_listener(wc_uri: str, thread_event: threading.Event, wallet_chain_id: int, wallet_address: str, result_container: List ) -> None:
     global thread
     if thread:
@@ -97,6 +115,26 @@ def stop_listener() -> Any:
     if result_container:
         return result_container[-1]
     return None
+'''
+
+async def start_listener(wc_uri: str, thread_event: threading.Event, wallet_chain_id: int, wallet_address: str, result_container: List ) -> None:
+    global thread
+    if thread:
+        await stop_listener()
+        print("Thread already running!")
+    thread = loop.run_in_executor(executor, wc_listen_for_messages, thread_event, wc_uri, wallet_chain_id, wallet_address, result_container)
+
+async def stop_listener() -> Any:
+    global thread
+    if thread:
+        thread_event.set()
+        thread.result()  # This will block until the thread finishes.
+        thread = None
+    if result_container:
+        return result_container[-1]
+    return None
+
+
 
 def _is_web3_call(request):
     if request.post_data:
@@ -108,7 +146,7 @@ def _is_web3_call(request):
             payload = json.loads(json_string)
             # payload = json.loads(request.post_data)
             if "method" in payload and payload["method"].startswith("eth_"):
-                ignore = ["eth_chainId", "eth_gasPrice"]
+                ignore = ["eth_chainId", "eth_gasPrice", "eth_blockNumber"]
                 if payload["method"] in ignore:
                     return False
                 
@@ -119,32 +157,53 @@ def _is_web3_call(request):
             print(str(e))
     return False
 
-def _forward_rpc_node_reqs(route):
+async def _forward_rpc_node_reqs(route):
     print(f"Route forwarded to Tenderly: {route.request}")
-    route.continue_(url=TENDERLY_FORK_URL, headers={"X-Access-Key": tenderly_api_access_key})
+    await route.continue_(url=TENDERLY_FORK_URL, headers={"X-Access-Key": tenderly_api_access_key})
 
-def _intercept_rpc_node_reqs(route):
+async def _async_forward_rpc_node_reqs(route):
+    request = route.request
+    data = json.loads(request.post_data)
+    response = requests.post(TENDERLY_FORK_URL, json=data, headers=request.headers)
+    await route.fulfill(
+        status=response.status_code,
+        headers=dict(response.headers),
+        body=response.content
+    )
+
+
+
+async def _intercept_rpc_node_reqs(route):
     if route.request.post_data and _is_web3_call(route.request):
         print(f"Forwarding:{route.request.url}")
-        _forward_rpc_node_reqs(route)
+        await _async_forward_rpc_node_reqs(route)
     else:
         # print(f'Request URL: {route.request.url}')
         # print(f'Request Headers: {route.request.headers}')
         # print(f'Request Post Data: {route.request.post_data}')
         print(f"Continuing:{route.request.url}")
-        route.continue_()
+        await route.continue_()
 
-
-def main():
+async def main():
+    global forkID
+    global TENDERLY_FORK_URL
     url = None
+    zcontext = zmq.asyncio.Context()
+    socket = zcontext.socket(zmq.REP)
+    socket.bind("tcp://*:5558")
+
+    # Define a flag to track request interception
+    is_intercepting = False
+
+
     # Set up Playwright
-    with sync_playwright() as playwright:
+    async with async_playwright() as playwright:
         chromium = playwright.chromium
-        browser = chromium.launch(headless = False)
+        browser = await chromium.launch(headless = False)
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
-        context = browser.new_context(user_agent=user_agent)
-        context.route("**/*",  _intercept_rpc_node_reqs)
-        page = context.new_page()
+        context = await browser.new_context(user_agent=user_agent)
+        page = await context.new_page()
+        # await context.tracing.start(name='trace', screenshots=True, snapshots=True)
 
         def print_console_msg(msg):
             print(msg.text)
@@ -152,32 +211,57 @@ def main():
         page.on("console", print_console_msg)
         while True:
             # Wait for a message from the client
-            message = socket.recv_json()
+            message = await socket.recv_json()
 
             # Perform the corresponding action based on the message
             if message["command"] == "Open":
                 url = message["url"]
                 print(f"Received URL: {url}")
-                page.goto(url)
-                socket.send_string("Website opened successfully")    
+                await page.goto(url)
+                await socket.send_string("Website opened successfully")    
             elif message["command"] == "WC":
                 wc = message["wc"]
-                start_listener(
+                if thread:
+                    await stop_listener()
+                await start_listener(
                     wc, 
                     thread_event, 
                     wallet_chain_id, 
                     wallet_address, 
                     result_container 
                 )
-                socket.send_string("WalletConnect started")    
+                await socket.send_string("WalletConnect started")    
+            elif message["command"] == "GetForkID":
+                message = {
+                    "id": forkID
+                }
+                await socket.send_json(message)
+            elif message["command"] == "ForkID":
+                forkID = message["id"]
+                TENDERLY_FORK_URL = f"https://rpc.tenderly.co/fork/{forkID}"
+                await socket.send_string(f"New fork ID: {forkID}") 
+            elif message["command"] == "NewFork":
+                forkID = "124358929583"
+                message = {
+                    "id": forkID
+                }
+                await socket.send_json(message)
+            elif message["command"] == "Forward":
+                await context.route("**/*",  _intercept_rpc_node_reqs)
+                await socket.send_string("Forwarding Started") 
+            elif message["command"] == "endForward":
+                await context.unroute("**/*",  _intercept_rpc_node_reqs)
+                await socket.send_string("Forwarding Ended") 
             elif message["command"] == "Exit":
-                socket.send_string("Exiting")
+                await socket.send_string("Exiting")
                 break
             else:
-                socket.send_string("Unknown command")
+                await socket.send_string("Unknown command")
 
+        # Stop trace
+        # await context.tracing.stop(path='trace.zip')
         # Clean up
-        browser.close()
+        await browser.close()
     # close walletconnect
     stop_listener()
 
@@ -185,7 +269,32 @@ def main():
     socket.close()
     zcontext.term()
 
+def tenderly_simulate_tx(wallet_address, tx):
+    payload = {
+    "id": 0,
+    "jsonrpc": "2.0",
+    "method": "eth_sendTransaction",
+        "params": [
+            {
+            "from": wallet_address,
+            "to": tx['to'],
+            "value": tx['value'] if 'value' in tx else "0x0",
+            "data": tx['data'],
+            }
+        ]
+    }
+    res = requests.post(TENDERLY_FORK_URL, json=payload)
+    res.raise_for_status()
 
-# Invoke this with: python3 -m discovery.playwright
+    tx_hash = res.json()['result']
+    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    print("Tenderly TxHash:", tx_hash)
+
+    if receipt['status'] == 0:
+        raise Exception(f"Transaction failed, tx_hash: {tx_hash}, check Tenderly dashboard for more details")
+
+
+# Invoke this with: python3 -m discovery.a_playwright
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
