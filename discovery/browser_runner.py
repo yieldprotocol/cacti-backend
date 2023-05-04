@@ -239,7 +239,7 @@ async def main():
         # Clean up
         await browser.close()
     # close walletconnect
-    stop_listener()
+    await stop_listener()
 
     # Clean up ZeroMQ
     socket.close()

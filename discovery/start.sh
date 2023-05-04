@@ -6,16 +6,31 @@ venv_dir="./.discovery-tool-venv"
 
 cd "${work_dir}"
 
-# if [ ! -d "${venv_dir}" ]; then
-#     echo "Creating virtual environment..."
-#     python3 -m venv "${venv_dir}"
-#     source "${venv_dir}/bin/activate"
-#     pip install -r "${work_dir}/requirements.txt"
-#     playwright install 
-#     echo "Virtual environment created."
-# else
-#     source "${venv_dir}/bin/activate"
-# fi
+if [ ! -d "${venv_dir}" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv "${venv_dir}"
+    source "${venv_dir}/bin/activate"
+    pip install -r "${work_dir}/requirements.txt"
+    playwright install 
+    echo "Virtual environment created."
+else
+    source "${venv_dir}/bin/activate"
+fi
+
+on_ctrl_c() {
+    # Kill any pending zmq processes
+    kill $(lsof -t -i :5558)  
+}
 
 python3 browser_runner.py &
+pid1=$! 
+
 streamlit run control_panel.py &
+pid2=$!
+
+trap on_ctrl_c SIGINT
+
+wait $pid1
+wait $pid2
+
+
