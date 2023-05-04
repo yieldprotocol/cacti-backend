@@ -41,6 +41,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 file_logger = logging.getLogger('file_logger')
 file_logger.setLevel(logging.INFO)
 
+# Enable PWDEBUG to launch Inspector with the app
+os.environ["PWDEBUG"] = "1"
 
 def wc_listen_for_messages(
         thread_event: threading.Event, wc_uri: str, wallet_chain_id: int, wallet_address: str, result_container: List):
@@ -296,7 +298,7 @@ async def main():
         # Clean up
 
         # Stop trace
-        await context.tracing.stop(path=f"{output_dir}/{formatted_start_time}_trace.zip")
+        await context.tracing.stop(path=f"{output_dir}/trace_{formatted_start_time}.zip")
         await browser.close()
     # close walletconnect
     await stop_listener()

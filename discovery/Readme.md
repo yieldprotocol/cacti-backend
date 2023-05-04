@@ -18,3 +18,8 @@ To start the tool,
 1. `cd discovery`
 1. `source "./.discovery-tool-venv/bin/activate"`
 1. `./start.sh`
+
+## Output
+The output of the tool is stored in `discovery/output` under a directory derived from the the URL's hostname, the following are the files to expect:-
+- {YYMMDD-HHMMSS}.log - contains the txs sent to Tenderly triggered by user actions and the corresponding simulation link to its dashboard
+- trace_{YYMMDD-HHMMSS}.zip - Playwright's trace of the browser session that can be viewed this way https://playwright.dev/python/docs/trace-viewer#viewing-the-trace-1
