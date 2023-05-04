@@ -34,12 +34,12 @@ wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" # vitalik.eth
 result_container = []
 fork_id = None # any default fork id will be set by the control panel
 tenderly_fork_url = None
-output_folder = None
+output_dir = None
+formatted_start_time = None
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 file_logger = logging.getLogger('file_logger')
 file_logger.setLevel(logging.INFO)
-
 
 
 def wc_listen_for_messages(
@@ -99,15 +99,11 @@ async def start_listener(wc_uri: str, thread_event: threading.Event, wallet_chai
         print("Thread already running!")
     thread = loop.run_in_executor(executor, wc_listen_for_messages, thread_event, wc_uri, wallet_chain_id, wallet_address, result_container)
 
-async def stop_listener() -> Any:
+async def stop_listener():
     global thread
     if thread:
         thread_event.set()
-        thread.result()  # This will block until the thread finishes.
         thread = None
-    if result_container:
-        return result_container[-1]
-    return None
 
 def _is_web3_call(request: str):
     if request.post_data:
@@ -165,13 +161,13 @@ def tenderly_simulate_tx(wallet_address, tx):
 
     tx_hash = res.json()['result']
 
-    get_latest_tx_params = {
+    get_latest_tx_payload = {
         "jsonrpc": "2.0",
         "method": "evm_getLatest",
         "params": []
     }
 
-    res = requests.post(tenderly_fork_url, json=get_latest_tx_params)
+    res = requests.post(tenderly_fork_url, json=get_latest_tx_payload)
     res.raise_for_status()
 
     tenderly_simulation_id = res.json()['result']
@@ -188,28 +184,27 @@ def tenderly_simulate_tx(wallet_address, tx):
     return tx_hash
 
 
-def create_output_folder(app_url: str):
-    global output_folder
+def create_output_dir(app_url: str):
+    global output_dir
     parsed_url = urlparse(app_url)
     host = parsed_url.hostname.replace(".", "_")
 
-    output_folder = f"./output/{host}"
+    dir_name = f"./output/{host}"
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
-    folder_path = os.path.join(current_dir, output_folder)
+    output_dir = os.path.join(current_dir, dir_name)
 
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
 def setup_file_logger():
-    now = datetime.now()
-
-    formatted_datetime = now.strftime('%y%m%d-%H%M%S')
+    global output_dir
+    global formatted_start_time
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_name = f"{formatted_datetime}.log"
-    file_path = os.path.join(current_dir, f"{output_folder}/{file_name}")
+    file_name = f"{formatted_start_time}.log"
+    file_path = os.path.join(current_dir, f"{output_dir}/{file_name}")
 
     file_handler = logging.FileHandler(file_path)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -221,6 +216,8 @@ def setup_file_logger():
 async def main():
     global fork_id
     global tenderly_fork_url
+    global formatted_start_time
+
     url = None
     zcontext = zmq.asyncio.Context()
     socket = zcontext.socket(zmq.REP)
@@ -232,8 +229,9 @@ async def main():
         browser = await chromium.launch(headless = False)
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
         context = await browser.new_context(user_agent=user_agent)
+        await context.tracing.start(name='trace', screenshots=True, snapshots=True)
+
         page = await context.new_page()
-        # await context.tracing.start(name='trace', screenshots=True, snapshots=True)
 
         def print_console_msg(msg):
             print(msg.text)
@@ -245,12 +243,17 @@ async def main():
 
             # Perform the corresponding action based on the message
             if message["command"] == "Open":
+                formatted_start_time = datetime.now().strftime('%y%m%d-%H%M%S')
                 url = message["url"]
+                
                 print(f"Received URL: {url}")
+                
                 await page.goto(url)
                 await socket.send_string("Website opened successfully")    
-                create_output_folder(url)
+                
+                create_output_dir(url)
                 setup_file_logger()
+
             elif message["command"] == "WC":
                 wc = message["wc"]
                 if thread:
@@ -290,9 +293,10 @@ async def main():
             else:
                 await socket.send_string("Unknown command")
 
-        # Stop trace
-        # await context.tracing.stop(path='trace.zip')
         # Clean up
+
+        # Stop trace
+        await context.tracing.stop(path=f"{output_dir}/{formatted_start_time}_trace.zip")
         await browser.close()
     # close walletconnect
     await stop_listener()
