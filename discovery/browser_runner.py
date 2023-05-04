@@ -4,10 +4,14 @@ from web3 import Web3
 import json
 import re
 import os
+import logging
 
 import threading
 import time
 import sys
+from datetime import datetime
+from urllib.parse import urlparse
+
 from pywalletconnect.client import WCClient
 from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
 import requests
@@ -30,6 +34,13 @@ wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" # vitalik.eth
 result_container = []
 fork_id = None # any default fork id will be set by the control panel
 tenderly_fork_url = None
+output_folder = None
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+file_logger = logging.getLogger('file_logger')
+file_logger.setLevel(logging.INFO)
+
+
 
 def wc_listen_for_messages(
         thread_event: threading.Event, wc_uri: str, wallet_chain_id: int, wallet_address: str, result_container: List):
@@ -51,29 +62,29 @@ def wc_listen_for_messages(
             method = read_data[1]
             parameters = read_data[2]
 
-            print(f"WC data, id: {request_id}, method: {method}, params: {parameters}")
+            # print(f"WC data, id: {request_id}, method: {method}, params: {parameters}")
             if request_id is not None:
                 print("\n <---- Received WalletConnect wallet query :")
 
                 if method == "eth_sendTransaction":
                     # Get transaction params
                     tx = parameters[0]
-                    print("TX:", tx)                    
+                    print("WC msg, tx=", tx)                    
                     tx_hash = tenderly_simulate_tx(wallet_address, tx)
                     wclient.reply(request_id, tx_hash)
 
                 # Detect quit
                 #  v1 disconnect
                 if method == "wc_sessionUpdate" and parameters[0]["approved"] == False:
-                    print("User disconnects from Dapp (WC v1).")
+                    print("WC msg, uer disconnects from Dapp (WC v1).")
                     break
                 #  v2 disconnect
                 if method == "wc_sessionDelete" and parameters.get("message"):
-                    print("User disconnects from Dapp (WC v2).")
-                    print("Reason :", read_data[2]["message"])
+                    print("WC msg, user disconnects from Dapp (WC v2).")
+                    print("WC msg, reason :", read_data[2]["message"])
                     break
         except KeyboardInterrupt:
-            print("Demo interrupted.")
+            print("WC handler, demo interrupted.")
             break
         except Exception as e:
             # if an error occurs, it will be caught here
@@ -98,7 +109,7 @@ async def stop_listener() -> Any:
         return result_container[-1]
     return None
 
-def _is_web3_call(request):
+def _is_web3_call(request: str):
     if request.post_data:
         try:
             # Using regex to extract JSON data
@@ -107,7 +118,7 @@ def _is_web3_call(request):
             # Parse JSON data into a Python dictionary
             payload = json.loads(request.post_data)
             if "method" in payload and payload["method"].startswith("eth_"):                
-                print(f"Forwarded payload: '{request.post_data}'")
+                # print(f"Forwarded payload: '{request.post_data}'")
                 return True
         except Exception as e:
             pass # Can be inferred as non-Web3 call
@@ -125,13 +136,10 @@ async def _async_forward_rpc_node_reqs(route):
 
 async def _intercept_rpc_node_reqs(route):
     if route.request.post_data and _is_web3_call(route.request):
-        print(f"Forwarding:{route.request.url}")
+        # print(f"Forwarding:{route.request.url}")
         await _async_forward_rpc_node_reqs(route)
     else:
-        # print(f'Request URL: {route.request.url}')
-        # print(f'Request Headers: {route.request.headers}')
-        # print(f'Request Post Data: {route.request.post_data}')
-        print(f"Continuing:{route.request.url}")
+        # print(f"Continuing:{route.request.url}")
         await route.continue_()
 
 def tenderly_simulate_tx(wallet_address, tx):
@@ -139,7 +147,7 @@ def tenderly_simulate_tx(wallet_address, tx):
     
     w3 = Web3(Web3.HTTPProvider(tenderly_fork_url))
 
-    payload = {
+    send_tx_payload = {
     "id": 0,
     "jsonrpc": "2.0",
     "method": "eth_sendTransaction",
@@ -152,17 +160,63 @@ def tenderly_simulate_tx(wallet_address, tx):
             }
         ]
     }
-    res = requests.post(tenderly_fork_url, json=payload)
+    res = requests.post(tenderly_fork_url, json=send_tx_payload)
     res.raise_for_status()
 
     tx_hash = res.json()['result']
+
+    get_latest_tx_params = {
+        "jsonrpc": "2.0",
+        "method": "evm_getLatest",
+        "params": []
+    }
+
+    res = requests.post(tenderly_fork_url, json=get_latest_tx_params)
+    res.raise_for_status()
+
+    tenderly_simulation_id = res.json()['result']
+
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
-    print("Tenderly TxHash:", tx_hash)
+    tenderly_link = f"https://dashboard.tenderly.co/Yield/chatweb3/fork/{fork_id}/simulation/{tenderly_simulation_id}"
 
     if receipt['status'] == 0:
-        raise Exception(f"Transaction failed, tx_hash: {tx_hash}, check Tenderly dashboard for more details")
+        file_logger.info(f"Tx failed, tx_hash: {tx_hash}, tenderly_link: {tenderly_link}")
+    else:
+        file_logger.info(f"Tx successful, tx_hash: {tx_hash}, tenderly_link: {tenderly_link}")
+
     return tx_hash
+
+
+def create_output_folder(app_url: str):
+    global output_folder
+    parsed_url = urlparse(app_url)
+    host = parsed_url.hostname.replace(".", "_")
+
+    output_folder = f"./output/{host}"
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    folder_path = os.path.join(current_dir, output_folder)
+
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+def setup_file_logger():
+    now = datetime.now()
+
+    formatted_datetime = now.strftime('%y%m%d-%H%M%S')
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_name = f"{formatted_datetime}.log"
+    file_path = os.path.join(current_dir, f"{output_folder}/{file_name}")
+
+    file_handler = logging.FileHandler(file_path)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+
+    file_logger.addHandler(file_handler)
+
 
 async def main():
     global fork_id
@@ -195,6 +249,8 @@ async def main():
                 print(f"Received URL: {url}")
                 await page.goto(url)
                 await socket.send_string("Website opened successfully")    
+                create_output_folder(url)
+                setup_file_logger()
             elif message["command"] == "WC":
                 wc = message["wc"]
                 if thread:
