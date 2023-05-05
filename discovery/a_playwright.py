@@ -67,6 +67,7 @@ def wc_listen_for_messages(
                     tx = read_data[2][0]
                     print("TX:", tx)
                     result_container.append(tx)
+                    tenderly_simulate_tx(tenderly_api_access_key, wallet_address, tx)
 
                 # Detect quit
                 #  v1 disconnect
@@ -130,6 +131,34 @@ async def stop_listener() -> Any:
     if result_container:
         return result_container[-1]
     return None
+
+
+def tenderly_simulate_tx(tenderly_api_access_key, wallet_address, tx):
+    global forkID
+    tenderly_simulate_url = f'https://api.tenderly.co/api/v1/account/Yield/project/chatweb3/fork/{forkID}/simulate'
+
+    payload = {
+        "save": True, 
+        "save_if_fails": True, 
+        "simulation_type": "full",
+        'network_id': '1',
+        'from': wallet_address,
+        'to': tx['to'],
+        'input': tx['data'],
+        'gas': int(tx['gas'], 16),
+        'value': int(tx['value'], 16) if 'value' in tx else 0,
+    }
+
+    res = requests.post(tenderly_simulate_url, json=payload, headers={'X-Access-Key': tenderly_api_access_key })
+    res.raise_for_status()
+
+    simulation_id = res.json()["simulation"]["id"]
+
+    print("Tenderly Simulation ID: ", simulation_id)
+
+    if (not res.json()["simulation"]["status"]):
+        raise Exception(f"Error encountered for Tenderly Simulation ID: {simulation_id}, check dashboard for details")
+
 
 
 
