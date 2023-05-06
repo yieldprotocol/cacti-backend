@@ -2,13 +2,13 @@
 
 on_ctrl_c() {
     # Kill any pending zmq processes
-    kill $(lsof -t -i :5558)  
+    lsof -i :5558 | awk 'NR>1 {print $2}' | xargs kill -9
 }
 
-python3 browser_runner.py &
+python3 playwright_browser.py &
 pid1=$! 
 
-streamlit run control_panel.py &
+streamlit run streamlit_control_panel.py &
 pid2=$!
 
 trap on_ctrl_c SIGINT

@@ -34,7 +34,7 @@ wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" # vitalik.eth
 result_container = []
 fork_id = None # any default fork id will be set by the control panel
 tenderly_fork_url = None
-output_dir = None
+output_dir = "./output"
 formatted_start_time = None
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
