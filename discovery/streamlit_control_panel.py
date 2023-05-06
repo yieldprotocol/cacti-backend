@@ -1,5 +1,9 @@
+import signal
+import subprocess
+import os
 import zmq
 import streamlit as st
+
 
 # Invoke this with: streamlit run ./discovery/streamlit.py
 
@@ -10,6 +14,23 @@ import streamlit as st
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
 socket.connect("tcp://localhost:5558")
+
+
+def kill_streamlit_server():
+    process_name = "streamlit_control_panel"
+
+    output = subprocess.check_output(['ps', 'aux']).decode('utf-8')
+
+    # Split the output into lines and iterate through them
+    for line in output.strip().split('\n'):
+        # Check if the partial name is in the process name
+        if process_name.lower() in line.lower():
+            # Extract the process ID (PID) from the line
+            pid = int(line.split()[1])
+
+            # Kill the process
+            print(f'Killing process with PID: {pid}')
+            os.kill(pid, signal.SIGKILL)
 
 if 'fork_forwarding_text' not in st.session_state:
     st.session_state.fork_forwarding_text = ""
@@ -122,15 +143,18 @@ with col2:
 
 st.success(st.session_state.fork_forwarding_text)
 
-st.markdown('### Close Playwright App')
-if st.button("Close"):
+st.markdown('### Shutdown Control Panel and Playwright Browser')
+if st.button("Shutdown"):
     # Send a message to the server to exit
     message = {
         "command": "Exit"
     }
     socket.send_json(message)
     response = socket.recv_string()
-    st.write(response)
+    st.warning(response)
     # Clean up ZeroMQ
     socket.close()
     context.term()
+    st.warning("Control Panel shutdown, close tab, re-run start script to restart.")
+    # No clean way to shutdown Streamlit server so have to resort to killng the process
+    kill_streamlit_server()

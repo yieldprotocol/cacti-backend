@@ -290,19 +290,18 @@ async def main():
                 await context.unroute("**/*",  _intercept_rpc_node_reqs)
                 await socket.send_string("Forwarding Ended") 
             elif message["command"] == "Exit":
-                await socket.send_string("Exiting")
                 break
             else:
                 await socket.send_string("Unknown command")
 
         # Clean up
-
         # Stop trace
         await context.tracing.stop(path=f"{output_dir}/trace_{formatted_start_time}.zip")
         await browser.close()
     # close walletconnect
     await stop_listener()
 
+    await socket.send_string("Performed cleanup, about to shutdown Playwright browser")
     # Clean up ZeroMQ
     socket.close()
     zcontext.term()

@@ -30,7 +30,7 @@ To start the tool,
 1. Before performing any protocol action, connect the test wallet by finding the connect button, getting the WalletConnect URI and pasting it in the "WalletConnect" field on the "Playwright Control Panel" page and then click "Start WC"
 1. If you wan to record user actions, click the "record" button on the "Playwright Inspector" window
 1. Interact with the Protocol UI normally by performing activities, transactions initiated will be auto-forwarded to Tenderly and instantly confirmed
-1. When you are done interacting with the page, click the "Close" button at the bottom of the "Playwright Control Panel" page
+1. When you are done interacting with the page, click the "Shutdown" button at the bottom of the "Playwright Control Panel" page
 1. You will be able to see the output of the tool in the `discovery/output` directory as described below
 
 # Output
