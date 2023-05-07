@@ -6,3 +6,6 @@ crypto_tokens.json
 .vscode
 local.yaml
 docker-compose.local.yml
+.*venv
+discovery/output/
+.DS_Store
