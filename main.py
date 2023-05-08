@@ -36,7 +36,7 @@ app.add_middleware(
     secret_key=env.env_config['server']['secret_key'],
     max_age=None,
     same_site='lax',
-    https_only=False,
+    https_only=not env.is_local(),
 )
 
 
