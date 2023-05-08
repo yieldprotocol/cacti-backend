@@ -1,21 +1,27 @@
 import asyncio
 from dataclasses import dataclass
 import json
-import secrets
+import time
+import traceback
 from typing import Optional, Set
 
 from fastapi import FastAPI, Request, Response, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+import siwe
 
 import server
 import chat
 import env
 
 
+NONCE_EXPIRY_SECS = 60
+
+
 app = FastAPI()
 
 origins = env.env_config['server']['origins']
+host = env.env_config['server']['host']
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,29 +51,49 @@ class ClientState:
 
 @app.get("/nonce")
 async def nonce(request: Request):
-    # TODO: should there be a time-expiry?
-    nonce = secrets.token_urlsafe()
-    request.session["nonce"] = nonce
+    request.session["nonce"] = siwe.generate_nonce()
+    request.session["nonce_timestamp"] = time.time()
     return nonce
 
 
+def _clear_session(request: Request):
+    request.session["nonce"] = None
+    request.session["nonce_timestamp"] = None
+    request.session["wallet_address"] = None
+
+
 @app.post("/login")
-async def login(request: Request, eip_string: str, signature: str):
+async def login(request: Request, eip4361: str, signature: str):
     nonce = request.session.get("nonce")
     if not nonce:
+        _clear_session(request)
+        return
+    nonce_timestamp = request.session.get("nonce_timestamp")
+    if not nonce_timestamp:
+        _clear_session(request)
+        return
+    if nonce_timestamp + NONCE_EXPIRY_SECS < time.time():
+        _clear_session(request)
         return
 
-    # verify eip_string and signature, get wallet address
-    # TODO
+    try:
+        # verify eip4361 and signature, get wallet address
+        message = siwe.SiweMessage(message=eip4361)
+        message.verify(signature, nonce=nonce, domain=host)
+        assert message.statement == 'Sign me in to wc3 app', message.statement
+        wallet_address = message.address
+    except (siwe.ValueError, siwe.ExpiredMessage, siwe.DomainMismatch, siwe.NonceMismatch, siwe.MalformedSession, siwe.InvalidSignature, AssertionError):
+        traceback.print_exc()
+        _clear_session(request)
+        return
 
-    # set authenticated wallet address is session
+    # set authenticated wallet address in session
     request.session["wallet_address"] = wallet_address
 
 
 @app.post("/logout")
 async def logout(request: Request):
-    request.session["nonce"] = None
-    request.session["wallet_address"] = None
+    _clear_session(request)
 
 
 @app.websocket("/chat")

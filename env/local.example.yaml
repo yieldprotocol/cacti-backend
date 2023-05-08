@@ -23,6 +23,5 @@ weaviate:
 
 # FastAPI server
 server:
-  origins:
-  - '*'
+  host: localhost:3000
   secret_key: US3e74TCvm0fB6XR0DrA5f7RofyIhR4xQtousxSwcV8=
