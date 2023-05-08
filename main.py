@@ -72,13 +72,8 @@ async def logout(request: Request):
 
 @app.websocket("/chat")
 async def websocket_chat(websocket: WebSocket):
-    # Get authenticated wallet address
-    wallet_address = websocket.session.get("wallet_address")
-    if not wallet_address:
-        # Only allow authenticated wallet to chat
-        return
-
     await websocket.accept()
+
     websockets.add(websocket)
     try:
         await _handle_websocket(websocket)
@@ -87,6 +82,13 @@ async def websocket_chat(websocket: WebSocket):
 
 
 async def _handle_websocket(websocket: WebSocket):
+    # Get authenticated wallet address
+    wallet_address = websocket.session.get("wallet_address")
+    if not wallet_address:
+        # Only allow authenticated wallet to chat
+        await _handle_unauthenticated_wallet(websocket)
+        return
+
     client_state = ClientState()
 
     while True:
@@ -115,6 +117,21 @@ async def _handle_websocket(websocket: WebSocket):
             break
         except WebSocketDisconnect:
             break
+
+
+async def _handle_unauthenticated_wallet(websocket: WebSocket):
+    while True:
+        msg = json.dumps({
+            'messageId': 0,
+            'actor': 'bot',
+            'type': 'text',
+            'payload': 'Please connect your wallet to chat.',
+            'stillThinking': False,
+            'operation': 'create',
+            'feedback': 'none',
+        })
+        await websocket.send_text(msg)
+        message = await websocket.receive_text()
 
 
 @app.on_event("startup")
