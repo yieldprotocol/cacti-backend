@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import json
 import time
 import traceback
-from typing import Optional, Set
+from typing import Any, Dict, List, Optional, Set, Union
 
 from fastapi import FastAPI, Request, Response, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +16,7 @@ import env
 
 
 NONCE_EXPIRY_SECS = 60
+AcceptJSON = Union[List, Dict, Any]  # a type that allows FastAPI to accept JSON objects
 
 
 app = FastAPI()
@@ -50,8 +51,9 @@ class ClientState:
 
 
 @app.get("/nonce")
-async def nonce(request: Request):
-    request.session["nonce"] = siwe.generate_nonce()
+async def api_nonce(request: Request):
+    nonce = siwe.generate_nonce()
+    request.session["nonce"] = nonce
     request.session["nonce_timestamp"] = time.time()
     return nonce
 
@@ -63,7 +65,15 @@ def _clear_session(request: Request):
 
 
 @app.post("/login")
-async def login(request: Request, eip4361: str, signature: str):
+async def api_login(request: Request, data: AcceptJSON):
+    if not data:
+        _clear_session(request)
+        return
+    eip4361 = data.get("eip4361")
+    signature = data.get("signature")
+    if not eip4361 or not signature:
+        _clear_session(request)
+        return
     nonce = request.session.get("nonce")
     if not nonce:
         _clear_session(request)
@@ -76,13 +86,32 @@ async def login(request: Request, eip4361: str, signature: str):
         _clear_session(request)
         return
 
+    for python_key, javascript_key in [
+            ('chain_id', 'chainId'),
+            ('issued_at', 'issuedAt'),
+            ('expiration_time', 'expirationTime'),
+            ('not_before', 'notBefore'),
+            ('request_id', 'requestId'),
+    ]:
+        if javascript_key in eip4361:
+            eip4361[python_key] = eip4361.pop(javascript_key)
+
     try:
         # verify eip4361 and signature, get wallet address
         message = siwe.SiweMessage(message=eip4361)
         message.verify(signature, nonce=nonce, domain=host)
         assert message.statement == 'Sign me in to wc3 app', message.statement
         wallet_address = message.address
-    except (siwe.ValueError, siwe.ExpiredMessage, siwe.DomainMismatch, siwe.NonceMismatch, siwe.MalformedSession, siwe.InvalidSignature, AssertionError):
+    except (
+            siwe.VerificationError,
+            siwe.InvalidSignature,
+            siwe.ExpiredMessage,
+            siwe.NotYetValidMessage,
+            siwe.DomainMismatch,
+            siwe.NonceMismatch,
+            siwe.MalformedSession,
+            AssertionError,
+    ):
         traceback.print_exc()
         _clear_session(request)
         return
@@ -92,7 +121,7 @@ async def login(request: Request, eip4361: str, signature: str):
 
 
 @app.post("/logout")
-async def logout(request: Request):
+async def api_logout(request: Request):
     _clear_session(request)
 
 
