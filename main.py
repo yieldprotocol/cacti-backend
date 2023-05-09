@@ -61,9 +61,9 @@ async def api_nonce(request: Request):
 
 
 def _clear_session(request: Request):
-    request.session["nonce"] = None
-    request.session["nonce_timestamp"] = None
-    request.session["wallet_address"] = None
+    request.session.pop("nonce", None)
+    request.session.pop("nonce_timestamp", None)
+    request.session.pop("wallet_address", None)
 
 
 @app.post("/login")
@@ -94,7 +94,7 @@ async def api_login(request: Request, data: AcceptJSON):
     if wallet_address and eip4361.get('address') == wallet_address:
         print('wallet already authenticated', wallet_address)
         # don't need to do anything, we only clear cookies if we explicitly log out
-        return
+        return True
 
     nonce = request.session.get("nonce")
     nonce_timestamp = request.session.get("nonce_timestamp")
@@ -130,11 +130,13 @@ async def api_login(request: Request, data: AcceptJSON):
 
     # set authenticated wallet address in session
     request.session["wallet_address"] = wallet_address
+    return True
 
 
 @app.post("/logout")
 async def api_logout(request: Request):
     _clear_session(request)
+    return True
 
 
 @app.websocket("/chat")
