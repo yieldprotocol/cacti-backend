@@ -15,7 +15,7 @@ import chat
 import env
 
 
-NONCE_EXPIRY_SECS = 60
+NONCE_EXPIRY_SECS = 60 * 60  # one hour
 AcceptJSON = Union[List, Dict, Any]  # a type that allows FastAPI to accept JSON objects
 
 
@@ -55,6 +55,8 @@ async def api_nonce(request: Request):
     nonce = siwe.generate_nonce()
     request.session["nonce"] = nonce
     request.session["nonce_timestamp"] = time.time()
+    nonce = request.session.get("nonce")
+    nonce_timestamp = request.session.get("nonce_timestamp")
     return nonce
 
 
@@ -72,20 +74,11 @@ async def api_login(request: Request, data: AcceptJSON):
     eip4361 = data.get("eip4361")
     signature = data.get("signature")
     if not eip4361 or not signature:
-        _clear_session(request)
-        return
-    nonce = request.session.get("nonce")
-    if not nonce:
-        _clear_session(request)
-        return
-    nonce_timestamp = request.session.get("nonce_timestamp")
-    if not nonce_timestamp:
-        _clear_session(request)
-        return
-    if nonce_timestamp + NONCE_EXPIRY_SECS < time.time():
+        print('missing eip message or signature')
         _clear_session(request)
         return
 
+    eip4361 = json.loads(eip4361)
     for python_key, javascript_key in [
             ('chain_id', 'chainId'),
             ('issued_at', 'issuedAt'),
@@ -96,12 +89,31 @@ async def api_login(request: Request, data: AcceptJSON):
         if javascript_key in eip4361:
             eip4361[python_key] = eip4361.pop(javascript_key)
 
+    # check if we are already logged in, and it matches the address in the message
+    wallet_address = request.session.get("wallet_address")
+    if wallet_address and eip4361.get('address') == wallet_address:
+        print('wallet already authenticated', wallet_address)
+        # don't need to do anything, we only clear cookies if we explicitly log out
+        return
+
+    nonce = request.session.get("nonce")
+    nonce_timestamp = request.session.get("nonce_timestamp")
+    if not nonce or not nonce_timestamp:
+        print('missing nonce or timestamp')
+        _clear_session(request)
+        return
+    if nonce_timestamp + NONCE_EXPIRY_SECS < time.time():
+        print('expired nonce')
+        _clear_session(request)
+        return
+
     try:
         # verify eip4361 and signature, get wallet address
         message = siwe.SiweMessage(message=eip4361)
         message.verify(signature, nonce=nonce, domain=host)
         assert message.statement == 'Sign me in to wc3 app', message.statement
         wallet_address = message.address
+        print('authenticated wallet', wallet_address)
     except (
             siwe.VerificationError,
             siwe.InvalidSignature,
@@ -137,18 +149,14 @@ async def websocket_chat(websocket: WebSocket):
 
 
 async def _handle_websocket(websocket: WebSocket):
-    # Get authenticated wallet address
-    wallet_address = websocket.session.get("wallet_address")
-    if not wallet_address:
-        # Only allow authenticated wallet to chat
-        await _handle_unauthenticated_wallet(websocket)
-        return
-
     client_state = ClientState()
 
     while True:
         try:
             message = await websocket.receive_text()
+
+            # Handle authenticated wallet address, if any (including changes)
+            client_state.wallet_address = websocket.session.get("wallet_address")
 
             queue = asyncio.queues.Queue()
 
@@ -172,21 +180,6 @@ async def _handle_websocket(websocket: WebSocket):
             break
         except WebSocketDisconnect:
             break
-
-
-async def _handle_unauthenticated_wallet(websocket: WebSocket):
-    while True:
-        msg = json.dumps({
-            'messageId': 0,
-            'actor': 'bot',
-            'type': 'text',
-            'payload': 'Please connect your wallet to chat.',
-            'stillThinking': False,
-            'operation': 'create',
-            'feedback': 'none',
-        })
-        await websocket.send_text(msg)
-        message = await websocket.receive_text()
 
 
 @app.on_event("startup")
