@@ -26,13 +26,12 @@ class CompoundSupplyWorkflow(BaseMultiStepWorkflow):
         self.token = workflow_params['token']
         self.amount = workflow_params['amount']
 
-        step1 = RunnableStep("enable_supply", WorkflowStepUserActionType.tx, f"{self.token} enable supply", self.step_1_enable_supply)
-        step2 = RunnableStep("confirm_supply", WorkflowStepUserActionType.tx, f"{self.token} confirm supply", self.step_2_confirm_supply)
+        step1 = RunnableStep("enable_supply", WorkflowStepUserActionType.tx, f"{self.token} enable Supply on Compound Finance", self.step_1_enable_supply)
+        step2 = RunnableStep("confirm_supply", WorkflowStepUserActionType.tx, f"{self.token} confirm Supply on Compound Finance", self.step_2_confirm_supply)
 
         steps = [step1, step2]
         
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow, workflow_params, curr_step_client_payload, steps)
-
 
     def _forward_rpc_node_reqs(self, route):
         """Override to intercept requests to ENS API and modify response to simulate block production"""
@@ -49,7 +48,7 @@ class CompoundSupplyWorkflow(BaseMultiStepWorkflow):
             route.fulfill(body=res_text, headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})
         else:
             super()._forward_rpc_node_reqs(route)
-
+            
     def _goto_page_and_open_walletconnect(self, page):
         """Go to page and open WalletConnect modal"""
 
@@ -98,7 +97,15 @@ class CompoundSupplyWorkflow(BaseMultiStepWorkflow):
             page.locator(".close-x").click()
 
         # Fill the amount
+        # try:
         page.get_by_placeholder("0").fill(str(self.amount))
+        # except PlaywrightTimeoutError:
+        #     return StepProcessingResult(
+        #         status="error", 
+        #         error_msg=f"{self.token} not available for Supply",
+        #     )
+
+        # confirm supply
         try:
             page.get_by_role("button", name="Supply").click()
         except PlaywrightTimeoutError:

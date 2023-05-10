@@ -8,7 +8,7 @@ from database.models import (
 # Invoke this with python3 -m ui_workflows.compound.tests.test_compound_supply
 if __name__ == "__main__":
     tenderly_api_access_key = os.environ.get("TENDERLY_API_ACCESS_KEY", None)
-    token_to_supply = "TUSD"
+    token_to_supply = "LINK"
     amount_to_supply = 0.0001
     wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
     wallet_chain_id = 1  # Tenderly Mainnet Fork
@@ -43,7 +43,6 @@ if __name__ == "__main__":
 
     multiStepResult: MultiStepResult = CompoundSupplyWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, workflow, curr_step_client_payload).run()
 
-    # # TODO: Note: This will error out as for some reason Tenderly doesn't preserve chain state across transactions for simulation API. Manually executing txs via Metamak works fine. More invastigation needed.
     tenderly_simulate_tx(wallet_address, multiStepResult.tx)
 
     print("Final checks")
@@ -60,4 +59,4 @@ if __name__ == "__main__":
     
     print(multiStepResult)
 
-    print(f"Successfully Supplied {worfklow_params['token']} {worfklow_params['amount']}")
+    print(f"Successfully Supplied {worfklow_params['amount']} {worfklow_params['token']}")

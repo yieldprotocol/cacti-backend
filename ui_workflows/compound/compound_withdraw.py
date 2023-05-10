@@ -12,7 +12,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 import env
 from utils import TENDERLY_FORK_URL, w3
-from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep, tenderly_simulate_tx, setup_mock_db_objects
+from ..base import BaseUIWorkflow, Result, BaseSingleStepWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep, tenderly_simulate_tx, setup_mock_db_objects
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
@@ -20,18 +20,15 @@ from database.models import (
 TWO_MINUTES = 120000
 TEN_SECONDS = 10000
 
-class CompoundWithdrawWorkflow(BaseMultiStepWorkflow):
+class CompoundWithdrawWorkflow(BaseSingleStepWorkflow):
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict) -> None:
         self.token = workflow_params['token']
         self.amount = workflow_params['amount']
-
-        step1 = RunnableStep("confirm_withdraw", WorkflowStepUserActionType.tx, f"{self.token} confirm withdraw", self.step_1_confirm_withdraw)
-
-        steps = [step1]
         
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow, workflow_params, curr_step_client_payload, steps)
-
+        step = RunnableStep("confirm_withdraw", WorkflowStepUserActionType.tx, f"{self.amount} {self.token} confirm Withdraw on Compound Finance", self.confirm_withdraw)
+        
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow_params, step)
 
     def _forward_rpc_node_reqs(self, route):
         """Override to intercept requests to ENS API and modify response to simulate block production"""
@@ -48,7 +45,7 @@ class CompoundWithdrawWorkflow(BaseMultiStepWorkflow):
             route.fulfill(body=res_text, headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})
         else:
             super()._forward_rpc_node_reqs(route)
-
+            
     def _goto_page_and_open_walletconnect(self, page):
         """Go to page and open WalletConnect modal"""
 
@@ -57,13 +54,16 @@ class CompoundWithdrawWorkflow(BaseMultiStepWorkflow):
         # Search for WalletConnect and open QRCode modal
         page.locator("a").filter(has_text="Wallet Connect").click()
 
-    def step_1_confirm_withdraw(self, page, context) -> StepProcessingResult:
-        """Step 1: Confirm withdraw"""
+    def confirm_withdraw(self, page, context) -> StepProcessingResult:
+        """Confirm withdraw"""
         # Find the token
         try:
             token_locators = page.get_by_text(re.compile(r".*\s{token}.*".format(token=self.token)))
         except PlaywrightTimeoutError:
-            return StepProcessingResult(status='error', error_msg=f"{self.token} not available for Withdraw")
+            return StepProcessingResult(
+                status="error", 
+                error_msg=f"{self.token} not available for Withdraw",
+            )
         
         # Find withdraw
         for i in range(4):
@@ -75,10 +75,23 @@ class CompoundWithdrawWorkflow(BaseMultiStepWorkflow):
             page.locator(".close-x").click()
 
         # Fill the amount
-        page.get_by_placeholder("0").fill(str(self.amount))
+        try:
+            page.get_by_placeholder("0").fill(str(self.amount))
+        except PlaywrightTimeoutError:
+            return StepProcessingResult(
+                status="error", 
+                error_msg=f"{self.token} not available for Withdraw",
+            )
+
+        # confirm withdraw
         try:
             page.get_by_role("button", name="Withdraw").click()
         except PlaywrightTimeoutError:
-            return StepProcessingResult(status='error', error_msg=f"No Balance to Withdraw {self.amount} {self.token}")
+            return StepProcessingResult(
+                status="error", 
+                error_msg=f"No Balance to Withdraw {self.amount} {self.token}",
+            )
 
-        return StepProcessingResult(status='success')
+        return StepProcessingResult(
+            status="success", 
+        )
