@@ -35,6 +35,15 @@ class Result:
     parsed_user_request: str = '' # NOTE: Field deprecated, use Multi-step workflow approach
 
 @dataclass
+class SingleStepResult:
+    status: Literal['success', 'error', 'terminated']
+    workflow_type: str
+    description: str
+    user_action_type: Literal['tx', 'acknowledge']
+    tx: any = None
+    error_msg: Optional[str] = None
+
+@dataclass
 class MultiStepResult:
     status: Literal['success', 'error', 'terminated']
     workflow_id: str
@@ -237,6 +246,60 @@ class BaseUIWorkflow(ABC):
                 self._forward_rpc_node_reqs(route)
         else:
             route.continue_()
+
+class BaseSingleStepWorkflow(BaseUIWorkflow):
+    """Common interface for single-step UI workflow."""
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, runnable_step: RunnableStep) -> None:
+        self.chat_message_id = chat_message_id
+        self.workflow_type = workflow_type
+        self.workflow_params = workflow_params
+        self.runnable_step = runnable_step
+        self.description = runnable_step.description
+
+        browser_storage_state = None
+        parsed_user_request = None        
+        super().__init__(wallet_chain_id, wallet_address, parsed_user_request, browser_storage_state)
+
+    def run(self) -> SingleStepResult:
+        try:
+            self.parsed_user_request = f"chat_message_id: {self.chat_message_id}, params: {self.workflow_params}"
+            return super().run()
+        except WorkflowValidationError as e:
+            print("UI SINGLE STEP WORKFLOW VALIDATION ERROR")
+            traceback.print_exc()
+            return SingleStepResult(
+                status="error", 
+                workflow_type=self.workflow_type,
+                error_msg="Unexpected error. Check with support.",
+                user_action_type=self.runnable_step.user_action_type.name,
+                description=self.description,
+            )
+        except Exception as e:
+            print("UI SINGLE STEP WORKFLOW EXCEPTION")
+            traceback.print_exc()
+            self.stop_listener()
+            return SingleStepResult(
+                status="error", 
+                workflow_type=self.workflow_type,
+                error_msg="Unexpected error. Check with support.",
+                user_action_type=self.runnable_step.user_action_type.name,
+                description=self.description,
+            )
+
+    def _run_page(self, page, context) -> SingleStepResult:
+        result = self.runnable_step.function(page, context)
+
+        # Arbitrary wait to allow for enough time for WalletConnect relay to send our client the tx data
+        page.wait_for_timeout(5000)
+        tx = self.stop_listener()
+        return SingleStepResult(
+            status=result.status,
+            workflow_type=self.workflow_type,
+            tx=tx,
+            error_msg=result.error_msg,
+            user_action_type=self.runnable_step.user_action_type.name,
+            description=self.description,
+        )
 
 class BaseMultiStepWorkflow(BaseUIWorkflow):
     """Common interface for multi-step UI workflow."""
