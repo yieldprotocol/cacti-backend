@@ -94,3 +94,4 @@ def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow
         error_msg=result.error_msg,
         description=result.description
     )
+

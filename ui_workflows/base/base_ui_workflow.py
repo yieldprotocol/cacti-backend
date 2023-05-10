@@ -15,7 +15,7 @@ from .common import _validate_non_zero_eth_balance
 
 
 class BaseUIWorkflow(ABC):
-    """Grandparent base class for UI workflows. Do not directly use this class, use either BaseSingleStepUIWorkflow or BaseMultiStepUIWorkflow class"""
+    """Grandparent base class for UI workflows. Do not directly use this class, use either BaseSingleStepUIWorkflow or BaseMultiStepUIWorkflow subclass"""
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, log_params: str, browser_storage_state: Optional[Dict] = None) -> None:
         self.wallet_chain_id = wallet_chain_id
@@ -29,8 +29,6 @@ class BaseUIWorkflow(ABC):
 
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
-        print(f"UI workflow started, {self.log_params}")
-
         _validate_non_zero_eth_balance(self.wallet_address)
 
         with sync_playwright() as playwright:
@@ -46,10 +44,10 @@ class BaseUIWorkflow(ABC):
             self._connect_to_walletconnect_modal(page)
 
             ret = self._run_page(page, context)
+            print(f"Workflow Result:-\n{ret}")
 
             context.close()
             browser.close()
-        print(f"UI workflow finished, {self.log_params}")
         return ret
 
     @abstractmethod

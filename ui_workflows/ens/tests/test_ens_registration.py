@@ -43,9 +43,9 @@ if __name__ == "__main__":
             "userActionData": "Sample TX HASH"
         }
 
-        workflow = MultiStepWorkflow.query.filter(MultiStepWorkflow.id == workflow_id).first()
+        multistep_workflow = MultiStepWorkflow.query.filter(MultiStepWorkflow.id == workflow_id).first()
 
-        multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, workflow, curr_step_client_payload).run()
+        multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, multistep_workflow, curr_step_client_payload).run()
 
         if multiStepResult.status != "success":
             raise Exception(multiStepResult)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
             "userActionData": "Sample TX HASH"
         }   
 
-        multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, workflow, curr_step_client_payload).run()
+        multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, multistep_workflow, curr_step_client_payload).run()
         
         print(multiStepResult)
 

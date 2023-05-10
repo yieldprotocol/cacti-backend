@@ -7,7 +7,7 @@ import requests
 from utils import  w3
 from database.models import db_session, ChatMessage, ChatSession, SystemConfig
 from utils import TENDERLY_FORK_URL, w3
-
+from database.models import (MultiStepWorkflow)
 class WorkflowStepClientPayload(TypedDict):
     id: str
     type: str
@@ -34,7 +34,6 @@ class MultiStepResult:
     step_number: int
     total_steps: int
     user_action_type: Literal['tx', 'acknowledge']
-    is_special_final_step: bool = False # NOTE: Spcial case - At times, the workflow may need to be terminated earlier eg. For lending protocols, supplying ETH doesn't require an approval step so this would be 1 step, whereas ERC20s require approval so this would be 2 steps
     tx: Optional[dict] = None
     error_msg: Optional[str] = None
     description: str = ''
@@ -50,9 +49,12 @@ class RunnableStep:
 class StepProcessingResult:
     status: Literal['success', 'error']
     error_msg: Optional[str] = None
-
+    is_special_final_step: bool = False # NOTE: Special case - to be used when workflow needs to terminate/complete on an earlier step eg. For ERC20 token on Aave UI, if user has given pre-approval or max approval to the protocol, the UI doesn't show the Approve button step
 
 class WorkflowValidationError(Exception):
+    pass
+
+class WorkflowFailed(Exception):
     pass
 
 def tenderly_simulate_tx(wallet_address, tx):
@@ -115,3 +117,15 @@ def estimate_gas(tx):
 
 def compute_abi_abspath(wf_file_path, abi_relative_path):
     return os.path.join(os.path.dirname(os.path.abspath(wf_file_path)), abi_relative_path)
+
+def process_result_and_simulate_tx(wallet_address, result: Union[Result, MultiStepResult]):
+    if result.status == "success":
+        tenderly_simulate_tx(wallet_address, result.tx)
+        print("Workflow successful")
+    elif result.status == "terminated":
+        print("Workflow terminated as it has reached the final step or user error has occured. See logs for more info.")
+    else:
+        raise WorkflowFailed(result)
+
+def fetch_multistep_workflow_from_db(id):
+    return MultiStepWorkflow.query.filter(MultiStepWorkflow.id == id).first()
