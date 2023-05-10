@@ -61,13 +61,13 @@ class AaveUIWorkflow(BaseUIWorkflow):
 
             return Result(
                 status="success", tx=tx,
-                is_approval_tx=self.is_approval_tx, parsed_user_request=self.parsed_user_request,
+                is_approval_tx=self.is_approval_tx, parsed_user_request=self.log_params,
                 description=description)
         except Exception as e:
             self.stop_listener()
             return Result(
                 status="error", error_msg=e.args[0],
-                parsed_user_request=self.parsed_user_request, description=self.parsed_user_request)
+                parsed_user_request=self.log_params, description=self.log_params)
 
 
 # Invoke this with python3 -m ui_workflows.aave

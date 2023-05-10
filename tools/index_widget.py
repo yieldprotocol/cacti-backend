@@ -433,7 +433,7 @@ def exec_aave_operation(token: str, amount: str, operation: str = '') -> TxPaylo
 def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
     wallet_chain_id = 1 # TODO: get from context
     wallet_address = context.get_wallet_address()
-    user_chat_message_id = context.get_user_chat_message_id() or user_chat_message_id
+    user_chat_message_id = context.get_user_chat_message_id()
 
     params = {
         'domain': domain,
@@ -441,7 +441,7 @@ def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
         'value': value,
     }
 
-    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, 'set-ens-text', params)
+    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, 'set-ens-text', params)
     result = wf.run()
 
     return TxPayloadForSending(

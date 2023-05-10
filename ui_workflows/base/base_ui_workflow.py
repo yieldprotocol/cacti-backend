@@ -11,14 +11,16 @@ from utils import TENDERLY_FORK_URL
 from pywalletconnect.client import WCClient
 from playwright.sync_api import  sync_playwright, Page, BrowserContext
 
+from .common import _validate_non_zero_eth_balance
+
 
 class BaseUIWorkflow(ABC):
-    """Common interface for UI workflow."""
+    """Grandparent base class for UI workflows. Do not directly use this class, use either BaseSingleStepUIWorkflow or BaseMultiStepUIWorkflow class"""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, parsed_user_request: str, browser_storage_state: Optional[Dict] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, log_params: str, browser_storage_state: Optional[Dict] = None) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
-        self.parsed_user_request = parsed_user_request
+        self.log_params = log_params
         self.browser_storage_state = browser_storage_state
         self.thread = None
         self.result_container = []
@@ -27,7 +29,9 @@ class BaseUIWorkflow(ABC):
 
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
-        print(f"Running UI workflow, {self.parsed_user_request}")
+        print(f"UI workflow started, {self.log_params}")
+
+        _validate_non_zero_eth_balance(self.wallet_address)
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
@@ -45,7 +49,7 @@ class BaseUIWorkflow(ABC):
 
             context.close()
             browser.close()
-        print(f"UI workflow finished, {self.parsed_user_request}")
+        print(f"UI workflow finished, {self.log_params}")
         return ret
 
     @abstractmethod

@@ -34,6 +34,7 @@ class MultiStepResult:
     step_number: int
     total_steps: int
     user_action_type: Literal['tx', 'acknowledge']
+    is_special_final_step: bool = False # NOTE: Spcial case - At times, the workflow may need to be terminated earlier eg. For lending protocols, supplying ETH doesn't require an approval step so this would be 1 step, whereas ERC20s require approval so this would be 2 steps
     tx: Optional[dict] = None
     error_msg: Optional[str] = None
     description: str = ''

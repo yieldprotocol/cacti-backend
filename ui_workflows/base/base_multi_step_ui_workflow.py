@@ -2,11 +2,11 @@ import traceback
 from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
 from database.models import db_session, WorkflowStep, WorkflowStepStatus, MultiStepWorkflow
 
-from .common import WorkflowStepClientPayload, RunnableStep, StepProcessingResult, MultiStepResult
+from .common import WorkflowStepClientPayload, RunnableStep, StepProcessingResult, MultiStepResult, WorkflowValidationError
 from .base_ui_workflow import BaseUIWorkflow
 
-class BaseMultiStepWorkflow(BaseUIWorkflow):
-    """Common interface for multi-step UI workflow."""
+class BaseMultiStepUIWorkflow(BaseUIWorkflow):
+    """Base class for multi-step UI workflow."""
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], runnable_steps: List[RunnableStep]) -> None:
         self.chat_message_id = chat_message_id
@@ -20,16 +20,16 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         self.curr_step = None
         self.curr_step_description = None
         browser_storage_state = None
-        parsed_user_request = None
+        log_params = None
 
-        super().__init__(wallet_chain_id, wallet_address, parsed_user_request, browser_storage_state)
+        super().__init__(wallet_chain_id, wallet_address, log_params, browser_storage_state)
 
     def run(self) -> Any:
         try:
             self._setup_workflow()
 
             if(not self._validate_before_page_run()):
-                print("Multi-step Workflow terminated before page run")
+                print(f"Multi-step Workflow terminated before page run, {self.log_params}")
                 return MultiStepResult(
                     status='terminated',
                     workflow_id=str(self.workflow.id),
@@ -44,10 +44,25 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
                 )
             
             return super().run()
-        except Exception:
-            print("MULTISTEP WORKFLOW EXCEPTION")
+        except WorkflowValidationError as e:
+            print(f"MULTISTEP UI WORKFLOW VALIDATION ERROR, {self.log_params}")
             traceback.print_exc()
-            self.stop_listener()
+            return MultiStepResult(
+                status='error',
+                workflow_id=str(self.workflow.id),
+                workflow_type=self.workflow_type,
+                step_id=str(self.curr_step.id) if self.curr_step else None,
+                step_type=self.curr_step.type if self.curr_step else None,
+                user_action_type=self.curr_step.user_action_type.name if self.curr_step else None,
+                step_number=self.curr_step.step_number if self.curr_step else None,
+                total_steps=self.total_steps,
+                tx=None,
+                error_msg=e.args[0],
+                description=self.curr_step_description
+            )
+        except Exception:
+            print(f"MULTISTEP UI WORKFLOW EXCEPTION, {self.log_params}")
+            traceback.print_exc()
             return MultiStepResult(
                 status='error',
                 workflow_id=str(self.workflow.id),
@@ -61,6 +76,8 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
                 error_msg="Unexpected error. Check with support.",
                 description=self.curr_step_description
             )
+        finally:
+            self.stop_listener()
 
     def _run_page(self, page, context) -> MultiStepResult:
         processing_result = self._run_step(page, context)
@@ -120,7 +137,7 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
         1. Create new workflow in DB if not already created
         2. Use current step payload/feedback from client to get the step's browser storage state so that it can be injected into the browser context to be used in next step
         3. User current step payload/feedback from client and save it to DB
-        4. Set parsed_user_request to be used for logging
+        4. Set log_params to be used for logging
         """
         if not self.workflow:
             # Create new workflow in DB
@@ -144,7 +161,7 @@ class BaseMultiStepWorkflow(BaseUIWorkflow):
             self.curr_step.user_action_data = self.curr_step_client_payload['userActionData']
             self._save_to_db([self.curr_step])
 
-        self.parsed_user_request = f"chat_message_id: {self.chat_message_id}, wf_id: {self.workflow.id}, workflow_type: {self.workflow_type}, curr_step_type: {self.curr_step.type if self.curr_step else None} params: {self.workflow_params}"
+        self.log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, wf_id: {self.workflow.id}, curr_step_type: {self.curr_step.type if self.curr_step else None}, wf_params: {self.workflow_params}"
 
     def _validate_before_page_run(self) -> bool:
         # Perform validation to check if we can continue with next step

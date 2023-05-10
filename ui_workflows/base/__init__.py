@@ -5,7 +5,9 @@ from .common import (
 )
 
 from .base_ui_workflow import BaseUIWorkflow
-from .base_multi_step_workflow import BaseMultiStepWorkflow
+from .base_multi_step_ui_workflow import BaseMultiStepUIWorkflow
+from .base_single_step_ui_workflow import BaseSingleStepUIWorkflow
 
 from .base_contract_workflow import BaseContractWorkflow
-from .base_contract_single_step_workflow import BaseContractSingleStepWorkflow
+from .base_single_step_contract_workflow import BaseSingleStepContractWorkflow
+from .base_multi_step_contract_workflow import BaseMultiStepContractWorkflow
