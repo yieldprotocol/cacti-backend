@@ -17,10 +17,9 @@ from .common import _validate_non_zero_eth_balance
 class BaseUIWorkflow(ABC):
     """Grandparent base class for UI workflows. Do not directly use this class, use either BaseSingleStepUIWorkflow or BaseMultiStepUIWorkflow subclass"""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, log_params: str, browser_storage_state: Optional[Dict] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, browser_storage_state: Optional[Dict] = None) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
-        self.log_params = log_params
         self.browser_storage_state = browser_storage_state
         self.thread = None
         self.result_container = []

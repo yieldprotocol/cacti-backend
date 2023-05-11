@@ -18,8 +18,8 @@ class BaseSingleStepUIWorkflow(BaseUIWorkflow):
         self.workflow_type = workflow_type
         self.workflow_params = workflow_params
         self.user_description = user_description
-        log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, wf_params: {self.workflow_params}"
-        super().__init__(wallet_chain_id, wallet_address, log_params)
+        self.log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, wf_params: {self.workflow_params}"
+        super().__init__(wallet_chain_id, wallet_address)
 
     def run(self) -> Any:
         print(f"Single-step UI workflow started, {self.log_params}")

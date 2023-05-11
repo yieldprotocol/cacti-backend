@@ -47,9 +47,10 @@ class RunnableStep:
 
 @dataclass
 class StepProcessingResult:
-    status: Literal['success', 'error']
+    status: Literal['success', 'error', 'replace']
     error_msg: Optional[str] = None
-    is_special_final_step: bool = False # NOTE: Special case - to be used when workflow needs to terminate/complete on an earlier step eg. For ERC20 token on Aave UI, if user has given pre-approval or max approval to the protocol, the UI doesn't show the Approve button step
+    replace_with_step_type: str = None
+    replace_extra_params: Dict = None
 
 class WorkflowValidationError(Exception):
     pass
