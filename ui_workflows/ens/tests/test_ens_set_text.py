@@ -1,7 +1,7 @@
 import os
 import uuid
 from ui_workflows.ens import ENSSetTextWorkflow
-from ui_workflows.base import tenderly_simulate_tx
+from ui_workflows.base import process_result_and_simulate_tx
 
 # Invoke this with python3 -m ui_workflows.ens.tests.test_ens_set_text
 if __name__ == "__main__":
@@ -14,8 +14,4 @@ if __name__ == "__main__":
 
     result = ENSSetTextWorkflow(wallet_chain_id, wallet_address, mock_chat_message_id, workflow_type, params).run()
 
-    if result.status == "success":
-        tenderly_simulate_tx(wallet_address, result.tx)
-        print("Workflow successful")
-    else:
-        print("Workflow failed")
+    process_result_and_simulate_tx(wallet_address, result)
