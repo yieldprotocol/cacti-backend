@@ -1,5 +1,6 @@
 
 import os
+import uuid
 from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
 from dataclasses import dataclass
 
@@ -8,13 +9,16 @@ from utils import  w3
 from database.models import db_session, ChatMessage, ChatSession, SystemConfig
 from utils import TENDERLY_FORK_URL, w3
 from database.models import (MultiStepWorkflow)
+
+TEST_WALLET_CHAIN_ID = 1  # Tenderly Mainnet Fork
+TEST_WALLET_ADDRESS = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" # vitalik.eth
+MOCK_CHAT_MESSAGE_ID = str(uuid.uuid4())
 class WorkflowStepClientPayload(TypedDict):
     id: str
     type: str
     status: Literal['pending', 'success', 'error', 'user_interrupt']
     status_message: str
     user_action_data: str
-
 @dataclass
 class Result:
     status: Literal['success', 'error']
@@ -42,12 +46,13 @@ class MultiStepResult:
 class RunnableStep:
     type: str
     user_action_type: Literal['tx', 'acknowledge']
-    description: str
+    user_description: str
     function: Callable
 
 @dataclass
 class StepProcessingResult:
     status: Literal['success', 'error', 'replace']
+    override_user_description: Optional[str] = None
     error_msg: Optional[str] = None
     replace_with_step_type: str = None
     replace_extra_params: Dict = None
@@ -130,3 +135,7 @@ def process_result_and_simulate_tx(wallet_address, result: Union[Result, MultiSt
 
 def fetch_multistep_workflow_from_db(id):
     return MultiStepWorkflow.query.filter(MultiStepWorkflow.id == id).first()
+
+
+def generate_mock_chat_message_id():
+    return str(uuid.uuid4())

@@ -112,7 +112,7 @@ class BaseMultiStepContractWorkflow(BaseContractWorkflow):
         first_step = self.runnable_steps[0]
 
         # Save step to DB and set current step
-        self._create_new_curr_step(first_step.type, 1, first_step.user_action_type, first_step.description)
+        self._create_new_curr_step(first_step.type, 1, first_step.user_action_type, first_step.user_description)
 
         # return first_step.function(page, context)
         return first_step.function()
@@ -125,7 +125,7 @@ class BaseMultiStepContractWorkflow(BaseContractWorkflow):
         next_step_to_run = self.runnable_steps[next_step_to_run_index]
 
         # Save step to DB and reset current step
-        self._create_new_curr_step(next_step_to_run.type, next_step_to_run_index + 1, next_step_to_run.user_action_type, next_step_to_run.description)
+        self._create_new_curr_step(next_step_to_run.type, next_step_to_run_index + 1, next_step_to_run.user_action_type, next_step_to_run.user_description)
 
         return next_step_to_run.function()
 

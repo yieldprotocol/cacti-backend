@@ -16,8 +16,9 @@ from ...base import BaseUIWorkflow, MultiStepResult, BaseMultiStepUIWorkflow, Wo
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
+from .common import AaveMixin
 
-class AaveSupplyUIWorkflow(BaseMultiStepUIWorkflow):
+class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
         self.token = workflow_params["token"]
@@ -37,13 +38,6 @@ class AaveSupplyUIWorkflow(BaseMultiStepUIWorkflow):
         final_step_type = "confirm_supply"
         
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
-
-    def _goto_page_and_open_walletconnect(self, page):
-        """Go to page and open WalletConnect modal"""
-        page.goto("https://app.aave.com/")
-        page.get_by_role("button", name="wallet", exact=True).click()
-        page.get_by_role("button", name="WalletConnect browser wallet icon").click()
-    
 
     def initiate_ERC20_approval_step(self, page, context) -> StepProcessingResult:
         """Initiate approval for ERC20 token"""
@@ -96,7 +90,7 @@ class AaveSupplyUIWorkflow(BaseMultiStepUIWorkflow):
 
         # Find token for an operation and click it
         try:
-            regex =  r"^{token}.*Supply.*$".format(token=self.token)
+            regex =  r"^{token}.*SupplyDetails$".format(token=self.token)
             page.locator("div").filter(has_text=re.compile(regex)).get_by_role("button", name="Supply").click()
         except PlaywrightTimeoutError:
             return StepProcessingResult(

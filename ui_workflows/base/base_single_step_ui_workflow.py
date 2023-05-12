@@ -50,6 +50,8 @@ class BaseSingleStepUIWorkflow(BaseUIWorkflow):
     def _run_page(self, page, context) -> Result:
         processing_result = self._run_step(page, context)
 
+        computed_user_description = processing_result.override_user_description or self.user_description
+
         # Arbitrary wait to allow for enough time for WalletConnect relay to send our client the tx data
         page.wait_for_timeout(5000)
         tx = self.stop_listener()
@@ -57,7 +59,7 @@ class BaseSingleStepUIWorkflow(BaseUIWorkflow):
             status=processing_result.status,
             tx=tx,
             error_msg=processing_result.error_msg,
-            description=self.user_description,
+            description=computed_user_description,
         )
 
     @abstractmethod
