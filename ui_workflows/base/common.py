@@ -1,11 +1,12 @@
 
 import os
 import uuid
+import json
 from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
 from dataclasses import dataclass
 
 import requests
-from utils import  w3
+from utils import  w3, Web3
 from database.models import db_session, ChatMessage, ChatSession, SystemConfig
 from utils import TENDERLY_FORK_URL, w3
 from database.models import (MultiStepWorkflow)
@@ -13,12 +14,16 @@ from database.models import (MultiStepWorkflow)
 TEST_WALLET_CHAIN_ID = 1  # Tenderly Mainnet Fork
 TEST_WALLET_ADDRESS = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" # vitalik.eth
 MOCK_CHAT_MESSAGE_ID = str(uuid.uuid4())
+ERC20_ABI = [ { "inputs": [ { "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "spender", "type": "address" } ], "name": "allowance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" } ]
+USDC_ADDRESS = Web3.to_checksum_address("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+
+# Response from FE Client for a particular step, contains user's action data eg. if user confirmed a tx, then tx status and tx hash
 class WorkflowStepClientPayload(TypedDict):
     id: str
     type: str
     status: Literal['pending', 'success', 'error', 'user_interrupt']
-    status_message: str
-    user_action_data: str
+    statusMessage: str
+    userActionData: str
 @dataclass
 class Result:
     status: Literal['success', 'error']
@@ -36,8 +41,8 @@ class MultiStepResult:
     step_id: str
     step_type: str
     step_number: int
-    total_steps: int
     user_action_type: Literal['tx', 'acknowledge']
+    is_final_step: bool = False
     tx: Optional[dict] = None
     error_msg: Optional[str] = None
     description: str = ''
@@ -63,7 +68,7 @@ class WorkflowValidationError(Exception):
 class WorkflowFailed(Exception):
     pass
 
-def tenderly_simulate_tx(wallet_address, tx):
+def tenderly_simulate_tx(wallet_address, tx) -> str:
     payload = {
     "id": 0,
     "jsonrpc": "2.0",
@@ -87,6 +92,8 @@ def tenderly_simulate_tx(wallet_address, tx):
 
     if receipt['status'] == 0:
         raise Exception(f"Transaction failed, tx_hash: {tx_hash}, check Tenderly dashboard for more details")
+    
+    return tx_hash
 
 def setup_mock_db_objects() -> Dict:
     mock_system_config = SystemConfig(json={})
@@ -124,18 +131,31 @@ def estimate_gas(tx):
 def compute_abi_abspath(wf_file_path, abi_relative_path):
     return os.path.join(os.path.dirname(os.path.abspath(wf_file_path)), abi_relative_path)
 
-def process_result_and_simulate_tx(wallet_address, result: Union[Result, MultiStepResult]):
+def process_result_and_simulate_tx(wallet_address, result: Union[Result, MultiStepResult]) -> Optional[str]:
     if result.status == "success":
-        tenderly_simulate_tx(wallet_address, result.tx)
+        tx_hash = tenderly_simulate_tx(wallet_address, result.tx)
         print("Workflow successful")
+        return tx_hash
     elif result.status == "terminated":
         print("Workflow terminated as it has reached the final step or user error has occured. See logs for more info.")
     else:
         raise WorkflowFailed(result)
+    return None
 
 def fetch_multistep_workflow_from_db(id):
     return MultiStepWorkflow.query.filter(MultiStepWorkflow.id == id).first()
 
-
 def generate_mock_chat_message_id():
     return str(uuid.uuid4())
+
+def revoke_erc20_approval(token_address: str, owner_address: str, spender_address: str):
+    print(f"Revoking ERC20 approval, owner_address: {owner_address}, spender_address: {spender_address}, token_address: {token_address}")
+    set_erc20_allowance(token_address, owner_address, spender_address, 0)
+
+def set_erc20_allowance(token_address: str, owner_address: str, spender_address: str, amount: int):
+    print(f"Setting ERC20 allowance, owner_address: {owner_address}, spender_address: {spender_address}, token_address: {token_address}, amount: {amount}")
+    contract = w3.eth.contract(Web3.to_checksum_address(token_address), abi=json.dumps(ERC20_ABI))
+
+    tx_hash = contract.functions.approve(Web3.to_checksum_address(spender_address), amount).transact({'from': Web3.to_checksum_address(owner_address), 'to': token_address, 'gas': "0x0"})
+
+    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)

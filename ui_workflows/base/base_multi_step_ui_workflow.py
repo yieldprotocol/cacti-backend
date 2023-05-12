@@ -9,7 +9,7 @@ from .base_ui_workflow import BaseUIWorkflow
 class BaseMultiStepUIWorkflow(BaseUIWorkflow):
     """Base class for multi-step UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, multistep_workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], runnable_steps: List[RunnableStep], final_step_type: str = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, multistep_workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], runnable_steps: List[RunnableStep], final_step_type) -> None:
 
         self.chat_message_id = chat_message_id
         self.multistep_workflow = multistep_workflow
@@ -17,27 +17,25 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
         self.workflow_type = workflow_type
         self.workflow_params = worfklow_params
         self.runnable_steps = runnable_steps
-        self.total_steps = len(runnable_steps)
         self.curr_step_client_payload = curr_step_client_payload
-        self.final_step_type = final_step_type # This is ONLY needed when workflow has steps that replace one another conditionally eg. workflows that have ERC20 approvals  
-
+        self.final_step_type = final_step_type
+        
         self.curr_step: Optional[WorkflowStep] = None
         self.curr_step_description = None
         self.prev_step: Optional[WorkflowStep] = None
-
-        self.start_log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_type: {self.curr_step.type if self.curr_step else self.runnable_steps[0].type}, wf_params: {self.workflow_params}"
 
         browser_storage_state = None
 
         super().__init__(wallet_chain_id, wallet_address, browser_storage_state)
 
     def run(self) -> Any:
-        print(f"Multi-step UI workflow started, {self.start_log_params}")
+        start_log_params = f"{self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step_client_payload['id'] if self.curr_step_client_payload else None}, curr_step_type: {self.curr_step_client_payload['type'] if self.curr_step_client_payload else self.runnable_steps[0].type}, wf_params: {self.workflow_params}"
+        print(f"Multi-step UI workflow started, wf_type: {start_log_params}")
         try:
             self._setup_workflow()
 
             if(self._check_should_terminate_run()):
-                print(f"Multi-step Workflow terminated before page run, {self.start_log_params}")
+                print(f"Multi-step Workflow terminated before page run, {start_log_params}")
                 return MultiStepResult(
                     status='terminated',
                     workflow_id=str(self.multistep_workflow.id),
@@ -46,14 +44,14 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
                     step_type=self.curr_step.type,
                     user_action_type=self.curr_step.user_action_type.name,
                     step_number=self.curr_step.step_number,
-                    total_steps=self.total_steps,
+                    is_final_step=self._check_is_final_step(),
                     tx=None,
                     description=self.curr_step_description
                 )
             
             return super().run()
         except WorkflowValidationError as e:
-            print(f"MULTISTEP UI WORKFLOW VALIDATION ERROR, {self.start_log_params}")
+            print(f"MULTISTEP UI WORKFLOW VALIDATION ERROR, {start_log_params}")
             traceback.print_exc()
             return MultiStepResult(
                 status='error',
@@ -63,13 +61,13 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
                 step_type=self.curr_step.type if self.curr_step else None,
                 user_action_type=self.curr_step.user_action_type.name if self.curr_step else None,
                 step_number=self.curr_step.step_number if self.curr_step else None,
-                total_steps=self.total_steps,
+                is_final_step=self._check_is_final_step(),
                 tx=None,
                 error_msg=e.args[0],
                 description=self.curr_step_description
             )
         except Exception:
-            print(f"MULTISTEP UI WORKFLOW EXCEPTION, {self.start_log_params}")
+            print(f"MULTISTEP UI WORKFLOW EXCEPTION, {start_log_params}")
             traceback.print_exc()
             return MultiStepResult(
                 status='error',
@@ -79,14 +77,14 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
                 step_type=self.curr_step.type if self.curr_step else None,
                 user_action_type=self.curr_step.user_action_type.name if self.curr_step else None,
                 step_number=self.curr_step.step_number if self.curr_step else None,
-                total_steps=self.total_steps,
+                is_final_step=self._check_is_final_step(),
                 tx=None,
                 error_msg="Unexpected error. Check with support.",
                 description=self.curr_step_description
             )
         finally:
             self.stop_listener()
-            end_log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_type: {self.curr_step.type}"
+            end_log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step.id}, curr_step_type: {self.curr_step.type}"
             print(f"Multi-step UI workflow ended, {end_log_params}")
 
     def _run_page(self, page, context) -> MultiStepResult:
@@ -103,8 +101,6 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
         # Stop WC listener thread and extract tx data if any
         tx = self.stop_listener()
 
-        computed_total_steps = self.curr_step.step_number if self._check_is_final_step() else self.total_steps
-
         computed_user_description = processing_result.override_user_description or self.curr_step_description
 
         return MultiStepResult(
@@ -115,7 +111,7 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
             step_type=self.curr_step.type,
             user_action_type=self.curr_step.user_action_type.name,
             step_number=self.curr_step.step_number,
-            total_steps=computed_total_steps,
+            is_final_step=self._check_is_final_step(),
             tx=tx,
             error_msg=processing_result.error_msg,
             description=computed_user_description
@@ -160,7 +156,7 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
         if not self.final_step_type:
             raise WorkflowValidationError("Variable self.final_step_type must be set for workflow with replace condition")
 
-        print(f"Workflow step replacement being processed, wf_type: {self.workflow_type}, multistep_wf_id: {self.multistep_workflow_id}, from_step_type: {self.curr_step.type}, to_step_type: {replace_with_step_type}")
+        print(f"Workflow step replacement being processed, wf_type: {self.workflow_type}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step.id}, from_step_type: {self.curr_step.type}, to_step_type: {replace_with_step_type}")
 
         runnable_step_index = self._find_runnable_step_index_by_step_type(replace_with_step_type)
         runnable_step = self.runnable_steps[runnable_step_index]
@@ -197,8 +193,12 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
             self._save_to_db([self.multistep_workflow])
         
         if self.curr_step_client_payload:
-            self.curr_step = WorkflowStep.query.filter(WorkflowStep.id == self.curr_step_client_payload['id']).first()
+            self.curr_step: WorkflowStep = WorkflowStep.query.filter(WorkflowStep.id == self.curr_step_client_payload['id']).first()
             # Retrive browser storage state from DB for next step
+
+            if self.curr_step.status != WorkflowStepStatus.pending:
+                raise WorkflowValidationError("Current step is not in pending status which means it has already been processed, FE client should not be sending a payload for this step")
+
             self.browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
 
             # Save current step status and user action data to DB that we receive from client
@@ -220,10 +220,7 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
         return False
 
     def _check_is_final_step(self) -> bool:
-        if self.final_step_type:
-            return self.curr_step.type == self.final_step_type
-        else:
-            return self.curr_step.step_number == self.total_steps
+        return self.curr_step.type == self.final_step_type
 
     def _save_to_db(self, models: List[any]) -> None:
         db_session.add_all(models)

@@ -4,9 +4,11 @@ from typing import Optional, Union, Literal
 
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-from ...base import StepProcessingResult 
+from ...base import StepProcessingResult, revoke_erc20_approval, set_erc20_allowance, TEST_WALLET_ADDRESS, USDC_ADDRESS
 
 FIVE_SECONDS = 5000
+AAVE_POOL_V3_ADDRESS =  "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2"
+
 class AaveMixin:
     def _goto_page_and_open_walletconnect(self, page):
         """Go to page and open WalletConnect modal"""
@@ -30,3 +32,9 @@ class AaveMixin:
         # Fill in the amount
         page.get_by_placeholder("0.00").fill(str(self.amount))
         return None
+
+def aave_revoke_usdc_approval():
+    revoke_erc20_approval(USDC_ADDRESS, TEST_WALLET_ADDRESS, AAVE_POOL_V3_ADDRESS)
+
+def aave_set_usdc_allowance(amount: int):
+    set_erc20_allowance(USDC_ADDRESS, TEST_WALLET_ADDRESS, AAVE_POOL_V3_ADDRESS, amount)

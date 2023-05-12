@@ -16,8 +16,6 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
         self.token = workflow_params["token"]
         self.amount = workflow_params["amount"]
 
-        # NOTE: This is ONLY needed when workflow has steps that replace one another conditionally eg. workflows that have ETH approvals like this one
-        final_step_type = None
 
         # Only one step for ETH as it doesn't require an approval step unlike ERC20 tokens
         if self.token == "ETH":
@@ -33,6 +31,7 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
             # check_liquidation_risk = RunnableStep("check_liquidation_risk", WorkflowStepUserActionType.acknowledge, f"Acknowledge liquidation risk due to high borrow amount of {self.amount} {self.token} on Aave", self.check_liquidation_risk)
             # confirm_borrow_step = RunnableStep("confirm_borrow", WorkflowStepUserActionType.tx, f"Confirm borrow of {self.amount} {self.token} from Aave", self.confirm_erc20_borrow)
             # steps = [check_liquidation_risk, confirm_borrow_step]
+            final_step_type = None
 
 
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
