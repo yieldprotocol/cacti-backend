@@ -9,7 +9,7 @@ from utils import w3
 from ....base import setup_mock_db_objects, process_result_and_simulate_tx, fetch_multistep_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
 from ..aave_supply_ui_workflow import AaveSupplyUIWorkflow
 
-# Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_supply_extreme_value
+# Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_supply_extreme_amount
 
 print(w3.eth.get_balance(TEST_WALLET_ADDRESS))
 

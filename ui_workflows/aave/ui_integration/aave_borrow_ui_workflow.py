@@ -77,10 +77,9 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
             result = self._find_and_fill_amount_helper(page, "Borrow")
             if result and result.status == "error":
                 return result
-        
-        overriden_amount = page.get_by_placeholder("0.00").input_value()
-        
+                
         page.get_by_role("button", name="Borrow").click()
 
+        overriden_amount = page.get_by_placeholder("0.00").input_value()
         return StepProcessingResult(status="success", override_user_description=f"Confirm borrow of {overriden_amount} ETH on Aave")
 

@@ -20,6 +20,8 @@ multistep_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRES
 # Assert what the user will see on the UI
 assert multistep_result.description == "Confirm supply of 0.1 ETH into Aave"
 
+assert multistep_result.is_final_step
+
 # Simulating user signing/confirming a tx on the UI with their wallet
 tx_hash = process_result_and_simulate_tx(TEST_WALLET_ADDRESS, multistep_result)
 

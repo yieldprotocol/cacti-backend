@@ -55,6 +55,8 @@ multistep_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRES
 
 assert multistep_result.description == "Confirm supply of 0.1 USDC into Aave"
 
+assert multistep_result.is_final_step
+
 tx_hash = process_result_and_simulate_tx(TEST_WALLET_ADDRESS, multistep_result)
 
 curr_step_client_payload = {
