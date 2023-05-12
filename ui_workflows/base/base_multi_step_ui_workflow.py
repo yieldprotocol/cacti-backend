@@ -121,15 +121,17 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
             description=computed_user_description
         )
 
-    def _run_step(self, page, context) -> StepProcessingResult:
-        if not self.curr_step:
+    def _run_step(self, page, context, replacement_step_type=None, extra_params=None) -> StepProcessingResult:
+        if replacement_step_type:
+            result = self._handle_step_replace(page, context, replacement_step_type, extra_params)
+        elif not self.curr_step:
             result = self._run_first_step(page, context)
         else:
             self.prev_step = self.curr_step
             result = self._run_next_step(page, context)
 
         if result.status == 'replace':
-            return self._handle_step_replace(page, context, result.replace_with_step_type, result.replace_extra_params)
+            return self._run_step(page, context, replacement_step_type=result.replace_with_step_type, extra_params=result.replace_extra_params)
         else:
             return result
 
