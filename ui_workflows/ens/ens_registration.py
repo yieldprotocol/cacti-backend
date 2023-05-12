@@ -29,8 +29,10 @@ class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
         step2 = RunnableStep("confirm_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} confirm registration", self.step_2_confirm_registration)
 
         steps = [step1, step2]
+
+        final_step_type = "confirm_registration"
         
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow, workflow_params, curr_step_client_payload, steps)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
 
     def _forward_rpc_node_reqs(self, route):
