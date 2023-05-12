@@ -28,7 +28,7 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
 
         super().__init__(wallet_chain_id, wallet_address, browser_storage_state)
 
-    def run(self) -> Any:
+    def run(self) -> MultiStepResult:
         start_log_params = f"{self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step_client_payload['id'] if self.curr_step_client_payload else None}, curr_step_type: {self.curr_step_client_payload['type'] if self.curr_step_client_payload else self.runnable_steps[0].type}, wf_params: {self.workflow_params}"
         print(f"Multi-step UI workflow started, wf_type: {start_log_params}")
         try:

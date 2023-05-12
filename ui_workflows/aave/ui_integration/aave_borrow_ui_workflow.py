@@ -16,8 +16,6 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
         self.token = workflow_params["token"]
         self.amount = workflow_params["amount"]
 
-
-        # Only one step for ETH as it doesn't require an approval step unlike ERC20 tokens
         if self.token == "ETH":
             check_ETH_liquidation_risk_step = RunnableStep("check_ETH_liquidation_risk", WorkflowStepUserActionType.acknowledge, f"Acknowledge liquidation risk due to high borrow amount of {self.amount} ETH on Aave", self.check_ETH_liquidation_risk)
             initiate_ETH_approval_step = RunnableStep("initiate_ETH_approval", WorkflowStepUserActionType.tx, f"Approve borrow of {self.amount} ETH on Aave", self.initiate_ETH_approval)
@@ -26,13 +24,10 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
             
             final_step_type = "confirm_ETH_borrow"
         else:
-            # For ERC20 to handle approval before final confirmation
-            pass
-            # check_liquidation_risk = RunnableStep("check_liquidation_risk", WorkflowStepUserActionType.acknowledge, f"Acknowledge liquidation risk due to high borrow amount of {self.amount} {self.token} on Aave", self.check_liquidation_risk)
-            # confirm_borrow_step = RunnableStep("confirm_borrow", WorkflowStepUserActionType.tx, f"Confirm borrow of {self.amount} {self.token} from Aave", self.confirm_erc20_borrow)
-            # steps = [check_liquidation_risk, confirm_borrow_step]
-            final_step_type = None
-
+            check_ERC20_liquidation_risk = RunnableStep("check_ERC20_liquidation_risk", WorkflowStepUserActionType.acknowledge, f"Acknowledge liquidation risk due to high borrow amount of {self.amount} {self.token} on Aave", self.check_ERC20_liquidation_risk)
+            confirm_ERC20_borrow_step = RunnableStep("confirm_ERC20_borrow", WorkflowStepUserActionType.tx, f"Confirm borrow of {self.amount} {self.token} from Aave", self.confirm_ERC20_borrow)
+            steps = [check_ERC20_liquidation_risk, confirm_ERC20_borrow_step]
+            final_step_type = "confirm_ERC20_borrow"
 
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
@@ -45,9 +40,10 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
         try:
             page.get_by_text("acknowledge the risks").wait_for(timeout=FIVE_SECONDS)
         except PlaywrightTimeoutError:
-            # If acknowledge the risk message not found in the UI modal, it means that token amount is within limit so replace with final next step which is to confirm supply
+            # If acknowledge the risk message not found in the UI modal, it means that token amount is within limit so replace with final next step which is to intiate ETH approval
             return StepProcessingResult(status="replace", replace_with_step_type="initiate_ETH_approval", replace_extra_params={"handle_replace": True})
     
+        # Override user amount to use the one set by Aave UI as it can automatically change it to the highest possible value if the user enters an amount that is too high
         overriden_amount = page.get_by_placeholder("0.00").input_value()
         return StepProcessingResult(status="success", override_user_description=f"Acknowledge liquidation risk due to high borrow amount of {overriden_amount} ETH on Aave")
 
@@ -83,3 +79,29 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
         overriden_amount = page.get_by_placeholder("0.00").input_value()
         return StepProcessingResult(status="success", override_user_description=f"Confirm borrow of {overriden_amount} ETH on Aave")
 
+
+    def check_ERC20_liquidation_risk(self, page, context):   
+        result = self._find_and_fill_amount_helper(page, "Borrow")
+        if result and result.status == "error":
+            return result
+        
+        try:
+            page.get_by_text("acknowledge the risks").wait_for(timeout=FIVE_SECONDS)
+        except PlaywrightTimeoutError:
+            # If acknowledge the risk message not found in the UI modal, it means that token amount is within limit so replace with final next step which is to confirm borrow
+            return StepProcessingResult(status="replace", replace_with_step_type="confirm_ERC20_borrow", replace_extra_params={"handle_replace": True})
+    
+        overriden_amount = page.get_by_placeholder("0.00").input_value()
+        return StepProcessingResult(status="success", override_user_description=f"Acknowledge liquidation risk due to high borrow amount of {overriden_amount} {self.token} on Aave")
+    
+    def confirm_ERC20_borrow(self, page, context, extra_params=None):
+
+        if not (extra_params and extra_params["handle_replace"]):
+            result = self._find_and_fill_amount_helper(page, "Borrow")
+            if result and result.status == "error":
+                return result
+                
+        page.get_by_role("button", name="Borrow").click()
+
+        overriden_amount = page.get_by_placeholder("0.00").input_value()
+        return StepProcessingResult(status="success", override_user_description=f"Confirm borrow of {overriden_amount} {self.token} on Aave")
