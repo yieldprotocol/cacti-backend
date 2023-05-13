@@ -6,12 +6,11 @@ from ....base import process_result_and_simulate_tx, fetch_multistep_workflow_fr
 from ..aave_borrow_ui_workflow import AaveBorrowUIWorkflow
 
 # Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_borrow_eth
-workflow_type = "aave-borrow"
 token = "ETH"
 amount = 0.1
 workflow_params = {"token": token, "amount": amount}
 
-multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_type, workflow_params).run()
+multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
 
 # Assert what the user will see on the UI
 assert multistep_result.description == "Confirm borrow of 0.1 ETH on Aave"
@@ -33,7 +32,7 @@ workflow_id = multistep_result.workflow_id
 multistep_workflow = fetch_multistep_workflow_from_db(workflow_id)
 
 # Process FE response payload
-multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_type, workflow_params, multistep_workflow, curr_step_client_payload).run()
+multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multistep_workflow, curr_step_client_payload).run()
 
 # Final state of workflow should be terminated
 assert multistep_result.status == "terminated"

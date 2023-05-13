@@ -1,6 +1,6 @@
 
 """
-Test for supplying a ETH into Aave
+Test for supplying a ETH on Aave
 """
 import re
 from logging import basicConfig, INFO
@@ -10,15 +10,14 @@ from ....base import setup_mock_db_objects, process_result_and_simulate_tx, fetc
 from ..aave_supply_ui_workflow import AaveSupplyUIWorkflow
 
 # Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_supply
-workflow_type = "aave-supply"
 token = "ETH"
 amount = 0.1
 workflow_params = {"token": token, "amount": amount}
 
-multistep_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_type, workflow_params).run()
+multistep_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
 
 # Assert what the user will see on the UI
-assert multistep_result.description == "Confirm supply of 0.1 ETH into Aave"
+assert multistep_result.description == "Confirm supply of 0.1 ETH on Aave"
 
 assert multistep_result.is_final_step
 
@@ -39,7 +38,7 @@ workflow_id = multistep_result.workflow_id
 multistep_workflow = fetch_multistep_workflow_from_db(workflow_id)
 
 # Process FE response payload
-multistep_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_type, workflow_params, multistep_workflow, curr_step_client_payload).run()
+multistep_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multistep_workflow, curr_step_client_payload).run()
 
 # Final state of workflow should be terminated
 assert multistep_result.status == "terminated"

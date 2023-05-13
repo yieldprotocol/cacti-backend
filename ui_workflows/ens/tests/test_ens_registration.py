@@ -14,7 +14,6 @@ if __name__ == "__main__":
     domain_to_register = f"test{epoch_seconds}.eth"
     wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
     wallet_chain_id = 1  # Tenderly Mainnet Fork
-    workflow_type = "register-ens-domain"
     worfklow_params = {
         "domain": domain_to_register,
     }
@@ -24,7 +23,7 @@ if __name__ == "__main__":
 
     print("Step 1: Request to register ENS domain...")
 
-    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, None, None).run()
+    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, None, None).run()
 
     process_result_and_simulate_tx(wallet_address, multiStepResult)
     
@@ -41,7 +40,7 @@ if __name__ == "__main__":
 
     multistep_workflow = fetch_multistep_workflow_from_db(workflow_id)
 
-    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, multistep_workflow, curr_step_client_payload).run()
+    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multistep_workflow, curr_step_client_payload).run()
 
     process_result_and_simulate_tx(wallet_address, multiStepResult)
 
@@ -55,7 +54,7 @@ if __name__ == "__main__":
         "userActionData": "Sample TX HASH"
     }   
 
-    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, workflow_type, worfklow_params, multistep_workflow, curr_step_client_payload).run()
+    multiStepResult: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multistep_workflow, curr_step_client_payload).run()
     
     process_result_and_simulate_tx(wallet_address, multiStepResult)
 

@@ -9,7 +9,6 @@ from ..aave_borrow_ui_workflow import AaveBorrowUIWorkflow
 from ..common import aave_revoke_eth_approval
 
 # Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_borrow_eth_with_approval
-workflow_type = "aave-borrow"
 token = "ETH"
 amount = 0.01
 workflow_params = {"token": token, "amount": amount}
@@ -18,7 +17,7 @@ workflow_params = {"token": token, "amount": amount}
 aave_revoke_eth_approval()
 
 # Step 1 - Initiate approval
-multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_type, workflow_params).run()
+multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
 
 # Assert what the user will see on the UI
 assert multistep_result.description == "Approve borrow of 0.01 ETH on Aave"
@@ -40,7 +39,7 @@ workflow_id = multistep_result.workflow_id
 multistep_workflow = fetch_multistep_workflow_from_db(workflow_id)
 
 # Step 2 - Confirm borrow after user approves borrow
-multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_type, workflow_params, multistep_workflow, curr_step_client_payload).run()
+multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multistep_workflow, curr_step_client_payload).run()
 
 assert multistep_result.description == "Confirm borrow of 0.01 ETH on Aave"
 
@@ -56,7 +55,7 @@ curr_step_client_payload = {
     "userActionData": tx_hash
 }
 
-multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_type, workflow_params, multistep_workflow, curr_step_client_payload).run()
+multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multistep_workflow, curr_step_client_payload).run()
 
 # Final state of workflow should be terminated
 assert multistep_result.status == "terminated"

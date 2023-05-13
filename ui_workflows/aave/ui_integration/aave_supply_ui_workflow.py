@@ -15,7 +15,7 @@ from .common import AaveMixin, FIVE_SECONDS
 
 class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
     """
-    UI Workflow script for supplying tokens to Aave. 
+    UI Workflow script for supplying tokens on Aave. 
     
     **This workflow is a mix of single-step and multi-step approaches, single-step for ETH and multi-step for ERC20 tokens.**
   
@@ -43,13 +43,13 @@ class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
 
         # Only one step for ETH as it doesn't require an approval step unlike ERC20 tokens
         if self.token == "ETH":
-            confirm_ETH_supply_step = RunnableStep("confirm_ETH_supply", WorkflowStepUserActionType.tx, f"Confirm supply of {self.amount} ETH to Aave", self.confirm_ETH_supply_step)
+            confirm_ETH_supply_step = RunnableStep("confirm_ETH_supply", WorkflowStepUserActionType.tx, f"Confirm supply of {self.amount} ETH on Aave", self.confirm_ETH_supply_step)
             steps = [confirm_ETH_supply_step]
             final_step_type = "confirm_ETH_supply"
         else:
             # For ERC20 you have to handle approval before final confirmation
-            initiate_ERC20_approval_step = RunnableStep("initiate_ERC20_approval", WorkflowStepUserActionType.tx, f"Approve supply of {self.amount} {self.token} to Aave", self.initiate_ERC20_approval_step)
-            confirm_ERC20_supply_step = RunnableStep("confirm_ERC20_supply", WorkflowStepUserActionType.tx, f"Confirm supply of {self.amount} {self.token} to Aave", self.confirm_ERC20_supply_step)
+            initiate_ERC20_approval_step = RunnableStep("initiate_ERC20_approval", WorkflowStepUserActionType.tx, f"Approve supply of {self.amount} {self.token} on Aave", self.initiate_ERC20_approval_step)
+            confirm_ERC20_supply_step = RunnableStep("confirm_ERC20_supply", WorkflowStepUserActionType.tx, f"Confirm supply of {self.amount} {self.token} on Aave", self.confirm_ERC20_supply_step)
             steps = [initiate_ERC20_approval_step, confirm_ERC20_supply_step]
 
             final_step_type = "confirm_ERC20_supply"
@@ -69,7 +69,7 @@ class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
 
         # Override user amount to use the one set by Aave UI as it can automatically change it to the highest possible value if the user enters an amount that is too high
         overriden_amount = page.get_by_placeholder("0.00").input_value()
-        return StepProcessingResult(status="success", override_user_description=f"Confirm supply of {overriden_amount} ETH to Aave")
+        return StepProcessingResult(status="success", override_user_description=f"Confirm supply of {overriden_amount} ETH on Aave")
     
     def initiate_ERC20_approval_step(self, page, context) -> StepProcessingResult:
         """Initiate approval for ERC20 token"""
@@ -104,5 +104,5 @@ class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
 
         # Override user amount to use the one set by Aave UI as it can automatically change it to the highest possible value if the user enters an amount that is too high
         overriden_amount = page.get_by_placeholder("0.00").input_value()
-        return StepProcessingResult(status="success", override_user_description=f"Confirm supply of {overriden_amount} {self.token} to Aave")
+        return StepProcessingResult(status="success", override_user_description=f"Confirm supply of {overriden_amount} {self.token} on Aave")
    
