@@ -11,6 +11,30 @@ from database.models import (
 from .common import AaveMixin, FIVE_SECONDS
 
 class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
+    """
+    UI Workflow script for borrowing tokens on Aave. This workflow handles borrowing for both ETH and ERC20 tokens.
+
+    The workflow handles the following scenarios:
+
+    * User tries to borrow more ETH/ERC20 than their balance
+    - Aave UI will auto-change/override user amount to the max allowed and show a warning text along with a checkbox to acknowledge the liquidation risk
+    - The script will check for this scenario by looking for the warning text on the UI and if found will return a result with action type "acknowledge" to get user's explicit approval in the Chat UI
+    - Since Aave UI auto-changes/overrides the amount to the max allowed, the script will get the new amount and override the user description so that the new amount in displayed to the user
+    - If this scenario is not encountered, the step will be replaced by the next step which is to check if ETH requires approval
+
+    * ETH requires approval as part of variable debt delegation https://docs.aave.com/developers/tokens/debttoken#approvedelegation
+    - Aave UI will show an approval button with the confirm button disabled
+    - The script will check for this by looking for the approval button on the UI and if found will click it to get the tx params via WalletConnect client and return that in the result with action type "tx" to get user to sign and confirm the tx in their wallet
+    - if this scenario is not encountered, the step will be replaced by the next step which is to confirm the borrow
+
+    * Confirm ETH/ERC20 borrow
+    - Aave UI will show a confirm button in a modal
+    - The script will check for this by looking for the confirm button and click it to get the tx params via WalletConnect client and return that in the result with action type "tx" to get user to sign and confirm the tx in their wallet
+
+    This workflow handles the following error cases:
+    * Token not available in user's profile, for this this the script will throw a timeout exception on not finding the token and return result with error status and message.
+    """
+        
     WORKFLOW_TYPE = 'aave-borrow'
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
