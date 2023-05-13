@@ -11,7 +11,7 @@ from dataclasses import dataclass, asdict
 import env
 from utils import TENDERLY_FORK_URL, w3
 from ..base import tenderly_simulate_tx, Result, BaseSingleStepContractWorkflow, WorkflowValidationError, estimate_gas, compute_abi_abspath
-from .ens_utils import ENS_PUBLIC_RESOLVER_ADDRESS, ENS_REGISTRY_ADDRESS, get_node_namehash, is_domain_registered
+from .ens_utils import ENS_PUBLIC_RESOLVER_ADDRESS, ENS_REGISTRY_ADDRESS, get_node_namehash, is_domain_registered, is_domain_owner
 
 class ENSSetTextWorkflow(BaseSingleStepContractWorkflow):
     """
@@ -31,10 +31,11 @@ class ENSSetTextWorkflow(BaseSingleStepContractWorkflow):
         
     def _pre_workflow_validation(self):
        # Check if domain is registered
-       if (not is_domain_registered(self.domain)):
+        if (not is_domain_registered(self.domain)):
             raise WorkflowValidationError(f"ENS name {self.domain} is not registered")
     
-        # TODO: check if user owns the domain
+        if(not is_domain_owner(self.domain, self.wallet_address)):
+            raise WorkflowValidationError(f"ENS name {self.domain} is not owned by the user")
 
     def _run(self) -> Result:
         # Create a contract object
