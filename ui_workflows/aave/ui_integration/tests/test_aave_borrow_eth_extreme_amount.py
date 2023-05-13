@@ -1,12 +1,12 @@
 
 """
-Test for borrowing exteme amount of ETH on Aave which requires the user to perform special acknowledgement
+Test for borrowing exteme amount of ETH on Aave which requires the user to perform special acknowledgement due to liquidation risk
 """
 import re
 from ....base import process_result_and_simulate_tx, fetch_multistep_workflow_from_db, TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID
 from ..aave_borrow_ui_workflow import AaveBorrowUIWorkflow
 
-# Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_borrow_extreme_amount
+# Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_eth_borrow_extreme_amount
 workflow_type = "aave-borrow"
 token = "ETH"
 amount = 100
