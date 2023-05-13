@@ -15,8 +15,6 @@ from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus
 )
 
-REGISTER_ENS_DOMAIN_WF_TYPE = 'register-ens-domain'
-
 class WorkflowClientPayload(TypedDict):
     id: str
     type: str
@@ -26,25 +24,18 @@ class MessagePayload(TypedDict):
     workflow: WorkflowClientPayload
 
 @dataclass
-class MultiStepPayloadContainer(ContainerMixin):
-    status: Literal['success', 'error']
-    workflow_id: str
-    workflow_type: str
-    step_id: str
-    step_type: str
-    step_number: int
-    total_steps: int
-    user_action_type: str
-    tx: Optional[dict] = None  # from, to, value, data, gas
-    error_msg: Optional[str] = None
-    description: str = ''
+class MultiStepPayloadContainer(ContainerMixin, base.MultiStepResult):
+
+    @classmethod
+    def from_multistep_result(cls, result: base.MultiStepResult):
+        return cls(**asdict(result))
 
     def container_name(self) -> str:
         return 'display-multistep-payload-container'
 
     def container_params(self) -> Dict:
         return dataclass_to_container_params(self)
-
+    
 
 def process_multistep_workflow(payload: MessagePayload, send_message: Callable):
     print('Processing multistep workflow, ', payload)
@@ -57,16 +48,22 @@ def process_multistep_workflow(payload: MessagePayload, send_message: Callable):
     workflow_params = workflow_db_obj.params
     user_chat_message_id = workflow_db_obj.chat_message_id
 
-    if workflow_type == REGISTER_ENS_DOMAIN_WF_TYPE:
+    if workflow_type == ens.ENSRegistrationWorkflow.WORKFLOW_TYPE:
         result = register_ens_domain(workflow_params['domain'], user_chat_message_id, workflow_db_obj, step)
-
-        if result.status != 'terminated':
-            send_message(chat.Response(
-                    response=str(result),
-                    still_thinking=False,
-                    actor='bot',
-                    operation='create',
-            ), last_chat_message_id=None)
+    elif workflow_type == aave.AaveSupplyUIWorkflow.WORKFLOW_TYPE:
+        result = exec_aave_operation(workflow_params['token'], workflow_params['amount'], "supply", user_chat_message_id, workflow_db_obj, step)
+    elif workflow_type == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
+        result = exec_aave_operation(workflow_params['token'], workflow_params['amount'], "borrow", user_chat_message_id, workflow_db_obj, step)
+    else:
+        raise Exception(f'Workflow type {workflow_type} not supported.')
+    
+    if result.status != 'terminated':
+        send_message(chat.Response(
+                response=str(result),
+                still_thinking=False,
+                actor='bot',
+                operation='create',
+        ), last_chat_message_id=None)
 
 
 @error_wrap
@@ -78,20 +75,28 @@ def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow
     if not wallet_address:
         raise ConnectedWalletRequired
 
-    wf = ens.ENSRegistrationWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, REGISTER_ENS_DOMAIN_WF_TYPE, {'domain': domain}, workflow, wf_step_client_payload)
+    wf = ens.ENSRegistrationWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, {'domain': domain}, workflow, wf_step_client_payload)
     result = wf.run()
 
-    return MultiStepPayloadContainer(
-        status=result.status,
-        workflow_id=result.workflow_id,
-        workflow_type=result.workflow_type,
-        step_id=result.step_id,
-        step_type=result.step_type,
-        step_number=result.step_number,
-        total_steps=result.total_steps,
-        user_action_type=result.user_action_type,
-        tx=result.tx,
-        error_msg=result.error_msg,
-        description=result.description
-    )
+    return MultiStepPayloadContainer.from_multistep_result(result)
 
+@error_wrap
+def exec_aave_operation(token: str, amount: str, operation: Literal["supply", "borrow", "repay", "withdraw"], user_chat_message_id: str = None,  workflow: Optional[MultiStepWorkflow] = None, wf_step_client_payload: Optional[base.WorkflowStepClientPayload] = None) -> MultiStepPayloadContainer:
+    wallet_chain_id = 1
+    wallet_address = context.get_wallet_address()
+    user_chat_message_id = context.get_user_chat_message_id() or user_chat_message_id
+    workflow_params = {'token': token, 'amount': amount}
+
+    if not wallet_address:
+        raise ConnectedWalletRequired
+
+    if operation == 'supply':
+        wf = aave.AaveSupplyUIWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, workflow_params, workflow, wf_step_client_payload)
+    elif operation == 'borrow':
+        wf = aave.AaveBorrowUIWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, workflow_params, workflow, wf_step_client_payload)
+    else:
+        raise Exception(f'Operation {operation} not supported.')
+    
+    result = wf.run()
+
+    return MultiStepPayloadContainer.from_multistep_result(result)

@@ -21,8 +21,9 @@ TWO_MINUTES = 120000
 TEN_SECONDS = 10000
 
 class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
+    WORKFLOW_TYPE = 'register-ens-domain'
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
         self.ens_domain = workflow_params['domain']
 
         step1 = RunnableStep("request_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} request registration", self.step_1_request_registration)
@@ -32,7 +33,7 @@ class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
 
         final_step_type = "confirm_registration"
         
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
 
     def _forward_rpc_node_reqs(self, route):

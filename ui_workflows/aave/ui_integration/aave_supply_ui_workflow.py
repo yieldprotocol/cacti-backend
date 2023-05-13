@@ -14,8 +14,9 @@ from database.models import (
 from .common import AaveMixin, FIVE_SECONDS
 
 class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
+    WORKFLOW_TYPE = 'aave-supply'
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
         self.token = workflow_params["token"]
         self.amount = workflow_params["amount"]
 
@@ -32,7 +33,7 @@ class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
 
             final_step_type = "confirm_ERC20_supply"
         
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
  
     def confirm_ETH_supply_step(self, page, context) -> StepProcessingResult:

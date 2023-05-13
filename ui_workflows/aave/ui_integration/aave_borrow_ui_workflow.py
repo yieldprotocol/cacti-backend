@@ -11,8 +11,9 @@ from database.models import (
 from .common import AaveMixin, FIVE_SECONDS
 
 class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
+    WORKFLOW_TYPE = 'aave-borrow'
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
         self.token = workflow_params["token"]
         self.amount = workflow_params["amount"]
 
@@ -29,7 +30,7 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
             steps = [check_ERC20_liquidation_risk, confirm_ERC20_borrow_step]
             final_step_type = "confirm_ERC20_borrow"
 
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
     def check_ETH_liquidation_risk(self, page, context):
         
