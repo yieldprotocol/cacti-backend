@@ -1,6 +1,7 @@
 from typing import Any, Callable
 
 from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.agents import initialize_agent
 from langchain.callbacks.base import CallbackManager
@@ -37,8 +38,8 @@ def get_streaming_llm(new_token_handler):
         callback_manager=streaming_callback_manager(new_token_handler),
     ) if new_token_handler else {}
 
-    llm = OpenAI(
-        temperature=0.0, max_tokens=-1,
+    llm = ChatOpenAI(
+        temperature=0.0,
         **streaming_kwargs
     )
     return llm
