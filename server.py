@@ -77,6 +77,22 @@ def _load_existing_history_and_messages(session_id):
     return history, messages
 
 
+def _ensure_authenticated(client_state, send_response):
+    if client_state.wallet_address:
+        return True
+    msg = json.dumps({
+        'messageId': 0,
+        'actor': 'bot',
+        'type': 'text',
+        'payload': 'Please connect your wallet to chat.',
+        'stillThinking': False,
+        'operation': 'create',
+        'feedback': 'none',
+    })
+    send_response(msg)
+    return False
+
+
 def message_received(*args, **kwargs):
     try:
         _message_received(*args, **kwargs)
@@ -85,6 +101,9 @@ def message_received(*args, **kwargs):
 
 
 def _message_received(client_state, send_response, message):
+    if not _ensure_authenticated(client_state, send_response):
+        return
+
     obj = json.loads(message)
     assert isinstance(obj, dict), obj
     actor = obj['actor']
@@ -101,11 +120,6 @@ def _message_received(client_state, send_response, message):
     history = client_state.chat_history
     system_config_id = client_state.system_config_id or default_system_config.id
     system = _get_system(system_config_id)
-
-    # set wallet status
-    if typ == 'wallet':
-        client_state.wallet_address = payload.get('walletAddress')
-        return
 
     # resume an existing chat history session, given a session id
     if typ == 'init':
