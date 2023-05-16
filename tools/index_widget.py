@@ -24,7 +24,7 @@ from ui_workflows import (
 )
 from .index_lookup import IndexLookupTool
 
-from ui_workflows.multistep_handler import register_ens_domain
+from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
 
@@ -180,14 +180,14 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
-    elif command == 'exec-project-deposit':
-        return str(exec_project_operation(*params, operation='Supply'))
-    elif command == 'exec-project-borrow':
-        return str(exec_project_operation(*params, operation='Borrow'))
-    elif command == 'exec-project-repay':
-        return str(exec_project_operation(*params, operation='Repay'))
-    elif command == 'exec-project-withdraw':
-        return str(exec_project_operation(*params, operation='Withdraw'))
+    elif command == 'aave-supply':
+        return str(exec_aave_operation(*params, operation='supply'))
+    elif command == 'aave-borrow':
+        return str(exec_aave_operation(*params, operation='borrow'))
+    elif command == 'aave-repay':
+        return str(exec_aave_operation(*params, operation='repay'))
+    elif command == 'aave-withdraw':
+        return str(exec_aave_operation(*params, operation='withdraw'))
     elif command == 'ens-from-address':
         return str(ens_from_address(*params))
     elif command == 'address-from-ens':
@@ -403,37 +403,11 @@ class TxPayloadForSending(ContainerMixin):
         return dataclass_to_container_params(self)
 
 @error_wrap
-def exec_project_operation(project: str, token: str, amount: str, operation: str = '') -> TxPayloadForSending:
-    if project.lower() == 'aave':
-        return exec_aave_operation(token, amount, operation)
-    else:
-        return "Project not supported."
-
-
-def exec_aave_operation(token: str, amount: str, operation: str = '') -> TxPayloadForSending:
-    if not operation:
-        raise ExecError("Operation needs to be specified.")
-    wallet_chain_id = 1
-    wallet_address = context.get_wallet_address()
-    if not wallet_address:
-        raise ConnectedWalletRequired
-    wf = aave.AaveUIWorkflow(wallet_chain_id, wallet_address, token, operation, float(amount))
-    result = wf.run()
-    return TxPayloadForSending(
-        user_request_status=result.status,
-        parsed_user_request=result.parsed_user_request,
-        tx=result.tx,
-        is_approval_tx=result.is_approval_tx,
-        error_msg=result.error_msg,
-        description=result.description
-    )
-
-@error_wrap
 @ensure_wallet_connected
 def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
     wallet_chain_id = 1 # TODO: get from context
     wallet_address = context.get_wallet_address()
-    user_chat_message_id = context.get_user_chat_message_id() or user_chat_message_id
+    user_chat_message_id = context.get_user_chat_message_id()
 
     params = {
         'domain': domain,
@@ -441,7 +415,7 @@ def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
         'value': value,
     }
 
-    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, 'set-ens-text', params)
+    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, 'set-ens-text', params)
     result = wf.run()
 
     return TxPayloadForSending(

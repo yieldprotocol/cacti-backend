@@ -11,6 +11,11 @@ from utils import w3
 ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
 ENS_PUBLIC_RESOLVER_ADDRESS = "0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41"
 
+curr_script_dir = os.path.dirname(os.path.abspath(__file__))
+
+with open(os.path.join(curr_script_dir, "./abis/ens_registry.abi"), 'r') as f:
+    ens_registry_abi_dict = json.load(f)
+
 def keccak_256(data):
     k = sha3.keccak_256()
     k.update(data)
@@ -36,12 +41,17 @@ def get_node_namehash(domain):
 
     return "0x" + node.hex()
 
+def instantiate_ens_registry_contract():
+    return w3.eth.contract(address=w3.to_checksum_address(ENS_REGISTRY_ADDRESS), abi=ens_registry_abi_dict)
+
 def is_domain_registered(domain) -> bool:
     node = get_node_namehash(domain)
-    curr_script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    with open(os.path.join(curr_script_dir, "./abis/ens_registry.abi"), 'r') as f:
-        contract_abi_dict = json.load(f)
-    contract = w3.eth.contract(address=w3.to_checksum_address(ENS_REGISTRY_ADDRESS), abi=contract_abi_dict)
+    contract = instantiate_ens_registry_contract()
     address = contract.functions.owner(node).call()
     return web3.constants.ADDRESS_ZERO != address
+
+def is_domain_owner(domain: str, user_address: str) -> bool:
+    node = get_node_namehash(domain)
+    contract = instantiate_ens_registry_contract()
+    owner_address: str = contract.functions.owner(node).call()
+    return owner_address.lower() == user_address.lower()
