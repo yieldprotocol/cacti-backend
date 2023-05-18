@@ -6,13 +6,15 @@ import traceback
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Callable
 
+
+from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
 import context
 import utils
-from utils import error_wrap, ConnectedWalletRequired, FetchError, ExecError
+from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
 import registry
 import streaming
 from chat.container import ContainerMixin, dataclass_to_container_params
@@ -25,35 +27,10 @@ from integrations import (
 from ui_workflows import (
     aave, ens
 )
-from ui_workflows.multistep_handler import register_ens_domain
+from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 
 
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
-
-# WIDGET_INSTRUCTION = '''To help users, an assistant may display information or dialog boxes using magic commands. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>". When the assistant uses a command, users will see data, an interaction box, or other inline item, not the command. Users cannot use magic commands. Fill in the command with parameters as inferred from the user input query. If there are missing parameters, prompt for them and do not make assumptions without the user's input. Do not return a magic command unless all parameters are known. Examples are given for illustration purposes, do not confuse them for the user's input. If a widget involves a transaction that requires user confirmation, prompt for it. If the widget requires a connected wallet, make sure that is available first. If there is no appropriate widget available, explain the situation and ask for more information. Do not make up a non-existent widget magic command, only use the most appropriate one. Here are the widgets that may match the user input:'''
-
-# TEMPLATE = '''You are a web3 assistant. You help users use web3 apps, such as Uniswap, AAVE, MakerDao, etc. You assist users in achieving their goals with these protocols, by providing users with relevant information, and creating transactions for users. Your responses should sound natural, helpful, cheerful, and engaging, and you should use easy to understand language with explanations for jargon.
-
-# {instruction}
-# ---
-# {task_info}
-# ---
-
-# User: {question}
-# Assistant:'''
-
-TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget magic commands that you can delegate work to, by invoking them and chaining them together, to provide a response to an input query. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>" specifying the command and its input parameters. They can only be used with all parameters having known and assigned values, otherwise, they have to be kept secret. The command may either have a display- or a fetch- prefix. When you return a display- command, the user will see data, an interaction box, or other inline item rendered in its place. When you return a fetch- command, data is fetched over an API and injected in place. Users cannot type or use magic commands, so do not tell them to use them. Fill in the command with parameters as inferred from the input. If there are missing parameters, do not use magic commands but mention what parameters are needed instead. If there is no appropriate widget available, explain that more information is needed. Do not make up a non-existent widget magic command, only use the applicable ones for the situation, and only if all parameters are available. You might need to use the output of widget magic commands as the input to another to get your final answer. Here are the widgets that may be relevant:
----
-{task_info}
----
-Use the following format:
-
-## Widget Command: most relevant widget magic command to respond to input
-## Known Parameters: input parameter-value pairs representing inputs to the above widget magic command
-## Response: return the widget magic command with ALL its respective input parameter values (omit parameter names)
-
-Tool input: {question}
-## Widget Command:'''
 
 # TODO: make this few-shot on real examples instead of dummy ones
 REPHRASE_TEMPLATE = '''
@@ -102,6 +79,19 @@ Chat History:
 Follow Up Input: {question}
 Standalone question:'''
 
+TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget magic commands that you can delegate work to, by invoking them and chaining them together, to provide a response to an input query. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>" specifying the command and its input parameters. They can only be used with all parameters having known and assigned values, otherwise, they have to be kept secret. The command may either have a display- or a fetch- prefix. When you return a display- command, the user will see data, an interaction box, or other inline item rendered in its place. When you return a fetch- command, data is fetched over an API and injected in place. Users cannot type or use magic commands, so do not tell them to use them. Fill in the command with parameters as inferred from the input. If there are missing parameters, do not use magic commands but mention what parameters are needed instead. If there is no appropriate widget available, explain that more information is needed. Do not make up a non-existent widget magic command, only use the applicable ones for the situation, and only if all parameters are available. You might need to use the output of widget magic commands as the input to another to get your final answer. Here are the widgets that may be relevant:
+---
+{task_info}
+---
+Use the following format:
+
+## Widget Command: most relevant widget magic command to respond to input
+## Known Parameters: input parameter-value pairs representing inputs to the above widget magic command
+## Response: return the widget magic command with ALL its respective input parameter values (omit parameter names)
+
+Tool input: {question}
+## Widget Command:'''
+
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
     def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
@@ -111,9 +101,8 @@ class RephraseWidgetSearchChat(BaseChat):
             input_variables=["history", "question"],
             template=REPHRASE_TEMPLATE,
         )
-        llm = ChatOpenAI(temperature=0.0,)
+        llm = OpenAI(temperature=0.0,)
         self.rephrase_chain = LLMChain(llm=llm, prompt=self.rephrase_prompt)
-        self.rephrase_chain.verbose = True
         self.widget_prompt = PromptTemplate(
             input_variables=["task_info", "question"],
             template=TEMPLATE,
@@ -133,8 +122,6 @@ class RephraseWidgetSearchChat(BaseChat):
     ) -> None:
         userinput = userinput.strip()
         history_string = history.to_string()
-
-        history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
         start = time.time()
 
         if history:
@@ -150,25 +137,13 @@ class RephraseWidgetSearchChat(BaseChat):
             rephrased = False
         if self.show_thinking and rephrased and userinput != question:
             send(Response(response="I think you're asking: " + question, still_thinking=True))
-
             duration = time.time() - start
-
             send(Response(
                 response=f'Rephrasing took {duration: .2f}s',
                 actor='system',
                 still_thinking=True,  # turn on thinking again
             ))
 
-        # chat_message_id = None
-
-        # def new_token_handler(token):
-        #     nonlocal chat_message_id
-        #     chat_message_id = send(Response(
-        #         response=token,
-        #         still_thinking=False,
-        #         actor='bot',
-        #         operation='append' if chat_message_id is not None else 'create',
-        #     ), last_chat_message_id=chat_message_id)
         system_chat_message_id = None
         system_response = ''
         bot_chat_message_id = None
@@ -186,17 +161,6 @@ class RephraseWidgetSearchChat(BaseChat):
             ), last_chat_message_id=system_chat_message_id, before_message_id=before_message_id)
             history.add_system_message(response, message_id=system_chat_message_id, before_message_id=before_message_id)
 
-        def bot_flush(response):
-            nonlocal bot_chat_message_id
-            response = response.strip()
-            send(Response(
-                response=response,
-                still_thinking=False,
-                actor='bot',
-                operation='replace',
-            ), last_chat_message_id=bot_chat_message_id, before_message_id=before_message_id)
-            history.add_bot_message(response, message_id=bot_chat_message_id, before_message_id=before_message_id)
-            
         def bot_new_token_handler(token):
             nonlocal bot_chat_message_id, bot_response, system_chat_message_id, system_response, has_sent_bot_response
 
@@ -220,8 +184,7 @@ class RephraseWidgetSearchChat(BaseChat):
         new_token_handler = bot_new_token_handler
         response_buffer = ""
         response_state = 0  # finite-state machine state
-        # response_prefix = "## Response:"
-        response_prefix = '<|'
+        response_prefix = "## Response:"
 
         def injection_handler(token):
             nonlocal new_token_handler, response_buffer, response_state, response_prefix
@@ -234,7 +197,7 @@ class RephraseWidgetSearchChat(BaseChat):
                 else:
                     # we have found the response_prefix, trim everything before that
                     response_state = 1
-                    response_buffer = response_buffer[response_buffer.index(response_prefix):]
+                    response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
                 while '<|' in response_buffer:
@@ -264,32 +227,20 @@ class RephraseWidgetSearchChat(BaseChat):
 
         widgets = self.widget_index.similarity_search(question, k=self.top_k)
         task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
-        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler)
-        start = time.time()
         example = {
             "task_info": task_info,
             "question": question,
-            "stop": "Tool input",
-        }
+            "stop": ["Tool input", "User"],
+        }        
+        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler)
 
-        result = chain.apply_and_parse([example])[0]
+        start = time.time()
+        result = chain.run(example).strip()
         duration = time.time() - start
-        # history.add_interaction(userinput, result)
-        # send(Response(result, operation='replace'), last_chat_message_id=chat_message_id)
-        # send(Response(response=f'Response generation took {duration: .2f}s', actor='system'))
 
-        if system_chat_message_id is not None:
-            system_flush(system_response)
-
-        if bot_chat_message_id is not None:
-            bot_flush(result)
-        else:
-            if 'DONE' not in result:
-                send(Response(response=result), before_message_id=before_message_id)
-
-        response = f'Response generation took {duration: .2f}s'
-        system_chat_message_id = send(Response(response=response, actor='system'), before_message_id=before_message_id)
-        history.add_system_message(response, message_id=system_chat_message_id, before_message_id=before_message_id)
+        history.add_interaction(userinput, result)
+        send(Response(result, operation='replace'), before_message_id=before_message_id)
+        send(Response(response=f'Response generation took {duration: .2f}s', actor='system'))
 
 
 def iterative_evaluate(phrase: str) -> str:
@@ -347,20 +298,22 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
-    elif command == 'exec-project-deposit':
-        return str(exec_project_operation(*params, operation='Supply'))
-    elif command == 'exec-project-borrow':
-        return str(exec_project_operation(*params, operation='Borrow'))
-    elif command == 'exec-project-repay':
-        return str(exec_project_operation(*params, operation='Repay'))
-    elif command == 'exec-project-withdraw':
-        return str(exec_project_operation(*params, operation='Withdraw'))
+    elif command == 'aave-supply':
+        return str(exec_aave_operation(*params, operation='supply'))
+    elif command == 'aave-borrow':
+        return str(exec_aave_operation(*params, operation='borrow'))
+    elif command == 'aave-repay':
+        return str(exec_aave_operation(*params, operation='repay'))
+    elif command == 'aave-withdraw':
+        return str(exec_aave_operation(*params, operation='withdraw'))
     elif command == 'ens-from-address':
         return str(ens_from_address(*params))
     elif command == 'address-from-ens':
         return str(address_from_ens(*params))
     elif command == 'register-ens-domain':
         return str(register_ens_domain(*params))
+    elif command == 'set-ens-text':
+        return str(set_ens_text(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -568,27 +521,24 @@ class TxPayloadForSending(ContainerMixin):
         return dataclass_to_container_params(self)
 
 @error_wrap
-def exec_project_operation(project: str, token: str, amount: str, operation: str = '') -> TxPayloadForSending:
-    if project.lower() == 'aave':
-        return exec_aave_operation(token, amount, operation)
-    else:
-        return "Project not supported."
-
-
-def exec_aave_operation(token: str, amount: str, operation: str = '') -> TxPayloadForSending:
-    if not operation:
-        raise ExecError("Operation needs to be specified.")
-    wallet_chain_id = 1
+@ensure_wallet_connected
+def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
+    wallet_chain_id = 1 # TODO: get from context
     wallet_address = context.get_wallet_address()
-    if not wallet_address:
-        raise ConnectedWalletRequired
-    wf = aave.AaveUIWorkflow(wallet_chain_id, wallet_address, token, operation, float(amount))
+    user_chat_message_id = context.get_user_chat_message_id()
+
+    params = {
+        'domain': domain,
+        'key': key,
+        'value': value,
+    }
+
+    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, 'set-ens-text', params)
     result = wf.run()
+
     return TxPayloadForSending(
         user_request_status=result.status,
-        parsed_user_request=result.parsed_user_request,
         tx=result.tx,
-        is_approval_tx=result.is_approval_tx,
         error_msg=result.error_msg,
         description=result.description
     )
