@@ -6,7 +6,7 @@ from langchain.docstore.document import Document
 from .weaviate import get_client
 
 
-INDEX_NAME = 'WidgetV7'
+INDEX_NAME = 'WidgetV8'
 INDEX_DESCRIPTION = "Index of widgets"
 TEXT_KEY = 'content'
 

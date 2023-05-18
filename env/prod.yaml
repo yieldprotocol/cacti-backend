@@ -25,5 +25,7 @@ weaviate:
 
 # FastAPI server
 server:
+  host: ironclad-parent.netlify.app
   origins:
-  - https://ironclad-parent.netlify.app/
+  - https://ironclad-parent.netlify.app
+  secret_key: Qs+NhV8YdtVB6ZkD26mz/Wkc6EDSXXno98WGuYkOwGA=

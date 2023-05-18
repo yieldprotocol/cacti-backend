@@ -1,14 +1,15 @@
 import asyncio
 from dataclasses import dataclass
-import json
 from typing import Optional, Set
 
-from fastapi import FastAPI, Response, Body, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, Response, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 import server
 import chat
 import env
+import auth
 
 
 app = FastAPI()
@@ -22,6 +23,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=env.env_config['server']['secret_key'],
+    max_age=None,
+    same_site='lax' if env.is_local() else 'none',
+    https_only=not env.is_local(),
+)
 
 
 websockets: Set[WebSocket] = set()
@@ -34,9 +42,25 @@ class ClientState:
     wallet_address: Optional[str] = None
 
 
+@app.get("/nonce")
+async def api_nonce(request: Request):
+    return auth.api_nonce(request)
+
+
+@app.post("/login")
+async def api_login(request: Request, data: auth.AcceptJSON):
+    return auth.api_login(request, data)
+
+
+@app.post("/logout")
+async def api_logout(request: Request):
+    return auth.api_logout(request)
+
+
 @app.websocket("/chat")
 async def websocket_chat(websocket: WebSocket):
     await websocket.accept()
+
     websockets.add(websocket)
     try:
         await _handle_websocket(websocket)
@@ -50,6 +74,10 @@ async def _handle_websocket(websocket: WebSocket):
     while True:
         try:
             message = await websocket.receive_text()
+
+            # Fetch authenticated wallet address from the session cookies. If
+            # not authenticated, this is None, and we handle this inside
+            client_state.wallet_address = auth.fetch_authenticated_wallet_address(websocket)
 
             queue = asyncio.queues.Queue()
 

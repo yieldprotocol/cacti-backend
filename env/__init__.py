@@ -32,8 +32,14 @@ def _get_env_file_path(env_tag):
     env_filename = f'{env_tag}.yaml'
     return pathlib.Path(__file__).parent / env_filename
 
+
 def is_prod():
     return os.environ.get('ENV_TAG', DEFAULT_ENV_TAG) == 'prod'
+
+
+def is_local():
+    return os.environ.get('ENV_TAG', DEFAULT_ENV_TAG) == 'local'
+
 
 env_config = _load_env_file(
     _get_env_file_path(os.environ.get('ENV_TAG', DEFAULT_ENV_TAG))
