@@ -2,7 +2,7 @@ import os
 import json
 from typing import Dict
 from ..common import w3
-from ..crypto_token import TOKEN_TO_PROFILE_MAP
+from ..crypto_token import MAINNET_TOKEN_TO_PROFILE_MAP
 
 ERC20_ABI = None
 
@@ -22,10 +22,10 @@ def get_token_balance(token: str, wallet_address: str) -> int:
     if token == "ETH":
         return w3.eth.get_balance(wallet_address)
     else:
-        if token not in TOKEN_TO_PROFILE_MAP:
+        if token not in MAINNET_TOKEN_TO_PROFILE_MAP:
             raise Exception(f"Token {token} not supported by system")
         
-        erc20_contract = w3.eth.contract(address=w3.to_checksum_address(TOKEN_TO_PROFILE_MAP[token]["address"]), abi=ERC20_ABI)
+        erc20_contract = w3.eth.contract(address=w3.to_checksum_address(MAINNET_TOKEN_TO_PROFILE_MAP[token]["address"]), abi=ERC20_ABI)
         return erc20_contract.functions.balanceOf(wallet_address).call()
 
 load_erc20_abi()

@@ -42,7 +42,7 @@ class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
         if (self.token not in AAVE_SUPPORTED_TOKENS):
             raise WorkflowValidationError(f"Token {self.token} not supported by Aave")
         
-        if (get_token_balance(self.token, self.wallet_address) < parse_token_amount(self.token, self.amount)):
+        if (get_token_balance(self.token, self.wallet_address) < parse_token_amount(self.wallet_chain_id, self.token, self.amount)):
             raise WorkflowValidationError(f"Insufficient {self.token} balance in wallet")
 
 
@@ -55,7 +55,7 @@ class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
             'from': self.wallet_address, 
             'to': AAVE_WRAPPED_TOKEN_GATEWAY, 
             'data': tx_input,
-            'value': hexify_token_amount(self.token, self.amount),
+            'value': hexify_token_amount(self.wallet_chain_id, self.token, self.amount),
         }
         
         tx['gas'] = estimate_gas(tx)

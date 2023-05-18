@@ -1,5 +1,6 @@
 
-TOKEN_TO_PROFILE_MAP = {
+# Always ensure decimals is set correctly for any token by checking the contract
+MAINNET_TOKEN_TO_PROFILE_MAP = {
     "WETH": {
         "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
         "decimals": 18,
@@ -12,7 +13,6 @@ TOKEN_TO_PROFILE_MAP = {
         "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
         "decimals": 18,
     },
-
     "USDT": { 
         "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
         "decimals": 6
@@ -39,10 +39,17 @@ TOKEN_TO_PROFILE_MAP = {
     },
 }
 
-def parse_token_amount(token: str, amount: str) -> int:
-    if token == "ETH":
-        return int(float(amount) * 10 ** 18)
-    return int(float(amount) * 10 ** TOKEN_TO_PROFILE_MAP[token]["decimals"])
+def parse_token_amount(chain_id: int, token: str, amount: str) -> int:
+    if chain_id == 1:
+        if token == "ETH":
+            return int(float(amount) * 10 ** 18)
+        
+        if token not in MAINNET_TOKEN_TO_PROFILE_MAP:
+            raise Exception(f"Token {token} not supported by system")
 
-def hexify_token_amount(token: str, amount: str) -> str:
-    return hex(parse_token_amount(token, amount))
+        return int(float(amount) * 10 ** MAINNET_TOKEN_TO_PROFILE_MAP[token]["decimals"])
+    else:
+        raise Exception(f"Chain ID {chain_id} not supported by system")
+
+def hexify_token_amount(chain_id: int, token: str, amount: str) -> str:
+    return hex(parse_token_amount(chain_id, token, amount))
