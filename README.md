@@ -7,3 +7,9 @@ source ../venv/bin/activate
 pip install -r requirements.txt
 ./start.sh
 ```
+
+or in local env:
+
+```
+ENV_TAG=local ./start.sh
+```

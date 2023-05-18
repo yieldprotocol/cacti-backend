@@ -19,7 +19,7 @@ with open(os.path.join(curr_script_dir, "./abis/ens_registry.abi"), 'r') as f:
     ens_registry_abi_dict = json.load(f)
 
 def keccak_256(data):
-    k = hashlib.sha256()
+    k = hashlib.sha3_256()
     k.update(data)
     return k.hexdigest()
 
