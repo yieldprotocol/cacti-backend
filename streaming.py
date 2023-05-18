@@ -39,6 +39,7 @@ def get_streaming_llm(new_token_handler):
     ) if new_token_handler else {}
 
     llm = ChatOpenAI(
+        model_name="gpt-3.5-turbo",
         temperature=0.0,
         **streaming_kwargs
     )
