@@ -6,7 +6,7 @@ import json
 from utils import w3, Web3
 from ....base import process_result_and_simulate_tx, fetch_multistep_workflow_from_db, TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID
 from ..aave_borrow_ui_workflow import AaveBorrowUIWorkflow
-from ..common import aave_revoke_eth_approval
+from ...common import aave_revoke_eth_approval
 
 # Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_borrow_eth_with_approval
 token = "ETH"

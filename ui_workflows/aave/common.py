@@ -4,11 +4,28 @@ from typing import Optional, Union, Literal
 
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-from utils import w3, Web3
-from ...base import StepProcessingResult, revoke_erc20_approval, set_erc20_allowance, TEST_WALLET_ADDRESS, USDC_ADDRESS
+from utils import w3, Web3, ERC20_ABI, load_erc20_abi, load_contract_abi
+from ..base import StepProcessingResult, revoke_erc20_approval, set_erc20_allowance, TEST_WALLET_ADDRESS, USDC_ADDRESS
 
 FIVE_SECONDS = 5000
-AAVE_POOL_V3_ADDRESS = "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2"
+AAVE_POOL_V3_PROXY_ADDRESS = w3.to_checksum_address("0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2")
+AAVE_WRAPPED_TOKEN_GATEWAY = w3.to_checksum_address("0xd322a49006fc828f9b5b37ab215f99b4e5cab19c")
+
+AAVE_SUPPORTED_TOKENS = [
+    "ETH",
+    "WETH",
+    "USDC",
+    "DAI",
+    "USDT",
+    "LINK",
+    "AAVE",
+    "LUSD",
+    "CRV",
+    "WBTC"
+]
+
+aave_pool_v3_address = w3.eth.contract(address=AAVE_POOL_V3_PROXY_ADDRESS, abi=load_contract_abi(__file__, "./abis/aave_pool_v3.abi.json"))
+aave_wrapped_token_gateway = w3.eth.contract(address=AAVE_WRAPPED_TOKEN_GATEWAY, abi=load_contract_abi(__file__, "./abis/aave_wrapped_token_gateway.abi.json"))
 
 class AaveMixin:
     def _goto_page_and_open_walletconnect(self, page):
@@ -35,10 +52,10 @@ class AaveMixin:
         return None
 
 def aave_revoke_usdc_approval():
-    revoke_erc20_approval(USDC_ADDRESS, TEST_WALLET_ADDRESS, AAVE_POOL_V3_ADDRESS)
+    revoke_erc20_approval(USDC_ADDRESS, TEST_WALLET_ADDRESS, AAVE_POOL_V3_PROXY_ADDRESS)
 
 def aave_set_usdc_allowance(amount: int):
-    set_erc20_allowance(USDC_ADDRESS, TEST_WALLET_ADDRESS, AAVE_POOL_V3_ADDRESS, amount)
+    set_erc20_allowance(USDC_ADDRESS, TEST_WALLET_ADDRESS, AAVE_POOL_V3_PROXY_ADDRESS, amount)
 
 
 def aave_revoke_eth_approval():

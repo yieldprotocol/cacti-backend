@@ -40,9 +40,11 @@ tokenizer = tiktoken.encoding_for_model("text-davinci-003")
 ns = ENS.from_web3(w3)
 
 
+def estimate_gas(tx):
+    return hex(w3.eth.estimate_gas(tx))
+
 def get_token_len(s: str) -> int:
     return len(tokenizer.encode(s))
-
 
 # Error handling
 class ConnectedWalletRequired(Exception):

@@ -6,7 +6,7 @@ from dataclasses import dataclass, asdict
 
 from ....base import process_result_and_simulate_tx, fetch_multistep_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
 from ..aave_supply_ui_workflow import AaveSupplyUIWorkflow
-from ..common import  aave_set_usdc_allowance
+from ...common import  aave_set_usdc_allowance
 
 # Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_supply_erc20_no_approval
 token = "USDC"

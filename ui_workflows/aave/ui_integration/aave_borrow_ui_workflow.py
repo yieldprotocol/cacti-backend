@@ -8,7 +8,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
-from .common import AaveMixin, FIVE_SECONDS
+from ..common import AaveMixin, FIVE_SECONDS
 
 class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
     """

@@ -9,25 +9,27 @@ from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Callabl
 from dataclasses import dataclass, asdict
 
 import env
-from utils import TENDERLY_FORK_URL, w3
-from ..base import tenderly_simulate_tx, Result, BaseSingleStepContractWorkflow, WorkflowValidationError, estimate_gas, compute_abi_abspath
+from utils import TENDERLY_FORK_URL, w3, estimate_gas
+from ..base import tenderly_simulate_tx, Result, BaseSingleStepContractWorkflow, WorkflowValidationError, compute_abi_abspath
 from .ens_utils import ENS_PUBLIC_RESOLVER_ADDRESS, ENS_REGISTRY_ADDRESS, get_node_namehash, is_domain_registered, is_domain_owner
+
 
 class ENSSetTextWorkflow(BaseSingleStepContractWorkflow):
     """
     API ref: https://docs.ens.domains/contract-api-reference/publicresolver#set-text-data
     """
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict) -> None:
+    WORKFLOW_TYPE = 'set-ens-text'
+
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict) -> None:
         self.domain = workflow_params['domain']
         self.key = workflow_params['key']
         self.value = workflow_params['value']
-    
+        self.contract_address =  w3.to_checksum_address(ENS_PUBLIC_RESOLVER_ADDRESS)
+        self.contract_abi_dict = self._load_contract_abi_dict(__file__, './abis/ens_resolver.abi')
+
         user_description = f"Set field {self.key} to {self.value} for ENS domain {self.domain}"
 
-        contract_address = ENS_PUBLIC_RESOLVER_ADDRESS
-
-        abi_path = compute_abi_abspath(__file__, './abis/ens_resolver.abi')
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, contract_address, abi_path, user_description, workflow_type, workflow_params)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, user_description, self.WORKFLOW_TYPE, workflow_params)
         
     def _pre_workflow_validation(self):
        # Check if domain is registered

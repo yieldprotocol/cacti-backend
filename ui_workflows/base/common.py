@@ -62,6 +62,10 @@ class StepProcessingResult:
     replace_with_step_type: str = None
     replace_extra_params: Dict = None
 
+@dataclass
+class ContractStepProcessingResult(StepProcessingResult):
+    tx: Optional[dict] = None
+
 class WorkflowValidationError(Exception):
     pass
 
@@ -122,11 +126,6 @@ def setup_mock_db_objects() -> Dict:
 def _validate_non_zero_eth_balance(wallet_address):
     if (w3.eth.get_balance(w3.to_checksum_address(wallet_address)) == 0):
         raise WorkflowValidationError("Wallet address has zero ETH balance")
-
-
-def estimate_gas(tx):
-    return hex(w3.eth.estimate_gas(tx))
-
 
 def compute_abi_abspath(wf_file_path, abi_relative_path):
     return os.path.join(os.path.dirname(os.path.abspath(wf_file_path)), abi_relative_path)

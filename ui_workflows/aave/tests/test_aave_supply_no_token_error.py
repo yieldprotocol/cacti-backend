@@ -19,7 +19,7 @@ from ..aave_supply_ui_workflow import AaveSupplyUIWorkflow
 
 from utils import w3, Web3
 
-from ..common import aave_revoke_usdc_approval
+from ...common import aave_revoke_usdc_approval
 
 # Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_supply_no_token_error
 token = "XXYYZZ"

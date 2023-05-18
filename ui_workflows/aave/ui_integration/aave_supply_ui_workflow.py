@@ -11,7 +11,7 @@ from ...base import BaseMultiStepUIWorkflow, WorkflowStepClientPayload, StepProc
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
-from .common import AaveMixin, FIVE_SECONDS
+from ..common import AaveMixin, FIVE_SECONDS
 
 class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
     """
