@@ -10,6 +10,7 @@ import server
 import chat
 import env
 import auth
+from app import share
 
 
 app = FastAPI()
@@ -40,6 +41,7 @@ class ClientState:
     chat_history: Optional[chat.ChatHistory] = None
     system_config_id: Optional[int] = None
     wallet_address: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 @app.get("/nonce")
@@ -55,6 +57,11 @@ async def api_login(request: Request, data: auth.AcceptJSON):
 @app.post("/logout")
 async def api_logout(request: Request):
     return auth.api_logout(request)
+
+
+@app.post("/share")
+async def api_share(request: Request, data: auth.AcceptJSON):
+    return share.handle_share(request, data)
 
 
 @app.websocket("/chat")
@@ -78,6 +85,7 @@ async def _handle_websocket(websocket: WebSocket):
             # Fetch authenticated wallet address from the session cookies. If
             # not authenticated, this is None, and we handle this inside
             client_state.wallet_address = auth.fetch_authenticated_wallet_address(websocket)
+            client_state.user_id = auth.fetch_authenticated_user_id(websocket)
 
             queue = asyncio.queues.Queue()
 
