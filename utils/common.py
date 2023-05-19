@@ -22,7 +22,7 @@ WEAVIATE_URL = _get_weaviate_url(env.env_config['weaviate'])
 CHATDB_URL = _get_postgres_url(env.env_config['chatdb'], 'chatdb')
 SCRAPEDB_URL = _get_postgres_url(env.env_config['scrapedb'], 'scrapedb')
 
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 CENTER_API_KEY = os.getenv('CENTER_API_KEY', 'key8f1af05afe473107c3ea2556')
 ETHERSCAN_API_KEY = 'ZCUTVCPHAJ5YRNB6SZTJN9ZV24FBEX86GJ'
 OPENSEA_API_KEY = os.getenv('OPENSEA_API_KEY', '')
