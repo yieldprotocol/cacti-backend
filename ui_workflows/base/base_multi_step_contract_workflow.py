@@ -58,7 +58,6 @@ class BaseMultiStepContractWorkflow(BaseContractWorkflow):
             # TODO: only in UI
             # print(f"MULTISTEP UI WORKFLOW VALIDATION ERROR, {start_log_params}")
             print(f"MULTISTEP CONTRACT WORKFLOW VALIDATION ERROR, {start_log_params}")
-            traceback.print_exc()
             return MultiStepResult(
                 status='error',
                 workflow_id=str(self.multistep_workflow.id),
