@@ -45,15 +45,45 @@ class WorkflowStepUserActionType(enum.IntEnum):
     tx = 2
     acknowledge = 3
 
+class PrivacyType(enum.IntEnum):
+    private = 1
+    public = 2
+
+
 class SystemConfig(Base, Timestamp):  # type: ignore
     __tablename__ = 'system_config'
     id = Column(Integer, primary_key=True)
     json = Column(JSONB, nullable=False, index=True)
 
 
+class User(Base, Timestamp):  # type: ignore
+    __tablename__ = 'user'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+
+class Wallet(Base, Timestamp):  # type: ignore
+    __tablename__ = 'wallet'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    wallet_address = Column(String, nullable=False)
+
+    Index('wallet_address_unique', wallet_address, unique=True)
+
+
+class UserWallet(Base, Timestamp):  # type: ignore
+    __tablename__ = 'user_wallet'
+    user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=False, primary_key=True)
+    wallet_id = Column(UUID(as_uuid=True), ForeignKey('wallet.id'), nullable=False, primary_key=True)
+
+    Index('wallet_user_id', wallet_id, user_id)
+
+
 class ChatSession(Base, Timestamp):  # type: ignore
     __tablename__ = 'chat_session'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    privacy_type = Column(ChoiceType(PrivacyType, impl=Integer()), default=PrivacyType.private, nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=True)
+
+    Index('chat_session_user', user_id)
 
 
 class ChatMessage(Base, Timestamp):  # type: ignore
