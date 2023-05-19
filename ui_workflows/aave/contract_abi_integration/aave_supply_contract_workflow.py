@@ -6,17 +6,16 @@ from dataclasses import dataclass, asdict
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 import env
-from utils import TENDERLY_FORK_URL, w3, ERC20_ABI, get_token_balance, estimate_gas, parse_token_amount, hexify_token_amount
+from utils import TENDERLY_FORK_URL, w3, ERC20_ABI, get_token_balance, estimate_gas, parse_token_amount, hexify_token_amount, has_sufficient_erc20_allowance, generate_erc20_approve_encoded_data, get_token_address
 from database.models import (
-    db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
+    db_session, MultiStepWorkflow, WorkflowStepUserActionType
 )
 from ...base import BaseMultiStepContractWorkflow, WorkflowStepClientPayload, RunnableStep, WorkflowValidationError, ContractStepProcessingResult
-from ..common import AAVE_SUPPORTED_TOKENS, AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, aave_pool_v3_address, aave_wrapped_token_gateway
+from ..common import AAVE_SUPPORTED_TOKENS, AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, aave_pool_v3_address_contract, aave_wrapped_token_gateway_contract
 
 class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
     """
     """
-
     WORKFLOW_TYPE = 'aave-supply'
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
@@ -42,33 +41,55 @@ class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
         if (self.token not in AAVE_SUPPORTED_TOKENS):
             raise WorkflowValidationError(f"Token {self.token} not supported by Aave")
         
-        if (get_token_balance(self.token, self.wallet_address) < parse_token_amount(self.wallet_chain_id, self.token, self.amount)):
+        if (get_token_balance(self.wallet_chain_id, self.token, self.wallet_address) < parse_token_amount(self.wallet_chain_id, self.token, self.amount)):
             raise WorkflowValidationError(f"Insufficient {self.token} balance in wallet")
 
 
     def confirm_ETH_supply_step(self) -> ContractStepProcessingResult:
         """Confirm supply of ETH/ERC20 token"""
 
-        tx_input = aave_wrapped_token_gateway.encodeABI(fn_name='depositETH', args=[AAVE_POOL_V3_PROXY_ADDRESS, self.wallet_address, 0])
-
+        pool_address = AAVE_POOL_V3_PROXY_ADDRESS
+        on_behalf_of = self.wallet_address
+        referral_code = 0
+        encoded_data = aave_wrapped_token_gateway_contract.encodeABI(fn_name='depositETH', args=[pool_address, on_behalf_of, referral_code])
         tx = {
             'from': self.wallet_address, 
             'to': AAVE_WRAPPED_TOKEN_GATEWAY, 
-            'data': tx_input,
+            'data': encoded_data,
             'value': hexify_token_amount(self.wallet_chain_id, self.token, self.amount),
         }
         
-        tx['gas'] = estimate_gas(tx)
-
         return ContractStepProcessingResult(status="success", tx=tx)
 
-    # def initiate_ERC20_approval_step(self):
-    #     """
-    #     - refactor StepResult to include tx hash
-    #     - check if erc20 already approved, if approved replace with next step
-    #     """
-    #     pass
+    def initiate_ERC20_approval_step(self):
+        """Initiate approval of ERC20 token to be spent by Aave"""
 
-    # def confirm_ERC20_supply_step(self, extra_params=None) -> StepProcessingResult:
-    #     """Confirm supply of ETH/ERC20 token"""
-    #     pass
+        if (has_sufficient_erc20_allowance(self.wallet_chain_id, self.token, self.wallet_address, AAVE_POOL_V3_PROXY_ADDRESS, self.amount)):
+            return ContractStepProcessingResult(status="replace", replace_with_step_type="confirm_ERC20_supply")
+
+        spender = AAVE_POOL_V3_PROXY_ADDRESS
+        value = parse_token_amount(self.wallet_chain_id, self.token, self.amount)
+        encoded_data = generate_erc20_approve_encoded_data(self.wallet_chain_id, self.token, spender, value)
+        tx = {
+            'from': self.wallet_address, 
+            'to': get_token_address(self.wallet_chain_id, self.token), 
+            'data': encoded_data,
+        }
+        return ContractStepProcessingResult(status="success", tx=tx)
+        
+
+    def confirm_ERC20_supply_step(self, extra_params=None) -> ContractStepProcessingResult:
+        """Confirm supply of ERC20 token"""
+
+        asset = get_token_address(self.wallet_chain_id, self.token)
+        amount = parse_token_amount(self.wallet_chain_id, self.token, self.amount)
+        on_behalf_of = self.wallet_address
+        referral_code = 0
+        encoded_data = aave_pool_v3_address_contract.encodeABI(fn_name='supply', args=[asset, amount, on_behalf_of, referral_code])
+        tx = {
+            'from': self.wallet_address, 
+            'to': AAVE_POOL_V3_PROXY_ADDRESS, 
+            'data': encoded_data,
+        }
+        
+        return ContractStepProcessingResult(status="success", tx=tx)

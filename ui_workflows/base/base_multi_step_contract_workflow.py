@@ -1,6 +1,8 @@
 import traceback
 import uuid
 from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
+
+from utils import estimate_gas
 from database.models import db_session, WorkflowStep, WorkflowStepStatus, MultiStepWorkflow
 
 from .common import WorkflowStepClientPayload, RunnableStep, ContractStepProcessingResult, MultiStepResult, WorkflowValidationError, compute_abi_abspath
@@ -115,6 +117,11 @@ class BaseMultiStepContractWorkflow(BaseContractWorkflow):
         # Stop WC listener thread and extract tx data if any
         #tx = self.stop_listener()
 
+        tx = processing_result.tx
+        tx['gas'] = estimate_gas(tx)
+        if "value" not in tx:
+            tx['value'] = "0x0"
+
         computed_user_description = processing_result.override_user_description or self.curr_step_description
 
         return MultiStepResult(
@@ -156,13 +163,17 @@ class BaseMultiStepContractWorkflow(BaseContractWorkflow):
 
     def _run_next_step(self) -> ContractStepProcessingResult:
         """Find the next step to run based on the current successful step from client response"""
-
         curr_runnable_step_index = self._find_runnable_step_index_by_step_type(self.curr_step.type)
         next_step_to_run_index = curr_runnable_step_index + 1
         next_step_to_run = self.runnable_steps[next_step_to_run_index]
+        prev_step = self.curr_step
 
         # Save step to DB and reset current step
         self._create_new_curr_step(next_step_to_run.type, next_step_to_run_index + 1, next_step_to_run.user_action_type, next_step_to_run.user_description)
+
+        log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step.id}, curr_step_type: {self.curr_step.type}, prev_step_type: {prev_step.type}"
+
+        print("Multi-step contract workflow - running next step, ", log_params)
 
         return next_step_to_run.function()
 

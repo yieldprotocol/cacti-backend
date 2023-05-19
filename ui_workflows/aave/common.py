@@ -24,8 +24,8 @@ AAVE_SUPPORTED_TOKENS = [
     "WBTC"
 ]
 
-aave_pool_v3_address = w3.eth.contract(address=AAVE_POOL_V3_PROXY_ADDRESS, abi=load_contract_abi(__file__, "./abis/aave_pool_v3.abi.json"))
-aave_wrapped_token_gateway = w3.eth.contract(address=AAVE_WRAPPED_TOKEN_GATEWAY, abi=load_contract_abi(__file__, "./abis/aave_wrapped_token_gateway.abi.json"))
+aave_pool_v3_address_contract = w3.eth.contract(address=AAVE_POOL_V3_PROXY_ADDRESS, abi=load_contract_abi(__file__, "./abis/aave_pool_v3.abi.json"))
+aave_wrapped_token_gateway_contract = w3.eth.contract(address=AAVE_WRAPPED_TOKEN_GATEWAY, abi=load_contract_abi(__file__, "./abis/aave_wrapped_token_gateway.abi.json"))
 
 class AaveMixin:
     def _goto_page_and_open_walletconnect(self, page):

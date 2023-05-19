@@ -5,11 +5,7 @@ Test for validating that workflow should return an error if token not found in u
 
 import re
 from logging import basicConfig, INFO
-import time
-import json
 
-import os
-import requests
 from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Callable
 from dataclasses import dataclass, asdict
 
@@ -18,8 +14,6 @@ from ....base import process_result_and_simulate_tx, fetch_multistep_workflow_fr
 from ..aave_supply_ui_workflow import AaveSupplyUIWorkflow
 
 from utils import w3, Web3
-
-from ...common import aave_revoke_usdc_approval
 
 # Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_supply_no_token_error
 token = "XXYYZZ"

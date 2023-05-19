@@ -1,1 +1,1 @@
-from .common import *
+from .abi_loader import *
