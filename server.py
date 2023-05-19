@@ -14,7 +14,7 @@ import system
 import config
 from database import utils as db_utils
 from database.models import (
-    db_session, FeedbackStatus,
+    db_session, FeedbackStatus, PrivacyType,
     ChatSession, ChatMessage, ChatMessageFeedback,
     SystemConfig,
 )
@@ -110,18 +110,48 @@ def _load_existing_history_and_messages(session_id):
 
 
 def _ensure_authenticated(client_state, send_response):
-    if client_state.wallet_address:
+    """Returns true if we are authenticated."""
+    if client_state.user_id:
         return True
     msg = json.dumps({
         'messageId': 0,
         'actor': 'bot',
         'type': 'text',
-        'payload': 'Please connect your wallet to chat.',
+        'payload': 'Please sign in to chat.',
         'stillThinking': False,
         'operation': 'create',
-        'feedback': 'none',
+        'feedback': 'n/a',
     })
     send_response(msg)
+    return False
+
+
+def _ensure_can_view_chat_session(session_id, client_state, send_response):
+    """Returns true if we are allowed to view the chat session."""
+    user_id = client_state.user_id
+    assert user_id, 'expecting user id to be known here'
+
+    chat_session = ChatSession.query.filter(ChatSession.id == session_id).one_or_none()
+    if not chat_session:
+        # non-existent session, treat as if no permissions
+        pass
+
+    elif str(chat_session.user_id) == str(user_id) or chat_session.privacy_type == PrivacyType.public:
+        # allow to view your own sessions, or those shared publicly
+        # TODO: add case where session is shared with specific user ids / wallet addresses
+        return True
+
+    msg = json.dumps({
+        'messageId': 0,
+        'actor': 'bot',
+        'type': 'text',
+        'payload': 'No permissions to view this chat.',
+        'stillThinking': False,
+        'operation': 'create',
+        'feedback': 'n/a',
+    })
+    send_response(msg)
+
     return False
 
 
@@ -154,6 +184,9 @@ def message_received(client_state, send_response, message):
         session_id = uuid.UUID(payload['sessionId'])
         resume_from_message_id = payload.get('resumeFromMessageId')
         before_message_id = payload.get('insertBeforeMessageId')
+
+        if not _ensure_can_view_chat_session(session_id, client_state, send_response):
+            return
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)
@@ -215,7 +248,7 @@ def message_received(client_state, send_response, message):
 
     chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
     if not chat_session:
-        chat_session = ChatSession(id=history.session_id)
+        chat_session = ChatSession(id=history.session_id, user_id=client_state.user_id)
         db_session.add(chat_session)
         db_session.flush()
 
