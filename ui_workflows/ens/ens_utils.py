@@ -13,7 +13,7 @@ ENS_PUBLIC_RESOLVER_ADDRESS = "0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41"
 
 curr_script_dir = os.path.dirname(os.path.abspath(__file__))
 
-with open(os.path.join(curr_script_dir, "./abis/ens_registry.abi"), 'r') as f:
+with open(os.path.join(curr_script_dir, "./abis/ens_registry.abi.json"), 'r') as f:
     ens_registry_abi_dict = json.load(f)
 
 def keccak_256(data):

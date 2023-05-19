@@ -7,8 +7,8 @@ from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
 
-# Invoke this with python3 -m ui_workflows.ens.tests.test_ens_registration 
-if __name__ == "__main__":
+# Invoke this with python -m pytest -s -k "test_ens_registration"
+def test_ens_registration():
     tenderly_api_access_key = os.environ.get("TENDERLY_API_ACCESS_KEY", None)
     epoch_seconds = int(time.time())
     domain_to_register = f"test{epoch_seconds}.eth"

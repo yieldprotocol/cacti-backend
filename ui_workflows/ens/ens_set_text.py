@@ -25,7 +25,7 @@ class ENSSetTextWorkflow(BaseSingleStepContractWorkflow):
         self.key = workflow_params['key']
         self.value = workflow_params['value']
         self.contract_address =  w3.to_checksum_address(ENS_PUBLIC_RESOLVER_ADDRESS)
-        self.contract_abi_dict = self._load_contract_abi_dict(__file__, './abis/ens_resolver.abi')
+        self.contract_abi_dict = self._load_contract_abi_dict(__file__, './abis/ens_resolver.abi.json')
 
         user_description = f"Set field {self.key} to {self.value} for ENS domain {self.domain}"
 

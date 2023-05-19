@@ -13,28 +13,28 @@ from database.models import (
 from ...base import BaseMultiStepContractWorkflow, WorkflowStepClientPayload, RunnableStep, WorkflowValidationError, ContractStepProcessingResult
 from ..common import AAVE_SUPPORTED_TOKENS, AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, aave_pool_v3_address_contract, aave_wrapped_token_gateway_contract
 
-class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
+class AaveBorrowContractWorkflow(BaseMultiStepContractWorkflow):
     """
-    NOTE: Refer to the docstring in ../ui_integration/aave_supply_ui_workflow.py (AaveSupplyUIWorkflow) to get more info on the various scenarios to handle for Aave supply
+    NOTE: Refer to the docstring in ../ui_integration/aave_borrow_ui_workflow.py (AaveBorrowUIWorkflow) to get more info on the various scenarios to handle for Aave borrow
     """
-    WORKFLOW_TYPE = 'aave-supply'
+    WORKFLOW_TYPE = 'aave-borrow'
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
         self.token = workflow_params["token"]
         self.amount = workflow_params["amount"]
 
-        # Only one step for ETH as it doesn't require an approval step unlike ERC20 tokens
         if self.token == "ETH":
-            confirm_ETH_supply_step = RunnableStep("confirm_ETH_supply", WorkflowStepUserActionType.tx, f"Confirm supply of {self.amount} ETH on Aave", self.confirm_ETH_supply_step)
-            steps = [confirm_ETH_supply_step]
-            final_step_type = "confirm_ETH_supply"
+            check_ETH_liquidation_risk_step = RunnableStep("check_ETH_liquidation_risk", WorkflowStepUserActionType.acknowledge, f"Acknowledge liquidation risk due to high borrow amount of {self.amount} ETH on Aave", self.check_ETH_liquidation_risk)
+            initiate_ETH_approval_step = RunnableStep("initiate_ETH_approval", WorkflowStepUserActionType.tx, f"Approve borrow of {self.amount} ETH on Aave", self.initiate_ETH_approval)
+            confirm_ETH_borrow_step = RunnableStep("confirm_ETH_borrow", WorkflowStepUserActionType.tx, f"Confirm borrow of {self.amount} ETH on Aave", self.confirm_ETH_borrow)
+            steps = [check_ETH_liquidation_risk_step, initiate_ETH_approval_step, confirm_ETH_borrow_step]
+            
+            final_step_type = "confirm_ETH_borrow"
         else:
-            # For ERC20 you have to handle approval before final confirmation
-            initiate_ERC20_approval_step = RunnableStep("initiate_ERC20_approval", WorkflowStepUserActionType.tx, f"Approve supply of {self.amount} {self.token} on Aave", self.initiate_ERC20_approval_step)
-            confirm_ERC20_supply_step = RunnableStep("confirm_ERC20_supply", WorkflowStepUserActionType.tx, f"Confirm supply of {self.amount} {self.token} on Aave", self.confirm_ERC20_supply_step)
-            steps = [initiate_ERC20_approval_step, confirm_ERC20_supply_step]
-
-            final_step_type = "confirm_ERC20_supply"
+            check_ERC20_liquidation_risk = RunnableStep("check_ERC20_liquidation_risk", WorkflowStepUserActionType.acknowledge, f"Acknowledge liquidation risk due to high borrow amount of {self.amount} {self.token} on Aave", self.check_ERC20_liquidation_risk)
+            confirm_ERC20_borrow_step = RunnableStep("confirm_ERC20_borrow", WorkflowStepUserActionType.tx, f"Confirm borrow of {self.amount} {self.token} from Aave", self.confirm_ERC20_borrow)
+            steps = [check_ERC20_liquidation_risk, confirm_ERC20_borrow_step]
+            final_step_type = "confirm_ERC20_borrow"
         
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
