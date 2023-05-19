@@ -20,7 +20,7 @@ from integrations import (
     etherscan, defillama, center, opensea,
 )
 from ui_workflows import (
-    aave, ens
+    aave, ens, lido
 )
 from .index_lookup import IndexLookupTool
 
@@ -416,6 +416,26 @@ def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
     }
 
     wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, 'set-ens-text', params)
+    result = wf.run()
+
+    return TxPayloadForSending(
+        user_request_status=result.status,
+        tx=result.tx,
+        error_msg=result.error_msg,
+        description=result.description
+    )
+
+@error_wrap
+def deposit_steth(amount: str) -> TxPayloadForSending:
+    wallet_chain_id = 1
+    wallet_address = context.get_wallet_address()
+    user_chat_message_id = context.get_user_chat_message_id()
+
+    params = {
+        'amount': amount,
+    }
+
+    wf = lido.LidoTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, 'deposit-eth', params)
     result = wf.run()
 
     return TxPayloadForSending(
