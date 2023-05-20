@@ -9,12 +9,13 @@ from .common import _validate_non_zero_eth_balance, compute_abi_abspath
 class BaseContractWorkflow(ABC):
     """Grandparent base class for contract workflows. Do not directly use this class, use either BaseSingleStepContractWorkflow or BaseMultiStepContractWorkflow class"""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, fork_id=None) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = w3.to_checksum_address(wallet_address)
         self.chat_message_id = chat_message_id
         self.workflow_type = workflow_type
         self.workflow_params = workflow_params
+        self.fork_id = fork_id
 
     def run(self) -> Any:
         """Main function to call to run the workflow."""

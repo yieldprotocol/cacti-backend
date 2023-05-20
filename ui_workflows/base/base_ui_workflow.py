@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDic
 
 import env
 import requests
-from utils import TENDERLY_FORK_URL
+from utils import TENDERLY_FORK_BASE_URL, TENDERLY_FORK_URL
 from pywalletconnect.client import WCClient
 from playwright.sync_api import  sync_playwright, Page, BrowserContext
 
@@ -17,7 +17,7 @@ from .common import _validate_non_zero_eth_balance
 class BaseUIWorkflow(ABC):
     """Grandparent base class for UI workflows. Do not directly use this class, use either BaseSingleStepUIWorkflow or BaseMultiStepUIWorkflow subclass"""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, browser_storage_state: Optional[Dict] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, browser_storage_state: Optional[Dict] = None, fork_id: Optional[str] = None) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
         self.browser_storage_state = browser_storage_state
@@ -25,6 +25,8 @@ class BaseUIWorkflow(ABC):
         self.result_container = []
         self.thread_event = threading.Event()
         self.is_approval_tx = False
+
+        self.tenderly_fork_url = f"{TENDERLY_FORK_BASE_URL}/{fork_id}" if fork_id else TENDERLY_FORK_URL
 
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
@@ -100,13 +102,13 @@ class BaseUIWorkflow(ABC):
         return dict(is_web3_call=False, has_list_payload=has_list_payload)
     
     def _forward_rpc_node_reqs(self, route):
-        route.continue_(url=TENDERLY_FORK_URL)
+        route.continue_(url=self.tenderly_fork_url)
 
     def _handle_batch_web3_call(self, route):
         payload = json.loads(route.request.post_data)
         batch_result = []
         for obj in payload:
-            response = requests.post(TENDERLY_FORK_URL, json=obj)
+            response = requests.post(self.tenderly_fork_url, json=obj)
             response.raise_for_status()
             batch_result.append(response.json())
         route.fulfill(body=json.dumps(batch_result), headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})

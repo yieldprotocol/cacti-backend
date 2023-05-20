@@ -3,7 +3,7 @@ Test for supplying an ERC20 token on Aave without approval step as it is already
 """
 from dataclasses import dataclass, asdict
 
-from ....base import process_result_and_simulate_tx, fetch_multistep_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
+from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
 from ..aave_supply_ui_workflow import AaveSupplyUIWorkflow
 from ...common import  aave_set_usdc_allowance
 
@@ -35,7 +35,7 @@ def test_ui_aave_supply_erc20_no_approval():
 
     workflow_id = multistep_result.workflow_id
 
-    multistep_workflow = fetch_multistep_workflow_from_db(workflow_id)
+    multistep_workflow = fetch_multi_step_workflow_from_db(workflow_id)
 
     multistep_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multistep_workflow, curr_step_client_payload).run()
 

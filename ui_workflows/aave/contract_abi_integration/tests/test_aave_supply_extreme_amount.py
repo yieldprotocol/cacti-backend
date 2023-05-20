@@ -5,7 +5,7 @@ Test for supplying an ETH amount greater than account balance on Aave
 import re
 
 from utils import w3
-from ....base import setup_mock_db_objects, process_result_and_simulate_tx, fetch_multistep_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
+from ....base import setup_mock_db_objects, process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
 from ..aave_supply_contract_workflow import AaveSupplyContractWorkflow
 
 # Invoke this with python3 -m pytest -s -k "test_contract_aave_supply_extreme_amount"

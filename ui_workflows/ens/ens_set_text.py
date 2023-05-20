@@ -10,7 +10,7 @@ from dataclasses import dataclass, asdict
 
 import env
 from utils import TENDERLY_FORK_URL, w3, estimate_gas
-from ..base import tenderly_simulate_tx, Result, BaseSingleStepContractWorkflow, WorkflowValidationError, compute_abi_abspath
+from ..base import Result, BaseSingleStepContractWorkflow, WorkflowValidationError
 from .ens_utils import ENS_PUBLIC_RESOLVER_ADDRESS, ENS_REGISTRY_ADDRESS, get_node_namehash, is_domain_registered, is_domain_owner
 
 
@@ -20,7 +20,7 @@ class ENSSetTextWorkflow(BaseSingleStepContractWorkflow):
     """
     WORKFLOW_TYPE = 'set-ens-text'
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, fork_id=None) -> None:
         self.domain = workflow_params['domain']
         self.key = workflow_params['key']
         self.value = workflow_params['value']
@@ -29,7 +29,7 @@ class ENSSetTextWorkflow(BaseSingleStepContractWorkflow):
 
         user_description = f"Set field {self.key} to {self.value} for ENS domain {self.domain}"
 
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, user_description, self.WORKFLOW_TYPE, workflow_params)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, user_description, self.WORKFLOW_TYPE, workflow_params, fork_id=fork_id)
         
     def _pre_workflow_validation(self):
        # Check if domain is registered
@@ -54,8 +54,6 @@ class ENSSetTextWorkflow(BaseSingleStepContractWorkflow):
             'value': '0x0',
         }
         
-        tx['gas'] = estimate_gas(tx)
-
         return Result(
                 status="success", 
                 tx=tx,

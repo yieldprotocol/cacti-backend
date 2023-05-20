@@ -9,13 +9,14 @@ import requests
 from abc import ABC, abstractmethod
 from typing import Dict
 
+from utils import estimate_gas
 from .common import WorkflowValidationError, Result
 from .base_contract_workflow import BaseContractWorkflow
 
 class BaseSingleStepContractWorkflow(BaseContractWorkflow):
     
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, user_description: str, workflow_type: str, workflow_params: Dict) -> None:
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow_params)
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, user_description: str, workflow_type: str, workflow_params: Dict, fork_id=None) -> None:
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow_params, fork_id=fork_id)
         
         self.user_description = user_description        
         self.log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, wf_params: {self.workflow_params}"
@@ -24,7 +25,12 @@ class BaseSingleStepContractWorkflow(BaseContractWorkflow):
     def run(self) -> Result:
         print(f"Single-step contract workflow started, {self.log_params}")
         try:
-            return super().run()
+            result: Result = super().run()
+
+            tx = result.tx
+            tx['gas'] = estimate_gas(tx, fork_id=self.fork_id)
+
+            return result
         except WorkflowValidationError as e:
             print(f"SINGLE STEP CONTRACT WORKFLOW VALIDATION ERROR, {self.log_params}")
             traceback.print_exc()

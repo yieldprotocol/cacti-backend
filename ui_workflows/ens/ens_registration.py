@@ -12,7 +12,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 import env
 from utils import TENDERLY_FORK_URL, w3
-from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepUIWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep, tenderly_simulate_tx, setup_mock_db_objects
+from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepUIWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep, setup_mock_db_objects
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
@@ -23,7 +23,7 @@ TEN_SECONDS = 10000
 class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
     WORKFLOW_TYPE = 'register-ens-domain'
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None, fork_id = None) -> None:
         self.ens_domain = workflow_params['domain']
 
         step1 = RunnableStep("request_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} request registration", self.step_1_request_registration)
@@ -33,7 +33,7 @@ class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
 
         final_step_type = "confirm_registration"
         
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, workflow, workflow_params, curr_step_client_payload, steps, final_step_type, fork_id=fork_id)
 
 
     def _forward_rpc_node_reqs(self, route):
@@ -43,7 +43,7 @@ class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
         # Intercepting below request to modify timestamp to be 5 minutes in the future to simulate block production and allow ENS web app to not be stuck in waiting loop
         if "eth_getBlockByNumber" in post_body:
             curr_time_hex = hex(int(time.time()) + 300)
-            data = requests.post(TENDERLY_FORK_URL, data=post_body)
+            data = requests.post(self.tenderly_fork_url, data=post_body)
             json_dict = data.json()
             json_dict["result"]["timestamp"] = curr_time_hex
             data = json_dict
@@ -66,7 +66,7 @@ class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
 
         # Check for failure cases early so check if domain is already registered
         try:
-            page.get_by_text("already register").wait_for()
+            page.get_by_text("already register").wait_for(timeout=TEN_SECONDS)
             return StepProcessingResult(status='error', error_msg="Domain is already registered")
         except PlaywrightTimeoutError:
             # Domain is not registered

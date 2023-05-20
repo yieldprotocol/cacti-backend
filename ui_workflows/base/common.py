@@ -6,9 +6,8 @@ from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDic
 from dataclasses import dataclass
 
 import requests
-from utils import  w3, Web3
 from database.models import db_session, ChatMessage, ChatSession, SystemConfig
-from utils import TENDERLY_FORK_URL, w3
+from utils import TENDERLY_FORK_BASE_URL, w3, Web3
 from database.models import (MultiStepWorkflow)
 
 TEST_WALLET_CHAIN_ID = 1  # Tenderly Mainnet Fork
@@ -72,30 +71,38 @@ class WorkflowValidationError(Exception):
 class WorkflowFailed(Exception):
     pass
 
-def tenderly_simulate_tx(wallet_address, tx) -> str:
+def tenderly_simulate_tx(fork_id: str, wallet_address: str, tx: Dict) -> str:
     payload = {
     "id": 0,
     "jsonrpc": "2.0",
     "method": "eth_sendTransaction",
         "params": [
             {
-            "from": wallet_address,
-            "to": tx['to'],
-            "value": tx['value'] if 'value' in tx else "0x0",
-            "data": tx['data'],
+                "from": wallet_address,
+                "to": tx['to'],
+                "value": tx['value'] if 'value' in tx else "0x0",
+                "data": tx['data'],
+                "gas": tx['gas'],
             }
         ]
     }
-    res = requests.post(TENDERLY_FORK_URL, json=payload)
+
+    fork_rpc_url = f"{TENDERLY_FORK_BASE_URL}/{fork_id}"
+
+    res = requests.post(fork_rpc_url, json=payload)
     res.raise_for_status()
 
     tx_hash = res.json()['result']
-    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    fork_w3 = Web3(Web3.HTTPProvider(fork_rpc_url))
+    receipt = fork_w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    print("receipt:", receipt)
 
     print("Tenderly TxHash:", tx_hash)
 
     if receipt['status'] == 0:
-        raise Exception(f"Transaction failed, tx_hash: {tx_hash}, check Tenderly dashboard for more details")
+        raise Exception(f"Transaction failed, tx_hash: {tx_hash}, check fork for more details - https://dashboard.tenderly.co/Yield/chatweb3/fork/{fork_id}")
     
     return tx_hash
 
@@ -130,9 +137,9 @@ def _validate_non_zero_eth_balance(wallet_address):
 def compute_abi_abspath(wf_file_path, abi_relative_path):
     return os.path.join(os.path.dirname(os.path.abspath(wf_file_path)), abi_relative_path)
 
-def process_result_and_simulate_tx(wallet_address, result: Union[Result, MultiStepResult]) -> Optional[str]:
+def process_result_and_simulate_tx(fork_id: str, wallet_address, result: Union[Result, MultiStepResult]) -> Optional[str]:
     if result.status == "success":
-        tx_hash = tenderly_simulate_tx(wallet_address, result.tx)
+        tx_hash = tenderly_simulate_tx(fork_id, wallet_address, result.tx)
         print("Workflow successful")
         return tx_hash
     elif result.status == "terminated":
@@ -141,7 +148,7 @@ def process_result_and_simulate_tx(wallet_address, result: Union[Result, MultiSt
         raise WorkflowFailed(result)
     return None
 
-def fetch_multistep_workflow_from_db(id):
+def fetch_multi_step_workflow_from_db(id):
     return MultiStepWorkflow.query.filter(MultiStepWorkflow.id == id).first()
 
 def generate_mock_chat_message_id():

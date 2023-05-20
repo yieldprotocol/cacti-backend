@@ -26,9 +26,10 @@ OPENAI_API_KEY = "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"
 CENTER_API_KEY = os.getenv('CENTER_API_KEY', 'key8f1af05afe473107c3ea2556')
 ETHERSCAN_API_KEY = 'ZCUTVCPHAJ5YRNB6SZTJN9ZV24FBEX86GJ'
 OPENSEA_API_KEY = os.getenv('OPENSEA_API_KEY', '')
+TENDERLY_API_KEY = os.getenv('TENDERLY_API_KEY', None)
 
-TENDERLY_FORK_URL = "https://rpc.tenderly.co/fork/902db63e-9c5e-415b-b883-5701c77b3aa7"
-
+TENDERLY_FORK_BASE_URL = "https://rpc.tenderly.co/fork"
+TENDERLY_FORK_URL = f"{TENDERLY_FORK_BASE_URL}/902db63e-9c5e-415b-b883-5701c77b3aa7"
 
 def set_api_key():
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
@@ -40,8 +41,14 @@ tokenizer = tiktoken.encoding_for_model("text-davinci-003")
 ns = ENS.from_web3(w3)
 
 
-def estimate_gas(tx):
-    return hex(w3.eth.estimate_gas(tx))
+def estimate_gas(tx, fork_id=None):
+    if fork_id:
+        fork_rpc_url = f"{TENDERLY_FORK_BASE_URL}/{fork_id}"
+        fork_w3 = Web3(Web3.HTTPProvider(fork_rpc_url))
+        return hex(fork_w3.eth.estimate_gas(tx))
+    else:
+        # Use default chain/fork
+        return hex(w3.eth.estimate_gas(tx))
 
 def get_token_len(s: str) -> int:
     return len(tokenizer.encode(s))

@@ -9,7 +9,7 @@ from .base_ui_workflow import BaseUIWorkflow
 class BaseMultiStepUIWorkflow(BaseUIWorkflow):
     """Base class for multi-step UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, multistep_workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], runnable_steps: List[RunnableStep], final_step_type) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, multistep_workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], runnable_steps: List[RunnableStep], final_step_type: str, fork_id: Optional[str] = None) -> None:
 
         self.chat_message_id = chat_message_id
         self.multistep_workflow = multistep_workflow
@@ -26,7 +26,7 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
 
         browser_storage_state = None
 
-        super().__init__(wallet_chain_id, wallet_address, browser_storage_state)
+        super().__init__(wallet_chain_id, wallet_address, browser_storage_state, fork_id=fork_id)
 
     def run(self) -> MultiStepResult:
         start_log_params = f"{self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step_client_payload['id'] if self.curr_step_client_payload else None}, curr_step_type: {self.curr_step_client_payload['type'] if self.curr_step_client_payload else self.runnable_steps[0].type}, wf_params: {self.workflow_params}"

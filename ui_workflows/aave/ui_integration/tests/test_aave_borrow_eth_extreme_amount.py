@@ -3,7 +3,7 @@
 Test for borrowing exteme amount of ETH on Aave which requires the user to perform special acknowledgement due to liquidation risk
 """
 import re
-from ....base import process_result_and_simulate_tx, fetch_multistep_workflow_from_db, TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID
+from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID
 from ..aave_borrow_ui_workflow import AaveBorrowUIWorkflow
 
 # Invoke this with python3 -m pytest -k "test_ui_aave_borrow_eth_extreme_amount"
@@ -33,7 +33,7 @@ def test_ui_aave_eth_borrow_extreme_amount():
 
     workflow_id = multistep_result.workflow_id
 
-    multistep_workflow = fetch_multistep_workflow_from_db(workflow_id)
+    multistep_workflow = fetch_multi_step_workflow_from_db(workflow_id)
 
     # Step 2 - Confirm borrow after user acknowledges liquidation risk
     multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multistep_workflow, curr_step_client_payload).run()

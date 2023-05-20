@@ -10,7 +10,7 @@ import requests
 from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Callable
 from dataclasses import dataclass, asdict
 
-from ....base import process_result_and_simulate_tx, fetch_multistep_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
+from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
 
 from ..aave_supply_contract_workflow import AaveSupplyContractWorkflow
 
@@ -46,7 +46,7 @@ def test_contract_aave_supply_erc20_with_approval():
 
     workflow_id = multi_step_result.workflow_id
 
-    multi_step_workflow = fetch_multistep_workflow_from_db(workflow_id)
+    multi_step_workflow = fetch_multi_step_workflow_from_db(workflow_id)
 
     # Step 2 - Process Step 1 response from FE and continue to Step 2 which is to confirm supply of USDC
     multi_step_result = AaveSupplyContractWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multi_step_workflow, curr_step_client_payload).run()

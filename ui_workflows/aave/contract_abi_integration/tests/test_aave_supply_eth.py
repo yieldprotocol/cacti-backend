@@ -4,7 +4,7 @@ Test for supplying a ETH on Aave
 """
 import re
 
-from ....base import setup_mock_db_objects, process_result_and_simulate_tx, fetch_multistep_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
+from ....base import setup_mock_db_objects, process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
 from ...contract_abi_integration import AaveSupplyContractWorkflow
 
 # Invoke this with python3 -m pytest -s -k "test_contract_aave_supply_eth"
@@ -33,7 +33,7 @@ def test_contract_aave_supply_eth():
 
     workflow_id = multi_step_result.workflow_id
 
-    multi_step_workflow = fetch_multistep_workflow_from_db(workflow_id)
+    multi_step_workflow = fetch_multi_step_workflow_from_db(workflow_id)
 
     # Process FE response payload
     multi_step_result = AaveSupplyContractWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multi_step_workflow, curr_step_client_payload).run()
