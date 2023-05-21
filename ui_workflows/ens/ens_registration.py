@@ -11,7 +11,7 @@ from dataclasses import dataclass, asdict
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 import env
-from utils import TENDERLY_FORK_URL, w3
+import context
 from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepUIWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep, setup_mock_db_objects
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
@@ -33,17 +33,17 @@ class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
 
         final_step_type = "confirm_registration"
         
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, workflow, workflow_params, curr_step_client_payload, steps, final_step_type, fork_id=fork_id)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
 
     def _forward_rpc_node_reqs(self, route):
-        """Override to intercept requests to ENS API and modify response to simulate block production"""
+        """ONLY FOR TESTING: Override to intercept requests to ENS API and modify response to simulate block production"""
         post_body = route.request.post_data
         
         # Intercepting below request to modify timestamp to be 5 minutes in the future to simulate block production and allow ENS web app to not be stuck in waiting loop
         if "eth_getBlockByNumber" in post_body:
             curr_time_hex = hex(int(time.time()) + 300)
-            data = requests.post(self.tenderly_fork_url, data=post_body)
+            data = requests.post(context.get_web3_tenderly_fork_url(), data=post_body)
             json_dict = data.json()
             json_dict["result"]["timestamp"] = curr_time_hex
             data = json_dict

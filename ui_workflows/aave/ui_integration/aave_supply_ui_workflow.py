@@ -6,7 +6,6 @@ from dataclasses import dataclass, asdict
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 import env
-from utils import TENDERLY_FORK_URL, w3
 from ...base import BaseMultiStepUIWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
@@ -54,7 +53,7 @@ class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
 
             final_step_type = "confirm_ERC20_supply"
         
-        super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type, fork_id=fork_id)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
  
     def confirm_ETH_supply_step(self, page, context) -> StepProcessingResult:

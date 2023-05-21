@@ -9,7 +9,7 @@ from ...common import  aave_set_usdc_allowance
 from ..aave_supply_contract_workflow import AaveSupplyContractWorkflow
 
 # Invoke this with python3 -m pytest -s -k "test_contract_aave_supply_erc20_no_approval"
-def test_contract_aave_supply_erc20_no_approval():
+def test_contract_aave_supply_erc20_no_approval(setup_fork):
     token = "USDC"
     amount = 0.1
     workflow_params = {"token": token, "amount": amount}

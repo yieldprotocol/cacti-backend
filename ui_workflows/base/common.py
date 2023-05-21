@@ -4,10 +4,11 @@ import uuid
 import json
 from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
 from dataclasses import dataclass
+from web3 import Web3
 
 import requests
+import context
 from database.models import db_session, ChatMessage, ChatSession, SystemConfig
-from utils import TENDERLY_FORK_BASE_URL, w3, Web3
 from database.models import (MultiStepWorkflow)
 
 TEST_WALLET_CHAIN_ID = 1  # Tenderly Mainnet Fork
@@ -71,7 +72,7 @@ class WorkflowValidationError(Exception):
 class WorkflowFailed(Exception):
     pass
 
-def tenderly_simulate_tx(fork_id: str, wallet_address: str, tx: Dict) -> str:
+def tenderly_simulate_tx(wallet_address: str, tx: Dict) -> str:
     payload = {
     "id": 0,
     "jsonrpc": "2.0",
@@ -87,15 +88,16 @@ def tenderly_simulate_tx(fork_id: str, wallet_address: str, tx: Dict) -> str:
         ]
     }
 
-    fork_rpc_url = f"{TENDERLY_FORK_BASE_URL}/{fork_id}"
+    fork_id = context.get_web3_fork_id()
+    fork_rpc_url = context.get_web3_tenderly_fork_url()
 
     res = requests.post(fork_rpc_url, json=payload)
     res.raise_for_status()
 
     tx_hash = res.json()['result']
 
-    fork_w3 = Web3(Web3.HTTPProvider(fork_rpc_url))
-    receipt = fork_w3.eth.wait_for_transaction_receipt(tx_hash)
+    fork_web3 = Web3(Web3.HTTPProvider(fork_rpc_url))
+    receipt = fork_web3.eth.wait_for_transaction_receipt(tx_hash)
 
     print("receipt:", receipt)
 
@@ -131,15 +133,16 @@ def setup_mock_db_objects() -> Dict:
     }
 
 def _validate_non_zero_eth_balance(wallet_address):
-    if (w3.eth.get_balance(w3.to_checksum_address(wallet_address)) == 0):
+    web3_provider = context.get_web3_provider()
+    if (web3_provider.eth.get_balance(web3_provider.to_checksum_address(wallet_address)) == 0):
         raise WorkflowValidationError("Wallet address has zero ETH balance")
 
 def compute_abi_abspath(wf_file_path, abi_relative_path):
     return os.path.join(os.path.dirname(os.path.abspath(wf_file_path)), abi_relative_path)
 
-def process_result_and_simulate_tx(fork_id: str, wallet_address, result: Union[Result, MultiStepResult]) -> Optional[str]:
+def process_result_and_simulate_tx(wallet_address, result: Union[Result, MultiStepResult]) -> Optional[str]:
     if result.status == "success":
-        tx_hash = tenderly_simulate_tx(fork_id, wallet_address, result.tx)
+        tx_hash = tenderly_simulate_tx(wallet_address, result.tx)
         print("Workflow successful")
         return tx_hash
     elif result.status == "terminated":
@@ -160,8 +163,9 @@ def revoke_erc20_approval(token_address: str, owner_address: str, spender_addres
 
 def set_erc20_allowance(token_address: str, owner_address: str, spender_address: str, amount: int):
     print(f"Setting ERC20 allowance, owner_address: {owner_address}, spender_address: {spender_address}, token_address: {token_address}, amount: {amount}")
-    contract = w3.eth.contract(Web3.to_checksum_address(token_address), abi=json.dumps(ERC20_ABI))
+    web3_provider = context.get_web3_provider()
+    contract = web3_provider.eth.contract(Web3.to_checksum_address(token_address), abi=json.dumps(ERC20_ABI))
 
     tx_hash = contract.functions.approve(Web3.to_checksum_address(spender_address), amount).transact({'from': Web3.to_checksum_address(owner_address), 'to': token_address, 'gas': "0x0"})
 
-    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+    tx_receipt = web3_provider.eth.wait_for_transaction_receipt(tx_hash)

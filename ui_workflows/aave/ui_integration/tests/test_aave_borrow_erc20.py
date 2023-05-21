@@ -3,13 +3,17 @@
 Test for borrowing ETH on Aave 
 """
 from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID
+from ...common import aave_supply_eth_for_borrow_test
 from ..aave_borrow_ui_workflow import AaveBorrowUIWorkflow
 
-# Invoke this with python3 -m pytest -k "test_ui_aave_borrow_eth"
-def test_ui_aave_borrow_erc20():
+# Invoke this with python3 -m pytest -s -k "test_ui_aave_borrow_erc20"
+def test_ui_aave_borrow_erc20(setup_fork):
     token = "USDC"
     amount = 0.1
     workflow_params = {"token": token, "amount": amount}
+
+    # Pre-supply ETH to Aave to setup the test environment for borrow
+    aave_supply_eth_for_borrow_test()
 
     multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
 

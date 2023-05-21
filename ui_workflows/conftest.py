@@ -4,35 +4,17 @@ from typing import Optional, Union
 import requests
 import pytest
 
-from utils import TENDERLY_API_KEY
-from .base import MultiStepResult, Result   
-
-TENDERLY_PROJECT_URL = "https://api.tenderly.co/api/v1/account/Yield/project/chatweb3/fork"
+import context
+from utils import create_fork, remove_fork
 
 @pytest.fixture(scope="module")
 def setup_fork():
     # Before test
     fork_id = create_fork()
 
-    # Return to test function
-    yield {"fork_id": fork_id}
+    with context.with_request_context(None, None, fork_id=fork_id):
+        # Return to test function
+        yield {"fork_id": fork_id}
     
     # After test
     remove_fork(fork_id)
-
-
-def create_fork():
-    if not TENDERLY_API_KEY:
-        raise Exception("TENDERLY_API_KEY required to run simulations in isolated forks")
-
-    payload = {
-        "network_id": "1",
-        "block_number": 17297193 # https://etherscan.io/block/17297193
-    }
-    res = requests.post(TENDERLY_PROJECT_URL, json=payload, headers={"X-Access-Key": TENDERLY_API_KEY})
-    res.raise_for_status()
-    return res.json()['root_transaction']['fork_id']
-
-def remove_fork(fork_id: str):
-    res = requests.delete(f"{TENDERLY_PROJECT_URL}/{fork_id}", headers={"X-Access-Key": TENDERLY_API_KEY})
-    res.raise_for_status()

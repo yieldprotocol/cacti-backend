@@ -1,7 +1,6 @@
 import os
 import json
 from typing import Dict
-from ..common import w3
 
 ERC20_ABI = None
 

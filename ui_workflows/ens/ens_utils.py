@@ -5,7 +5,8 @@ import os
 from logging import basicConfig, INFO
 import sha3 # 'pip install pysha3'
 from idna import encode, IDNAError
-from utils import w3
+
+import context
 
 # ENS contract addresses - https://legacy.ens.domains/name/ens.eth/subdomains
 ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
@@ -41,17 +42,17 @@ def get_node_namehash(domain):
 
     return "0x" + node.hex()
 
-def instantiate_ens_registry_contract():
-    return w3.eth.contract(address=w3.to_checksum_address(ENS_REGISTRY_ADDRESS), abi=ens_registry_abi_dict)
+def instantiate_ens_registry_contract(web3_provider: web3.Web3):
+    return web3_provider.eth.contract(address=web3.Web3.to_checksum_address(ENS_REGISTRY_ADDRESS), abi=ens_registry_abi_dict)
 
-def is_domain_registered(domain) -> bool:
+def is_domain_registered(web3_provider: web3.Web3, domain) -> bool:    
     node = get_node_namehash(domain)
-    contract = instantiate_ens_registry_contract()
+    contract = instantiate_ens_registry_contract(web3_provider)
     address = contract.functions.owner(node).call()
     return web3.constants.ADDRESS_ZERO != address
 
-def is_domain_owner(domain: str, user_address: str) -> bool:
+def is_domain_owner(web3_provider: web3.Web3, domain: str, user_address: str) -> bool:
     node = get_node_namehash(domain)
-    contract = instantiate_ens_registry_contract()
+    contract = instantiate_ens_registry_contract(web3_provider)
     owner_address: str = contract.functions.owner(node).call()
     return owner_address.lower() == user_address.lower()

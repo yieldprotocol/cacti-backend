@@ -10,19 +10,18 @@ from ...ui_integration import AaveSupplyUIWorkflow
 
 # Invoke this with python3 -m pytest -s -k "test_ui_aave_supply_eth"
 def test_ui_aave_supply_eth(setup_fork):
-    fork_id = setup_fork['fork_id']
     token = "ETH"
     amount = 0.1
     workflow_params = {"token": token, "amount": amount}
 
-    multi_step_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, fork_id=fork_id).run()
+    multi_step_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
 
     assert multi_step_result.description == "Confirm supply of 0.1 ETH on Aave"
 
     assert multi_step_result.is_final_step
 
     # Simulating user signing/confirming a tx on the UI with their wallet
-    tx_hash = process_result_and_simulate_tx(fork_id, TEST_WALLET_ADDRESS, multi_step_result)
+    tx_hash = process_result_and_simulate_tx(TEST_WALLET_ADDRESS, multi_step_result)
 
     # Mocking FE response payload to backend
     curr_step_client_payload = {
@@ -38,7 +37,7 @@ def test_ui_aave_supply_eth(setup_fork):
     multi_step_workflow = fetch_multi_step_workflow_from_db(workflow_id)
 
     # Process FE response payload
-    multi_step_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multi_step_workflow, curr_step_client_payload, fork_id=fork_id).run()
+    multi_step_result = AaveSupplyUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multi_step_workflow, curr_step_client_payload).run()
 
     # Final state of workflow should be terminated
     assert multi_step_result.status == "terminated"

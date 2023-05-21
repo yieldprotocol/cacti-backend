@@ -14,8 +14,6 @@ from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_f
 
 from ..aave_supply_ui_workflow import AaveSupplyUIWorkflow
 
-from utils import w3, Web3
-
 from ...common import aave_revoke_usdc_approval
 
 # Invoke this with python3 -m pytest -s -k "test_ui_aave_supply_erc20_with_approval"
@@ -34,7 +32,7 @@ def test_ui_aave_supply_erc20_with_approval(setup_fork):
     assert multistep_result.description == "Approve supply of 0.1 USDC on Aave"
 
     # Simulating user signing/confirming a tx on the UI with their wallet
-    tx_hash = process_result_and_simulate_tx(setup_fork['fork_id'], TEST_WALLET_ADDRESS, multistep_result)
+    tx_hash = process_result_and_simulate_tx(TEST_WALLET_ADDRESS, multistep_result)
 
     # Mocking FE response payload to backend
     curr_step_client_payload = {

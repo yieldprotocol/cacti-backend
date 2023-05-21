@@ -8,6 +8,7 @@ import functools
 import traceback
 import context
 import env
+import context
 
 
 def _get_weaviate_url(config):
@@ -41,14 +42,8 @@ tokenizer = tiktoken.encoding_for_model("text-davinci-003")
 ns = ENS.from_web3(w3)
 
 
-def estimate_gas(tx, fork_id=None):
-    if fork_id:
-        fork_rpc_url = f"{TENDERLY_FORK_BASE_URL}/{fork_id}"
-        fork_w3 = Web3(Web3.HTTPProvider(fork_rpc_url))
-        return hex(fork_w3.eth.estimate_gas(tx))
-    else:
-        # Use default chain/fork
-        return hex(w3.eth.estimate_gas(tx))
+def estimate_gas(tx):
+        return hex(context.get_web3_provider().eth.estimate_gas(tx))
 
 def get_token_len(s: str) -> int:
     return len(tokenizer.encode(s))

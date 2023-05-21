@@ -14,18 +14,17 @@ from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_f
 
 from ..aave_supply_contract_workflow import AaveSupplyContractWorkflow
 
-from utils import w3, Web3
-
 from ...common import aave_revoke_usdc_approval
 
 # Invoke this with python3 -m pytest -s -k "test_aave_supply_erc20_with_approval"
-def test_contract_aave_supply_erc20_with_approval():
+def test_contract_aave_supply_erc20_with_approval(setup_fork):
     token = "USDC"
     amount = 0.1
     workflow_params = {"token": token, "amount": amount}
 
     # Make sure to revoke any USDC pre-approval to ensure Aave UI is in the correct state to show approval flow
     aave_revoke_usdc_approval()
+    
     # Step 1 - Approve supply of USDC
     multi_step_result = AaveSupplyContractWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
 

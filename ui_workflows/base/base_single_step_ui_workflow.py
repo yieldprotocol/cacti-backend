@@ -13,13 +13,13 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 class BaseSingleStepUIWorkflow(BaseUIWorkflow):
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, user_description: str, fork_id: Optional[str] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, user_description: str) -> None:
         self.chat_message_id = chat_message_id
         self.workflow_type = workflow_type
         self.workflow_params = workflow_params
         self.user_description = user_description
         self.log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, wf_params: {self.workflow_params}"
-        super().__init__(wallet_chain_id, wallet_address, fork_id=fork_id)
+        super().__init__(wallet_chain_id, wallet_address)
 
     def run(self) -> Any:
         print(f"Single-step UI workflow started, {self.log_params}")
@@ -47,8 +47,8 @@ class BaseSingleStepUIWorkflow(BaseUIWorkflow):
             print(f"Single-step UI workflow ended, {self.log_params}")
 
     
-    def _run_page(self, page, context) -> Result:
-        processing_result = self._run_step(page, context)
+    def _run_page(self, page, browser_context) -> Result:
+        processing_result = self._run_step(page, browser_context)
 
         computed_user_description = processing_result.override_user_description or self.user_description
 
@@ -63,7 +63,7 @@ class BaseSingleStepUIWorkflow(BaseUIWorkflow):
         )
 
     @abstractmethod
-    def _run_step(self, page, context) -> StepProcessingResult:
+    def _run_step(self, page, browser_context) -> StepProcessingResult:
         """Run the step and return the result."""
 
         

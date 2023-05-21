@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
-from .common import w3
+from web3 import Web3
+
 from .abi import ERC20_ABI
 
 # Always ensure decimals is set correctly for any token by checking the contract
@@ -56,23 +57,23 @@ def parse_token_amount(chain_id: int, token: str, amount: str) -> int:
 def hexify_token_amount(chain_id: int, token: str, amount: str) -> str:
     return hex(parse_token_amount(chain_id, token, amount))
 
-def get_token_balance(chain_id: int, token: str, wallet_address: str) -> int:
+def get_token_balance(web3_provider: Web3, chain_id: int, token: str, wallet_address: str) -> int:
     if chain_id == 1:
-        return _mainnet_token_balance(token, wallet_address)
+        return _mainnet_token_balance(web3_provider, token, wallet_address)
     else:
         raise Exception(f"Chain ID {chain_id} not supported by system")
 
-def has_sufficient_erc20_allowance(chain_id: int, token: str, wallet_address: str, spender_address: str, amount: str) -> bool:
+def has_sufficient_erc20_allowance(web3_provider: Web3, chain_id: int, token: str, wallet_address: str, spender_address: str, amount: str) -> bool:
     if chain_id == 1:
-        erc20_contract = w3.eth.contract(address=get_token_address(chain_id, token), abi=ERC20_ABI)
+        erc20_contract = web3_provider.eth.contract(address=get_token_address(chain_id, token), abi=ERC20_ABI)
         return erc20_contract.functions.allowance(wallet_address, spender_address).call() >= _mainnet_parse_token_amount(token, amount)
     else:
         raise Exception(f"Chain ID {chain_id} not supported by system")
 
-def generate_erc20_approve_encoded_data(chain_id: int, token: str, spender_address: str, amount: str) -> Dict:
+def generate_erc20_approve_encoded_data(web3_provider: Web3, chain_id: int, token: str, spender_address: str, amount: str) -> Dict:
     if chain_id == 1:
-        erc20_contract = w3.eth.contract(address=get_token_address(chain_id, token), abi=ERC20_ABI)
-        return erc20_contract.encodeABI(fn_name="approve", args=[w3.to_checksum_address(spender_address), _mainnet_parse_token_amount(token, amount)])
+        erc20_contract = web3_provider.eth.contract(address=get_token_address(chain_id, token), abi=ERC20_ABI)
+        return erc20_contract.encodeABI(fn_name="approve", args=[web3_provider.to_checksum_address(spender_address), _mainnet_parse_token_amount(token, amount)])
     else:
         raise Exception(f"Chain ID {chain_id} not supported by system")
 
@@ -88,11 +89,11 @@ def _mainnet_parse_token_amount(token: str, amount: str) -> int:
 
     return int(float(amount) * 10 ** _mainnet_get_token_profile(token)["decimals"])
 
-def _mainnet_token_balance(token: str, wallet_address: str) -> int:
+def _mainnet_token_balance(web3_provider: Web3, token: str, wallet_address: str) -> int:
     if token == "ETH":
-        return w3.eth.get_balance(wallet_address)
+        return web3_provider.eth.get_balance(wallet_address)
     else:        
-        erc20_contract = w3.eth.contract(address=_mainnet_get_token_address(token), abi=ERC20_ABI)
+        erc20_contract = web3_provider.eth.contract(address=_mainnet_get_token_address(token), abi=ERC20_ABI)
         return erc20_contract.functions.balanceOf(wallet_address).call()
 
 def _mainnet_get_token_profile(token: str) -> Dict:
@@ -104,4 +105,4 @@ def _mainnet_get_token_address(token: str) -> str:
     if token == "ETH":
         raise Exception("ETH does not have an address")
     
-    return w3.to_checksum_address(_mainnet_get_token_profile(token)["address"])
+    return Web3.to_checksum_address(_mainnet_get_token_profile(token)["address"])

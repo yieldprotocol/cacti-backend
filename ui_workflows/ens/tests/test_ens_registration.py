@@ -3,14 +3,9 @@ import traceback
 import time
 from ui_workflows.ens import ENSRegistrationWorkflow
 from ui_workflows.base import MultiStepResult, setup_mock_db_objects, process_result_and_simulate_tx, fetch_multi_step_workflow_from_db
-from database.models import (
-    db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
-)
 
 # Invoke this with python -m pytest -s -k "test_ens_registration"
 def test_ens_registration(setup_fork):
-    fork_id = setup_fork['fork_id']
-    tenderly_api_access_key = os.environ.get("TENDERLY_API_ACCESS_KEY", None)
     epoch_seconds = int(time.time())
     domain_to_register = f"test{epoch_seconds}.eth"
     wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
@@ -24,9 +19,9 @@ def test_ens_registration(setup_fork):
 
     print("Step 1: Request to register ENS domain...")
 
-    multi_step_result: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, None, None, fork_id=fork_id).run()
+    multi_step_result: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, None, None).run()
 
-    process_result_and_simulate_tx(fork_id, wallet_address, multi_step_result)
+    process_result_and_simulate_tx(wallet_address, multi_step_result)
     
     print("Step 2: Confirm registration")
 
@@ -41,9 +36,9 @@ def test_ens_registration(setup_fork):
 
     multi_step_workflow = fetch_multi_step_workflow_from_db(workflow_id)
 
-    multi_step_result: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multi_step_workflow, curr_step_client_payload, fork_id=fork_id).run()
+    multi_step_result: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multi_step_workflow, curr_step_client_payload).run()
 
-    process_result_and_simulate_tx(fork_id, wallet_address, multi_step_result)
+    process_result_and_simulate_tx(wallet_address, multi_step_result)
 
     print("Final checks")
 
@@ -55,9 +50,9 @@ def test_ens_registration(setup_fork):
         "userActionData": "Sample TX HASH"
     }   
 
-    multi_step_result: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multi_step_workflow, curr_step_client_payload, fork_id=fork_id).run()
+    multi_step_result: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multi_step_workflow, curr_step_client_payload).run()
     
-    process_result_and_simulate_tx(fork_id, wallet_address, multi_step_result)
+    process_result_and_simulate_tx(wallet_address, multi_step_result)
 
     print("Domain registered successfully")
 

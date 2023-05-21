@@ -8,7 +8,7 @@ from ....base import setup_mock_db_objects, process_result_and_simulate_tx, fetc
 from ...contract_abi_integration import AaveSupplyContractWorkflow
 
 # Invoke this with python3 -m pytest -s -k "test_contract_aave_supply_eth"
-def test_contract_aave_supply_eth():
+def test_contract_aave_supply_eth(setup_fork):
     token = "ETH"
     amount = 0.1
     workflow_params = {"token": token, "amount": amount}

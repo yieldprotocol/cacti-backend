@@ -5,19 +5,19 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
 
-import env
 import requests
-from utils import TENDERLY_FORK_BASE_URL, TENDERLY_FORK_URL
 from pywalletconnect.client import WCClient
 from playwright.sync_api import  sync_playwright, Page, BrowserContext
 
+import env
+import context
 from .common import _validate_non_zero_eth_balance
 
 
 class BaseUIWorkflow(ABC):
     """Grandparent base class for UI workflows. Do not directly use this class, use either BaseSingleStepUIWorkflow or BaseMultiStepUIWorkflow subclass"""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, browser_storage_state: Optional[Dict] = None, fork_id: Optional[str] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, browser_storage_state: Optional[Dict] = None) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
         self.browser_storage_state = browser_storage_state
@@ -26,17 +26,15 @@ class BaseUIWorkflow(ABC):
         self.thread_event = threading.Event()
         self.is_approval_tx = False
 
-        self.tenderly_fork_url = f"{TENDERLY_FORK_BASE_URL}/{fork_id}" if fork_id else TENDERLY_FORK_URL
-
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
         _validate_non_zero_eth_balance(self.wallet_address)
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
-            context = browser.new_context(storage_state=self.browser_storage_state)
-            context.grant_permissions(["clipboard-read", "clipboard-write"])
-            page = context.new_page()
+            browser_context = browser.new_context(storage_state=self.browser_storage_state)
+            browser_context.grant_permissions(["clipboard-read", "clipboard-write"])
+            page = browser_context.new_page()
 
             if not env.is_prod():
                 self._dev_mode_intercept_rpc(page)
@@ -44,15 +42,15 @@ class BaseUIWorkflow(ABC):
             self._goto_page_and_open_walletconnect(page)
             self._connect_to_walletconnect_modal(page)
 
-            ret = self._run_page(page, context)
+            ret = self._run_page(page, browser_context)
             print(f"Workflow Result:-\n{ret}")
 
-            context.close()
+            browser_context.close()
             browser.close()
         return ret
 
     @abstractmethod
-    def _run_page(self, page: Page, context: BrowserContext) -> Any:
+    def _run_page(self, page: Page, browser_context: BrowserContext) -> Any:
         """Accept user input and return responses via the send_message function."""
 
     @abstractmethod
@@ -102,13 +100,13 @@ class BaseUIWorkflow(ABC):
         return dict(is_web3_call=False, has_list_payload=has_list_payload)
     
     def _forward_rpc_node_reqs(self, route):
-        route.continue_(url=self.tenderly_fork_url)
+        route.continue_(url=context.get_web3_tenderly_fork_url())
 
     def _handle_batch_web3_call(self, route):
         payload = json.loads(route.request.post_data)
         batch_result = []
         for obj in payload:
-            response = requests.post(self.tenderly_fork_url, json=obj)
+            response = requests.post(context.get_web3_tenderly_fork_url(), json=obj)
             response.raise_for_status()
             batch_result.append(response.json())
         route.fulfill(body=json.dumps(batch_result), headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})

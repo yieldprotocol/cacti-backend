@@ -9,7 +9,7 @@ from .base_ui_workflow import BaseUIWorkflow
 class BaseMultiStepUIWorkflow(BaseUIWorkflow):
     """Base class for multi-step UI workflow."""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, multistep_workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], runnable_steps: List[RunnableStep], final_step_type: str, fork_id: Optional[str] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, multistep_workflow: Optional[MultiStepWorkflow], worfklow_params: Dict, curr_step_client_payload: Optional[WorkflowStepClientPayload], runnable_steps: List[RunnableStep], final_step_type: str) -> None:
 
         self.chat_message_id = chat_message_id
         self.multistep_workflow = multistep_workflow
@@ -26,7 +26,7 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
 
         browser_storage_state = None
 
-        super().__init__(wallet_chain_id, wallet_address, browser_storage_state, fork_id=fork_id)
+        super().__init__(wallet_chain_id, wallet_address, browser_storage_state)
 
     def run(self) -> MultiStepResult:
         start_log_params = f"{self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step_client_payload['id'] if self.curr_step_client_payload else None}, curr_step_type: {self.curr_step_client_payload['type'] if self.curr_step_client_payload else self.runnable_steps[0].type}, wf_params: {self.workflow_params}"
@@ -87,8 +87,8 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
             end_log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step.id}, curr_step_type: {self.curr_step.type}"
             print(f"Multi-step UI workflow ended, {end_log_params}")
 
-    def _run_page(self, page, context) -> MultiStepResult:
-        processing_result = self._run_step(page, context)
+    def _run_page(self, page, browser_context) -> MultiStepResult:
+        processing_result = self._run_step(page, browser_context)
 
         if processing_result.status == 'error':
             self.curr_step.status = WorkflowStepStatus.error
@@ -117,30 +117,30 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
             description=computed_user_description
         )
 
-    def _run_step(self, page, context, replacement_step_type=None, extra_params=None) -> StepProcessingResult:
+    def _run_step(self, page, browser_context, replacement_step_type=None, extra_params=None) -> StepProcessingResult:
         if replacement_step_type:
-            result = self._handle_step_replace(page, context, replacement_step_type, extra_params)
+            result = self._handle_step_replace(page, browser_context, replacement_step_type, extra_params)
         elif not self.curr_step:
-            result = self._run_first_step(page, context)
+            result = self._run_first_step(page, browser_context)
         else:
             self.prev_step = self.curr_step
-            result = self._run_next_step(page, context)
+            result = self._run_next_step(page, browser_context)
 
         if result.status == 'replace':
-            return self._run_step(page, context, replacement_step_type=result.replace_with_step_type, extra_params=result.replace_extra_params)
+            return self._run_step(page, browser_context, replacement_step_type=result.replace_with_step_type, extra_params=result.replace_extra_params)
         else:
             return result
 
-    def _run_first_step(self, page, context) -> StepProcessingResult:
+    def _run_first_step(self, page, browser_context) -> StepProcessingResult:
         """Run first step, it is singled out as this is the only step that has no prior client response to process unlike other steps"""
         first_step = self.runnable_steps[0]
 
         # Save step to DB and set current step
         self._create_new_curr_step(first_step.type, 1, first_step.user_action_type, first_step.user_description)
 
-        return first_step.function(page, context)
+        return first_step.function(page, browser_context)
 
-    def _run_next_step(self, page, context) -> StepProcessingResult:
+    def _run_next_step(self, page, browser_context) -> StepProcessingResult:
         """Find the next step to run based on the current successful step from client response"""
 
         curr_runnable_step_index = self._find_runnable_step_index_by_step_type(self.curr_step.type)
@@ -150,9 +150,9 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
         # Save step to DB and reset current step
         self._create_new_curr_step(next_step_to_run.type, next_step_to_run_index + 1, next_step_to_run.user_action_type, next_step_to_run.user_description)
 
-        return next_step_to_run.function(page, context)
+        return next_step_to_run.function(page, browser_context)
 
-    def _handle_step_replace(self, page, context, replace_with_step_type: str, replace_extra_params: Dict) -> StepProcessingResult:
+    def _handle_step_replace(self, page, browser_context, replace_with_step_type: str, replace_extra_params: Dict) -> StepProcessingResult:
         if not self.final_step_type:
             raise WorkflowValidationError("Variable self.final_step_type must be set for workflow with replace condition")
 
@@ -167,7 +167,7 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
 
         self.curr_step_description = runnable_step.user_description
 
-        return runnable_step.function(page, context, replace_extra_params)
+        return runnable_step.function(page, browser_context, replace_extra_params)
         
     def _find_runnable_step_index_by_step_type(self, step_type) -> int:
         return [i for i,s in enumerate(self.runnable_steps) if s.type == step_type][0]
@@ -176,7 +176,7 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
         """
         This setup function does the following primary tasks:
         1. Create new workflow in DB if not already created
-        2. Use current step payload/feedback from client to get the step's browser storage state so that it can be injected into the browser context to be used in next step
+        2. Use current step payload/feedback from client to get the step's browser storage state so that it can be injected into the browser browser_context to be used in next step
         3. User current step payload/feedback from client and save it to DB
         4. Set log_params to be used for logging
         """
@@ -226,8 +226,8 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
         db_session.add_all(models)
         db_session.commit()
 
-    def _preserve_browser_local_storage_item(self, context, key):
-        storage_state = self._get_browser_cookies_and_storage(context)
+    def _preserve_browser_local_storage_item(self, browser_context, key):
+        storage_state = self._get_browser_cookies_and_storage(browser_context)
         local_storage = storage_state['origins'][0]['localStorage']
         origin = storage_state['origins'][0]['origin']
         item_to_preserve = None
@@ -267,5 +267,5 @@ class BaseMultiStepUIWorkflow(BaseUIWorkflow):
             self.curr_step.step_state.update(step_state)
         self._save_to_db([self.curr_step])
 
-    def _get_browser_cookies_and_storage(self, context) -> Dict:
-        return context.storage_state()
+    def _get_browser_cookies_and_storage(self, browser_context) -> Dict:
+        return browser_context.storage_state()

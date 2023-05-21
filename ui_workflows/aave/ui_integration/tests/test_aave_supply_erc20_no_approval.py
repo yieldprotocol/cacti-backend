@@ -8,7 +8,7 @@ from ..aave_supply_ui_workflow import AaveSupplyUIWorkflow
 from ...common import  aave_set_usdc_allowance
 
 # Invoke this with python3 -m pytest -s -k "test_ui_aave_supply_erc20_no_approval"
-def test_ui_aave_supply_erc20_no_approval():
+def test_ui_aave_supply_erc20_no_approval(setup_fork):
     token = "USDC"
     amount = 0.1
     workflow_params = {"token": token, "amount": amount}
@@ -42,4 +42,4 @@ def test_ui_aave_supply_erc20_no_approval():
     # Final state of workflow should be terminated
     assert multistep_result.status == "terminated"
 
-    # TODO - For thorough validation, ensure to assert the actual amount used in tx matches expectation by fetching decoded tx data from Tenderly
+    # TODO - For thorough validation, figure out how to fetch decoded tx data from Tenderly and assert the amount processed
