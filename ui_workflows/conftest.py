@@ -12,7 +12,7 @@ def setup_fork():
     # Before test
     fork_id = create_fork()
 
-    with context.with_request_context(None, None, fork_id=fork_id):
+    with context.with_request_context(None, None, wallet_chain_id=None, fork_id=fork_id):
         # Return to test function
         yield {"fork_id": fork_id}
     
