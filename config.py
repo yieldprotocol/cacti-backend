@@ -38,7 +38,7 @@ default_config = dict(
     chat=dict(
         type="chat.rephrase_widget_search2.RephraseWidgetSearchChat",
         widget_index=widget_index,
-        top_k=15,
+        top_k=18,
     )
 )
 
@@ -83,9 +83,7 @@ def initialize_system(config):
     return initialize(config)
 
 
-def initialize_system(config):
-    return initialize(config)
-
+#----------------------------------------
 
 # import registry
 

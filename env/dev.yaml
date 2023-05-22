@@ -1,14 +1,9 @@
-# Local environment
+# Dev environment
 
+# GCP SQL instance: chatdb-dev
 chatdb:
-  # if you are not doing any db schema changes, using the dev db is ok
   host: 34.139.225.26
   port: 5432
-  # if you are making big changes (schema, refactors, etc), run postgres
-  # locally in docker (see docker/docker-compose.yml) and update the
-  # env config to use the local postgres instead
-  #host: 127.0.0.1
-  #port: 5433
   user: chatdb
   password: lVIu2U0lBctiYBScboAJ
 
@@ -19,6 +14,7 @@ scrapedb:
   user: chatdb
   password: lVIu2U0lBctiYBScboAJ
 
+# TODO: set up https
 # GCP VM: weaviate-dev
 weaviate:
   protocol: http
@@ -29,40 +25,7 @@ weaviate:
 
 # FastAPI server
 server:
-  host: localhost:3000
+  host: dev--ironclad-parent.netlify.app
   origins:
-  - '*'
-  secret_key: US3e74TCvm0fB6XR0DrA5f7RofyIhR4xQtousxSwcV8=
-
-
-# # Dev environment
-
-# # GCP SQL instance: chatdb-dev
-# chatdb:
-#   host: 34.139.225.26
-#   port: 5432
-#   user: chatdb
-#   password: lVIu2U0lBctiYBScboAJ
-
-# # GCP SQL instance: scrapedb
-# scrapedb:
-#   host: 34.23.168.19
-#   port: 5432
-#   user: chatdb
-#   password: lVIu2U0lBctiYBScboAJ
-
-# # TODO: set up https
-# # GCP VM: weaviate-dev
-# weaviate:
-#   protocol: http
-#   host: 35.211.169.16
-#   port: 8080
-#   user: chatweb3
-#   password: q0jficzXOA69T5FWgAeT
-
-# # FastAPI server
-# server:
-#   host: dev--ironclad-parent.netlify.app
-#   origins:
-#   - https://dev--ironclad-parent.netlify.app
-#   secret_key: wMLunxkwpWJf5iyDTHGm3iGqLtHOf0vQ+gOzv3HipIM=
+  - https://dev--ironclad-parent.netlify.app
+  secret_key: wMLunxkwpWJf5iyDTHGm3iGqLtHOf0vQ+gOzv3HipIM=

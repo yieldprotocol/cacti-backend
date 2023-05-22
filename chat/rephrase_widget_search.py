@@ -259,7 +259,6 @@ def replace_match(m: re.Match) -> str:
     params = list(map(sanitize_str, params.split(','))) if params else []
     print('found command:', command, params)
     if command == 'fetch-nft-search':
-        print(*params)
         return str(fetch_nft_search(*params))
     elif command == 'fetch-nft-collection-assets-by-trait':
         return str(fetch_nft_search_collection_by_trait(*params, for_sale_only=False))
