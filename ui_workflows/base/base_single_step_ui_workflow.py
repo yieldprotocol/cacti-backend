@@ -14,12 +14,9 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 class BaseSingleStepUIWorkflow(BaseUIWorkflow):
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict, user_description: str) -> None:
-        self.chat_message_id = chat_message_id
-        self.workflow_type = workflow_type
-        self.workflow_params = workflow_params
         self.user_description = user_description
         self.log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, wf_params: {self.workflow_params}"
-        super().__init__(wallet_chain_id, wallet_address)
+        super().__init__(wallet_chain_id, wallet_address, chat_message_id, workflow_type, workflow_params)
 
     def run(self) -> Any:
         print(f"Single-step UI workflow started, {self.log_params}")
@@ -43,7 +40,7 @@ class BaseSingleStepUIWorkflow(BaseUIWorkflow):
                 description=self.user_description
             )
         finally:
-            self.stop_listener()
+            self.stop_wallet_connect_listener()
             print(f"Single-step UI workflow ended, {self.log_params}")
 
     
@@ -54,7 +51,7 @@ class BaseSingleStepUIWorkflow(BaseUIWorkflow):
 
         # Arbitrary wait to allow for enough time for WalletConnect relay to send our client the tx data
         page.wait_for_timeout(5000)
-        tx = self.stop_listener()
+        tx = self.stop_wallet_connect_listener()
         return Result(
             status=processing_result.status,
             tx=tx,

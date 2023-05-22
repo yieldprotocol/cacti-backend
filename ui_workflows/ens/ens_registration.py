@@ -61,7 +61,7 @@ class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
         page.get_by_role("navigation").get_by_text("Connect").click()
         page.get_by_text("WalletConnect", exact=True).click()
 
-    def step_1_request_registration(self, page, context) -> StepProcessingResult:
+    def step_1_request_registration(self, page, browser_context) -> StepProcessingResult:
         """Step 1: Request registration"""
 
         # Check for failure cases early so check if domain is already registered
@@ -78,11 +78,11 @@ class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
         page.click(selector)
 
         # Preserve browser local storage item to allow protocol to recreate the correct state
-        self._preserve_browser_local_storage_item(context, 'progress')
+        self._preserve_browser_local_storage_item(browser_context, 'progress')
 
         return StepProcessingResult(status='success')
     
-    def step_2_confirm_registration(self, page, context) -> StepProcessingResult:
+    def step_2_confirm_registration(self, page, browser_context) -> StepProcessingResult:
         """Step 2: Confirm registration"""
 
         # Find register button

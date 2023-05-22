@@ -26,7 +26,7 @@ class UniswapUIWorkflow(BaseUIWorkflow):
         page.get_by_text("Copy to clipboard").click()
         wc_uri = page.evaluate("() => navigator.clipboard.readText()")
 
-        self.start_listener(wc_uri)
+        self.start_wallet_connect_listener(wc_uri)
 
     def _run_page(self, page):
         try:
@@ -80,7 +80,7 @@ class UniswapUIWorkflow(BaseUIWorkflow):
 
             # Arbitrary wait to allow WC to relay info to our client
             page.wait_for_timeout(5000)
-            tx = self.stop_listener()
+            tx = self.stop_wallet_connect_listener()
             self.is_approval_tx = True
 
             try:
@@ -97,7 +97,7 @@ class UniswapUIWorkflow(BaseUIWorkflow):
                 page.get_by_role("button", name=f"Confirm {self.operation}").click()
                 return Result(status="success", tx=tx[0], is_approval_tx=self.is_approval_tx, description=self.description)
         except Exception as e:
-            self.stop_listener()
+            self.stop_wallet_connect_listener()
             return Result(status="error", error_msg=e.args[0], description=self.description)
 
 

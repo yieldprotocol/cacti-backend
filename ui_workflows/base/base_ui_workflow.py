@@ -17,14 +17,18 @@ from .common import _validate_non_zero_eth_balance
 class BaseUIWorkflow(ABC):
     """Grandparent base class for UI workflows. Do not directly use this class, use either BaseSingleStepUIWorkflow or BaseMultiStepUIWorkflow subclass"""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, browser_storage_state: Optional[Dict] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
-        self.browser_storage_state = browser_storage_state
+        self.chat_message_id = chat_message_id
+        self.workflow_type = workflow_type
+        self.workflow_params = workflow_params
+        self.browser_storage_state = None
         self.thread = None
         self.result_container = []
         self.thread_event = threading.Event()
         self.is_approval_tx = False
+
 
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
@@ -61,7 +65,7 @@ class BaseUIWorkflow(ABC):
         """Intercept RPC calls in dev mode"""
         page.route("**/*", self._intercept_rpc_node_reqs)
 
-    def start_listener(self, wc_uri: str) -> None:
+    def start_wallet_connect_listener(self, wc_uri: str) -> None:
         assert self.thread is None, 'not expecting a thread to be started'
         self.thread = threading.Thread(
             target=wc_listen_for_messages,
@@ -69,7 +73,7 @@ class BaseUIWorkflow(ABC):
         )
         self.thread.start()
 
-    def stop_listener(self) -> Any:
+    def stop_wallet_connect_listener(self) -> Any:
         if self.thread:
             self.thread_event.set()
             self.thread.join()
@@ -81,7 +85,7 @@ class BaseUIWorkflow(ABC):
     def _connect_to_walletconnect_modal(self, page):
         page.get_by_text("Copy to clipboard").click()
         wc_uri = page.evaluate("() => navigator.clipboard.readText()")
-        self.start_listener(wc_uri)
+        self.start_wallet_connect_listener(wc_uri)
 
     def _is_web3_call(self, request) -> Dict[bool, bool]:
         has_list_payload = False
