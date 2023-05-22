@@ -3,9 +3,11 @@ import json
 import web3
 import os
 from logging import basicConfig, INFO
-# import sha3 # 'pip install pysha3'
+#import sha3 # 'pip install pysha3'
+import hashlib
 from idna import encode, IDNAError
 from utils import w3
+
 
 # ENS contract addresses - https://legacy.ens.domains/name/ens.eth/subdomains
 ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
@@ -17,7 +19,7 @@ with open(os.path.join(curr_script_dir, "./abis/ens_registry.abi"), 'r') as f:
     ens_registry_abi_dict = json.load(f)
 
 def keccak_256(data):
-    k = sha3.keccak_256()
+    k = hashlib.sha3_256()
     k.update(data)
     return k.hexdigest()
 

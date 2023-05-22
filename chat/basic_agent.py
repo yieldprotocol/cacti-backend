@@ -64,6 +64,7 @@ class BasicAgentChat(BaseChat):
         history_string = history.to_string(bot_prefix="Observation", system_prefix="Thought", token_limit=HISTORY_TOKEN_LIMIT, before_message_id=before_message_id)
 
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
+        start = time.time()
 
         system_chat_message_id = None
         system_response = ''
@@ -146,7 +147,6 @@ class BasicAgentChat(BaseChat):
             'input': userinput,
             'chat_history': history_string,
         }
-        start = time.time()
         with context.with_request_context(history.wallet_address, message_id):
             result = agent.run(example).strip()
         duration = time.time() - start
