@@ -137,7 +137,7 @@ class BaseMultiStepMixin():
             tx = processing_result.tx
             tx['gas'] = estimate_gas(tx)
 
-        if "value" not in tx:
+        if tx and "value" not in tx:
             tx['value'] = "0x0"
 
         computed_user_description = processing_result.override_user_description or self.curr_step_description
@@ -213,7 +213,7 @@ class BaseMultiStepMixin():
             page = args[0]
             browser_context = args[1]
 
-        print(f"Workflow step replacement being processed, wf_type: {self.workflow_type}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step.id}, from_step_type: {self.curr_step.type}, to_step_type: {replace_with_step_type}")
+        print(f"Workflow step replacement being processed, wf_type: {self.workflow_type}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step.id}, from_step_type: {self.curr_step.type}, to_step_type: {replacement_step_type}")
 
         runnable_step_index = self._find_runnable_step_index_by_step_type(replacement_step_type)
         runnable_step = self.runnable_steps[runnable_step_index]
