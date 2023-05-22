@@ -34,6 +34,7 @@ server:
   - '*'
   secret_key: US3e74TCvm0fB6XR0DrA5f7RofyIhR4xQtousxSwcV8=
 
+
 # # Dev environment
 
 # # GCP SQL instance: chatdb-dev
