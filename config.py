@@ -36,9 +36,9 @@ crypto_tokens_index = dict(
 default_config = dict(
     type="system.System",
     chat=dict(
-        type="chat.rephrase_widget_search.RephraseWidgetSearchChat",
+        type="chat.rephrase_widget_search2.RephraseWidgetSearchChat",
         widget_index=widget_index,
-        top_k=5,
+        top_k=15,
     )
 )
 
@@ -81,6 +81,11 @@ def initialize_streaming(cfg, new_token_handler):
 
 def initialize_system(config):
     return initialize(config)
+
+
+def initialize_system(config):
+    return initialize(config)
+
 
 # import registry
 

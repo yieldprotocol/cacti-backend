@@ -29,15 +29,7 @@ from ui_workflows import (
 )
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 
-
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
-
-REPHRASE_TEMPLATE = \
-'''You are a rephrasing agent. You will be given a query which you have to rephrase, explicitly restating the task without pronouns and restating details based on the conversation history and new input. Restate verbatim ALL details/names/figures/facts/etc from past observations relevant to the task and ALL related entities.
-# Chat History:
-# {history}
-# Input: {userinput}
-# Rephrased Input:'''
 
 TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget magic commands that you can delegate work to, by invoking them and chaining them together, to provide a response to an input query. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>" specifying the command and its input parameters. They can only be used with all parameters having known and assigned values, otherwise, they have to be kept secret. The command may either have a display- or a fetch- prefix. When you return a display- command, the user will see data, an interaction box, or other inline item rendered in its place. When you return a fetch- command, data is fetched over an API and injected in place. Users cannot type or use magic commands, so do not tell them to use them. Fill in the command with parameters as inferred from the input. If there are missing parameters, do not use magic commands but mention what parameters are needed instead. If there is no appropriate widget available, explain that more information is needed. Do not make up a non-existent widget magic command, only use the applicable ones for the situation, and only if all parameters are available. You might need to use the output of widget magic commands as the input to another to get your final answer. Here are the widgets that may be relevant:
 ---
@@ -50,22 +42,19 @@ Use the following format:
 ## Known Parameters: parameter-value pairs representing inputs to the above widget magic command
 ## Response: return the widget magic command with ALL its respective input parameter values (omit parameter names)
 
-## Tool Input: {question}
-## Widget Command:'''
+Previous conversation history:
+{chat_history}
+
+Input: {question}
+## Tool input:'''
 
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
     def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
-        self.rephrase_prompt = PromptTemplate(
-            input_variables=["history", "userinput"],
-            template=REPHRASE_TEMPLATE,
-        )
-        llm = OpenAI(temperature=0.0,)
-        self.rephrase_chain = LLMChain(llm=llm, prompt=self.rephrase_prompt)
         self.widget_prompt = PromptTemplate(
-            input_variables=["task_info", "question"],
+            input_variables=["task_info", "chat_history", "question"],
             template=TEMPLATE,
             output_parser=self.output_parser,
         )
@@ -85,26 +74,6 @@ class RephraseWidgetSearchChat(BaseChat):
         history_string = history.to_string(before_message_id=before_message_id)
         
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
-        start = time.time()
-
-        if history:
-            # First rephrase the question
-            question = self.rephrase_chain.run({
-                "history": history_string.strip(),
-                "userinput": userinput,
-            }).strip()
-            rephrased = True
-        else:
-            question = userinput
-            rephrased = False
-        duration = time.time() - start
-        if self.show_thinking and rephrased and userinput != question:
-            send(Response(response="I think you're asking: " + question, still_thinking=True))
-            send(Response(
-                response=f'Rephrasing took {duration: .2f}s',
-                actor='system',
-                still_thinking=True,  # turn on thinking again
-            ))
 
         system_chat_message_id = None
         system_response = ''
@@ -214,11 +183,12 @@ class RephraseWidgetSearchChat(BaseChat):
                     # we have found a line-break in the response, switch to the terminal state to mask subsequent output
                     response_state = 2
 
-        widgets = self.widget_index.similarity_search(question, k=self.top_k)
+        widgets = self.widget_index.similarity_search(userinput, k=self.top_k)
         task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
         example = {
             "task_info": task_info,
-            "question": question,
+            "chat_history": history_string,
+            "question": userinput,
             "stop": ["Input", "User"],
         }        
 
