@@ -48,6 +48,9 @@ Previous conversation history:
 Input: {question}
 ## Tool input:'''
 
+HISTORY_TOKEN_LIMIT = 1800
+
+
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
     def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
@@ -71,8 +74,8 @@ class RephraseWidgetSearchChat(BaseChat):
             before_message_id: Optional[uuid.UUID] = None,
     ) -> None:
         userinput = userinput.strip()
-        history_string = history.to_string(before_message_id=before_message_id)
-        
+        history_string = history.to_string(system_prefix=None, token_limit=HISTORY_TOKEN_LIMIT, before_message_id=before_message_id)  # omit system messages
+
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
 
         system_chat_message_id = None
