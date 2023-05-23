@@ -6,7 +6,7 @@ import traceback
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Callable
 
-
+from gpt_index.utils import ErrorToRetry, retry_on_exceptions_with_backoff
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
@@ -185,7 +185,10 @@ class RephraseWidgetSearchChat(BaseChat):
                     # we have found a line-break in the response, switch to the terminal state to mask subsequent output
                     response_state = 2
 
-        widgets = self.widget_index.similarity_search(question, k=self.top_k)
+        widgets = retry_on_exceptions_with_backoff(
+            lambda: self.widget_index.similarity_search(question, k=self.top_k),
+            [ErrorToRetry(TypeError)],
+        )
         task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
         example = {
             "task_info": task_info,
