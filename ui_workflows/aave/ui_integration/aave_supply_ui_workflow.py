@@ -6,12 +6,11 @@ from dataclasses import dataclass, asdict
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 import env
-from utils import TENDERLY_FORK_URL, w3
 from ...base import BaseMultiStepUIWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
-from .common import AaveMixin, FIVE_SECONDS
+from ..common import AaveMixin, FIVE_SECONDS
 
 class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
     """
@@ -37,7 +36,7 @@ class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
 
     WORKFLOW_TYPE = 'aave-supply'
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None, fork_id = None) -> None:
         self.token = workflow_params["token"]
         self.amount = workflow_params["amount"]
 
@@ -57,7 +56,7 @@ class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
  
-    def confirm_ETH_supply_step(self, page, context) -> StepProcessingResult:
+    def confirm_ETH_supply_step(self, page, browser_context) -> StepProcessingResult:
         """Confirm supply of ETH/ERC20 token"""
 
         result = self._find_and_fill_amount_helper(page, "Supply")
@@ -71,7 +70,7 @@ class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
         overriden_amount = page.get_by_placeholder("0.00").input_value()
         return StepProcessingResult(status="success", override_user_description=f"Confirm supply of {overriden_amount} ETH on Aave")
     
-    def initiate_ERC20_approval_step(self, page, context) -> StepProcessingResult:
+    def initiate_ERC20_approval_step(self, page, browser_context) -> StepProcessingResult:
         """Initiate approval for ERC20 token"""
         result = self._find_and_fill_amount_helper(page, "Supply")
         if result and result.status == "error":
@@ -87,7 +86,7 @@ class AaveSupplyUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
 
         return StepProcessingResult(status="success")
         
-    def confirm_ERC20_supply_step(self, page, context, extra_params=None) -> StepProcessingResult:
+    def confirm_ERC20_supply_step(self, page, browser_context, extra_params=None) -> StepProcessingResult:
         """Confirm supply of ETH/ERC20 token"""
 
         # Check if this step is being run as a replacement for the approval step

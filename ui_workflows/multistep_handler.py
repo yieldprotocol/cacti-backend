@@ -68,7 +68,7 @@ def process_multistep_workflow(payload: MessagePayload, send_message: Callable):
 
 @error_wrap
 def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow: Optional[MultiStepWorkflow] = None, wf_step_client_payload: Optional[base.WorkflowStepClientPayload] = None) -> MultiStepPayloadContainer:
-    wallet_chain_id = 1 # TODO: get constant from utils
+    wallet_chain_id = 1 # TODO: get from context
     wallet_address = context.get_wallet_address()
     user_chat_message_id = context.get_user_chat_message_id() or user_chat_message_id
 

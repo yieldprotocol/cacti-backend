@@ -8,7 +8,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
-from .common import AaveMixin, FIVE_SECONDS
+from ..common import AaveMixin, FIVE_SECONDS
 
 class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
     """
@@ -56,7 +56,7 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
 
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
-    def check_ETH_liquidation_risk(self, page, context):
+    def check_ETH_liquidation_risk(self, page, browser_context):
         
         result = self._find_and_fill_amount_helper(page, "Borrow")
         if result and result.status == "error":
@@ -72,7 +72,7 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
         overriden_amount = page.get_by_placeholder("0.00").input_value()
         return StepProcessingResult(status="success", override_user_description=f"Acknowledge liquidation risk due to high borrow amount of {overriden_amount} ETH on Aave")
 
-    def initiate_ETH_approval(self, page, context, extra_params=None):
+    def initiate_ETH_approval(self, page, browser_context, extra_params=None):
         """Initiate approval for ETH token"""      
 
         # If this step is not triggered by a replace, then it was triggered as part of the normal next step processing flow after user accepted liquidation risk from Chat UI so make sure to check the checkbox 
@@ -92,7 +92,7 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
         overriden_amount = page.get_by_placeholder("0.00").input_value()
         return StepProcessingResult(status="success", override_user_description=f"Approve borrow of {overriden_amount} ETH on Aave")
 
-    def confirm_ETH_borrow(self, page, context, extra_params=None):
+    def confirm_ETH_borrow(self, page, browser_context, extra_params=None):
 
         if not (extra_params and extra_params["handle_replace"]):
             result = self._find_and_fill_amount_helper(page, "Borrow")
@@ -105,7 +105,7 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
         return StepProcessingResult(status="success", override_user_description=f"Confirm borrow of {overriden_amount} ETH on Aave")
 
 
-    def check_ERC20_liquidation_risk(self, page, context):   
+    def check_ERC20_liquidation_risk(self, page, browser_context):   
         result = self._find_and_fill_amount_helper(page, "Borrow")
         if result and result.status == "error":
             return result
@@ -119,7 +119,7 @@ class AaveBorrowUIWorkflow(AaveMixin, BaseMultiStepUIWorkflow):
         overriden_amount = page.get_by_placeholder("0.00").input_value()
         return StepProcessingResult(status="success", override_user_description=f"Acknowledge liquidation risk due to high borrow amount of {overriden_amount} {self.token} on Aave")
     
-    def confirm_ERC20_borrow(self, page, context, extra_params=None):
+    def confirm_ERC20_borrow(self, page, browser_context, extra_params=None):
 
         if not (extra_params and extra_params["handle_replace"]):
             result = self._find_and_fill_amount_helper(page, "Borrow")
