@@ -110,6 +110,7 @@ class RephraseWidgetSearchChat(BaseChat):
                 still_thinking=True,  # turn on thinking again
             ))
 
+        start = time.time()
         system_chat_message_id = None
         system_response = ''
         bot_chat_message_id = None
@@ -228,7 +229,6 @@ class RephraseWidgetSearchChat(BaseChat):
 
         chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler)
 
-        start = time.time()
         with context.with_request_context(history.wallet_address, message_id):
             result = chain.run(example).strip()
         duration = time.time() - start
