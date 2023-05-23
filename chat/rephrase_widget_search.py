@@ -111,22 +111,9 @@ class RephraseWidgetSearchChat(BaseChat):
             ))
 
         start = time.time()
-        system_chat_message_id = None
-        system_response = ''
         bot_chat_message_id = None
         bot_response = ''
         has_sent_bot_response = False
-
-        def system_flush(response):
-            nonlocal system_chat_message_id, has_sent_bot_response
-            response = response.strip()
-            send(Response(
-                response=response,
-                still_thinking=not has_sent_bot_response,
-                actor='system',
-                operation='replace',
-            ), last_chat_message_id=system_chat_message_id, before_message_id=before_message_id)
-            history.add_system_message(response, message_id=system_chat_message_id, before_message_id=before_message_id)
 
         def bot_flush(response):
             nonlocal bot_chat_message_id
@@ -139,29 +126,8 @@ class RephraseWidgetSearchChat(BaseChat):
             ), last_chat_message_id=bot_chat_message_id, before_message_id=before_message_id)
             history.add_bot_message(response, message_id=bot_chat_message_id, before_message_id=before_message_id)
 
-        def system_new_token_handler(token):
-            nonlocal system_chat_message_id, system_response, bot_chat_message_id, bot_response, has_sent_bot_response
-
-            if bot_chat_message_id is not None:
-                bot_flush(bot_response)
-                bot_chat_message_id = None
-                bot_response = ''
-
-            system_response += token
-            system_chat_message_id = send(Response(
-                response=token,
-                still_thinking=not has_sent_bot_response,
-                actor='system',
-                operation='append' if system_chat_message_id is not None else 'create',
-            ), last_chat_message_id=system_chat_message_id, before_message_id=before_message_id)
-
         def bot_new_token_handler(token):
-            nonlocal bot_chat_message_id, bot_response, system_chat_message_id, system_response, has_sent_bot_response
-
-            if system_chat_message_id is not None:
-                system_flush(system_response)
-                system_chat_message_id = None
-                system_response = ''
+            nonlocal bot_chat_message_id, bot_response, has_sent_bot_response
 
             bot_response += token
             if not bot_response.strip():
@@ -233,8 +199,6 @@ class RephraseWidgetSearchChat(BaseChat):
             result = chain.run(example).strip()
         duration = time.time() - start
 
-        if system_chat_message_id is not None:
-            system_flush(system_response)
         if bot_chat_message_id is not None:
             bot_flush(bot_response)
 
