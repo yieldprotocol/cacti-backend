@@ -13,6 +13,7 @@ from langchain.prompts.base import BaseOutputParser
 import context
 import utils
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
+import utils.timing as timing
 import registry
 import streaming
 from chat.container import ContainerMixin, dataclass_to_container_params
@@ -67,6 +68,8 @@ class IndexWidgetTool(IndexLookupTool):
         def injection_handler(token):
             nonlocal new_token_handler, response_buffer, response_state, response_prefix
 
+            timing.log('first_widget_token')
+
             response_buffer += token
             if response_state == 0:  # we are still waiting for response_prefix to appear
                 if response_prefix not in response_buffer:
@@ -74,6 +77,7 @@ class IndexWidgetTool(IndexLookupTool):
                     return
                 else:
                     # we have found the response_prefix, trim everything before that
+                    timing.log('first_widget_response_token')
                     response_state = 1
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
@@ -96,8 +100,11 @@ class IndexWidgetTool(IndexLookupTool):
                     else:
                         # keep waiting
                         return
+
                 token = response_buffer
                 response_buffer = ""
+                if token.strip():
+                    timing.log('first_visible_widget_response_token')
                 new_token_handler(token)
                 if '\n' in token:
                     # we have found a line-break in the response, switch to the terminal state to mask subsequent output
@@ -145,6 +152,7 @@ def replace_match(m: re.Match) -> str:
     command = m.group('command')
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []
+    timing.log('first_widget_command')
     print('found command:', command, params)
     if command == 'fetch-nft-search':
         return str(fetch_nft_search(*params))

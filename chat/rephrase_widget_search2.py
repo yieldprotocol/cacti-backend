@@ -14,6 +14,7 @@ from langchain.chains import LLMChain
 
 import context
 import utils
+import utils.timing as timing
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
 import registry
 import streaming
@@ -79,7 +80,7 @@ class RephraseWidgetSearchChat(BaseChat):
         history_string = history.to_string(system_prefix=None, token_limit=HISTORY_TOKEN_LIMIT, before_message_id=before_message_id)  # omit system messages
 
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
-        start = time.time()
+        timing.init()
 
         bot_chat_message_id = None
         bot_response = ''
@@ -104,6 +105,7 @@ class RephraseWidgetSearchChat(BaseChat):
                 # don't start returning something until we have the first non-whitespace char
                 return
 
+            timing.log('first_visible_bot_token')
             bot_chat_message_id = send(Response(
                 response=token,
                 still_thinking=False,
@@ -120,6 +122,9 @@ class RephraseWidgetSearchChat(BaseChat):
         def injection_handler(token):
             nonlocal new_token_handler, response_buffer, response_state, response_prefix
 
+            timing.log('first_token')
+            timing.log('first_widget_token')  # for comparison with basic agent
+
             response_buffer += token
             if response_state == 0:  # we are still waiting for response_prefix to appear
                 if response_prefix not in response_buffer:
@@ -127,6 +132,7 @@ class RephraseWidgetSearchChat(BaseChat):
                     return
                 else:
                     # we have found the response_prefix, trim everything before that
+                    timing.log('first_widget_response_token')
                     response_state = 1
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
@@ -151,6 +157,8 @@ class RephraseWidgetSearchChat(BaseChat):
                         return
                 token = response_buffer
                 response_buffer = ""
+                if token.strip():
+                    timing.log('first_visible_widget_response_token')
                 new_token_handler(token)
                 if '\n' in token:
                     # we have found a line-break in the response, switch to the terminal state to mask subsequent output
@@ -160,6 +168,7 @@ class RephraseWidgetSearchChat(BaseChat):
             lambda: self.widget_index.similarity_search(userinput, k=self.top_k),
             [ErrorToRetry(TypeError)],
         )
+        timing.log('widget_index_lookup_done')
         task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
         example = {
             "task_info": task_info,
@@ -172,11 +181,11 @@ class RephraseWidgetSearchChat(BaseChat):
 
         with context.with_request_context(history.wallet_address, message_id):
             result = chain.run(example).strip()
-        duration = time.time() - start
+        timing.log('response_done')
 
         if bot_chat_message_id is not None:
             bot_flush(bot_response)
 
-        response = f'Response generation took {duration: .2f}s'
+        response = f'Timings - {timing.report()}'
         system_chat_message_id = send(Response(response=response, actor='system'), before_message_id=before_message_id)
         history.add_system_message(response, message_id=system_chat_message_id, before_message_id=before_message_id)
