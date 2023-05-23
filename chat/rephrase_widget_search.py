@@ -1,0 +1,243 @@
+# This chat variant determines if the user's query is related to a widget or a search
+import re
+import time
+import uuid
+import traceback
+from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Callable
+
+
+from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+
+import context
+import utils
+from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
+import registry
+import streaming
+from chat.container import ContainerMixin, dataclass_to_container_params
+from .base import (
+    BaseChat, ChatHistory, Response, ChatOutputParser,
+)
+from integrations import (
+    etherscan, defillama, center, opensea,
+)
+from ui_workflows import (
+    aave, ens
+)
+from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
+from tools.index_widget import *
+
+
+RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
+
+REPHRASE_TEMPLATE = \
+'''You are a rephrasing agent. You will be given a query which you have to rephrase, explicitly restating the task without pronouns and restating details based on the conversation history and new input. Restate verbatim ALL details/names/figures/facts/etc from past observations relevant to the task and ALL related entities.
+# Chat History:
+# {history}
+# Input: {userinput}
+# Rephrased Input:'''
+
+TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget magic commands that you can delegate work to, by invoking them and chaining them together, to provide a response to an input query. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>" specifying the command and its input parameters. They can only be used with all parameters having known and assigned values, otherwise, they have to be kept secret. The command may either have a display- or a fetch- prefix. When you return a display- command, the user will see data, an interaction box, or other inline item rendered in its place. When you return a fetch- command, data is fetched over an API and injected in place. Users cannot type or use magic commands, so do not tell them to use them. Fill in the command with parameters as inferred from the input. If there are missing parameters, do not use magic commands but mention what parameters are needed instead. If there is no appropriate widget available, explain that more information is needed. Do not make up a non-existent widget magic command, only use the applicable ones for the situation, and only if all parameters are available. You might need to use the output of widget magic commands as the input to another to get your final answer. Here are the widgets that may be relevant:
+---
+{task_info}
+---
+Use the following format:
+
+## Tool Input: given a query which you have to rephrase, explicitly restating the task without pronouns and restating details based on the conversation history and new input. Restate verbatim ALL details/names/figures/facts/etc from past observations relevant to the task and ALL related entities.
+## Widget Command: most relevant widget magic command to respond to Tool Input
+## Known Parameters: parameter-value pairs representing inputs to the above widget magic command
+## Response: return the widget magic command with ALL its respective input parameter values (omit parameter names)
+
+## Tool Input: {question}
+## Widget Command:'''
+
+HISTORY_TOKEN_LIMIT = 1800
+
+
+@registry.register_class
+class RephraseWidgetSearchChat(BaseChat):
+    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
+        super().__init__()
+        self.output_parser = ChatOutputParser()
+        self.rephrase_prompt = PromptTemplate(
+            input_variables=["history", "userinput"],
+            template=REPHRASE_TEMPLATE,
+        )
+        llm = OpenAI(temperature=0.0,)
+        self.rephrase_chain = LLMChain(llm=llm, prompt=self.rephrase_prompt)
+        self.widget_prompt = PromptTemplate(
+            input_variables=["task_info", "question"],
+            template=TEMPLATE,
+            output_parser=self.output_parser,
+        )
+        self.widget_index = widget_index
+        self.top_k = top_k
+        self.show_thinking = show_thinking
+
+    def receive_input(
+            self,
+            history: ChatHistory,
+            userinput: str,
+            send: Callable,
+            message_id: Optional[uuid.UUID] = None,
+            before_message_id: Optional[uuid.UUID] = None,
+    ) -> None:
+        userinput = userinput.strip()
+        history_string = history.to_string(system_prefix=None, token_limit=HISTORY_TOKEN_LIMIT, before_message_id=before_message_id)  # omit system messages
+
+        history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
+        start = time.time()
+
+        if history:
+            # First rephrase the question
+            question = self.rephrase_chain.run({
+                "history": history_string.strip(),
+                "userinput": userinput,
+            }).strip()
+            rephrased = True
+        else:
+            question = userinput
+            rephrased = False
+        duration = time.time() - start
+        if self.show_thinking and rephrased and userinput != question:
+            send(Response(response="I think you're asking: " + question, still_thinking=True))
+            send(Response(
+                response=f'Rephrasing took {duration: .2f}s',
+                actor='system',
+                still_thinking=True,  # turn on thinking again
+            ))
+
+        start = time.time()
+        system_chat_message_id = None
+        system_response = ''
+        bot_chat_message_id = None
+        bot_response = ''
+        has_sent_bot_response = False
+
+        def system_flush(response):
+            nonlocal system_chat_message_id, has_sent_bot_response
+            response = response.strip()
+            send(Response(
+                response=response,
+                still_thinking=not has_sent_bot_response,
+                actor='system',
+                operation='replace',
+            ), last_chat_message_id=system_chat_message_id, before_message_id=before_message_id)
+            history.add_system_message(response, message_id=system_chat_message_id, before_message_id=before_message_id)
+
+        def bot_flush(response):
+            nonlocal bot_chat_message_id
+            response = response.strip()
+            send(Response(
+                response=response,
+                still_thinking=False,
+                actor='bot',
+                operation='replace',
+            ), last_chat_message_id=bot_chat_message_id, before_message_id=before_message_id)
+            history.add_bot_message(response, message_id=bot_chat_message_id, before_message_id=before_message_id)
+
+        def system_new_token_handler(token):
+            nonlocal system_chat_message_id, system_response, bot_chat_message_id, bot_response, has_sent_bot_response
+
+            if bot_chat_message_id is not None:
+                bot_flush(bot_response)
+                bot_chat_message_id = None
+                bot_response = ''
+
+            system_response += token
+            system_chat_message_id = send(Response(
+                response=token,
+                still_thinking=not has_sent_bot_response,
+                actor='system',
+                operation='append' if system_chat_message_id is not None else 'create',
+            ), last_chat_message_id=system_chat_message_id, before_message_id=before_message_id)
+
+        def bot_new_token_handler(token):
+            nonlocal bot_chat_message_id, bot_response, system_chat_message_id, system_response, has_sent_bot_response
+
+            if system_chat_message_id is not None:
+                system_flush(system_response)
+                system_chat_message_id = None
+                system_response = ''
+
+            bot_response += token
+            if not bot_response.strip():
+                # don't start returning something until we have the first non-whitespace char
+                return
+            bot_chat_message_id = send(Response(
+                response=token,
+                still_thinking=False,
+                actor='bot',
+                operation='append' if bot_chat_message_id is not None else 'create',
+            ), last_chat_message_id=bot_chat_message_id, before_message_id=before_message_id)
+            has_sent_bot_response = True
+
+        new_token_handler = bot_new_token_handler
+        response_buffer = ""
+        response_state = 0  # finite-state machine state
+        response_prefix = "## Response:"
+
+        def injection_handler(token):
+            nonlocal new_token_handler, response_buffer, response_state, response_prefix
+
+            response_buffer += token
+            if response_state == 0:  # we are still waiting for response_prefix to appear
+                if response_prefix not in response_buffer:
+                    # keep waiting
+                    return
+                else:
+                    # we have found the response_prefix, trim everything before that
+                    response_state = 1
+                    response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
+
+            if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
+                while '<|' in response_buffer:
+                    if '|>' in response_buffer:
+                        # parse fetch command
+                        response_buffer = iterative_evaluate(response_buffer)
+                        if response_buffer == response_buffer:  # nothing resolved
+                            if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                                # matching pairs of open/close, just flush
+                                # NB: for better frontend parsing of nested widgets, we need an invariant that
+                                # there are no two independent widgets on the same line, otherwise we can't
+                                # detect the closing tag properly when there is nesting.
+                                response_buffer = response_buffer.replace('|>', '|>\n')
+                                break
+                            else:
+                                # keep waiting
+                                return
+                    else:
+                        # keep waiting
+                        return
+                token = response_buffer
+                response_buffer = ""
+                new_token_handler(token)
+                if '\n' in token:
+                    # we have found a line-break in the response, switch to the terminal state to mask subsequent output
+                    response_state = 2
+
+        widgets = self.widget_index.similarity_search(question, k=self.top_k)
+        task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
+        example = {
+            "task_info": task_info,
+            "question": question,
+            "stop": ["Input", "User"],
+        }
+
+        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler)
+
+        with context.with_request_context(history.wallet_address, message_id):
+            result = chain.run(example).strip()
+        duration = time.time() - start
+
+        if system_chat_message_id is not None:
+            system_flush(system_response)
+        if bot_chat_message_id is not None:
+            bot_flush(bot_response)
+
+        response = f'Response generation took {duration: .2f}s'
+        system_chat_message_id = send(Response(response=response, actor='system'), before_message_id=before_message_id)
+        history.add_system_message(response, message_id=system_chat_message_id, before_message_id=before_message_id)
