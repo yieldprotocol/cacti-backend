@@ -121,7 +121,7 @@ class RephraseWidgetSearchChat(BaseChat):
                 actor='system',
                 operation='append' if system_chat_message_id is not None else 'create',
             ), last_chat_message_id=system_chat_message_id, before_message_id=before_message_id)
-            
+
         def bot_new_token_handler(token):
             nonlocal bot_chat_message_id, bot_response, system_chat_message_id, system_response, has_sent_bot_response
 
@@ -193,7 +193,7 @@ class RephraseWidgetSearchChat(BaseChat):
             "chat_history": history_string,
             "question": userinput,
             "stop": ["Input", "User"],
-        }        
+        }
 
         chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler)
 
@@ -204,6 +204,8 @@ class RephraseWidgetSearchChat(BaseChat):
 
         if system_chat_message_id is not None:
             system_flush(system_response)
+        if bot_chat_message_id is not None:
+            bot_flush(bot_response)
 
         response = f'Response generation took {duration: .2f}s'
         system_chat_message_id = send(Response(response=response, actor='system'), before_message_id=before_message_id)
