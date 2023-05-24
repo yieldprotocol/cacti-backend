@@ -1,5 +1,4 @@
-coingecko_api_url_prefix = "https://api.coingecko.com/api/v3/simple/price"
-coin_list = [
+[
   {
     "id": "01coin",
     "symbol": "zoc",
@@ -6511,6 +6510,11 @@ coin_list = [
     "name": "Blocto"
   },
   {
+    "id": "blokpad",
+    "symbol": "bpad",
+    "name": "BlokPad"
+  },
+  {
     "id": "bloktopia",
     "symbol": "blok",
     "name": "Bloktopia"
@@ -8746,11 +8750,6 @@ coin_list = [
     "name": "Cheese Swap"
   },
   {
-    "id": "cheesus",
-    "symbol": "cheesus",
-    "name": "Cheesus"
-  },
-  {
     "id": "chellitcoin",
     "symbol": "chlt",
     "name": "Chellitcoin"
@@ -10836,11 +10835,6 @@ coin_list = [
     "name": "Crypto Emergency"
   },
   {
-    "id": "crypto-excellence",
-    "symbol": "ce",
-    "name": "Crypto Excellence"
-  },
-  {
     "id": "cryptoexpress",
     "symbol": "xpress",
     "name": "CryptoXpress"
@@ -10929,6 +10923,11 @@ coin_list = [
     "id": "cryptoku",
     "symbol": "cku",
     "name": "Cryptoku"
+  },
+  {
+    "id": "cryptolic",
+    "symbol": "cptlc",
+    "name": "Cryptolic"
   },
   {
     "id": "cryptomeda",
@@ -13431,6 +13430,11 @@ coin_list = [
     "name": "DogeFood"
   },
   {
+    "id": "dogegayson",
+    "symbol": "goge",
+    "name": "Goge DAO"
+  },
+  {
     "id": "dogegf",
     "symbol": "dogegf",
     "name": "DogeGF"
@@ -15111,6 +15115,11 @@ coin_list = [
     "name": "iShares MSCI Emerging Markets ETF Defichain"
   },
   {
+    "id": "energyfi",
+    "symbol": "eft",
+    "name": "Energyfi"
+  },
+  {
     "id": "energytrade-token",
     "symbol": "ett",
     "name": "EnergyTrade Token"
@@ -15319,6 +15328,11 @@ coin_list = [
     "id": "e-radix",
     "symbol": "exrd",
     "name": "e-Radix"
+  },
+  {
+    "id": "era-name-service",
+    "symbol": "era",
+    "name": "Era Name Service"
   },
   {
     "id": "era-swap-token",
@@ -18273,7 +18287,7 @@ coin_list = [
   {
     "id": "gatsby-inu-2",
     "symbol": "gatsby",
-    "name": "Gatsby Inu [OLD]"
+    "name": "Gatsby Inu"
   },
   {
     "id": "gax-liquidity-token-reward",
@@ -18289,6 +18303,11 @@ coin_list = [
     "id": "gaziantep-fk-fan-token",
     "symbol": "gfk",
     "name": "Gaziantep FK Fan Token"
+  },
+  {
+    "id": "gbank-apy",
+    "symbol": "gbk",
+    "name": "GBANK APY"
   },
   {
     "id": "gcn-coin",
@@ -18414,6 +18433,11 @@ coin_list = [
     "id": "gemlink",
     "symbol": "glink",
     "name": "GemLink"
+  },
+  {
+    "id": "gempad",
+    "symbol": "gems",
+    "name": "GemPad"
   },
   {
     "id": "gems-2",
@@ -19586,11 +19610,6 @@ coin_list = [
     "name": "Gridcoin"
   },
   {
-    "id": "gridzone",
-    "symbol": "zone",
-    "name": "GridZone.io"
-  },
-  {
     "id": "griffin-art",
     "symbol": "gart",
     "name": "Griffin Art"
@@ -20204,6 +20223,11 @@ coin_list = [
     "id": "health-potion",
     "symbol": "hep",
     "name": "Health Potion"
+  },
+  {
+    "id": "heartx-utility-token",
+    "symbol": "hnx",
+    "name": "HeartX Utility Token"
   },
   {
     "id": "heavenland-hto",
@@ -23761,6 +23785,11 @@ coin_list = [
     "name": "Kermit"
   },
   {
+    "id": "kewl",
+    "symbol": "kewl",
+    "name": "Kewl"
+  },
+  {
     "id": "keyfi",
     "symbol": "keyfi",
     "name": "KeyFi"
@@ -24436,6 +24465,11 @@ coin_list = [
     "name": "K-Tune"
   },
   {
+    "id": "ktx-finance",
+    "symbol": "ktc",
+    "name": "KTX.Finance"
+  },
+  {
     "id": "kubecoin",
     "symbol": "kube",
     "name": "KubeCoin"
@@ -24514,6 +24548,11 @@ coin_list = [
     "id": "kuswap",
     "symbol": "kus",
     "name": "KuSwap"
+  },
+  {
+    "id": "kvants-ai",
+    "symbol": "kvnt",
+    "name": "Kvants AI"
   },
   {
     "id": "kwai",
@@ -24796,6 +24835,11 @@ coin_list = [
     "name": "League of Kingdoms"
   },
   {
+    "id": "leancoin",
+    "symbol": "lean",
+    "name": "Leancoin"
+  },
+  {
     "id": "leandro-lopes",
     "symbol": "lopes",
     "name": "Leandro Lopes"
@@ -24803,7 +24847,7 @@ coin_list = [
   {
     "id": "lean-management-token",
     "symbol": "lean",
-    "name": "Leancoin"
+    "name": "Leancoin [OLD]"
   },
   {
     "id": "leap-token",
@@ -26134,6 +26178,11 @@ coin_list = [
     "id": "lunatics",
     "symbol": "lunat",
     "name": "Lunatics"
+  },
+  {
+    "id": "lunatics-eth",
+    "symbol": "lunat",
+    "name": "Lunatics [ETH]"
   },
   {
     "id": "luna-wormhole",
@@ -29346,6 +29395,11 @@ coin_list = [
     "name": "Moonarch"
   },
   {
+    "id": "moon-bay",
+    "symbol": "bay",
+    "name": "Moon Bay"
+  },
+  {
     "id": "moonbeam",
     "symbol": "glmr",
     "name": "Moonbeam"
@@ -29654,11 +29708,6 @@ coin_list = [
     "id": "motion-motn",
     "symbol": "motn",
     "name": "MOTION"
-  },
-  {
-    "id": "motionwreck-games",
-    "symbol": "mwg",
-    "name": "MotionWreck Games"
   },
   {
     "id": "motiv-protocol",
@@ -30414,6 +30463,11 @@ coin_list = [
     "id": "nekocoin",
     "symbol": "nekos",
     "name": "Nekocoin"
+  },
+  {
+    "id": "nelore-coin",
+    "symbol": "nlc",
+    "name": "Nelore Coin"
   },
   {
     "id": "nem",
@@ -33021,11 +33075,6 @@ coin_list = [
     "name": "PalmSwap"
   },
   {
-    "id": "pana-dao",
-    "symbol": "pana",
-    "name": "PANA"
-  },
-  {
     "id": "pancake-bunny",
     "symbol": "bunny",
     "name": "Pancake Bunny"
@@ -33544,11 +33593,6 @@ coin_list = [
     "id": "pea-farm",
     "symbol": "pea",
     "name": "Pea Farm"
-  },
-  {
-    "id": "peak-finance",
-    "symbol": "peak",
-    "name": "Peak Finance"
   },
   {
     "id": "peak-token",
@@ -35291,11 +35335,6 @@ coin_list = [
     "name": "Port Finance"
   },
   {
-    "id": "portify",
-    "symbol": "pfy",
-    "name": "Portify"
-  },
-  {
     "id": "portion",
     "symbol": "prt",
     "name": "Portion"
@@ -36018,7 +36057,7 @@ coin_list = [
   {
     "id": "puppets-arts-2",
     "symbol": "puppets",
-    "name": "Puppets Arts"
+    "name": "Puppets Coin"
   },
   {
     "id": "purchasa",
@@ -37719,11 +37758,6 @@ coin_list = [
     "id": "robonomics-network",
     "symbol": "xrt",
     "name": "Robonomics Network"
-  },
-  {
-    "id": "robonomics-web-services",
-    "symbol": "rws",
-    "name": "Robonomics Web Services"
   },
   {
     "id": "robot",
@@ -39811,6 +39845,11 @@ coin_list = [
     "name": "Shrapnel"
   },
   {
+    "id": "shree",
+    "symbol": "shr",
+    "name": "SHREE"
+  },
+  {
     "id": "shroom-finance",
     "symbol": "shroom",
     "name": "Niftyx Protocol"
@@ -40601,11 +40640,6 @@ coin_list = [
     "name": "Solanax"
   },
   {
-    "id": "sola-ninja",
-    "symbol": "snj",
-    "name": "Sola Ninja"
-  },
-  {
     "id": "solanium",
     "symbol": "slim",
     "name": "Solanium"
@@ -40824,11 +40858,6 @@ coin_list = [
     "id": "solidsex-tokenized-vesolid",
     "symbol": "solidsex",
     "name": "SOLIDsex: Tokenized veSOLID"
-  },
-  {
-    "id": "solily-protocol",
-    "symbol": "lily",
-    "name": "Solily Protocol"
   },
   {
     "id": "solimax",
@@ -41659,6 +41688,11 @@ coin_list = [
     "id": "stable-asset",
     "symbol": "sta",
     "name": "STABLE ASSET"
+  },
+  {
+    "id": "stablecoin",
+    "symbol": "stable",
+    "name": "Stablecoin"
   },
   {
     "id": "stabledoc-token",
@@ -43044,11 +43078,6 @@ coin_list = [
     "id": "sx-network",
     "symbol": "sx",
     "name": "SX Network"
-  },
-  {
-    "id": "syfin",
-    "symbol": "syf",
-    "name": "Syfin"
   },
   {
     "id": "sylo",
@@ -51025,69 +51054,4 @@ coin_list = [
     "symbol": "zzz",
     "name": "GoSleep ZZZ"
   }
-]
-
-currency_list = \
-[
-  "btc",
-  "eth",
-  "ltc",
-  "bch",
-  "bnb",
-  "eos",
-  "xrp",
-  "xlm",
-  "link",
-  "dot",
-  "yfi",
-  "usd",
-  "aed",
-  "ars",
-  "aud",
-  "bdt",
-  "bhd",
-  "bmd",
-  "brl",
-  "cad",
-  "chf",
-  "clp",
-  "cny",
-  "czk",
-  "dkk",
-  "eur",
-  "gbp",
-  "hkd",
-  "huf",
-  "idr",
-  "ils",
-  "inr",
-  "jpy",
-  "krw",
-  "kwd",
-  "lkr",
-  "mmk",
-  "mxn",
-  "myr",
-  "ngn",
-  "nok",
-  "nzd",
-  "php",
-  "pkr",
-  "pln",
-  "rub",
-  "sar",
-  "sek",
-  "sgd",
-  "thb",
-  "try",
-  "twd",
-  "uah",
-  "vef",
-  "vnd",
-  "zar",
-  "xdr",
-  "xag",
-  "xau",
-  "bits",
-  "sats"
 ]

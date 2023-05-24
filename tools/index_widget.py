@@ -15,7 +15,7 @@ import context
 import utils
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
 import utils.timing as timing
-from utils.coingecko_coin_currency import *
+from utils.coingecko.coingecko_coin_currency import coin_list, currency_list, coingecko_api_url_prefix
 import registry
 import streaming
 from chat.container import ContainerMixin, dataclass_to_container_params
@@ -215,10 +215,14 @@ def replace_match(m: re.Match) -> str:
         # assert 0, 'unrecognized command: %s' % m.group(0)
         return m.group(0)
     
-def fetch_price(basetoken: str, quotetoken: str) -> str:
+def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
     # TODO
-    # handle misspells 
-    basetoken_id, quotetoken_id = None, None
+    # Handle failures
+    """
+    Failures:
+    - Cannot identify duplicates in the coin list
+    - Cannot handle major mispells
+    """ 
     for c in coin_list:
         if c['id'].lower() == basetoken.lower() or \
             c['symbol'].lower() == basetoken.lower() or \
@@ -226,16 +230,17 @@ def fetch_price(basetoken: str, quotetoken: str) -> str:
             basetoken_id = c['id'].lower()
             basetoken_name = c['name']
             break
-    for c in currency_list:
-        if c.lower() == quotetoken.lower():
-            quotetoken_id = c.lower()
-            break
+    if not basetoken_id: return f"Query token {basetoken} not supported"
+    
+    if quotetoken.lower() in currency_list: 
+        quotetoken_id = quotetoken.lower()
+    else:
+        return f"Quote currency {quotetoken} not supported"
+
     coingecko_api_url = coingecko_api_url_prefix + f"?ids={basetoken_id}&vs_currencies={quotetoken_id}"
     response = requests.get(coingecko_api_url)
-    if basetoken_id != None and quotetoken_id != None:
-        return f"The price of {basetoken_name} is {response.json()[basetoken_name.lower()][quotetoken.lower()]} {quotetoken}" 
-    if basetoken_id==None: return f"coin {basetoken} not found"
-    if quotetoken_id==None: return f"currency {quotetoken} not found"
+    return f"The price of {basetoken_name} is {response.json()[basetoken_name.lower()][quotetoken.lower()]} {quotetoken}" 
+
     
 @error_wrap
 def fetch_balance(token: str, wallet_address: str) -> str:
