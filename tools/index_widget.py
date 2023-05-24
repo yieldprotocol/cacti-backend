@@ -1,6 +1,7 @@
 import functools
 import json
 import re
+import requests
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional, Union, Literal, TypedDict
 import traceback
@@ -14,6 +15,7 @@ import context
 import utils
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
 import utils.timing as timing
+from utils.coingecko_coin_currency import *
 import registry
 import streaming
 from chat.container import ContainerMixin, dataclass_to_container_params
@@ -156,6 +158,8 @@ def replace_match(m: re.Match) -> str:
     print('found command:', command, params)
     if command == 'fetch-nft-search':
         return str(fetch_nft_search(*params))
+    elif command == 'fetch-price':
+        return str(fetch_price(*params))
     elif command == 'fetch-nft-collection-assets-by-trait':
         return str(fetch_nft_search_collection_by_trait(*params, for_sale_only=False))
     elif command == 'fetch-nft-collection-assets-for-sale-by-trait':
@@ -210,7 +214,29 @@ def replace_match(m: re.Match) -> str:
         # unrecognized command, just return for now
         # assert 0, 'unrecognized command: %s' % m.group(0)
         return m.group(0)
-
+    
+def fetch_price(basetoken: str, quotetoken: str) -> str:
+    # TODO
+    # handle misspells 
+    basetoken_id, quotetoken_id = None, None
+    for c in coin_list:
+        if c['id'].lower() == basetoken.lower() or \
+            c['symbol'].lower() == basetoken.lower() or \
+                c['name'].lower() == basetoken.lower():
+            basetoken_id = c['id'].lower()
+            basetoken_name = c['name']
+            break
+    for c in currency_list:
+        if c.lower() == quotetoken.lower():
+            quotetoken_id = c.lower()
+            break
+    coingecko_api_url = coingecko_api_url_prefix + f"?ids={basetoken_id}&vs_currencies={quotetoken_id}"
+    response = requests.get(coingecko_api_url)
+    if basetoken_id != None and quotetoken_id != None:
+        return f"The price of {basetoken_name} is {response.json()[basetoken_name.lower()][quotetoken.lower()]} {quotetoken}" 
+    if basetoken_id==None: return f"coin {basetoken} not found"
+    if quotetoken_id==None: return f"currency {quotetoken} not found"
+    
 @error_wrap
 def fetch_balance(token: str, wallet_address: str) -> str:
     if not wallet_address or wallet_address == 'None':
