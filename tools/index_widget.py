@@ -239,7 +239,7 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
 
     coingecko_api_url = coingecko_api_url_prefix + f"?ids={basetoken_id}&vs_currencies={quotetoken_id}"
     response = requests.get(coingecko_api_url)
-    return f"The price of {basetoken_name} is {response.json()[basetoken_name.lower()][quotetoken.lower()]} {quotetoken}" 
+    return f"The price of {basetoken_name} is {list(list(response.json().values())[0].values())[0]} {quotetoken}" 
 
     
 @error_wrap
