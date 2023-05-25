@@ -242,8 +242,8 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
 
     coingecko_api_url = coingecko_api_url_prefix + f"?ids={basetoken_id}&vs_currencies={quotetoken_id}"
     response = requests.get(coingecko_api_url)
-    if not response.raise_for_status(): 
-        return f"The price of {basetoken_name} is {list(list(response.json().values())[0].values())[0]} {quotetoken}"
+    response.raise_for_status()
+    return f"The price of {basetoken_name} is {list(list(response.json().values())[0].values())[0]} {quotetoken}"
 
     
 @error_wrap
