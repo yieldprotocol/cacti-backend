@@ -214,12 +214,14 @@ def replace_match(m: re.Match) -> str:
         # unrecognized command, just return for now
         # assert 0, 'unrecognized command: %s' % m.group(0)
         return m.group(0)
-    
+
+@error_wrap 
 def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
     # TODO
     # Handle failures
     """
     Failures:
+    - quotetoken not mentioned it can assume it to be usd or eth
     - Cannot identify duplicates in the coin list
     - Cannot handle major mispells
     """ 
@@ -230,7 +232,8 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
             basetoken_id = c['id'].lower()
             basetoken_name = c['name']
             break
-    if not basetoken_id: return f"Query token {basetoken} not supported"
+    else:
+        return f"Query token {basetoken} not supported"
     
     if quotetoken.lower() in currency_list: 
         quotetoken_id = quotetoken.lower()
@@ -239,7 +242,8 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
 
     coingecko_api_url = coingecko_api_url_prefix + f"?ids={basetoken_id}&vs_currencies={quotetoken_id}"
     response = requests.get(coingecko_api_url)
-    return f"The price of {basetoken_name} is {list(list(response.json().values())[0].values())[0]} {quotetoken}" 
+    if not response.raise_for_status(): 
+        return f"The price of {basetoken_name} is {list(list(response.json().values())[0].values())[0]} {quotetoken}"
 
     
 @error_wrap
