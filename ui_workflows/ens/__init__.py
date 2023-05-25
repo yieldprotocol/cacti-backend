@@ -1,3 +1,4 @@
 from .ens_registration import ENSRegistrationWorkflow
 from .ens_set_text import ENSSetTextWorkflow
 from .ens_set_primary_name import ENSSetPrimaryNameWorkflow
+from .ens_set_avatar_nft import ENSSetAvatarNFTWorkflow

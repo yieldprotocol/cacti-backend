@@ -192,9 +192,9 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
-    elif command == 'aave-supply':
+    elif command == aave.AaveSupplyUIWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
-    elif command == 'aave-borrow':
+    elif command == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='borrow'))
     elif command == 'aave-repay':
         return str(exec_aave_operation(*params, operation='repay'))
@@ -204,13 +204,13 @@ def replace_match(m: re.Match) -> str:
         return str(ens_from_address(*params))
     elif command == 'address-from-ens':
         return str(address_from_ens(*params))
-    elif command == 'register-ens-domain':
+    elif command == ens.ENSRegistrationWorkflow.WORKFLOW_TYPE:
         return str(register_ens_domain(*params))
-    elif command == 'set-ens-text':
+    elif command == ens.ENSSetTextWorkflow.WORKFLOW_TYPE:
         return str(set_ens_text(*params))
-    elif command == 'set-ens-primary-name':
+    elif command == ens.ENSSetPrimaryNameWorkflow.WORKFLOW_TYPE:
         return str(set_ens_primary_name(*params))
-    elif command == 'set-ens-avatar-nft':
+    elif command == ens.ENSSetAvatarNFTWorkflow.WORKFLOW_TYPE:
         return str(set_ens_avatar_nft(*params))
     elif command.startswith('display-'):
         return m.group(0)
@@ -476,16 +476,5 @@ def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPay
     if not nftId:
         return "Unable to find NFT ID in chat for setting avatar, please specify an NFT ID"
 
-    print("set_ens_avatar_nft", params)
-
-    # wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params)
-    # result = wf.run()
-
-    # return TxPayloadForSending(
-    #     user_request_status=result.status,
-    #     tx=result.tx,
-    #     error_msg=result.error_msg,
-    #     description=result.description
-    # )
-
-    return "Not implemented yet"
+    result = ens.ENSSetAvatarNFTWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
+    return TxPayloadForSending.from_workflow_result(result)
