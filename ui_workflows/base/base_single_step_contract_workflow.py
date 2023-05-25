@@ -28,7 +28,12 @@ class BaseSingleStepContractWorkflow(BaseContractWorkflow):
             result: Result = super().run()
 
             tx = result.tx
+            tx["from"] = self.wallet_address
             tx['gas'] = estimate_gas(tx)
+
+            if "value" not in tx:
+                tx['value'] = "0x0"
+            
 
             return result
         except WorkflowValidationError as e:

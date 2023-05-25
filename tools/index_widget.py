@@ -10,6 +10,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
 
+import ui_workflows
 import context
 import utils
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
@@ -145,6 +146,9 @@ def sanitize_str(s: str) -> str:
     s = s.strip()
     if s.startswith('"') and s.endswith('"') or s.startswith("'") and s.endswith("'"):
         s = s[1:-1]
+    
+    # If parameter not detected in message, model will fill in with "None" so parse that to native None
+    s = None if s == 'None' else s
     return s
 
 
@@ -204,6 +208,10 @@ def replace_match(m: re.Match) -> str:
         return str(register_ens_domain(*params))
     elif command == 'set-ens-text':
         return str(set_ens_text(*params))
+    elif command == 'set-ens-primary-name':
+        return str(set_ens_primary_name(*params))
+    elif command == 'set-ens-avatar-nft':
+        return str(set_ens_avatar_nft(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -404,6 +412,15 @@ class TxPayloadForSending(ContainerMixin):
     error_msg: Optional[str] = None
     description: str = ''
 
+    @classmethod
+    def from_workflow_result(cls, result: ui_workflows.base.Result):
+        return TxPayloadForSending(
+            user_request_status=result.status,
+            tx=result.tx,
+            error_msg=result.error_msg,
+            description=result.description
+        )
+
     def container_name(self) -> str:
         return 'display-tx-payload-for-sending-container'
 
@@ -423,12 +440,52 @@ def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
         'value': value,
     }
 
-    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params)
-    result = wf.run()
+    result = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
+    return TxPayloadForSending.from_workflow_result(result)
 
-    return TxPayloadForSending(
-        user_request_status=result.status,
-        tx=result.tx,
-        error_msg=result.error_msg,
-        description=result.description
-    )
+@error_wrap
+@ensure_wallet_connected
+def set_ens_primary_name(domain: str) ->TxPayloadForSending:
+    wallet_chain_id = 1 # TODO: get from context
+    wallet_address = context.get_wallet_address()
+    user_chat_message_id = context.get_user_chat_message_id()
+
+    params = {
+        'domain': domain,
+    }
+
+    result = ens.ENSSetPrimaryNameWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
+    return TxPayloadForSending.from_workflow_result(result)
+
+@error_wrap
+@ensure_wallet_connected
+def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPayloadForSending:
+    wallet_chain_id = 1 # TODO: get from context
+    wallet_address = context.get_wallet_address()
+    user_chat_message_id = context.get_user_chat_message_id()
+
+    params = {
+        'domain': domain,
+        'nftContractAddress': nftContractAddress,
+        'nftId': nftId,
+    }
+
+    if not nftContractAddress:
+        return "Unable to find NFT collection in chat for setting avatar, ask for a collection first and try again"
+
+    if not nftId:
+        return "Unable to find NFT ID in chat for setting avatar, please specify an NFT ID"
+
+    print("set_ens_avatar_nft", params)
+
+    # wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params)
+    # result = wf.run()
+
+    # return TxPayloadForSending(
+    #     user_request_status=result.status,
+    #     tx=result.tx,
+    #     error_msg=result.error_msg,
+    #     description=result.description
+    # )
+
+    return "Not implemented yet"

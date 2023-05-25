@@ -33,12 +33,6 @@ class BaseContractWorkflow(ABC):
 
     @abstractmethod
     def _pre_workflow_validation(self):
-        """Perform any validation before running the workflow."""
-    
-    def _load_contract_abi_dict(self, wf_file_path: str, abi_relative_path: str) -> Dict:
-        abi_abs_path = compute_abi_abspath(wf_file_path, abi_relative_path)
-        with open(abi_abs_path, 'r') as f:
-            return json.load(f)
-
+        """Override this method to perform any validation before running the workflow."""
     
 

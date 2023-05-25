@@ -176,9 +176,21 @@ Required Parameters:
 Widget magic command: <|set-ens-text({domain},{key},{value})|>
 Description of widget: This widget is used when the user wants to set the text record for an ENS domain that ends with *.eth in a key value pair format
 Required Parameters:
--{domain}: domain name to register
+-{domain}: ENS domain name
 -{key}: key of the text record
 -{value}: value of the text record
+---
+Widget magic command: <|set-ens-primary-name({domain})|>
+Description of widget: This widget is used when the user wants to set a primary ENS name for their connected wallet account 
+Required Parameters:
+-{domain}: domain name to use as primary ENS name
+---
+Widget magic command: <|set-ens-avatar-nft({domain},{nftContractAddress},{nftId})|>
+Description of widget: This widget is used when the user wants to set an nft as their ENS domain's avatar. Do not guess any parameter, if any parameter is missing, set the default value as 'None'
+Required Parameters:
+-{domain}: ENS domain name
+-{nftContractAddress}: contract address of the NFT
+-{nftId}: token ID of the NFT
 ---
 Widget magic command: <|aave-supply({token},{amount})|>
 Description of widget: This widget is used when the user wants to deposit or supply tokens into Aave project.
