@@ -6,7 +6,7 @@ Required parameters:
 -{address}: transfer recipient address
 ---
 Widget magic command: <|fetch-price({baseToken},{quoteToken})|>
-Description of widget: This widget is used to get the price of a token.
+Description of widget: This widget is used to get the price of a token. Note, when the quoteToken isn't explicitly specified assume it to be USD.
 Required parameters:
 -{baseToken}: token to get the price of
 -{quoteToken}: token to use as units for price

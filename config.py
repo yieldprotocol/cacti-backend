@@ -3,7 +3,7 @@ import registry
 
 widget_index = dict(
     type="index.weaviate.WeaviateIndex",
-    index_name="WidgetV8",
+    index_name="WidgetV9",
     text_key="content",
 )
 app_info_index = dict(
