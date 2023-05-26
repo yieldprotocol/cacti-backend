@@ -4,6 +4,7 @@ from pydantic import Extra
 from gpt_index.utils import ErrorToRetry, retry_on_exceptions_with_backoff
 
 import registry
+import utils.timing as timing
 from .base import BaseTool
 
 
@@ -56,6 +57,7 @@ class IndexLookupTool(BaseTool):
             lambda: self._index.similarity_search(query, k=self._top_k),
             [ErrorToRetry(TypeError)],
         )
+        timing.log('widget_index_lookup_done')
         if self._source_key is not None:
             task_info = '\n'.join([f'Content: {doc.page_content}\nSource: {doc.metadata[self._source_key]}' for doc in docs])
         else:

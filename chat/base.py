@@ -111,7 +111,7 @@ class ChatHistory:
     def __iter__(self):
         return iter(self.messages)
 
-    def to_string(self, user_prefix: str = "User", bot_prefix: str = "Assistant", system_prefix: str = "System", token_limit: Optional[int] = None, before_message_id : Optional[uuid.UUID] = None) -> str:
+    def to_string(self, user_prefix: str = "User", bot_prefix: str = "Assistant", system_prefix: Optional[str] = "System", token_limit: Optional[int] = None, before_message_id : Optional[uuid.UUID] = None) -> str:
         ret = []
         for message in self:
             if before_message_id is not None and message.message_id == before_message_id:
@@ -119,6 +119,8 @@ class ChatHistory:
             if message.actor == 'user':
                 prefix = user_prefix
             elif message.actor == 'system':
+                if system_prefix is None:
+                    continue
                 prefix = system_prefix
             elif message.actor == 'bot':
                 prefix = bot_prefix

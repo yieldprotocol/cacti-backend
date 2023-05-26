@@ -1,6 +1,7 @@
 import functools
 import json
 import re
+import requests
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional, Union, Literal, TypedDict
 import traceback
@@ -13,6 +14,8 @@ from langchain.prompts.base import BaseOutputParser
 import context
 import utils
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
+import utils.timing as timing
+from utils.coingecko.coingecko_coin_currency import coin_list, currency_list, coingecko_api_url_prefix
 import registry
 import streaming
 from chat.container import ContainerMixin, dataclass_to_container_params
@@ -67,6 +70,8 @@ class IndexWidgetTool(IndexLookupTool):
         def injection_handler(token):
             nonlocal new_token_handler, response_buffer, response_state, response_prefix
 
+            timing.log('first_widget_token')
+
             response_buffer += token
             if response_state == 0:  # we are still waiting for response_prefix to appear
                 if response_prefix not in response_buffer:
@@ -74,6 +79,7 @@ class IndexWidgetTool(IndexLookupTool):
                     return
                 else:
                     # we have found the response_prefix, trim everything before that
+                    timing.log('first_widget_response_token')
                     response_state = 1
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
@@ -96,8 +102,11 @@ class IndexWidgetTool(IndexLookupTool):
                     else:
                         # keep waiting
                         return
+
                 token = response_buffer
                 response_buffer = ""
+                if token.strip():
+                    timing.log('first_visible_widget_response_token')
                 new_token_handler(token)
                 if '\n' in token:
                     # we have found a line-break in the response, switch to the terminal state to mask subsequent output
@@ -145,9 +154,12 @@ def replace_match(m: re.Match) -> str:
     command = m.group('command')
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []
+    timing.log('first_widget_command')
     print('found command:', command, params)
     if command == 'fetch-nft-search':
         return str(fetch_nft_search(*params))
+    elif command == 'fetch-price':
+        return str(fetch_price(*params))
     elif command == 'fetch-nft-collection-assets-by-trait':
         return str(fetch_nft_search_collection_by_trait(*params, for_sale_only=False))
     elif command == 'fetch-nft-collection-assets-for-sale-by-trait':
@@ -203,6 +215,37 @@ def replace_match(m: re.Match) -> str:
         # assert 0, 'unrecognized command: %s' % m.group(0)
         return m.group(0)
 
+@error_wrap 
+def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
+    # TODO
+    # Handle failures
+    """
+    Failures:
+    - quotetoken not mentioned it can assume it to be usd or eth
+    - Cannot identify duplicates in the coin list
+    - Cannot handle major mispells
+    """ 
+    for c in coin_list:
+        if c['id'].lower() == basetoken.lower() or \
+            c['symbol'].lower() == basetoken.lower() or \
+                c['name'].lower() == basetoken.lower():
+            basetoken_id = c['id'].lower()
+            basetoken_name = c['name']
+            break
+    else:
+        return f"Query token {basetoken} not supported"
+    
+    if quotetoken.lower() in currency_list: 
+        quotetoken_id = quotetoken.lower()
+    else:
+        return f"Quote currency {quotetoken} not supported"
+
+    coingecko_api_url = coingecko_api_url_prefix + f"?ids={basetoken_id}&vs_currencies={quotetoken_id}"
+    response = requests.get(coingecko_api_url)
+    response.raise_for_status()
+    return f"The price of {basetoken_name} is {list(list(response.json().values())[0].values())[0]} {quotetoken}"
+
+    
 @error_wrap
 def fetch_balance(token: str, wallet_address: str) -> str:
     if not wallet_address or wallet_address == 'None':
@@ -415,7 +458,7 @@ def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
         'value': value,
     }
 
-    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, 'set-ens-text', params)
+    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params)
     result = wf.run()
 
     return TxPayloadForSending(

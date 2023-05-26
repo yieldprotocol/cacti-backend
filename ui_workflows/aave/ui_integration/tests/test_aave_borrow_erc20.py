@@ -2,41 +2,46 @@
 """
 Test for borrowing ETH on Aave 
 """
-from ....base import process_result_and_simulate_tx, fetch_multistep_workflow_from_db, TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID
+from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID
+from ...common import aave_supply_eth_for_borrow_test
 from ..aave_borrow_ui_workflow import AaveBorrowUIWorkflow
 
-# Invoke this with python3 -m ui_workflows.aave.ui_integration.tests.test_aave_borrow_erc20
-token = "USDC"
-amount = 0.1
-workflow_params = {"token": token, "amount": amount}
+# Invoke this with python3 -m pytest -s -k "test_ui_aave_borrow_erc20"
+def test_ui_aave_borrow_erc20(setup_fork):
+    token = "USDC"
+    amount = 0.1
+    workflow_params = {"token": token, "amount": amount}
 
-multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
+    # Pre-supply ETH to Aave to setup the test environment for borrow
+    aave_supply_eth_for_borrow_test()
 
-# Assert what the user will see on the UI
-assert multistep_result.description == "Confirm borrow of 0.1 USDC on Aave"
+    multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
 
-assert multistep_result.is_final_step == True
+    # Assert what the user will see on the UI
+    assert multistep_result.description == "Confirm borrow of 0.1 USDC on Aave"
 
-# Simulating user signing/confirming a tx on the UI with their wallet
-tx_hash = process_result_and_simulate_tx(TEST_WALLET_ADDRESS, multistep_result)
+    assert multistep_result.is_final_step == True
 
-# Mocking FE response payload to backend
-curr_step_client_payload = {
-    "id": multistep_result.step_id,
-    "type": multistep_result.step_type,
-    "status": 'success',
-    "statusMessage": "TX successfully sent",
-    "userActionData": tx_hash
-}
+    # Simulating user signing/confirming a tx on the UI with their wallet
+    tx_hash = process_result_and_simulate_tx(TEST_WALLET_ADDRESS, multistep_result)
 
-workflow_id = multistep_result.workflow_id
+    # Mocking FE response payload to backend
+    curr_step_client_payload = {
+        "id": multistep_result.step_id,
+        "type": multistep_result.step_type,
+        "status": 'success',
+        "statusMessage": "TX successfully sent",
+        "userActionData": tx_hash
+    }
 
-multistep_workflow = fetch_multistep_workflow_from_db(workflow_id)
+    workflow_id = multistep_result.workflow_id
 
-# Process FE response payload
-multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multistep_workflow, curr_step_client_payload).run()
+    multistep_workflow = fetch_multi_step_workflow_from_db(workflow_id)
 
-# Final state of workflow should be terminated
-assert multistep_result.status == "terminated"
+    # Process FE response payload
+    multistep_result = AaveBorrowUIWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params, multistep_workflow, curr_step_client_payload).run()
 
-# TODO - For thorough validation, ensure to assert the actual amount used in tx matches expectation by fetching decoded tx data from Tenderly
+    # Final state of workflow should be terminated
+    assert multistep_result.status == "terminated"
+
+    # TODO - For thorough validation, ensure to assert the actual amount used in tx matches expectation by fetching decoded tx data from Tenderly

@@ -9,6 +9,7 @@ import traceback
 import context
 import env
 
+from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL
 
 def _get_weaviate_url(config):
     return f"{config.get('protocol', 'https')}://{config['user']}:{config['password']}@{config['host']}:{config['port']}"
@@ -22,13 +23,6 @@ WEAVIATE_URL = _get_weaviate_url(env.env_config['weaviate'])
 CHATDB_URL = _get_postgres_url(env.env_config['chatdb'], 'chatdb')
 SCRAPEDB_URL = _get_postgres_url(env.env_config['scrapedb'], 'scrapedb')
 
-OPENAI_API_KEY = "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"
-CENTER_API_KEY = os.getenv('CENTER_API_KEY', 'key8f1af05afe473107c3ea2556')
-ETHERSCAN_API_KEY = 'ZCUTVCPHAJ5YRNB6SZTJN9ZV24FBEX86GJ'
-OPENSEA_API_KEY = os.getenv('OPENSEA_API_KEY', '')
-
-TENDERLY_FORK_URL = "https://rpc.tenderly.co/fork/902db63e-9c5e-415b-b883-5701c77b3aa7"
-
 
 def set_api_key():
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
@@ -40,9 +34,11 @@ tokenizer = tiktoken.encoding_for_model("text-davinci-003")
 ns = ENS.from_web3(w3)
 
 
+def estimate_gas(tx):
+        return hex(context.get_web3_provider().eth.estimate_gas(tx))
+
 def get_token_len(s: str) -> int:
     return len(tokenizer.encode(s))
-
 
 # Error handling
 class ConnectedWalletRequired(Exception):

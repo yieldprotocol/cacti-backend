@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 import requests
 
 import utils
+import utils.timing as timing
 from chat.container import ContainerMixin, dataclass_to_container_params
 
 from . import opensea
@@ -168,14 +169,18 @@ def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
         type='collection',  # too noisy otherwise
     ))
     ret = []
+    count = 0
     for network in NETWORKS:
         url = f"{API_URL}/{network}/search?{q}"
+        timing.log('search_begin')
         response = requests.get(url, headers=HEADERS)
         response.raise_for_status()
+        timing.log('search_done')
         obj = response.json()
         for r in obj['results']:
             if not r.get('previewImageUrl'):
                 continue
+            count += 1
             network = r['id'].split('/')[0]
             if r['type'].lower() == 'collection':
                 result = fetch_nft_collection(network, r['address'])
@@ -184,6 +189,8 @@ def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
             else:
                 result = fetch_nft_asset(network, r['address'], r['tokenId'])
             ret.append(result)
+            timing.log('first_result_done')
+    timing.log('%d_results_done' % count)
     return ret
 
 

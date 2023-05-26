@@ -9,6 +9,7 @@ import context
 import registry
 import streaming
 from tools.base import BaseTool
+import utils.timing as timing
 from .base import BaseChat, ChatHistory, Response
 
 
@@ -64,7 +65,7 @@ class BasicAgentChat(BaseChat):
         history_string = history.to_string(bot_prefix="Observation", system_prefix="Thought", token_limit=HISTORY_TOKEN_LIMIT, before_message_id=before_message_id)
 
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
-        start = time.time()
+        timing.init()
 
         system_chat_message_id = None
         system_response = ''
@@ -97,6 +98,8 @@ class BasicAgentChat(BaseChat):
         def system_new_token_handler(token):
             nonlocal system_chat_message_id, system_response, bot_chat_message_id, bot_response, has_sent_bot_response
 
+            timing.log('first_token')
+
             if bot_chat_message_id is not None:
                 bot_flush(bot_response)
                 bot_chat_message_id = None
@@ -113,6 +116,8 @@ class BasicAgentChat(BaseChat):
         def bot_new_token_handler(token):
             nonlocal bot_chat_message_id, bot_response, system_chat_message_id, system_response, has_sent_bot_response
 
+            timing.log('first_token')
+
             if system_chat_message_id is not None:
                 system_flush(system_response)
                 system_chat_message_id = None
@@ -122,6 +127,8 @@ class BasicAgentChat(BaseChat):
             if not bot_response.strip():
                 # don't start returning something until we have the first non-whitespace char
                 return
+
+            timing.log('first_visible_bot_token')
             bot_chat_message_id = send(Response(
                 response=token,
                 still_thinking=False,
@@ -149,7 +156,7 @@ class BasicAgentChat(BaseChat):
         }
         with context.with_request_context(history.wallet_address, message_id):
             result = agent.run(example).strip()
-        duration = time.time() - start
+        timing.log('response_done')
 
         if system_chat_message_id is not None:
             system_flush(system_response)
@@ -160,6 +167,6 @@ class BasicAgentChat(BaseChat):
             if 'DONE' not in result:
                 send(Response(response=result), before_message_id=before_message_id)
 
-        response = f'Response generation took {duration: .2f}s'
+        response = f'Timings - {timing.report()}'
         system_chat_message_id = send(Response(response=response, actor='system'), before_message_id=before_message_id)
         history.add_system_message(response, message_id=system_chat_message_id, before_message_id=before_message_id)

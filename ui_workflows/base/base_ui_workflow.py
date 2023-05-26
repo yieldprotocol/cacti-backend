@@ -5,26 +5,30 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
 
-import env
 import requests
-from utils import TENDERLY_FORK_URL
 from pywalletconnect.client import WCClient
 from playwright.sync_api import  sync_playwright, Page, BrowserContext
 
+import env
+import context
 from .common import _validate_non_zero_eth_balance
 
 
 class BaseUIWorkflow(ABC):
     """Grandparent base class for UI workflows. Do not directly use this class, use either BaseSingleStepUIWorkflow or BaseMultiStepUIWorkflow subclass"""
 
-    def __init__(self, wallet_chain_id: int, wallet_address: str, browser_storage_state: Optional[Dict] = None) -> None:
+    def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict) -> None:
         self.wallet_chain_id = wallet_chain_id
         self.wallet_address = wallet_address
-        self.browser_storage_state = browser_storage_state
+        self.chat_message_id = chat_message_id
+        self.workflow_type = workflow_type
+        self.workflow_params = workflow_params
+        self.browser_storage_state = None
         self.thread = None
         self.result_container = []
         self.thread_event = threading.Event()
         self.is_approval_tx = False
+
 
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
@@ -32,9 +36,9 @@ class BaseUIWorkflow(ABC):
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
-            context = browser.new_context(storage_state=self.browser_storage_state)
-            context.grant_permissions(["clipboard-read", "clipboard-write"])
-            page = context.new_page()
+            browser_context = browser.new_context(storage_state=self.browser_storage_state)
+            browser_context.grant_permissions(["clipboard-read", "clipboard-write"])
+            page = browser_context.new_page()
 
             if not env.is_prod():
                 self._dev_mode_intercept_rpc(page)
@@ -42,15 +46,15 @@ class BaseUIWorkflow(ABC):
             self._goto_page_and_open_walletconnect(page)
             self._connect_to_walletconnect_modal(page)
 
-            ret = self._run_page(page, context)
+            ret = self._run_page(page, browser_context)
             print(f"Workflow Result:-\n{ret}")
 
-            context.close()
+            browser_context.close()
             browser.close()
         return ret
 
     @abstractmethod
-    def _run_page(self, page: Page, context: BrowserContext) -> Any:
+    def _run_page(self, page: Page, browser_context: BrowserContext) -> Any:
         """Accept user input and return responses via the send_message function."""
 
     @abstractmethod
@@ -61,7 +65,7 @@ class BaseUIWorkflow(ABC):
         """Intercept RPC calls in dev mode"""
         page.route("**/*", self._intercept_rpc_node_reqs)
 
-    def start_listener(self, wc_uri: str) -> None:
+    def start_wallet_connect_listener(self, wc_uri: str) -> None:
         assert self.thread is None, 'not expecting a thread to be started'
         self.thread = threading.Thread(
             target=wc_listen_for_messages,
@@ -69,7 +73,7 @@ class BaseUIWorkflow(ABC):
         )
         self.thread.start()
 
-    def stop_listener(self) -> Any:
+    def stop_wallet_connect_listener(self) -> Any:
         if self.thread:
             self.thread_event.set()
             self.thread.join()
@@ -81,7 +85,7 @@ class BaseUIWorkflow(ABC):
     def _connect_to_walletconnect_modal(self, page):
         page.get_by_text("Copy to clipboard").click()
         wc_uri = page.evaluate("() => navigator.clipboard.readText()")
-        self.start_listener(wc_uri)
+        self.start_wallet_connect_listener(wc_uri)
 
     def _is_web3_call(self, request) -> Dict[bool, bool]:
         has_list_payload = False
@@ -100,13 +104,13 @@ class BaseUIWorkflow(ABC):
         return dict(is_web3_call=False, has_list_payload=has_list_payload)
     
     def _forward_rpc_node_reqs(self, route):
-        route.continue_(url=TENDERLY_FORK_URL)
+        route.continue_(url=context.get_web3_tenderly_fork_url())
 
     def _handle_batch_web3_call(self, route):
         payload = json.loads(route.request.post_data)
         batch_result = []
         for obj in payload:
-            response = requests.post(TENDERLY_FORK_URL, json=obj)
+            response = requests.post(context.get_web3_tenderly_fork_url(), json=obj)
             response.raise_for_status()
             batch_result.append(response.json())
         route.fulfill(body=json.dumps(batch_result), headers={"access-control-allow-origin": "*", "access-control-allow-methods": "*", "access-control-allow-headers": "*"})
