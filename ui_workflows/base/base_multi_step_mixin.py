@@ -75,35 +75,13 @@ class BaseMultiStepMixin():
             return self.super_base_class.run(self)
         except WorkflowValidationError as e:
             print(f"MULTISTEP {approach_label} WORKFLOW VALIDATION ERROR, {start_log_params}")
-            return MultiStepResult(
-                status='error',
-                workflow_id=str(self.multistep_workflow.id),
-                workflow_type=self.workflow_type,
-                step_id=str(self.curr_step.id) if self.curr_step else None,
-                step_type=self.curr_step.type if self.curr_step else None,
-                user_action_type=self.curr_step.user_action_type.name if self.curr_step else None,
-                step_number=self.curr_step.step_number if self.curr_step else None,
-                is_final_step=self._check_is_final_step(),
-                tx=None,
-                error_msg=e.args[0],
-                description=self.curr_step_description
-            )
+            return self._create_error_result(e.args[0])
+
         except Exception:
             print(f"MULTISTEP {approach_label} WORKFLOW EXCEPTION, {start_log_params}")
             traceback.print_exc()
-            return MultiStepResult(
-                status='error',
-                workflow_id=str(self.multistep_workflow.id),
-                workflow_type=self.workflow_type,
-                step_id=str(self.curr_step.id) if self.curr_step else None,
-                step_type=self.curr_step.type if self.curr_step else None,
-                user_action_type=self.curr_step.user_action_type.name if self.curr_step else None,
-                step_number=self.curr_step.step_number if self.curr_step else None,
-                is_final_step=self._check_is_final_step(),
-                tx=None,
-                error_msg="Unexpected error. Check with support.",
-                description=self.curr_step_description
-            )
+            return self._create_error_result("Unexpected error. Check with support.")
+
         finally:
             if self.workflow_approach == WorkflowApproach.UI:
                 self.stop_wallet_connect_listener()
@@ -132,6 +110,15 @@ class BaseMultiStepMixin():
 
             # Stop WC listener thread and extract tx data if any
             tx = self.stop_wallet_connect_listener()
+
+            if tx['gas'] == '0x0':
+                try:
+                    tx['from'] = Web3.to_checksum_address(tx['from'])
+                    tx['to'] = Web3.to_checksum_address(tx['to'])
+                    tx['gas'] = estimate_gas(tx)
+                except Exception:
+                    # If no gas specified by protocol UI and gas estimation fails, use arbitary gas limit 500,000
+                    tx['gas'] = "0x7A120" 
         else:
             # For contract ABI approach
             tx = processing_result.tx
@@ -265,7 +252,11 @@ class BaseMultiStepMixin():
             # Save current step status and user action data to DB that we receive from client
             self.curr_step.status = WorkflowStepStatus[self.curr_step_client_payload['status']]
             self.curr_step.status_message = self.curr_step_client_payload['statusMessage']
-            self.curr_step.user_action_data = self.curr_step_client_payload['userActionData']
+
+            # If user action data is missing it means that the client response payload is of an unsuccessful status such as 'error'
+            if self.curr_step_client_payload.get('userActionData'):
+                self.curr_step.user_action_data = self.curr_step_client_payload['userActionData']
+
             self._save_to_db([self.curr_step])
 
     def _check_should_terminate_run(self) -> bool:
@@ -313,3 +304,18 @@ class BaseMultiStepMixin():
         else:
             self.curr_step.step_state.update(step_state)
         self._save_to_db([self.curr_step])
+
+    def _create_error_result(self, error_msg: str):
+        return MultiStepResult(
+            status='error',
+            workflow_id=str(self.multistep_workflow.id),
+            workflow_type=self.workflow_type,
+            step_id=str(self.curr_step.id) if self.curr_step else None,
+            step_type=self.curr_step.type if self.curr_step else None,
+            user_action_type=self.curr_step.user_action_type.name if self.curr_step else None,
+            step_number=self.curr_step.step_number if self.curr_step else None,
+            is_final_step=self._check_is_final_step(),
+            tx=None,
+            error_msg=error_msg,
+            description=self.curr_step_description or "(Unexpected error)"
+        )

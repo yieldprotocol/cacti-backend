@@ -505,11 +505,5 @@ def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPay
         'nftId': nftId,
     }
 
-    if not nftContractAddress:
-        return "Unable to find NFT collection in chat for setting avatar, ask for a collection first and try again"
-
-    if not nftId:
-        return "Unable to find NFT ID in chat for setting avatar, please specify an NFT ID"
-
     result = ens.ENSSetAvatarNFTWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
     return TxPayloadForSending.from_workflow_result(result)
