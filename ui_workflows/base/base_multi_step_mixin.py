@@ -111,7 +111,7 @@ class BaseMultiStepMixin():
             # Stop WC listener thread and extract tx data if any
             tx = self.stop_wallet_connect_listener()
 
-            if tx['gas'] == '0x0':
+            if tx and tx['gas'] == '0x0':
                 try:
                     tx['from'] = Web3.to_checksum_address(tx['from'])
                     tx['to'] = Web3.to_checksum_address(tx['to'])
