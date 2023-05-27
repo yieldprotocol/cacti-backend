@@ -30,22 +30,28 @@ def streaming_callback_manager(new_token_handler: Callable) -> CallbackManager:
     return CallbackManager([StreamingCallbackHandler(new_token_handler)])
 
 
-def get_streaming_llm(new_token_handler):
+def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
     # falls back to non-streaming if none provided
     streaming_kwargs = dict(
         streaming=True,
         callback_manager=streaming_callback_manager(new_token_handler),
     ) if new_token_handler else {}
 
+    model_kwargs = dict(
+        model_name=model_name,
+    ) if model_name else {}
+
     llm = OpenAI(
-        temperature=0.0, max_tokens=-1,
-        **streaming_kwargs
+        temperature=0.0,
+        max_tokens=max_tokens,
+        **streaming_kwargs,
+        **model_kwargs,
     )
     return llm
 
 
-def get_streaming_chain(prompt, new_token_handler, use_api_chain=False):
-    llm = get_streaming_llm(new_token_handler)
+def get_streaming_chain(prompt, new_token_handler, use_api_chain=False, model_name=None, max_tokens=-1):
+    llm = get_streaming_llm(new_token_handler, model_name=model_name, max_tokens=max_tokens)
 
     if use_api_chain:
         return IndexAPIChain.from_llm(
