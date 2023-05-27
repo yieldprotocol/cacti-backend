@@ -7,3 +7,4 @@ from . import widget_search
 from . import rephrase_widget_search
 from . import rephrase_widget_search2
 from . import basic_agent
+from . import fine_tuned
