@@ -34,11 +34,11 @@ from tools.index_widget import *
 
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
 
-TEMPLATE = '''<user>{question}<hist>{chat_history}<task>{task_info}<bot>'''
+TEMPLATE = '''<hist>{chat_history}<user>{question}<task>{task_info}<bot>'''
 
 HISTORY_TOKEN_LIMIT = 1800
 
-MODEL_NAME = 'curie:ft-yield-inc-2023-05-27-21-10-09'
+MODEL_NAME = 'curie:ft-yield-inc-2023-05-28-03-06-35'
 STOP = "<eot>"
 MAX_TOKENS = 50
 
