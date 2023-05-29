@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Dict
 
 from utils import estimate_gas
-from .common import WorkflowValidationError, Result
+from .common import WorkflowValidationError, Result, _validate_non_zero_eth_balance
 from .base_contract_workflow import BaseContractWorkflow
 
 class BaseSingleStepContractWorkflow(BaseContractWorkflow):
@@ -25,6 +25,10 @@ class BaseSingleStepContractWorkflow(BaseContractWorkflow):
     def run(self) -> Result:
         print(f"Single-step contract workflow started, {self.log_params}")
         try:
+            # Run basic validations
+            _validate_non_zero_eth_balance(self.wallet_address)
+            self._general_workflow_validation()
+
             result: Result = super().run()
 
             tx = result.tx

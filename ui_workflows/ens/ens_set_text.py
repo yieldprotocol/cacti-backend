@@ -23,7 +23,7 @@ class ENSSetTextWorkflow(BaseSingleStepContractWorkflow):
 
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, user_description, self.WORKFLOW_TYPE, workflow_params)
 
-    def _pre_workflow_validation(self):
+    def _general_workflow_validation(self):
         ens_update_common_pre_workflow_validation(self.web3_provider, self.domain, self.wallet_address)
 
     def _run(self) -> Result:

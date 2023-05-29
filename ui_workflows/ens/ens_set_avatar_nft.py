@@ -25,7 +25,7 @@ class ENSSetAvatarNFTWorkflow(BaseSingleStepContractWorkflow):
 
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, user_description, self.WORKFLOW_TYPE, workflow_params)
 
-    def _pre_workflow_validation(self):
+    def _general_workflow_validation(self):
         if not self.domain:
             raise WorkflowValidationError("Unable to interpret an ENS domain in current chat for setting avatar, please specify an ENS domain")
 

@@ -11,7 +11,7 @@ from database.models import db_session, WorkflowStep, WorkflowStepStatus, MultiS
 
 from enum import Enum
 
-from .common import WorkflowStepClientPayload, RunnableStep, ContractStepProcessingResult, MultiStepResult, WorkflowValidationError, StepProcessingResult
+from .common import WorkflowStepClientPayload, RunnableStep, ContractStepProcessingResult, MultiStepResult, WorkflowValidationError, StepProcessingResult, _validate_non_zero_eth_balance
 from .base_contract_workflow import BaseContractWorkflow
 from .base_ui_workflow import BaseUIWorkflow
 from .base_contract_workflow import BaseContractWorkflow
@@ -75,6 +75,7 @@ class BaseMultiStepMixin():
             return self.super_base_class.run(self)
         except WorkflowValidationError as e:
             print(f"MULTISTEP {approach_label} WORKFLOW VALIDATION ERROR, {start_log_params}")
+            traceback.print_exc()
             return self._create_error_result(e.args[0])
 
         except Exception:
@@ -88,9 +89,6 @@ class BaseMultiStepMixin():
 
             end_log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step.id if self.curr_step else None}, curr_step_type: {self.curr_step.type if self.curr_step else self.runnable_steps[0].type}"
             print(f"Multi-step {approach_label} workflow ended, {end_log_params}")
-
-    # TODO: only in UI
-    # def _run_page(self, page, context) -> MultiStepResult:
 
     def _run(self, *args, **kwargs) -> MultiStepResult:
         processing_result = self._run_step(*args, **kwargs)
@@ -246,8 +244,8 @@ class BaseMultiStepMixin():
             if self.curr_step.status != WorkflowStepStatus.pending:
                 raise WorkflowValidationError("Current step is not in pending status which means it has already been processed, FE client should not be sending a payload for this step")
 
-            # TODO: only in UI
-            self.browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
+            if self.workflow_approach == WorkflowApproach.UI:
+                self.browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
 
             # Save current step status and user action data to DB that we receive from client
             self.curr_step.status = WorkflowStepStatus[self.curr_step_client_payload['status']]
@@ -293,6 +291,11 @@ class BaseMultiStepMixin():
         self._save_to_db([workflow_step])
         self.curr_step = workflow_step
         self.curr_step_description = step_description
+
+        # Run any common validation checks for all workflow steps
+        _validate_non_zero_eth_balance(self.wallet_address)
+        self._general_workflow_validation()
+
         return workflow_step
     
     def _get_step_by_id(self, step_id: str) -> WorkflowStep:
@@ -319,3 +322,7 @@ class BaseMultiStepMixin():
             error_msg=error_msg,
             description=self.curr_step_description or "(Unexpected error)"
         )
+    
+    def _general_workflow_validation(self):
+        """Override this method to perform any common validation checks for all steps in the workflow before running them"""
+        pass
