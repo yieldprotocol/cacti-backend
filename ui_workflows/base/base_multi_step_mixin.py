@@ -16,6 +16,8 @@ from .base_contract_workflow import BaseContractWorkflow
 from .base_ui_workflow import BaseUIWorkflow
 from .base_contract_workflow import BaseContractWorkflow
 
+FALLBACK_GAS_LIMIT = hex(500000) # Arbitrary gas limit of 500k to be used when estimating gas fails
+
 class WorkflowApproach(Enum):
     UI = 1
     CONTRACT = 2
@@ -115,12 +117,16 @@ class BaseMultiStepMixin():
                     tx['to'] = Web3.to_checksum_address(tx['to'])
                     tx['gas'] = estimate_gas(tx)
                 except Exception:
-                    # If no gas specified by protocol UI and gas estimation fails, use arbitary gas limit 500,000
-                    tx['gas'] = "0x7A120" 
+                    # If no gas specified by protocol UI and gas estimation fails, use fallback arbitary gas limit to attempt tx
+                    tx['gas'] = FALLBACK_GAS_LIMIT 
         else:
             # For contract ABI approach
             tx = processing_result.tx
-            tx['gas'] = estimate_gas(tx)
+            try:
+                tx['gas'] = estimate_gas(tx)
+            except Exception:
+                # If gas usage estimation fails, use fallback arbitary gas limit to attempt tx
+                tx['gas'] = FALLBACK_GAS_LIMIT
 
         if tx and "value" not in tx:
             tx['value'] = "0x0"

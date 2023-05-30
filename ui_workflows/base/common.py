@@ -72,9 +72,8 @@ class WorkflowValidationError(Exception):
 class WorkflowFailed(Exception):
     pass
 
-def tenderly_simulate_tx(wallet_address: str, tx: Dict) -> str:
+def tenderly_simulate_tx(wallet_address: str, tx: Dict) -> str:    
     payload = {
-    "id": 0,
     "jsonrpc": "2.0",
     "method": "eth_sendTransaction",
         "params": [
@@ -107,6 +106,34 @@ def tenderly_simulate_tx(wallet_address: str, tx: Dict) -> str:
         raise Exception(f"Transaction failed, tx_hash: {tx_hash}, check fork for more details - https://dashboard.tenderly.co/Yield/chatweb3/fork/{fork_id}")
     
     return tx_hash
+
+def advance_fork_blocks(num_blocks) -> None:
+    fork_rpc_url = context.get_web3_tenderly_fork_url()
+
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "evm_increaseBlocks",
+        "params": [
+            hex(num_blocks)
+        ]
+    }
+
+    res = requests.post(fork_rpc_url, json=payload)
+    res.raise_for_status()
+
+def advance_fork_time_secs(secs) -> None:
+    fork_rpc_url = context.get_web3_tenderly_fork_url()
+
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "evm_increaseTime",
+        "params": [
+            hex(secs)
+        ]
+    }
+
+    res = requests.post(fork_rpc_url, json=payload)
+    res.raise_for_status()
 
 def setup_mock_db_objects() -> Dict:
     mock_system_config = SystemConfig(json={})
