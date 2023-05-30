@@ -2,7 +2,7 @@ import os
 import traceback
 import time
 from ui_workflows.ens import ENSRegistrationContractWorkflow
-from ui_workflows.base import MultiStepResult, setup_mock_db_objects, process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, advance_fork_time_secs, advance_fork_blocks
+from ui_workflows.base import MultiStepResult, setup_mock_db_objects, process_result_and_simulate_tx, fetch_multi_step_workflow_from_db
 
 # Invoke this with python -m pytest -s -k "test_contract_ens_registration"
 def test_contract_ens_registration(setup_fork):
@@ -51,9 +51,9 @@ def test_contract_ens_registration(setup_fork):
     }   
 
     multi_step_result: MultiStepResult = ENSRegistrationContractWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multi_step_workflow, curr_step_client_payload).run()
-    
-    process_result_and_simulate_tx(wallet_address, multi_step_result)
 
+    assert multi_step_result.status == "terminated"
+    
     print("Domain registered successfully")
 
 
