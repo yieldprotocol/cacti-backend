@@ -88,7 +88,7 @@ if wc_button:
 # Define Streamlit app header
 st.markdown("### Fork Manager")
 # Define input box for forkID
-fork_id = st.text_input("Enter fork ID", key="fork_id", value="902db63e-9c5e-415b-b883-5701c77b3aa7")
+fork_id = st.text_input("Enter fork ID", key="fork_id", value="08f78838-4799-47a8-88fb-1f169fa99f57")
 col1, col2 = st.columns(2)
 # Define button to update fork
 with col1:
