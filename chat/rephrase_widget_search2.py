@@ -141,17 +141,16 @@ class RephraseWidgetSearchChat(BaseChat):
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
-                        if response_buffer == response_buffer:  # nothing resolved
-                            if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
-                                # matching pairs of open/close, just flush
-                                # NB: for better frontend parsing of nested widgets, we need an invariant that
-                                # there are no two independent widgets on the same line, otherwise we can't
-                                # detect the closing tag properly when there is nesting.
-                                response_buffer = response_buffer.replace('|>', '|>\n')
-                                break
-                            else:
-                                # keep waiting
-                                return
+                        if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                            # matching pairs of open/close, just flush
+                            # NB: for better frontend parsing of nested widgets, we need an invariant that
+                            # there are no two independent widgets on the same line, otherwise we can't
+                            # detect the closing tag properly when there is nesting.
+                            response_buffer = response_buffer.replace('|>', '|>\n')
+                            break
+                        else:
+                            # keep waiting
+                            return
                     else:
                         # keep waiting
                         return
