@@ -26,7 +26,7 @@ class ENSRegistrationUIWorkflow(BaseMultiStepUIWorkflow):
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None, fork_id = None) -> None:
         self.ens_domain = workflow_params['domain']
 
-        step1 = RunnableStep("request_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} request registration. After confirming transaction, ENS will take ~1min to process next step", self.step_1_request_registration)
+        step1 = RunnableStep("request_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} registration request. After confirming transaction, ENS will take ~1min to process next step", self.step_1_request_registration)
         step2 = RunnableStep("confirm_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} confirm registration", self.step_2_confirm_registration)
 
         steps = [step1, step2]
