@@ -171,7 +171,7 @@ def sanitize_str(s: str) -> str:
     return s
 
 
-def replace_match(m: re.Match) -> str:
+def replace_match(m: re.Match) -> Union[str | Generator]:
     command = m.group('command')
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []
