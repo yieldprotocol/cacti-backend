@@ -35,7 +35,7 @@ ns = ENS.from_web3(w3)
 
 
 def estimate_gas(tx):
-        return hex(context.get_web3_provider().eth.estimate_gas(tx))
+    return hex(context.get_web3_provider().eth.estimate_gas(tx))
 
 def get_token_len(s: str) -> int:
     return len(tokenizer.encode(s))

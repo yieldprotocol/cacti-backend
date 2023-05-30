@@ -6,7 +6,6 @@ import json
 import context
 
 from web3 import Web3
-from .common import _validate_non_zero_eth_balance, compute_abi_abspath
 
 class BaseContractWorkflow(ABC):
     """Grandparent base class for contract workflows. Do not directly use this class, use either BaseSingleStepContractWorkflow or BaseMultiStepContractWorkflow class"""
@@ -21,9 +20,6 @@ class BaseContractWorkflow(ABC):
 
     def run(self) -> Any:
         """Main function to call to run the workflow."""
-        _validate_non_zero_eth_balance(self.wallet_address)
-        self._pre_workflow_validation()
-
         ret = self._run()
         return ret
 
@@ -31,14 +27,8 @@ class BaseContractWorkflow(ABC):
     def _run(self) -> Any:
         """Implement the contract interaction logic here."""
 
-    @abstractmethod
-    def _pre_workflow_validation(self):
-        """Perform any validation before running the workflow."""
-    
-    def _load_contract_abi_dict(self, wf_file_path: str, abi_relative_path: str) -> Dict:
-        abi_abs_path = compute_abi_abspath(wf_file_path, abi_relative_path)
-        with open(abi_abs_path, 'r') as f:
-            return json.load(f)
 
-    
+    @abstractmethod
+    def _general_workflow_validation(self):
+        """Override this method to perform any common validation checks for all steps in the workflow before running them"""
 

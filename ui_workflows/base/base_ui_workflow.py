@@ -11,7 +11,6 @@ from playwright.sync_api import  sync_playwright, Page, BrowserContext
 
 import env
 import context
-from .common import _validate_non_zero_eth_balance
 
 
 class BaseUIWorkflow(ABC):
@@ -32,8 +31,6 @@ class BaseUIWorkflow(ABC):
 
     def run(self) -> Any:
         """Spin up headless browser and call run_page function on page."""
-        _validate_non_zero_eth_balance(self.wallet_address)
-
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=_check_headless_allowed())
             browser_context = browser.new_context(storage_state=self.browser_storage_state)
@@ -60,6 +57,10 @@ class BaseUIWorkflow(ABC):
     @abstractmethod
     def _goto_page_and_open_walletconnect(self,page):
         """Go to page and open walletconnect"""
+
+    def _general_workflow_validation(self):
+        """Override this method to perform any common validation checks for all steps in the workflow before running them"""
+        pass
 
     def _dev_mode_intercept_rpc(self, page) -> None:
         """Intercept RPC calls in dev mode"""

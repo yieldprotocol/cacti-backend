@@ -11,6 +11,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
 
+import ui_workflows
 import context
 import utils
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
@@ -146,6 +147,9 @@ def sanitize_str(s: str) -> str:
     s = s.strip()
     if s.startswith('"') and s.endswith('"') or s.startswith("'") and s.endswith("'"):
         s = s[1:-1]
+    
+    # If parameter not detected in message, model will fill in with "None" so parse that to native None
+    s = None if s.lower() == 'none' else s
     return s
 
 
@@ -191,9 +195,9 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
-    elif command == 'aave-supply':
+    elif command == aave.AaveSupplyUIWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
-    elif command == 'aave-borrow':
+    elif command == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='borrow'))
     elif command == 'aave-repay':
         return str(exec_aave_operation(*params, operation='repay'))
@@ -203,10 +207,14 @@ def replace_match(m: re.Match) -> str:
         return str(ens_from_address(*params))
     elif command == 'address-from-ens':
         return str(address_from_ens(*params))
-    elif command == 'register-ens-domain':
+    elif command == ens.ENSRegistrationWorkflow.WORKFLOW_TYPE:
         return str(register_ens_domain(*params))
-    elif command == 'set-ens-text':
+    elif command == ens.ENSSetTextWorkflow.WORKFLOW_TYPE:
         return str(set_ens_text(*params))
+    elif command == ens.ENSSetPrimaryNameWorkflow.WORKFLOW_TYPE:
+        return str(set_ens_primary_name(*params))
+    elif command == ens.ENSSetAvatarNFTWorkflow.WORKFLOW_TYPE:
+        return str(set_ens_avatar_nft(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -438,6 +446,15 @@ class TxPayloadForSending(ContainerMixin):
     error_msg: Optional[str] = None
     description: str = ''
 
+    @classmethod
+    def from_workflow_result(cls, result: ui_workflows.base.Result):
+        return TxPayloadForSending(
+            user_request_status=result.status,
+            tx=result.tx,
+            error_msg=result.error_msg,
+            description=result.description
+        )
+
     def container_name(self) -> str:
         return 'display-tx-payload-for-sending-container'
 
@@ -457,12 +474,35 @@ def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
         'value': value,
     }
 
-    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params)
-    result = wf.run()
+    result = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
+    return TxPayloadForSending.from_workflow_result(result)
 
-    return TxPayloadForSending(
-        user_request_status=result.status,
-        tx=result.tx,
-        error_msg=result.error_msg,
-        description=result.description
-    )
+@error_wrap
+@ensure_wallet_connected
+def set_ens_primary_name(domain: str) ->TxPayloadForSending:
+    wallet_chain_id = 1 # TODO: get from context
+    wallet_address = context.get_wallet_address()
+    user_chat_message_id = context.get_user_chat_message_id()
+
+    params = {
+        'domain': domain,
+    }
+
+    result = ens.ENSSetPrimaryNameWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
+    return TxPayloadForSending.from_workflow_result(result)
+
+@error_wrap
+@ensure_wallet_connected
+def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPayloadForSending:
+    wallet_chain_id = 1 # TODO: get from context
+    wallet_address = context.get_wallet_address()
+    user_chat_message_id = context.get_user_chat_message_id()
+
+    params = {
+        'domain': domain,
+        'nftContractAddress': nftContractAddress,
+        'nftId': nftId,
+    }
+
+    result = ens.ENSSetAvatarNFTWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
+    return TxPayloadForSending.from_workflow_result(result)
