@@ -207,7 +207,7 @@ def replace_match(m: re.Match) -> str:
         return str(ens_from_address(*params))
     elif command == 'address-from-ens':
         return str(address_from_ens(*params))
-    elif command == ens.ENSRegistrationWorkflow.WORKFLOW_TYPE:
+    elif command == ens.ENSRegistrationUIWorkflow.WORKFLOW_TYPE:
         return str(register_ens_domain(*params))
     elif command == ens.ENSSetTextWorkflow.WORKFLOW_TYPE:
         return str(set_ens_text(*params))

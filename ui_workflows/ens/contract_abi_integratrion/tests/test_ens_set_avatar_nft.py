@@ -1,10 +1,10 @@
 import os
 import uuid
 from ..ens_set_avatar_nft import ENSSetAvatarNFTWorkflow
-from ...base import process_result_and_simulate_tx
+from ....base import process_result_and_simulate_tx
 
-# Invoke this with python -m pytest -s -k "test_ens_set_avatar_nft"
-def test_ens_set_avatar_nft(setup_fork):
+# Invoke this with python -m pytest -s -k "test_contract_ens_set_avatar_nft"
+def test_contract_ens_set_avatar_nft(setup_fork):
     domain = "owocki.gitcoin.eth"
     wallet_address = "0xDDF369C3bf18b1B12EA295d597B943b955eF4671"
     wallet_chain_id = 1  # Tenderly Mainnet Fork

@@ -12,7 +12,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 import env
 import context
-from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepUIWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep, setup_mock_db_objects
+from ...base import BaseUIWorkflow, MultiStepResult, BaseMultiStepUIWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep, setup_mock_db_objects
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
@@ -20,7 +20,7 @@ from database.models import (
 TWO_MINUTES = 120000
 TEN_SECONDS = 10000
 
-class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
+class ENSRegistrationUIWorkflow(BaseMultiStepUIWorkflow):
     WORKFLOW_TYPE = 'register-ens-domain'
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None, fork_id = None) -> None:
