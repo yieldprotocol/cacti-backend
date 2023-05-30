@@ -38,7 +38,7 @@ TEMPLATE = '''<hist>{chat_history}<user>{question}<task>{task_info}<bot>'''
 
 HISTORY_TOKEN_LIMIT = 1800
 
-MODEL_NAME = 'curie:ft-yield-inc-2023-05-28-03-06-35'
+MODEL_NAME = 'curie:ft-yield-inc-2023-05-30-20-19-41'
 STOP = "<eot>"
 MAX_TOKENS = 50
 
