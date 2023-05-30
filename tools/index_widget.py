@@ -150,7 +150,7 @@ def sanitize_str(s: str) -> str:
         s = s[1:-1]
     
     # If parameter not detected in message, model will fill in with "None" so parse that to native None
-    s = None if s == 'None' else s
+    s = None if s.lower() == 'none' else s
     return s
 
 
