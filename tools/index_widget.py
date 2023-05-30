@@ -3,7 +3,7 @@ import json
 import re
 import requests
 from dataclasses import dataclass, asdict
-from typing import Any, Dict, List, Optional, Union, Literal, TypedDict
+from typing import Any, Dict, Generator, List, Optional, Union, Literal, TypedDict
 import traceback
 
 from langchain.llms import OpenAI
@@ -88,6 +88,11 @@ class IndexWidgetTool(IndexLookupTool):
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
+                        if isinstance(response_buffer, Generator):  # handle stream of widgets
+                            for item in response_buffer:
+                                new_token_handler(str(item) + "\n")
+                            response_buffer = ""
+                            return
                         if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
@@ -133,9 +138,26 @@ class IndexWidgetTool(IndexLookupTool):
         return result.strip()
 
 
-def iterative_evaluate(phrase: str) -> str:
+def iterative_evaluate(phrase: str) -> Union[str | Generator]:
     while True:
-        eval_phrase = RE_COMMAND.sub(replace_match, phrase)
+        # before we had streaming, we could use this
+        #eval_phrase = RE_COMMAND.sub(replace_match, phrase)
+        # now, iterate manually to find any streamable components
+        eval_phrase = ""
+        last_matched_char = 0
+        for match in RE_COMMAND.finditer(phrase):
+            span = match.span()
+            eval_phrase += phrase[last_matched_char: span[0]]
+            last_matched_char = span[1]
+            replaced = replace_match(match)
+            if isinstance(replaced, str):
+                eval_phrase += replaced
+            else:
+                # we assume that at most one fetch widget exists if we get a stream of
+                # display widgets, and short-circuit to return the stream here.
+                # we also ignore any surrounding text that might be present
+                return replaced
+        eval_phrase += phrase[last_matched_char:]
         if eval_phrase == phrase:
             break
         phrase = eval_phrase
@@ -156,7 +178,7 @@ def replace_match(m: re.Match) -> str:
     timing.log('first_widget_command')
     print('found command:', command, params)
     if command == 'fetch-nft-search':
-        return str(fetch_nft_search(*params))
+        return fetch_nft_search(*params)
     elif command == 'fetch-price':
         return str(fetch_price(*params))
     elif command == 'fetch-nft-collection-assets-by-trait':
@@ -214,7 +236,7 @@ def replace_match(m: re.Match) -> str:
         # assert 0, 'unrecognized command: %s' % m.group(0)
         return m.group(0)
 
-@error_wrap 
+@error_wrap
 def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
     # TODO
     # Handle failures
@@ -223,7 +245,7 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
     - quotetoken not mentioned it can assume it to be usd or eth
     - Cannot identify duplicates in the coin list
     - Cannot handle major mispells
-    """ 
+    """
     for c in coin_list:
         if c['id'].lower() == basetoken.lower() or \
             c['symbol'].lower() == basetoken.lower() or \
@@ -233,8 +255,8 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
             break
     else:
         return f"Query token {basetoken} not supported"
-    
-    if quotetoken.lower() in currency_list: 
+
+    if quotetoken.lower() in currency_list:
         quotetoken_id = quotetoken.lower()
     else:
         return f"Quote currency {quotetoken} not supported"
@@ -244,7 +266,7 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
     response.raise_for_status()
     return f"The price of {basetoken_name} is {list(list(response.json().values())[0].values())[0]} {quotetoken}"
 
-    
+
 @error_wrap
 def fetch_balance(token: str, wallet_address: str) -> str:
     if not wallet_address or wallet_address == 'None':
@@ -281,10 +303,7 @@ def fetch_gas(wallet_address: str) -> str:
 class ListContainer(ContainerMixin, list):
     def message_prefix(self) -> str:
         num = len(self)
-        if num > 0:
-            return f"I found {num} result{'s' if num > 1 else ''}: "
-        else:
-            return "I did not find any results."
+        return _get_result_list_prefix(num)
 
     def container_name(self) -> str:
         return 'display-list-container'
@@ -292,6 +311,32 @@ class ListContainer(ContainerMixin, list):
     def container_params(self) -> Dict:
         return dict(
             items=[item.struct() for item in self],
+        )
+
+
+def _get_result_list_prefix(num: int):
+    if num > 0:
+        return f"I found {num} result{'s' if num > 1 else ''}: "
+    else:
+        return "I did not find any results."
+
+
+@dataclass
+class StreamingListContainer(ContainerMixin):
+    operation: str
+    item: Optional[ContainerMixin] = None
+    prefix: Optional[str] = None
+    suffix: Optional[str] = None
+
+    def container_name(self) -> str:
+        return 'display-streaming-list-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            operation=self.operation,
+            item=self.item.struct() if self.item else None,
+            prefix=self.prefix,
+            suffix=self.suffix,
         )
 
 
@@ -325,8 +370,12 @@ class TableContainer(ContainerMixin):
 
 @error_wrap
 def fetch_nft_search(search_str: str) -> str:
-    ret = center.fetch_nft_search(search_str)
-    return str(ListContainer(ret))
+    yield StreamingListContainer(operation="create", prefix="Searching...")
+    num = 0
+    for item in center.fetch_nft_search(search_str):
+        yield StreamingListContainer(operation="append", item=item)
+        num += 1
+    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num))
 
 
 @error_wrap

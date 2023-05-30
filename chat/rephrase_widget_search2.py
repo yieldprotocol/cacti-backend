@@ -4,7 +4,7 @@ import time
 import uuid
 import traceback
 from dataclasses import dataclass, asdict
-from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Callable
+from typing import Any, Dict, Generator, List, Optional, Union, Literal, TypedDict, Callable
 
 from gpt_index.utils import ErrorToRetry, retry_on_exceptions_with_backoff
 from langchain.llms import OpenAI
@@ -141,6 +141,11 @@ class RephraseWidgetSearchChat(BaseChat):
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
+                        if isinstance(response_buffer, Generator):  # handle stream of widgets
+                            for item in response_buffer:
+                                new_token_handler(str(item) + "\n")
+                            response_buffer = ""
+                            return
                         if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that

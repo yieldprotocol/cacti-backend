@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union
 
 from urllib.parse import urlencode
 import requests
@@ -163,12 +163,11 @@ class NFTCollectionAssets(ContainerMixin):
         return dataclass_to_container_params(self)
 
 
-def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
+def fetch_nft_search(search_str: str) -> Generator[Union[NFTCollection, NFTAsset], None, None]:
     q = urlencode(dict(
         query=search_str,
         type='collection',  # too noisy otherwise
     ))
-    ret = []
     count = 0
     for network in NETWORKS:
         url = f"{API_URL}/{network}/search?{q}"
@@ -188,10 +187,9 @@ def fetch_nft_search(search_str: str) -> List[Union[NFTCollection, NFTAsset]]:
                     continue
             else:
                 result = fetch_nft_asset(network, r['address'], r['tokenId'])
-            ret.append(result)
+            yield result
             timing.log('first_result_done')
     timing.log('%d_results_done' % count)
-    return ret
 
 
 def _is_valid_collection(collection: NFTCollection) -> bool:
