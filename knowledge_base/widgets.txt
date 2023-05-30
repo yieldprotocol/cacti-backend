@@ -204,7 +204,7 @@ Required Parameters:
 -{token}: token to withdraw
 -{amount}: quantity to withdraw
 ---
-Widget magic command: <|lido-eth-deposit({amount})|>
+Widget magic command: <|deposit-eth-lido({amount})|>
 Description of widget: This widget is only used when the user wants to deposit ETH into the Lido to get steth
 Required Parameters:
 -{amount}: amount of ETH to deposit
