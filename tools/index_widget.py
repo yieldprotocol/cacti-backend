@@ -187,15 +187,15 @@ def replace_match(m: re.Match) -> Union[str | Generator]:
     elif command == 'fetch-price':
         return str(fetch_price(*params))
     elif command == 'fetch-nft-collection-assets-by-trait':
-        return str(fetch_nft_search_collection_by_trait(*params, for_sale_only=False))
+        return fetch_nft_search_collection_by_trait(*params, for_sale_only=False)
     elif command == 'fetch-nft-collection-assets-for-sale-by-trait':
-        return str(fetch_nft_search_collection_by_trait(*params, for_sale_only=True))
+        return fetch_nft_search_collection_by_trait(*params, for_sale_only=True)
     elif command == 'fetch-nft-collection-info':
         # return str(fetch_nft_collection(*params))
         # we also fetch some collection assets as a convenience
         return str(fetch_nft_collection_assets(*params))
     elif command == 'fetch-nft-collection-assets-for-sale':
-        return str(fetch_nft_collection_assets_for_sale(*params))
+        return fetch_nft_collection_assets_for_sale(*params)
     elif command == 'fetch-nft-collection-traits':
         return str(fetch_nft_collection_traits(*params))
     elif command == 'fetch-nft-collection-trait-values':
@@ -380,7 +380,7 @@ class TableContainer(ContainerMixin):
 
 
 @error_wrap
-def fetch_nft_search(search_str: str) -> str:
+def fetch_nft_search(search_str: str) -> Generator:
     yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
     num = 0
     for item in center.fetch_nft_search(search_str):
@@ -391,10 +391,14 @@ def fetch_nft_search(search_str: str) -> str:
 
 @error_wrap
 def fetch_nft_search_collection_by_trait(
-        network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> str:
-    ret = center.fetch_nft_search_collection_by_trait(
-        network, address, trait_name, trait_value, for_sale_only=for_sale_only)
-    return str(ListContainer(ret))
+        network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> Generator:
+    yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
+    num = 0
+    for item in center.fetch_nft_search_collection_by_trait(
+            network, address, trait_name, trait_value, for_sale_only=for_sale_only):
+        yield StreamingListContainer(operation="append", item=item)
+        num += 1
+    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
@@ -409,9 +413,13 @@ def fetch_nft_collection_assets(network: str, address: str) -> str:
 
 
 @error_wrap
-def fetch_nft_collection_assets_for_sale(network: str, address: str) -> str:
-    ret = center.fetch_nft_collection_assets_for_sale(network, address)
-    return str(ListContainer(ret))
+def fetch_nft_collection_assets_for_sale(network: str, address: str) -> Generator:
+    yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
+    num = 0
+    for item in center.fetch_nft_collection_assets_for_sale(network, address):
+        yield StreamingListContainer(operation="append", item=item)
+        num += 1
+    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
