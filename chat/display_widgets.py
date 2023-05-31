@@ -110,10 +110,10 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
     elif command == 'nft-asset-trait-value-container':
         params = json.loads(params)
         lines.append(f"{params['trait']}: {params['value']}")
-    elif command == 'display-tx-payload-for-sending-container':
+    elif command == 'tx-payload-for-sending-container':
         params = json.loads(params)
         lines.append(f"A transaction was presented for sending: {params['description']}.")
-    elif command == 'display-multistep-payload-container':
+    elif command == 'multistep-payload-container':
         params = json.loads(params)
         lines.append(f"A workflow step was presented: {params['description']}.")
     else:
