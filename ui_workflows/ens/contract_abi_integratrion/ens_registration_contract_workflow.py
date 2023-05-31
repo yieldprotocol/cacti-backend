@@ -10,7 +10,7 @@ from ...base import BaseMultiStepContractWorkflow, WorkflowStepClientPayload, Co
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
-from ..common import is_domain_registered, get_ens_registrar_controller_contract
+from ..common import is_domain_registered, get_ens_registrar_controller_contract, ENS_PUBLIC_RESOLVER_ADDRESS
 
 ONE_MINUTE_REQUIRED_WAIT = 60
 ONE_YEAR_DURATION = 365 * 24 * 60 * 60
@@ -40,28 +40,20 @@ class ENSRegistrationContractWorkflow(BaseMultiStepContractWorkflow):
     def step_1_request_registration(self) -> ContractStepProcessingResult:
         """Step 1: Request registration"""
 
-        # TODO: Should we require user to specify duration for the use of domain or default to 1 year?
-
         params = {
             'name': self.name_label,
             'owner': self.wallet_address,
-            'duration': ONE_YEAR_DURATION,
             'secret': self.web3_provider.keccak(text=uuid.uuid4().hex),
-            'resolver': '0x0000000000000000000000000000000000000000',
-            'data': [],
-            'reverseRecord': False,
-            'ownerControlledFuses': 0
+            'resolver': ENS_PUBLIC_RESOLVER_ADDRESS,
+            'addr': self.wallet_address,
         }
 
-        commitmentHash = get_ens_registrar_controller_contract().functions.makeCommitment(
+        commitmentHash = get_ens_registrar_controller_contract().functions.makeCommitmentWithConfig(
             params['name'],
             params['owner'],
-            params['duration'],
             params['secret'],
             params['resolver'],
-            params['data'],
-            params['reverseRecord'],
-            params['ownerControlledFuses']
+            params['addr']
         ).call({})
 
         encoded_data = get_ens_registrar_controller_contract().encodeABI(fn_name='commit', args=[commitmentHash])
@@ -89,24 +81,24 @@ class ENSRegistrationContractWorkflow(BaseMultiStepContractWorkflow):
         # Wait for 1 min as per ENS docs - https://docs.ens.domains/contract-api-reference/.eth-permanent-registrar/controller
         time.sleep(ONE_MINUTE_REQUIRED_WAIT)
 
-        (base_price, premium) = get_ens_registrar_controller_contract().functions.rentPrice(self.name_label, ONE_YEAR_DURATION).call({})
+        rent_price = get_ens_registrar_controller_contract().functions.rentPrice(self.name_label, ONE_YEAR_DURATION).call({})
 
         # Add 10% to account for price fluctuation; the difference is refunded.
-        adj_rent_price = (base_price + premium) * 1.1
+        adj_rent_price = rent_price * 1.1
+
+        # TODO: Should we require user to specify duration for the use of domain or default to 1 year?
 
         params = {
             'name': self.name_label,
             'owner': self.wallet_address,
             'duration': ONE_YEAR_DURATION,
             'secret': secret,
-            'resolver': '0x0000000000000000000000000000000000000000',
-            'data': [],
-            'reverseRecord': False,
-            'ownerControlledFuses': 0
+            'resolver': ENS_PUBLIC_RESOLVER_ADDRESS,
+            'addr': self.wallet_address,
         }
 
-        encoded_data = get_ens_registrar_controller_contract().encodeABI(fn_name='register', args=[
-            params['name'], params['owner'], params['duration'], params['secret'], params['resolver'], params['data'], params['reverseRecord'], params['ownerControlledFuses']
+        encoded_data = get_ens_registrar_controller_contract().encodeABI(fn_name='registerWithConfig', args=[
+            params['name'], params['owner'], params['duration'], params['secret'], params['resolver'], params['addr']
         ])
 
         tx = {

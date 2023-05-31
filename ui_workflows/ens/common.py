@@ -15,7 +15,9 @@ from ..base import WorkflowValidationError
 ENS_REGISTRY_ADDRESS = web3.Web3.to_checksum_address("0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e")
 ENS_PUBLIC_RESOLVER_ADDRESS = web3.Web3.to_checksum_address("0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63")
 ENS_REVERSE_REGISTRAR_ADDRESS = web3.Web3.to_checksum_address("0xa58E81fe9b61B5c3fE2AFD33CF304c454AbFc7Cb")
-ENS_REGISTRAR_CONTROLLER_ADDRESS = web3.Web3.to_checksum_address("0x253553366Da8546fC250F225fe3d25d0C782303b")
+
+# Use the old registrar controller contract as the new one does not work for some reason, but old one is used by official https://legacy.ens.domains/ as well as is compatible with UI components/dapps such as Rainbowkit
+ENS_REGISTRAR_CONTROLLER_ADDRESS = web3.Web3.to_checksum_address("0x283af0b28c62c092c9727f1ee09c02ca627eb7f5")
 
 curr_script_dir = os.path.dirname(os.path.abspath(__file__))
 

@@ -195,7 +195,7 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
-    elif command == aave.AaveSupplyUIWorkflow.WORKFLOW_TYPE:
+    elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
     elif command == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='borrow'))
@@ -207,7 +207,7 @@ def replace_match(m: re.Match) -> str:
         return str(ens_from_address(*params))
     elif command == 'address-from-ens':
         return str(address_from_ens(*params))
-    elif command == ens.ENSRegistrationUIWorkflow.WORKFLOW_TYPE:
+    elif command == ens.ENSRegistrationContractWorkflow.WORKFLOW_TYPE:
         return str(register_ens_domain(*params))
     elif command == ens.ENSSetTextWorkflow.WORKFLOW_TYPE:
         return str(set_ens_text(*params))

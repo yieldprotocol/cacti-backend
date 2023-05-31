@@ -48,9 +48,9 @@ def process_multistep_workflow(payload: MessagePayload, send_message: Callable):
     workflow_params = workflow_db_obj.params
     user_chat_message_id = workflow_db_obj.chat_message_id
 
-    if workflow_type == ens.ENSRegistrationUIWorkflow.WORKFLOW_TYPE:
+    if workflow_type == ens.ENSRegistrationContractWorkflow.WORKFLOW_TYPE:
         result = register_ens_domain(workflow_params['domain'], user_chat_message_id, workflow_db_obj, step)
-    elif workflow_type == aave.AaveSupplyUIWorkflow.WORKFLOW_TYPE:
+    elif workflow_type == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         result = exec_aave_operation(workflow_params['token'], workflow_params['amount'], "supply", user_chat_message_id, workflow_db_obj, step)
     elif workflow_type == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
         result = exec_aave_operation(workflow_params['token'], workflow_params['amount'], "borrow", user_chat_message_id, workflow_db_obj, step)
@@ -75,7 +75,7 @@ def register_ens_domain(domain: str, user_chat_message_id: str = None,  workflow
     if not wallet_address:
         raise ConnectedWalletRequired
 
-    wf = ens.ENSRegistrationUIWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, {'domain': domain}, workflow, wf_step_client_payload)
+    wf = ens.ENSRegistrationContractWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, {'domain': domain}, workflow, wf_step_client_payload)
     result = wf.run()
 
     return MultiStepPayloadContainer.from_multistep_result(result)
@@ -91,7 +91,7 @@ def exec_aave_operation(token: str, amount: str, operation: Literal["supply", "b
         raise ConnectedWalletRequired
 
     if operation == 'supply':
-        wf = aave.AaveSupplyUIWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, workflow_params, workflow, wf_step_client_payload)
+        wf = aave.AaveSupplyContractWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, workflow_params, workflow, wf_step_client_payload)
     elif operation == 'borrow':
         wf = aave.AaveBorrowUIWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, workflow_params, workflow, wf_step_client_payload)
     else:
