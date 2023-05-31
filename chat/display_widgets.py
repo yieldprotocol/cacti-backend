@@ -46,9 +46,24 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
         lines.extend([
             f"A list with {len(items)} items:",
         ] + [
-            f"-Item {idx}.{_widgetize(item['name'], json.dumps(item['params']), depth=depth + 1)}"
+            f"-Item {idx}.{_widgetize(item['name'], json.dumps(item['params']), depth=depth)}"
             for idx, item in enumerate(items, start=1)
         ])
+    elif command == 'streaming-list-container':
+        params = json.loads(params)
+        operation = params['operation']
+        if operation == 'create':
+            prefix = params.get('prefix')
+            prefix =  f' ({prefix})' if prefix else ''
+            lines.append(f'A list of items{prefix}:')
+        elif operation == 'update':
+            prefix = params.get('prefix') or ''
+            suffix = params.get('suffix') or ''
+            if prefix or suffix:
+                lines.append(f'{prefix} {suffix}')
+        elif operation == 'append':
+            item = params['item']
+            lines.append(f"-Item: {_widgetize(item['name'], json.dumps(item['params']), depth=depth)}")
     elif command == 'nft-collection-container':
         params = json.loads(params)
         lines.extend([
