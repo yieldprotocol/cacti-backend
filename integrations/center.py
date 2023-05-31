@@ -199,7 +199,7 @@ def _is_valid_collection(collection: NFTCollection) -> bool:
     if not collection_traits.traits:
         return False
     # should have listed and valid assets
-    assets_for_sale = fetch_nft_collection_assets_for_sale(collection.network, collection.address)
+    assets_for_sale = list(fetch_nft_collection_assets_for_sale(collection.network, collection.address, _skip_timing=True))
     if not assets_for_sale:
         return False
     return True
@@ -219,7 +219,8 @@ def _is_valid_asset(asset: NFTAsset) -> bool:
     return True
 
 
-def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> List[NFTAsset]:
+def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> Generator[NFTAsset, None, None]:
+    timing.log('search_begin')
     if network == "ethereum-mainnet":
         token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
     else:
@@ -232,8 +233,8 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
     }
     limit = PAGE_LIMIT
     offset = 0
-    ret = []
-    while len(ret) < MAX_RESULTS:
+    count = 0
+    while count < MAX_RESULTS:
         q = urlencode(dict(
             limit=limit,
             offset=offset,
@@ -241,6 +242,7 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
         url = f"{API_URL}/{network}/{address}/assets/searchByTraits?{q}"
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
+        timing.log('search_done')
         obj = response.json()
         for item in obj['items']:
             token_id = item['tokenId']
@@ -260,11 +262,15 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
                 preview_image_url=item['mediumPreviewImageUrl'],
                 price=price,
             )
-            ret.append(asset)
+            yield asset
+            timing.log('first_result_done')
+            count += 1
+            if count >= MAX_RESULTS:
+                break
         if obj['onLastPage']:
             break
         offset += limit
-    return ret
+    timing.log('%d_results_done' % count)
 
 
 def fetch_nft_collection(network: str, address: str) -> NFTCollection:
@@ -329,7 +335,11 @@ def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAsse
     )
 
 
-def fetch_nft_collection_assets_for_sale(network: str, address: str) -> List[NFTAsset]:
+def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timing: bool = False) -> Generator[NFTAsset, None, None]:
+    # we set _skip_timing=True if we are using this as an internal helper, to avoid cluttering
+    # logs with irrelevant events
+    if not _skip_timing:
+        timing.log('search_begin')
     collection = fetch_nft_collection(network, address)
     if collection.network == "ethereum-mainnet":
         token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
@@ -343,8 +353,8 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str) -> List[NFT
 
     limit = min(PAGE_LIMIT, len(token_ids))
     offset = 0
-    assets = []
-    while len(assets) < MAX_RESULTS and offset < len(token_ids):
+    count = 0
+    while count < MAX_RESULTS and offset < len(token_ids):
         payload = {"assets": [
             {"Address": address, "TokenID": token_id}
             for token_id in token_ids[offset: offset + limit]
@@ -352,6 +362,8 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str) -> List[NFT
         url = f"{API_URL}/{network}/assets"
         response = requests.post(url, headers=HEADERS, json=payload)
         response.raise_for_status()
+        if not _skip_timing:
+            timing.log('search_done')
         obj = response.json()
         for item in obj:
             if not item:
@@ -372,10 +384,15 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str) -> List[NFT
             )
             if not _is_valid_asset(asset):
                 continue
-            assets.append(asset)
+            yield asset
+            if not _skip_timing:
+                timing.log('first_result_done')
+            count += 1
+            if count >= MAX_RESULTS:
+                break
         offset += limit
-    assets = assets[:MAX_RESULTS]
-    return assets
+    if not _skip_timing:
+        timing.log('%d_results_done' % count)
 
 
 def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTraits:
