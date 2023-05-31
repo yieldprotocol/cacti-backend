@@ -169,7 +169,7 @@ def sanitize_str(s: str) -> str:
     s = s.strip()
     if s.startswith('"') and s.endswith('"') or s.startswith("'") and s.endswith("'"):
         s = s[1:-1]
-    
+
     # If parameter not detected in message, model will fill in with "None" so parse that to native None
     s = None if s.lower() == 'none' else s
     return s
@@ -335,6 +335,7 @@ class StreamingListContainer(ContainerMixin):
     item: Optional[ContainerMixin] = None
     prefix: Optional[str] = None
     suffix: Optional[str] = None
+    is_thinking: Optional[bool] = None
 
     def container_name(self) -> str:
         return 'display-streaming-list-container'
@@ -345,6 +346,7 @@ class StreamingListContainer(ContainerMixin):
             item=self.item.struct() if self.item else None,
             prefix=self.prefix,
             suffix=self.suffix,
+            isThinking=self.is_thinking,
         )
 
 
@@ -378,12 +380,12 @@ class TableContainer(ContainerMixin):
 
 @error_wrap
 def fetch_nft_search(search_str: str) -> str:
-    yield StreamingListContainer(operation="create", prefix="Searching...")
+    yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
     num = 0
     for item in center.fetch_nft_search(search_str):
         yield StreamingListContainer(operation="append", item=item)
         num += 1
-    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num))
+    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
