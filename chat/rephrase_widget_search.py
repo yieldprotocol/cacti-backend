@@ -172,6 +172,7 @@ class RephraseWidgetSearchChat(BaseChat):
                         response_buffer = iterative_evaluate(response_buffer)
                         if isinstance(response_buffer, Generator):  # handle stream of widgets
                             for item in response_buffer:
+                                timing.log('first_visible_widget_response_token')
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
