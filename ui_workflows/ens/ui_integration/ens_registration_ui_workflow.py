@@ -12,7 +12,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 import env
 import context
-from ..base import BaseUIWorkflow, MultiStepResult, BaseMultiStepUIWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep, setup_mock_db_objects
+from ...base import BaseUIWorkflow, MultiStepResult, BaseMultiStepUIWorkflow, WorkflowStepClientPayload, StepProcessingResult, RunnableStep, setup_mock_db_objects
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
@@ -20,13 +20,13 @@ from database.models import (
 TWO_MINUTES = 120000
 TEN_SECONDS = 10000
 
-class ENSRegistrationWorkflow(BaseMultiStepUIWorkflow):
+class ENSRegistrationUIWorkflow(BaseMultiStepUIWorkflow):
     WORKFLOW_TYPE = 'register-ens-domain'
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None, fork_id = None) -> None:
         self.ens_domain = workflow_params['domain']
 
-        step1 = RunnableStep("request_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} request registration. After confirming transaction, ENS will take ~1min to process next step", self.step_1_request_registration)
+        step1 = RunnableStep("request_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} registration request. After confirming transaction, ENS will take ~1min to process next step", self.step_1_request_registration)
         step2 = RunnableStep("confirm_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.ens_domain} confirm registration", self.step_2_confirm_registration)
 
         steps = [step1, step2]

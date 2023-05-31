@@ -1,1 +1,2 @@
 from .ui_integration import AaveSupplyUIWorkflow, AaveBorrowUIWorkflow
+from .contract_abi_integration import AaveSupplyContractWorkflow

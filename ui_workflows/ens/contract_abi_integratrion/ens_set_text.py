@@ -4,8 +4,8 @@ from dataclasses import dataclass, asdict
 
 from web3 import Web3
 
-from ..base import Result, BaseSingleStepContractWorkflow, WorkflowValidationError
-from .common import get_node_namehash, get_ens_resolver_contract, ens_update_common_pre_workflow_validation
+from ...base import Result, BaseSingleStepContractWorkflow, WorkflowValidationError
+from ..common import get_node_namehash, get_ens_resolver_contract, ens_update_common_pre_workflow_validation
 
 
 class ENSSetTextWorkflow(BaseSingleStepContractWorkflow):

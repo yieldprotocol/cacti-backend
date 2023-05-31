@@ -4,8 +4,8 @@ from dataclasses import dataclass, asdict
 
 from web3 import Web3
 
-from ..base import Result, BaseSingleStepContractWorkflow, WorkflowValidationError
-from .common import get_ens_reverse_registrar_contract, ens_update_common_pre_workflow_validation
+from ...base import Result, BaseSingleStepContractWorkflow, WorkflowValidationError
+from ..common import get_ens_reverse_registrar_contract, ens_update_common_pre_workflow_validation
 
 
 class ENSSetPrimaryNameWorkflow(BaseSingleStepContractWorkflow):
@@ -17,7 +17,7 @@ class ENSSetPrimaryNameWorkflow(BaseSingleStepContractWorkflow):
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict) -> None:
         self.domain = workflow_params['domain']
 
-        user_description = f"Set ENS '{self.domain}' as primary name for wallet address '{wallet_address}'"
+        user_description = f"Set ENS {self.domain} as primary name for wallet address '{wallet_address}'"
 
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, user_description, self.WORKFLOW_TYPE, workflow_params)
 

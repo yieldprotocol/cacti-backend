@@ -4,8 +4,8 @@ from dataclasses import dataclass, asdict
 
 from web3 import Web3
 
-from ..base import Result, BaseSingleStepContractWorkflow, WorkflowValidationError
-from .common import get_ens_reverse_registrar_contract, ens_update_common_pre_workflow_validation
+from ...base import Result, BaseSingleStepContractWorkflow, WorkflowValidationError
+from ..common import get_ens_reverse_registrar_contract, ens_update_common_pre_workflow_validation
 from .ens_set_text import ENSSetTextWorkflow
 
 
@@ -21,7 +21,7 @@ class ENSSetAvatarNFTWorkflow(BaseSingleStepContractWorkflow):
         self.nftContractAddress = workflow_params['nftContractAddress']
         self.nftId = workflow_params['nftId']
 
-        user_description = f"Set avatar fror ENS '{self.domain}'"
+        user_description = f"Set avatar for ENS {self.domain}"
 
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, user_description, self.WORKFLOW_TYPE, workflow_params)
 
