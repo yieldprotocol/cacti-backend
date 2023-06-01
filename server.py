@@ -147,8 +147,12 @@ def message_received(client_state, send_response, message):
             message_start_idx = 0
         else:
             message_start_indexes = [i for i, message in enumerate(messages) if str(message.id) == resume_from_message_id]
-            assert len(message_start_indexes) == 1, f'expected one message to match id {resume_from_message_id}, got {len(message_start_indexes)} for session {session_id}'
-            message_start_idx = message_start_indexes[0] + 1
+            #assert len(message_start_indexes) == 1, f'expected one message to match id {resume_from_message_id}, got {len(message_start_indexes)} for session {session_id}'
+            if len(message_start_indexes) != 1:
+                print(f'expected one message to match id {resume_from_message_id}, got {len(message_start_indexes)} for session {session_id}')
+                message_start_idx = 0  # pick zero to cause every message to load in (more visible to help debug)
+            else:
+                message_start_idx = message_start_indexes[0] + 1
 
         for i in range(message_start_idx, len(messages)):
             message = messages[i]
