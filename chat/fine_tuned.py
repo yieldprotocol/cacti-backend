@@ -13,7 +13,6 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
 import context
-import finetune.dataset
 import utils
 import utils.timing as timing
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
@@ -31,18 +30,18 @@ from ui_workflows import (
 )
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 from tools.index_widget import *
+from finetune.dataset import (
+    format_widgets_for_prompt,
+    HISTORY_TOKEN_LIMIT,
+    TEMPLATE,
+    STOP,
+    NO_WIDGET_TOKEN,
+)
 
-
-RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
-
-TEMPLATE = '''<hist>{chat_history}<user>{question}<task>{task_info}<bot>'''
-
-HISTORY_TOKEN_LIMIT = 1800
 
 # MODEL_NAME = 'curie:ft-yield-inc-2023-05-30-20-19-41'
 MODEL_NAME = 'curie:ft-yield-inc:truncate-task-info-2023-06-01-00-37-29'
-STOP = "<eot>"
-MAX_TOKENS = 400
+MAX_TOKENS = 200
 
 
 @registry.register_class
@@ -51,7 +50,7 @@ class FineTunedChat(BaseChat):
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
-            input_variables=["task_info", "chat_history", "question"],
+            input_variables=["task_info", "chat_history", "user_input"],
             template=TEMPLATE,
             output_parser=self.output_parser,
         )
@@ -150,11 +149,11 @@ class FineTunedChat(BaseChat):
         )
         timing.log('widget_index_lookup_done')
         # task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
-        task_info = finetune.dataset.format_widgets_for_prompt(widgets)
+        task_info = format_widgets_for_prompt(widgets)
         example = {
             "task_info": task_info,
             "chat_history": history_string,
-            "question": userinput,
+            "user_input": userinput,
             "stop": [STOP],
         }
 
