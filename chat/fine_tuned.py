@@ -46,7 +46,7 @@ MAX_TOKENS = 200
 
 @registry.register_class
 class FineTunedChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, fallback_chat: Optional[BaseChat] = None, show_thinking: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
@@ -56,6 +56,7 @@ class FineTunedChat(BaseChat):
         )
         self.widget_index = widget_index
         self.top_k = top_k
+        self.fallback_chat = fallback_chat
         self.show_thinking = show_thinking
 
     def receive_input(
@@ -137,6 +138,13 @@ class FineTunedChat(BaseChat):
                 else:
                     # keep waiting
                     return
+
+            if len(response_buffer) < len(NO_WIDGET_TOKEN) and NO_WIDGET_TOKEN.startswith(response_buffer):
+                # keep waiting
+                return
+            elif response_buffer.startswith(NO_WIDGET_TOKEN):
+                # don't emit this in the stream, we will handle the final response below
+                return
             token = response_buffer
             response_buffer = ""
             if token.strip():
@@ -161,6 +169,27 @@ class FineTunedChat(BaseChat):
 
         with context.with_request_context(history.wallet_address, message_id):
             result = chain.run(example).strip()
+
+        if result == NO_WIDGET_TOKEN:
+            if self.fallback_chat is not None:
+                # call the fallback chat
+                self.fallback_chat._inner_receive_input(
+                    history,
+                    history_string,
+                    userinput,
+                    send,
+                    message_id=message_id,
+                    before_message_id=before_message_id,
+                )
+            else:
+                bot_chat_message_id = send(Response(
+                    response="I'm sorry, I don't understand. Please try again.",
+                    still_thinking=False,
+                    actor='bot',
+                    operation='replace' if bot_chat_message_id is not None else 'create',
+                ), last_chat_message_id=bot_chat_message_id, before_message_id=before_message_id)
+            return
+
         timing.log('response_done')
 
         if bot_chat_message_id is not None:

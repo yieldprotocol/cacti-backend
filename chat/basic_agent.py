@@ -67,6 +67,24 @@ class BasicAgentChat(BaseChat):
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
         timing.init()
 
+        self._inner_receive_input(
+            history,
+            history_string,
+            userinput,
+            send,
+            message_id=message_id,
+            before_message_id=before_message_id,
+        )
+
+    def _inner_receive_input(
+            self,
+            history: ChatHistory,
+            history_string: str,
+            userinput: str,
+            send: Callable,
+            message_id: Optional[uuid.UUID] = None,
+            before_message_id: Optional[uuid.UUID] = None,
+    ):
         system_chat_message_id = None
         system_response = ''
         bot_chat_message_id = None
