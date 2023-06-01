@@ -145,7 +145,7 @@ def _message_received(client_state, send_response, message):
             message_start_idx = 0
         else:
             message_start_indexes = [i for i, message in enumerate(messages) if str(message.id) == resume_from_message_id]
-            assert len(message_start_indexes) == 1, f'expected one message to match id {resume_from_message_id}'
+            assert len(message_start_indexes) == 1, f'expected one message to match id {resume_from_message_id}, got {len(message_start_indexes)} for session {session_id}'
             message_start_idx = message_start_indexes[0] + 1
 
         for i in range(message_start_idx, len(messages)):
@@ -288,7 +288,6 @@ def _message_received(client_state, send_response, message):
                     feedback_status=feedback_status,
                 )
             db_session.add(chat_message_feedback)
-            db_session.commit()
         elif action_type == 'transaction':
             tx_hash = obj['payload']['hash']
             success = obj['payload'].get('success')
@@ -331,8 +330,6 @@ def _message_received(client_state, send_response, message):
                     message_id=edit_message_id,
                     before_message_id=before_message_id,
                 )
-            else:
-                db_session.commit()
         elif action_type == 'delete':
             delete_message_id = uuid.UUID(obj['payload']['messageId'])
             chat_message = ChatMessage.query.get(delete_message_id)
@@ -340,10 +337,10 @@ def _message_received(client_state, send_response, message):
             removed_message_ids = history.truncate_from_message(delete_message_id, before_message_id=before_message_id)
             for removed_id in removed_message_ids:
                 db_session.delete(ChatMessage.query.get(removed_id))  # use this delete approach to have cascade
-            db_session.commit()
         else:
             assert 0, f'unrecognized action type: {action_type}'
 
+        db_session.commit()
         return
 
     # NB: here this could be regular user message or a system message replay
@@ -369,3 +366,5 @@ def _message_received(client_state, send_response, message):
 
     if actor == 'user':
         system.chat.receive_input(history, payload, send_message, message_id=message_id)
+
+    db_session.commit()
