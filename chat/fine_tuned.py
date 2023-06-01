@@ -13,6 +13,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
 import context
+import finetune.dataset
 import utils
 import utils.timing as timing
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
@@ -38,7 +39,8 @@ TEMPLATE = '''<hist>{chat_history}<user>{question}<task>{task_info}<bot>'''
 
 HISTORY_TOKEN_LIMIT = 1800
 
-MODEL_NAME = 'curie:ft-yield-inc-2023-05-30-20-19-41'
+# MODEL_NAME = 'curie:ft-yield-inc-2023-05-30-20-19-41'
+MODEL_NAME = 'curie:ft-yield-inc:truncate-task-info-2023-06-01-00-37-29'
 STOP = "<eot>"
 MAX_TOKENS = 400
 
@@ -146,8 +148,8 @@ class FineTunedChat(BaseChat):
             [ErrorToRetry(TypeError)],
         )
         timing.log('widget_index_lookup_done')
-        task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
-        task_info = ""  # TODO: remove
+        # task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
+        task_info = finetune.dataset.format_widgets_for_prompt(widgets)
         example = {
             "task_info": task_info,
             "chat_history": history_string,
