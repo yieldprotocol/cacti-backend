@@ -16,12 +16,15 @@ import index
 
 import finetune.widget_llm
 
-HISTORY_TOKEN_LIMIT = 1800
+HISTORY_TOKEN_LIMIT = 1500
 
+TEMPLATE = '''<hist>{chat_history}<user>{user_input}<task>{task_info}<bot>'''
+STOP = "<eot>"
 NO_WIDGET_TOKEN = '<WIDGET_NA>'
 
 # <|some-command(...)|> => some-command
 WIDGET_COMMAND_PATTERN = r'\<\|([\w_-]+)\(.*\)\|\>'
+
 
 
 def _extract_widget_command(s):
@@ -119,8 +122,12 @@ class Datapoint:
 
 
 def render_datapoint(datapoint):
-    prompt = f'<hist>{datapoint.history}<user>{datapoint.user_input}<task>{datapoint.task_info}<bot>'
-    completion = f'{datapoint.completion}<eot>'
+    prompt = TEMPLATE.format(
+        chat_history=datapoint.history,
+        user_input=datapoint.user_input,
+        task_info=datapoint.task_info,
+    )
+    completion = f'{datapoint.completion}{STOP}'
     return {
         'prompt': prompt,
         'completion': completion,
