@@ -133,9 +133,11 @@ def message_received(client_state, send_response, message):
             params = parse_qs(urlparse(payload).query)
             session_id = uuid.UUID(params['s'][0])
             resume_from_message_id = None
+            before_message_id = None
         else:
             session_id = uuid.UUID(payload['sessionId'])
             resume_from_message_id = payload.get('resumeFromMessageId')
+            before_message_id = payload.get('insertBeforeMessageId')
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)
@@ -154,14 +156,21 @@ def message_received(client_state, send_response, message):
             else:
                 message_start_idx = message_start_indexes[0] + 1
 
+        # it's possible we are trying to restore connection after an intermediate section
+        # of messages was deleted and getting regenerated halfway
+        before_message_id_kwargs = {'beforeMessageId': str(before_message_id)} if before_message_id is not None else {}
+
         for i in range(message_start_idx, len(messages)):
             message = messages[i]
+            if before_message_id is not None and str(message.id) == before_message_id:
+                break
             msg = json.dumps({
                 'messageId': str(message.id),
                 'actor': message.actor,
                 'type': message.type,
                 'payload': message.payload,
                 'feedback': str(message.chat_message_feedback.feedback_status.name) if message.chat_message_feedback else 'none',
+                **before_message_id_kwargs,
             })
             send_response(msg)
         return
