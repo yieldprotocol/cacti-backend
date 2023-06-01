@@ -158,7 +158,7 @@ def message_received(client_state, send_response, message):
 
         # it's possible we are trying to restore connection after an intermediate section
         # of messages was deleted and getting regenerated halfway
-        before_message_id_kwargs = {'beforeMessageId': str(before_message_id)} if before_message_id is not None else {}
+        before_message_id = str(before_message_id) if before_message_id is not None else None
 
         for i in range(message_start_idx, len(messages)):
             message = messages[i]
@@ -170,7 +170,7 @@ def message_received(client_state, send_response, message):
                 'type': message.type,
                 'payload': message.payload,
                 'feedback': str(message.chat_message_feedback.feedback_status.name) if message.chat_message_feedback else 'none',
-                **before_message_id_kwargs,
+                'beforeMessageId': before_message_id,
             })
             send_response(msg)
         return
@@ -267,7 +267,7 @@ def message_received(client_state, send_response, message):
         else:
             assert 0, f'unrecognized operation: {resp.operation}'
 
-        before_message_id_kwargs = {'beforeMessageId': str(before_message_id)} if before_message_id is not None else {}
+        before_message_id = str(before_message_id) if before_message_id is not None else None
         msg = json.dumps({
             'messageId': str(chat_message_id),
             'actor': resp.actor,
@@ -276,7 +276,7 @@ def message_received(client_state, send_response, message):
             'stillThinking': resp.still_thinking,
             'operation': resp.operation,
             'feedback': 'none',
-            **before_message_id_kwargs,
+            'beforeMessageId': before_message_id,
         })
         send_response(msg)
 
