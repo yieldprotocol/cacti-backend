@@ -11,6 +11,7 @@ import chat
 import index
 import system
 import config
+from database import utils as db_utils
 from database.models import (
     db_session, FeedbackStatus,
     ChatSession, ChatMessage, ChatMessageFeedback,
@@ -43,13 +44,20 @@ def _register_system(system_config_id, system_config_json):
     return system
 
 
-default_system_config = SystemConfig.query.filter_by(json=config.default_config).one_or_none()
-if not default_system_config:
-    default_system_config = SystemConfig(json=config.default_config)
-    db_session.add(default_system_config)
-    db_session.commit()
-print(f'The default system config id is: {default_system_config.id}')
-_register_system(default_system_config.id, default_system_config.json)
+@db_utils.close_db_session()
+def _get_default_system_config_id():
+    # we query the db but return the identifier to store, so that we can still
+    # reference the id even after the session has been closed.
+    default_system_config = SystemConfig.query.filter_by(json=config.default_config).one_or_none()
+    if not default_system_config:
+        default_system_config = SystemConfig(json=config.default_config)
+        db_session.add(default_system_config)
+        db_session.commit()
+    print(f'The default system config id is: {default_system_config.id}')
+    _register_system(default_system_config.id, default_system_config.json)
+    return default_system_config.id
+
+default_system_config_id = _get_default_system_config_id()
 
 
 
@@ -93,14 +101,8 @@ def _ensure_authenticated(client_state, send_response):
     return False
 
 
-def message_received(*args, **kwargs):
-    try:
-        _message_received(*args, **kwargs)
-    finally:
-        db_session.close()
-
-
-def _message_received(client_state, send_response, message):
+@db_utils.close_db_session()
+def message_received(client_state, send_response, message):
     if not _ensure_authenticated(client_state, send_response):
         return
 
@@ -118,7 +120,7 @@ def _message_received(client_state, send_response, message):
         return
 
     history = client_state.chat_history
-    system_config_id = client_state.system_config_id or default_system_config.id
+    system_config_id = client_state.system_config_id or default_system_config_id
     system = _get_system(system_config_id)
 
     # resume an existing chat history session, given a session id
