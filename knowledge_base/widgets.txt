@@ -216,3 +216,18 @@ Required Parameters:
 -{network}: network or blockchain of the project. Default to Ethereum if not specified
 -{token}: token to deposit in the project
 -{amount}: amount of token to deposit in the project
+---
+Widget magic command: <|deposit-eth-reth({amount})|>
+Description of widget: This widget is used when the user wants to deposit ETH into the reth to get reth
+Required Parameters:
+-{amount}: amount of ETH to deposit
+---
+Widget magic command: <|withdraw-eth-reth({amount})|>
+Description of widget: This widget is used when the user wants to withdraw ETH from the reth
+Required Parameters:
+-{amount}: amount of ETH to withdraw
+---
+Widget magic command: <|withdraw-eth-lido({amount})|>
+Description of widget: This widget is only used when the user wants to withdraw ETH from Lido
+Required Parameters:
+-{amount}: amount of ETH to withdraw
