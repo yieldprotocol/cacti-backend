@@ -1,6 +1,5 @@
 #!/bin/bash
 
-export LANGCHAIN_HANDLER=langchain
 xvfb_cmd=xvfb-run
 start_cmd="uvicorn main:app --host 0.0.0.0 --port 9999"
 

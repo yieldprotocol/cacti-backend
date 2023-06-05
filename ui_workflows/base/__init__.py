@@ -4,6 +4,7 @@ from .common import (
     ContractStepProcessingResult,
     tenderly_simulate_tx, compute_abi_abspath, setup_mock_db_objects, process_result_and_simulate_tx,
     fetch_multi_step_workflow_from_db, revoke_erc20_approval, set_erc20_allowance,
+     advance_fork_time_secs, advance_fork_blocks,
     MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID, USDC_ADDRESS
 )
 

@@ -15,12 +15,10 @@ def test_contract_aave_supply_extreme_amount(setup_fork):
     test_extreme_eth_amount = current_eth_balance + 10*10**18 # Add 10 ETH to the current available balance
 
     token = "ETH"
-    amount = test_extreme_eth_amount
+    amount = test_extreme_eth_amount 
     workflow_params = {"token": token, "amount": amount}
 
     multistep_result = AaveSupplyContractWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
 
     # Assert what the user will see on the UI
     assert multistep_result.error_msg == "Insufficient ETH balance in wallet"
-
-    # TODO: Figure out how to run the tests in isolation with their own snapshot of the fork state so that they don't interfere with each other

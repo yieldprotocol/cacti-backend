@@ -6,7 +6,7 @@ from logging import basicConfig, INFO
 from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDict
 
 from .base_ui_workflow import BaseUIWorkflow
-from .common import Result, WorkflowValidationError, StepProcessingResult
+from .common import Result, WorkflowValidationError, StepProcessingResult, _validate_non_zero_eth_balance
 
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
@@ -21,6 +21,9 @@ class BaseSingleStepUIWorkflow(BaseUIWorkflow):
     def run(self) -> Any:
         print(f"Single-step UI workflow started, {self.log_params}")
         try:
+            _validate_non_zero_eth_balance(self.wallet_address)
+            self._general_workflow_validation()
+            
             # Arbitrary wait to allow for enough time for WalletConnect relay to send our client the tx data
             return super().run()
         except WorkflowValidationError as e:

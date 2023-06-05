@@ -11,6 +11,7 @@ import chat
 import index
 import system
 import config
+from database import utils as db_utils
 from database.models import (
     db_session, FeedbackStatus,
     ChatSession, ChatMessage, ChatMessageFeedback,
@@ -43,13 +44,20 @@ def _register_system(system_config_id, system_config_json):
     return system
 
 
-default_system_config = SystemConfig.query.filter_by(json=config.default_config).one_or_none()
-if not default_system_config:
-    default_system_config = SystemConfig(json=config.default_config)
-    db_session.add(default_system_config)
-    db_session.commit()
-print(f'The default system config id is: {default_system_config.id}')
-_register_system(default_system_config.id, default_system_config.json)
+@db_utils.close_db_session()
+def _get_default_system_config_id():
+    # we query the db but return the identifier to store, so that we can still
+    # reference the id even after the session has been closed.
+    default_system_config = SystemConfig.query.filter_by(json=config.default_config).one_or_none()
+    if not default_system_config:
+        default_system_config = SystemConfig(json=config.default_config)
+        db_session.add(default_system_config)
+        db_session.commit()
+    print(f'The default system config id is: {default_system_config.id}')
+    _register_system(default_system_config.id, default_system_config.json)
+    return default_system_config.id
+
+default_system_config_id = _get_default_system_config_id()
 
 
 
@@ -93,14 +101,8 @@ def _ensure_authenticated(client_state, send_response):
     return False
 
 
-def message_received(*args, **kwargs):
-    try:
-        _message_received(*args, **kwargs)
-    finally:
-        db_session.close()
-
-
-def _message_received(client_state, send_response, message):
+@db_utils.close_db_session()
+def message_received(client_state, send_response, message):
     if not _ensure_authenticated(client_state, send_response):
         return
 
@@ -118,7 +120,7 @@ def _message_received(client_state, send_response, message):
         return
 
     history = client_state.chat_history
-    system_config_id = client_state.system_config_id or default_system_config.id
+    system_config_id = client_state.system_config_id or default_system_config_id
     system = _get_system(system_config_id)
 
     # resume an existing chat history session, given a session id
@@ -131,9 +133,11 @@ def _message_received(client_state, send_response, message):
             params = parse_qs(urlparse(payload).query)
             session_id = uuid.UUID(params['s'][0])
             resume_from_message_id = None
+            before_message_id = None
         else:
             session_id = uuid.UUID(payload['sessionId'])
             resume_from_message_id = payload.get('resumeFromMessageId')
+            before_message_id = payload.get('insertBeforeMessageId')
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)
@@ -145,17 +149,28 @@ def _message_received(client_state, send_response, message):
             message_start_idx = 0
         else:
             message_start_indexes = [i for i, message in enumerate(messages) if str(message.id) == resume_from_message_id]
-            assert len(message_start_indexes) == 1, f'expected one message to match id {resume_from_message_id}'
-            message_start_idx = message_start_indexes[0] + 1
+            #assert len(message_start_indexes) == 1, f'expected one message to match id {resume_from_message_id}, got {len(message_start_indexes)} for session {session_id}'
+            if len(message_start_indexes) != 1:
+                print(f'expected one message to match id {resume_from_message_id}, got {len(message_start_indexes)} for session {session_id}')
+                message_start_idx = 0  # pick zero to cause every message to load in (more visible to help debug)
+            else:
+                message_start_idx = message_start_indexes[0] + 1
+
+        # it's possible we are trying to restore connection after an intermediate section
+        # of messages was deleted and getting regenerated halfway
+        before_message_id = str(before_message_id) if before_message_id is not None else None
 
         for i in range(message_start_idx, len(messages)):
             message = messages[i]
+            if before_message_id is not None and str(message.id) == before_message_id:
+                break
             msg = json.dumps({
                 'messageId': str(message.id),
                 'actor': message.actor,
                 'type': message.type,
                 'payload': message.payload,
                 'feedback': str(message.chat_message_feedback.feedback_status.name) if message.chat_message_feedback else 'none',
+                'beforeMessageId': before_message_id,
             })
             send_response(msg)
         return
@@ -252,7 +267,7 @@ def _message_received(client_state, send_response, message):
         else:
             assert 0, f'unrecognized operation: {resp.operation}'
 
-        before_message_id_kwargs = {'beforeMessageId': str(before_message_id)} if before_message_id is not None else {}
+        before_message_id = str(before_message_id) if before_message_id is not None else None
         msg = json.dumps({
             'messageId': str(chat_message_id),
             'actor': resp.actor,
@@ -261,7 +276,7 @@ def _message_received(client_state, send_response, message):
             'stillThinking': resp.still_thinking,
             'operation': resp.operation,
             'feedback': 'none',
-            **before_message_id_kwargs,
+            'beforeMessageId': before_message_id,
         })
         send_response(msg)
 
@@ -288,7 +303,6 @@ def _message_received(client_state, send_response, message):
                     feedback_status=feedback_status,
                 )
             db_session.add(chat_message_feedback)
-            db_session.commit()
         elif action_type == 'transaction':
             tx_hash = obj['payload']['hash']
             success = obj['payload'].get('success')
@@ -331,8 +345,6 @@ def _message_received(client_state, send_response, message):
                     message_id=edit_message_id,
                     before_message_id=before_message_id,
                 )
-            else:
-                db_session.commit()
         elif action_type == 'delete':
             delete_message_id = uuid.UUID(obj['payload']['messageId'])
             chat_message = ChatMessage.query.get(delete_message_id)
@@ -340,10 +352,10 @@ def _message_received(client_state, send_response, message):
             removed_message_ids = history.truncate_from_message(delete_message_id, before_message_id=before_message_id)
             for removed_id in removed_message_ids:
                 db_session.delete(ChatMessage.query.get(removed_id))  # use this delete approach to have cascade
-            db_session.commit()
         else:
             assert 0, f'unrecognized action type: {action_type}'
 
+        db_session.commit()
         return
 
     # NB: here this could be regular user message or a system message replay
@@ -369,3 +381,5 @@ def _message_received(client_state, send_response, message):
 
     if actor == 'user':
         system.chat.receive_input(history, payload, send_message, message_id=message_id)
+
+    db_session.commit()

@@ -1,3 +1,4 @@
+import inspect
 import os
 
 from web3 import Web3
@@ -35,7 +36,7 @@ ns = ENS.from_web3(w3)
 
 
 def estimate_gas(tx):
-        return hex(context.get_web3_provider().eth.estimate_gas(tx))
+    return hex(context.get_web3_provider().eth.estimate_gas(tx))
 
 def get_token_len(s: str) -> int:
     return len(tokenizer.encode(s))
@@ -52,7 +53,9 @@ class FetchError(Exception):
 class ExecError(Exception):
     pass
 
+
 def error_wrap(fn):
+
     @functools.wraps(fn)
     def wrapped_fn(*args, **kwargs):
         try:
@@ -66,7 +69,26 @@ def error_wrap(fn):
         except Exception as e:
             traceback.print_exc()
             return f'Got exception evaluating {fn.__name__}(args={args}, kwargs={kwargs}): {e}'
-    return wrapped_fn
+
+    @functools.wraps(fn)
+    def wrapped_generator_fn(*args, **kwargs):
+        try:
+            for item in fn(*args, **kwargs):
+                yield item
+        except ConnectedWalletRequired:
+            yield "A connected wallet is required. Please connect one and try again."
+        except FetchError as e:
+            yield str(e)
+        except ExecError as e:
+            yield str(e)
+        except Exception as e:
+            traceback.print_exc()
+            yield f'Got exception evaluating {fn.__name__}(args={args}, kwargs={kwargs}): {e}'
+
+    if inspect.isgeneratorfunction(fn):
+        return wrapped_generator_fn
+    else:
+        return wrapped_fn
 
 
 def ensure_wallet_connected(fn):

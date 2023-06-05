@@ -38,7 +38,7 @@ class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
         
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
-    def _pre_workflow_validation(self):
+    def _general_workflow_validation(self):
         if (self.token not in AAVE_SUPPORTED_TOKENS):
             raise WorkflowValidationError(f"Token {self.token} not supported by Aave")
         

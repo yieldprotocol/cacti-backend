@@ -1,11 +1,11 @@
 import os
 import traceback
 import time
-from ui_workflows.ens import ENSRegistrationWorkflow
+from ui_workflows.ens import ENSRegistrationUIWorkflow
 from ui_workflows.base import MultiStepResult, setup_mock_db_objects, process_result_and_simulate_tx, fetch_multi_step_workflow_from_db
 
-# Invoke this with python -m pytest -s -k "test_ens_registration"
-def test_ens_registration(setup_fork):
+# Invoke this with python -m pytest -s -k "test_ui_ens_registration"
+def test_ui_ens_registration(setup_fork):
     epoch_seconds = int(time.time())
     domain_to_register = f"test{epoch_seconds}.eth"
     wallet_address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
@@ -19,7 +19,7 @@ def test_ens_registration(setup_fork):
 
     print("Step 1: Request to register ENS domain...")
 
-    multi_step_result: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, None, None).run()
+    multi_step_result: MultiStepResult = ENSRegistrationUIWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, None, None).run()
 
     process_result_and_simulate_tx(wallet_address, multi_step_result)
     
@@ -36,7 +36,7 @@ def test_ens_registration(setup_fork):
 
     multi_step_workflow = fetch_multi_step_workflow_from_db(workflow_id)
 
-    multi_step_result: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multi_step_workflow, curr_step_client_payload).run()
+    multi_step_result: MultiStepResult = ENSRegistrationUIWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multi_step_workflow, curr_step_client_payload).run()
 
     process_result_and_simulate_tx(wallet_address, multi_step_result)
 
@@ -50,7 +50,7 @@ def test_ens_registration(setup_fork):
         "userActionData": "Sample TX HASH"
     }   
 
-    multi_step_result: MultiStepResult = ENSRegistrationWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multi_step_workflow, curr_step_client_payload).run()
+    multi_step_result: MultiStepResult = ENSRegistrationUIWorkflow(wallet_chain_id, wallet_address, mock_message_id, worfklow_params, multi_step_workflow, curr_step_client_payload).run()
     
     process_result_and_simulate_tx(wallet_address, multi_step_result)
 

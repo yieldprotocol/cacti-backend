@@ -3,7 +3,7 @@ import json
 import re
 import requests
 from dataclasses import dataclass, asdict
-from typing import Any, Dict, List, Optional, Union, Literal, TypedDict
+from typing import Any, Dict, Generator, List, Optional, Union, Literal, TypedDict
 import traceback
 
 from langchain.llms import OpenAI
@@ -11,6 +11,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
 
+import ui_workflows
 import context
 import utils
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
@@ -88,6 +89,12 @@ class IndexWidgetTool(IndexLookupTool):
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
+                        if isinstance(response_buffer, Generator):  # handle stream of widgets
+                            for item in response_buffer:
+                                timing.log('first_visible_widget_response_token')
+                                new_token_handler(str(item) + "\n")
+                            response_buffer = ""
+                            return
                         if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
@@ -133,9 +140,26 @@ class IndexWidgetTool(IndexLookupTool):
         return result.strip()
 
 
-def iterative_evaluate(phrase: str) -> str:
+def iterative_evaluate(phrase: str) -> Union[str | Generator]:
     while True:
-        eval_phrase = RE_COMMAND.sub(replace_match, phrase)
+        # before we had streaming, we could use this
+        #eval_phrase = RE_COMMAND.sub(replace_match, phrase)
+        # now, iterate manually to find any streamable components
+        eval_phrase = ""
+        last_matched_char = 0
+        for match in RE_COMMAND.finditer(phrase):
+            span = match.span()
+            eval_phrase += phrase[last_matched_char: span[0]]
+            last_matched_char = span[1]
+            replaced = replace_match(match)
+            if isinstance(replaced, str):
+                eval_phrase += replaced
+            else:
+                # we assume that at most one fetch widget exists if we get a stream of
+                # display widgets, and short-circuit to return the stream here.
+                # we also ignore any surrounding text that might be present
+                return replaced
+        eval_phrase += phrase[last_matched_char:]
         if eval_phrase == phrase:
             break
         phrase = eval_phrase
@@ -146,29 +170,32 @@ def sanitize_str(s: str) -> str:
     s = s.strip()
     if s.startswith('"') and s.endswith('"') or s.startswith("'") and s.endswith("'"):
         s = s[1:-1]
+
+    # If parameter not detected in message, model will fill in with "None" so parse that to native None
+    s = None if s.lower() == 'none' else s
     return s
 
 
-def replace_match(m: re.Match) -> str:
+def replace_match(m: re.Match) -> Union[str | Generator]:
     command = m.group('command')
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []
     timing.log('first_widget_command')
     print('found command:', command, params)
     if command == 'fetch-nft-search':
-        return str(fetch_nft_search(*params))
+        return fetch_nft_search(*params)
     elif command == 'fetch-price':
         return str(fetch_price(*params))
     elif command == 'fetch-nft-collection-assets-by-trait':
-        return str(fetch_nft_search_collection_by_trait(*params, for_sale_only=False))
+        return fetch_nft_search_collection_by_trait(*params, for_sale_only=False)
     elif command == 'fetch-nft-collection-assets-for-sale-by-trait':
-        return str(fetch_nft_search_collection_by_trait(*params, for_sale_only=True))
+        return fetch_nft_search_collection_by_trait(*params, for_sale_only=True)
     elif command == 'fetch-nft-collection-info':
         # return str(fetch_nft_collection(*params))
         # we also fetch some collection assets as a convenience
         return str(fetch_nft_collection_assets(*params))
     elif command == 'fetch-nft-collection-assets-for-sale':
-        return str(fetch_nft_collection_assets_for_sale(*params))
+        return fetch_nft_collection_assets_for_sale(*params)
     elif command == 'fetch-nft-collection-traits':
         return str(fetch_nft_collection_traits(*params))
     elif command == 'fetch-nft-collection-trait-values':
@@ -191,9 +218,9 @@ def replace_match(m: re.Match) -> str:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
-    elif command == 'aave-supply':
+    elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
-    elif command == 'aave-borrow':
+    elif command == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='borrow'))
     elif command == 'aave-repay':
         return str(exec_aave_operation(*params, operation='repay'))
@@ -203,10 +230,14 @@ def replace_match(m: re.Match) -> str:
         return str(ens_from_address(*params))
     elif command == 'address-from-ens':
         return str(address_from_ens(*params))
-    elif command == 'register-ens-domain':
+    elif command == ens.ENSRegistrationContractWorkflow.WORKFLOW_TYPE:
         return str(register_ens_domain(*params))
-    elif command == 'set-ens-text':
+    elif command == ens.ENSSetTextWorkflow.WORKFLOW_TYPE:
         return str(set_ens_text(*params))
+    elif command == ens.ENSSetPrimaryNameWorkflow.WORKFLOW_TYPE:
+        return str(set_ens_primary_name(*params))
+    elif command == ens.ENSSetAvatarNFTWorkflow.WORKFLOW_TYPE:
+        return str(set_ens_avatar_nft(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -214,7 +245,7 @@ def replace_match(m: re.Match) -> str:
         # assert 0, 'unrecognized command: %s' % m.group(0)
         return m.group(0)
 
-@error_wrap 
+@error_wrap
 def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
     # TODO
     # Handle failures
@@ -223,7 +254,7 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
     - quotetoken not mentioned it can assume it to be usd or eth
     - Cannot identify duplicates in the coin list
     - Cannot handle major mispells
-    """ 
+    """
     for c in coin_list:
         if c['id'].lower() == basetoken.lower() or \
             c['symbol'].lower() == basetoken.lower() or \
@@ -233,8 +264,8 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
             break
     else:
         return f"Query token {basetoken} not supported"
-    
-    if quotetoken.lower() in currency_list: 
+
+    if quotetoken.lower() in currency_list:
         quotetoken_id = quotetoken.lower()
     else:
         return f"Quote currency {quotetoken} not supported"
@@ -244,7 +275,7 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
     response.raise_for_status()
     return f"The price of {basetoken_name} is {list(list(response.json().values())[0].values())[0]} {quotetoken}"
 
-    
+
 @error_wrap
 def fetch_balance(token: str, wallet_address: str) -> str:
     if not wallet_address or wallet_address == 'None':
@@ -281,10 +312,7 @@ def fetch_gas(wallet_address: str) -> str:
 class ListContainer(ContainerMixin, list):
     def message_prefix(self) -> str:
         num = len(self)
-        if num > 0:
-            return f"I found {num} result{'s' if num > 1 else ''}: "
-        else:
-            return "I did not find any results."
+        return _get_result_list_prefix(num)
 
     def container_name(self) -> str:
         return 'display-list-container'
@@ -292,6 +320,34 @@ class ListContainer(ContainerMixin, list):
     def container_params(self) -> Dict:
         return dict(
             items=[item.struct() for item in self],
+        )
+
+
+def _get_result_list_prefix(num: int):
+    if num > 0:
+        return f"I found {num} result{'s' if num > 1 else ''}: "
+    else:
+        return "I did not find any results."
+
+
+@dataclass
+class StreamingListContainer(ContainerMixin):
+    operation: str
+    item: Optional[ContainerMixin] = None
+    prefix: Optional[str] = None
+    suffix: Optional[str] = None
+    is_thinking: Optional[bool] = None
+
+    def container_name(self) -> str:
+        return 'display-streaming-list-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            operation=self.operation,
+            item=self.item.struct() if self.item else None,
+            prefix=self.prefix,
+            suffix=self.suffix,
+            isThinking=self.is_thinking,
         )
 
 
@@ -324,17 +380,25 @@ class TableContainer(ContainerMixin):
 
 
 @error_wrap
-def fetch_nft_search(search_str: str) -> str:
-    ret = center.fetch_nft_search(search_str)
-    return str(ListContainer(ret))
+def fetch_nft_search(search_str: str) -> Generator:
+    yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
+    num = 0
+    for item in center.fetch_nft_search(search_str):
+        yield StreamingListContainer(operation="append", item=item)
+        num += 1
+    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
 def fetch_nft_search_collection_by_trait(
-        network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> str:
-    ret = center.fetch_nft_search_collection_by_trait(
-        network, address, trait_name, trait_value, for_sale_only=for_sale_only)
-    return str(ListContainer(ret))
+        network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> Generator:
+    yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
+    num = 0
+    for item in center.fetch_nft_search_collection_by_trait(
+            network, address, trait_name, trait_value, for_sale_only=for_sale_only):
+        yield StreamingListContainer(operation="append", item=item)
+        num += 1
+    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
@@ -349,9 +413,13 @@ def fetch_nft_collection_assets(network: str, address: str) -> str:
 
 
 @error_wrap
-def fetch_nft_collection_assets_for_sale(network: str, address: str) -> str:
-    ret = center.fetch_nft_collection_assets_for_sale(network, address)
-    return str(ListContainer(ret))
+def fetch_nft_collection_assets_for_sale(network: str, address: str) -> Generator:
+    yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
+    num = 0
+    for item in center.fetch_nft_collection_assets_for_sale(network, address):
+        yield StreamingListContainer(operation="append", item=item)
+        num += 1
+    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
@@ -438,6 +506,15 @@ class TxPayloadForSending(ContainerMixin):
     error_msg: Optional[str] = None
     description: str = ''
 
+    @classmethod
+    def from_workflow_result(cls, result: ui_workflows.base.Result):
+        return TxPayloadForSending(
+            user_request_status=result.status,
+            tx=result.tx,
+            error_msg=result.error_msg,
+            description=result.description
+        )
+
     def container_name(self) -> str:
         return 'display-tx-payload-for-sending-container'
 
@@ -457,15 +534,38 @@ def set_ens_text(domain: str, key: str, value: str) ->TxPayloadForSending:
         'value': value,
     }
 
-    wf = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params)
-    result = wf.run()
+    result = ens.ENSSetTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
+    return TxPayloadForSending.from_workflow_result(result)
 
-    return TxPayloadForSending(
-        user_request_status=result.status,
-        tx=result.tx,
-        error_msg=result.error_msg,
-        description=result.description
-    )
+@error_wrap
+@ensure_wallet_connected
+def set_ens_primary_name(domain: str) ->TxPayloadForSending:
+    wallet_chain_id = 1 # TODO: get from context
+    wallet_address = context.get_wallet_address()
+    user_chat_message_id = context.get_user_chat_message_id()
+
+    params = {
+        'domain': domain,
+    }
+
+    result = ens.ENSSetPrimaryNameWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
+    return TxPayloadForSending.from_workflow_result(result)
+
+@error_wrap
+@ensure_wallet_connected
+def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPayloadForSending:
+    wallet_chain_id = 1 # TODO: get from context
+    wallet_address = context.get_wallet_address()
+    user_chat_message_id = context.get_user_chat_message_id()
+
+    params = {
+        'domain': domain,
+        'nftContractAddress': nftContractAddress,
+        'nftId': nftId,
+    }
+
+    result = ens.ENSSetAvatarNFTWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
+    return TxPayloadForSending.from_workflow_result(result)
 
 @error_wrap
 def deposit_steth(amount: str) -> TxPayloadForSending:

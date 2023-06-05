@@ -11,10 +11,12 @@ from database.models import db_session, WorkflowStep, WorkflowStepStatus, MultiS
 
 from enum import Enum
 
-from .common import WorkflowStepClientPayload, RunnableStep, ContractStepProcessingResult, MultiStepResult, WorkflowValidationError, StepProcessingResult
+from .common import WorkflowStepClientPayload, RunnableStep, ContractStepProcessingResult, MultiStepResult, WorkflowValidationError, StepProcessingResult, _validate_non_zero_eth_balance
 from .base_contract_workflow import BaseContractWorkflow
 from .base_ui_workflow import BaseUIWorkflow
 from .base_contract_workflow import BaseContractWorkflow
+
+FALLBACK_GAS_LIMIT = hex(500000) # Arbitrary gas limit of 500k to be used when estimating gas fails
 
 class WorkflowApproach(Enum):
     UI = 1
@@ -75,44 +77,20 @@ class BaseMultiStepMixin():
             return self.super_base_class.run(self)
         except WorkflowValidationError as e:
             print(f"MULTISTEP {approach_label} WORKFLOW VALIDATION ERROR, {start_log_params}")
-            return MultiStepResult(
-                status='error',
-                workflow_id=str(self.multistep_workflow.id),
-                workflow_type=self.workflow_type,
-                step_id=str(self.curr_step.id) if self.curr_step else None,
-                step_type=self.curr_step.type if self.curr_step else None,
-                user_action_type=self.curr_step.user_action_type.name if self.curr_step else None,
-                step_number=self.curr_step.step_number if self.curr_step else None,
-                is_final_step=self._check_is_final_step(),
-                tx=None,
-                error_msg=e.args[0],
-                description=self.curr_step_description
-            )
+            traceback.print_exc()
+            return self._create_error_result(e.args[0])
+
         except Exception:
             print(f"MULTISTEP {approach_label} WORKFLOW EXCEPTION, {start_log_params}")
             traceback.print_exc()
-            return MultiStepResult(
-                status='error',
-                workflow_id=str(self.multistep_workflow.id),
-                workflow_type=self.workflow_type,
-                step_id=str(self.curr_step.id) if self.curr_step else None,
-                step_type=self.curr_step.type if self.curr_step else None,
-                user_action_type=self.curr_step.user_action_type.name if self.curr_step else None,
-                step_number=self.curr_step.step_number if self.curr_step else None,
-                is_final_step=self._check_is_final_step(),
-                tx=None,
-                error_msg="Unexpected error. Check with support.",
-                description=self.curr_step_description
-            )
+            return self._create_error_result("Unexpected error. Check with support.")
+
         finally:
             if self.workflow_approach == WorkflowApproach.UI:
                 self.stop_wallet_connect_listener()
 
             end_log_params = f"wf_type: {self.workflow_type}, chat_message_id: {self.chat_message_id}, multistep_wf_id: {self.multistep_workflow_id}, curr_step_id: {self.curr_step.id if self.curr_step else None}, curr_step_type: {self.curr_step.type if self.curr_step else self.runnable_steps[0].type}"
             print(f"Multi-step {approach_label} workflow ended, {end_log_params}")
-
-    # TODO: only in UI
-    # def _run_page(self, page, context) -> MultiStepResult:
 
     def _run(self, *args, **kwargs) -> MultiStepResult:
         processing_result = self._run_step(*args, **kwargs)
@@ -132,10 +110,23 @@ class BaseMultiStepMixin():
 
             # Stop WC listener thread and extract tx data if any
             tx = self.stop_wallet_connect_listener()
+
+            if tx and tx['gas'] == '0x0':
+                try:
+                    tx['from'] = Web3.to_checksum_address(tx['from'])
+                    tx['to'] = Web3.to_checksum_address(tx['to'])
+                    tx['gas'] = estimate_gas(tx)
+                except Exception:
+                    # If no gas specified by protocol UI and gas estimation fails, use fallback arbitary gas limit to attempt tx
+                    tx['gas'] = FALLBACK_GAS_LIMIT 
         else:
             # For contract ABI approach
             tx = processing_result.tx
-            tx['gas'] = estimate_gas(tx)
+            try:
+                tx['gas'] = estimate_gas(tx)
+            except Exception:
+                # If gas usage estimation fails, use fallback arbitary gas limit to attempt tx
+                tx['gas'] = FALLBACK_GAS_LIMIT
 
         if tx and "value" not in tx:
             tx['value'] = "0x0"
@@ -259,13 +250,17 @@ class BaseMultiStepMixin():
             if self.curr_step.status != WorkflowStepStatus.pending:
                 raise WorkflowValidationError("Current step is not in pending status which means it has already been processed, FE client should not be sending a payload for this step")
 
-            # TODO: only in UI
-            self.browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
+            if self.workflow_approach == WorkflowApproach.UI:
+                self.browser_storage_state = self.curr_step.step_state['browser_storage_state'] if  self.curr_step.step_state else None
 
             # Save current step status and user action data to DB that we receive from client
             self.curr_step.status = WorkflowStepStatus[self.curr_step_client_payload['status']]
             self.curr_step.status_message = self.curr_step_client_payload['statusMessage']
-            self.curr_step.user_action_data = self.curr_step_client_payload['userActionData']
+
+            # If user action data is missing it means that the client response payload is of an unsuccessful status such as 'error'
+            if self.curr_step_client_payload.get('userActionData'):
+                self.curr_step.user_action_data = self.curr_step_client_payload['userActionData']
+
             self._save_to_db([self.curr_step])
 
     def _check_should_terminate_run(self) -> bool:
@@ -302,6 +297,11 @@ class BaseMultiStepMixin():
         self._save_to_db([workflow_step])
         self.curr_step = workflow_step
         self.curr_step_description = step_description
+
+        # Run any common validation checks for all workflow steps
+        _validate_non_zero_eth_balance(self.wallet_address)
+        self._general_workflow_validation()
+
         return workflow_step
     
     def _get_step_by_id(self, step_id: str) -> WorkflowStep:
@@ -313,3 +313,22 @@ class BaseMultiStepMixin():
         else:
             self.curr_step.step_state.update(step_state)
         self._save_to_db([self.curr_step])
+
+    def _create_error_result(self, error_msg: str):
+        return MultiStepResult(
+            status='error',
+            workflow_id=str(self.multistep_workflow.id),
+            workflow_type=self.workflow_type,
+            step_id=str(self.curr_step.id) if self.curr_step else None,
+            step_type=self.curr_step.type if self.curr_step else None,
+            user_action_type=self.curr_step.user_action_type.name if self.curr_step else None,
+            step_number=self.curr_step.step_number if self.curr_step else None,
+            is_final_step=self._check_is_final_step(),
+            tx=None,
+            error_msg=error_msg,
+            description=self.curr_step_description or "(Unexpected error)"
+        )
+    
+    def _general_workflow_validation(self):
+        """Override this method to perform any common validation checks for all steps in the workflow before running them"""
+        pass
