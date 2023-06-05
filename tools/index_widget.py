@@ -140,7 +140,7 @@ class IndexWidgetTool(IndexLookupTool):
         return result.strip()
 
 
-def iterative_evaluate(phrase: str) -> Union[str | Generator]:
+def iterative_evaluate(phrase: str) -> Union[str , Generator]:
     while True:
         # before we had streaming, we could use this
         #eval_phrase = RE_COMMAND.sub(replace_match, phrase)
@@ -176,7 +176,7 @@ def sanitize_str(s: str) -> str:
     return s
 
 
-def replace_match(m: re.Match) -> Union[str | Generator]:
+def replace_match(m: re.Match) -> Union[str, Generator]:
     command = m.group('command')
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []
@@ -240,6 +240,8 @@ def replace_match(m: re.Match) -> Union[str | Generator]:
         return str(set_ens_avatar_nft(*params))
     elif command.startswith('display-'):
         return m.group(0)
+    elif command == lido.LidoTextWorkflow.WORKFLOW_TYPE:
+        return str(deposit_steth(*params))
     else:
         # unrecognized command, just return for now
         # assert 0, 'unrecognized command: %s' % m.group(0)
@@ -580,9 +582,4 @@ def deposit_steth(amount: str) -> TxPayloadForSending:
     wf = lido.LidoTextWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, 'deposit-eth', params)
     result = wf.run()
 
-    return TxPayloadForSending(
-        user_request_status=result.status,
-        tx=result.tx,
-        error_msg=result.error_msg,
-        description=result.description
-    )
+    return TxPayloadForSending.from_workflow_result(result)
