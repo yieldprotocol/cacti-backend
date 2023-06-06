@@ -60,7 +60,10 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
             prefix = params.get('prefix') or ''
             suffix = params.get('suffix') or ''
             if prefix or suffix:
-                lines.append(f'{prefix} {suffix}')
+                line = f'{prefix} {suffix}'.strip()
+                if line.endswith(':'):
+                    line = line[:-1] + '.'
+                lines.append(line)
         elif operation == 'append':
             item = params['item']
             lines.append(f"-Item: {_widgetize(item['name'], json.dumps(item['params']), depth=depth)}")
