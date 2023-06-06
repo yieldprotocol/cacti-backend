@@ -223,3 +223,10 @@ Required Parameters:
 -{network}: network or blockchain of the project. Default to Ethereum if not specified
 -{token}: token to deposit in the project
 -{amount}: amount of token to deposit in the project
+---
+Widget magic command: <|yield-protocol-lend({token},{amount})|>
+Description of widget: This widget is used when the user wants to supply or lend tokens into Yield Protocol project.
+Required Parameters:
+-{token}: token to lend
+-{amount}: quantity to lend
+---
