@@ -28,6 +28,13 @@ class Message:
 
     @property
     def payload(self):
+        if self.actor == 'user':
+            payload = self.raw_payload
+            # add capitalization perturbation for initial char
+            if rf() < 0.5:
+                return payload[:1].upper() + payload[1:]
+            else:
+                return payload
         return self.eval_payload if self.eval_payload is not None else self.raw_payload
 
 
@@ -249,7 +256,7 @@ def generate_dataset():
 
             history_string = chat_history.to_string(token_limit=HISTORY_TOKEN_LIMIT)
 
-            user_input = user_message.raw_payload
+            user_input = user_message.payload  # has perturbation
             completion = bot_message.raw_payload  # unprocessed version
             bot_response = bot_message.payload  # processed version
             datapoint_task_info = ""  # TODO: handle this
