@@ -141,13 +141,21 @@ class RephraseWidgetSearchChat(BaseChat):
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
-                        if isinstance(response_buffer, Generator):  # handle stream of widgets
+                        if isinstance(response_buffer, Callable):  # handle delegated streaming
+                            def handler(token):
+                                nonlocal new_token_handler
+                                timing.log('first_visible_widget_response_token')
+                                return new_token_handler(token)
+                            response_buffer(handler)
+                            response_buffer = ""
+                            return
+                        elif isinstance(response_buffer, Generator):  # handle stream of widgets
                             for item in response_buffer:
                                 timing.log('first_visible_widget_response_token')
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
-                        if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
                             # there are no two independent widgets on the same line, otherwise we can't
