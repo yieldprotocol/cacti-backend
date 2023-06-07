@@ -3,7 +3,7 @@ import json
 import re
 import requests
 from dataclasses import dataclass, asdict
-from typing import Any, Dict, Generator, List, Optional, Union, Literal, TypedDict
+from typing import Any, Callable, Dict, Generator, List, Optional, Union, Literal, TypedDict
 import traceback
 
 from langchain.llms import OpenAI
@@ -12,6 +12,7 @@ from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
 
 import ui_workflows
+import config
 import context
 import utils
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
@@ -29,6 +30,7 @@ from ui_workflows import (
 from .index_lookup import IndexLookupTool
 
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
+
 
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
 
@@ -89,13 +91,21 @@ class IndexWidgetTool(IndexLookupTool):
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
-                        if isinstance(response_buffer, Generator):  # handle stream of widgets
+                        if isinstance(response_buffer, Callable):  # handle delegated streaming
+                            def handler(token):
+                                nonlocal new_token_handler
+                                timing.log('first_visible_widget_response_token')
+                                return new_token_handler(token)
+                            response_buffer(handler)
+                            response_buffer = ""
+                            return
+                        elif isinstance(response_buffer, Generator):  # handle stream of widgets
                             for item in response_buffer:
                                 timing.log('first_visible_widget_response_token')
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
-                        if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
                             # there are no two independent widgets on the same line, otherwise we can't
@@ -140,7 +150,7 @@ class IndexWidgetTool(IndexLookupTool):
         return result.strip()
 
 
-def iterative_evaluate(phrase: str) -> Union[str | Generator]:
+def iterative_evaluate(phrase: str) -> Union[str, Generator, Callable]:
     while True:
         # before we had streaming, we could use this
         #eval_phrase = RE_COMMAND.sub(replace_match, phrase)
@@ -176,7 +186,7 @@ def sanitize_str(s: str) -> str:
     return s
 
 
-def replace_match(m: re.Match) -> Union[str | Generator]:
+def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
     command = m.group('command')
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []
@@ -218,6 +228,10 @@ def replace_match(m: re.Match) -> Union[str | Generator]:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
+    elif command == 'fetch-app-info':
+        return fetch_app_info(*params)
+    elif command == 'fetch-scraped-sites':
+        return fetch_scraped_sites(*params)
     elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
     elif command == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
@@ -307,6 +321,40 @@ def fetch_eth_out(wallet_address: str) -> str:
 @error_wrap
 def fetch_gas(wallet_address: str) -> str:
     return etherscan.get_all_gas_for_address(wallet_address)
+
+
+@error_wrap
+def fetch_app_info(query: str) -> Callable:
+    def fn(token_handler):
+        app_info_index = config.initialize(config.app_info_index)
+        tool = dict(
+            type="tools.index_app_info.IndexAppInfoTool",
+            _streaming=True,
+            name="AppInfoIndexAnswer",
+            index=app_info_index,
+            top_k=3,
+        )
+        tool = streaming.get_streaming_tools([tool], token_handler)[0]
+        tool._run(query)
+    return fn
+
+
+@error_wrap
+def fetch_scraped_sites(query: str) -> Callable:
+    def fn(token_handler):
+        scraped_sites_index = config.initialize(config.scraped_sites_index)
+        tool = dict(
+            type="tools.index_answer.IndexAnswerTool",
+            _streaming=True,
+            name="ScrapedSitesIndexAnswer",
+            content_description="",  # not used
+            index=scraped_sites_index,
+            top_k=3,
+            source_key="url",
+        )
+        tool = streaming.get_streaming_tools([tool], token_handler)[0]
+        tool._run(query)
+    return fn
 
 
 class ListContainer(ContainerMixin, list):
