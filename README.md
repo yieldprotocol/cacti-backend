@@ -22,3 +22,10 @@ you are modifying weaviate schema.
 cd docker
 docker-compose up
 ```
+
+
+# DRAFT
+- the Weaviate vector index may not have been updated with the latest widgets.txt changes, so anytime the file is changed the following needs to be done to allow semantic search to query against the latest state of the widgets:-
+    - Bump up the index version on https://github.com/yieldprotocol/chatweb3-backend/blob/dev/index/widgets.py#L9 (so use `WidgetV11` as v10 already taken by pending PR)
+    - Similarly, bump up the index version on https://github.com/yieldprotocol/chatweb3-backend/blob/dev/config.py#L6
+    - Finally, run this command on https://github.com/yieldprotocol/chatweb3-backend/blob/dev/index/widgets.py (`python3 -c "from index import widgets; widgets.backfill()"`)

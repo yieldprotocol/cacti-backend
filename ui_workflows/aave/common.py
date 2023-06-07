@@ -12,6 +12,7 @@ from ..base import StepProcessingResult, revoke_erc20_approval, set_erc20_allowa
 FIVE_SECONDS = 5000
 AAVE_POOL_V3_PROXY_ADDRESS = Web3.to_checksum_address("0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2")
 AAVE_WRAPPED_TOKEN_GATEWAY = Web3.to_checksum_address("0xd322a49006fc828f9b5b37ab215f99b4e5cab19c")
+AAVE_VARIABLE_DEBT_TOKEN_ADDRESS = Web3.to_checksum_address("0xea51d7853eefb32b6ee06b1c12e6dcca88be0ffe")
 
 AAVE_SUPPORTED_TOKENS = [
     "ETH",
@@ -34,6 +35,10 @@ def get_aave_pool_v3_address_contract():
 def get_aave_wrapped_token_gateway_contract():
     web3_provider = context.get_web3_provider()
     return web3_provider.eth.contract(address=AAVE_WRAPPED_TOKEN_GATEWAY, abi=load_contract_abi(__file__, "./abis/aave_wrapped_token_gateway.abi.json"))
+
+def get_aave_variable_debt_token_contract():
+    web3_provider = context.get_web3_provider()
+    return web3_provider.eth.contract(address=AAVE_VARIABLE_DEBT_TOKEN_ADDRESS, abi=load_contract_abi(__file__, "./abis/aave_variable_debt_token.abi.json"))
 
 class AaveMixin:
     def _goto_page_and_open_walletconnect(self, page):
