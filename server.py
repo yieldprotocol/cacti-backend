@@ -7,6 +7,7 @@ from urllib.parse import urlparse, parse_qs
 
 from sqlalchemy import func
 
+import env
 import chat
 import index
 import system
@@ -60,13 +61,34 @@ def _get_default_system_config_id():
 default_system_config_id = _get_default_system_config_id()
 
 
+# uuid to display random conversation (only for non-prod)
+RANDOM_CONVERSATION_UUID = uuid.UUID('00000000-0000-0000-0000-000000000000')
+
+
+def _generate_random_conversation():
+    from finetune.generate import generate_conversation
+    for i, msg in enumerate(generate_conversation()):
+        yield ChatMessage(
+            actor=msg.actor,
+            type='text',
+            payload=msg.payload,
+            sequence_number=i,
+            chat_session_id=RANDOM_CONVERSATION_UUID,
+            system_config_id=default_system_config_id,
+        )
+
 
 def _load_existing_history_and_messages(session_id):
     """Given an existing session_id, recreate the ChatHistory instance along with the individual Messages"""
     history = chat.ChatHistory.new(session_id)
     messages = []
 
-    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.sequence_number, ChatMessage.created).all():
+    if session_id == RANDOM_CONVERSATION_UUID and not env.is_prod():
+        message_iter = _generate_random_conversation()
+    else:
+        message_iter = ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.sequence_number, ChatMessage.created).all()
+
+    for message in message_iter:
         messages.append(message)
 
         # register user/bot messages to history
