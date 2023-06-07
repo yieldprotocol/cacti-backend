@@ -127,17 +127,9 @@ def message_received(client_state, send_response, message):
     if typ == 'init':
         assert history is None, f'received a session resume request for existing session {history.session_id}'
 
-        # HACK: legacy payload is a query string of the format '?s=some_session_id', temporarily preserve backwards compatibility
-        if isinstance(payload, str):
-            # parse query string for session id
-            params = parse_qs(urlparse(payload).query)
-            session_id = uuid.UUID(params['s'][0])
-            resume_from_message_id = None
-            before_message_id = None
-        else:
-            session_id = uuid.UUID(payload['sessionId'])
-            resume_from_message_id = payload.get('resumeFromMessageId')
-            before_message_id = payload.get('insertBeforeMessageId')
+        session_id = uuid.UUID(payload['sessionId'])
+        resume_from_message_id = payload.get('resumeFromMessageId')
+        before_message_id = payload.get('insertBeforeMessageId')
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)
