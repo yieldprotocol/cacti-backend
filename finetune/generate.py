@@ -69,8 +69,8 @@ def random_token() -> str:
     return "".join(random.choices("0123456789abcdefghijklmnopqrstuvwyxzABCDEFGHIJKLMNOPQRSTUVWXYZ", k=l))
 
 
-def random_weighted_choice(enum_cls, weight_dict):
-    choices = list(enum_cls.__members__.values())
+def random_weighted_choice(weight_dict):
+    choices = list(weight_dict.keys())
     weights = [weight_dict[k] for k in choices]
     flow = random.choices(choices, weights=weights)[0]
     return flow
@@ -84,7 +84,7 @@ def perturb(s: str) -> str:
 
 
 def generate_nft_flow() -> Iterable[Message]:
-    query = random_name(with_adjective=True)
+    query = random_name(with_adjective=rf() < 0.5)
     message = random.choice([
         f"find some {query} NFTs",
         f"find {query} NFTs",
@@ -125,15 +125,6 @@ class NFTCollectionFlow(enum.IntEnum):
     collection_traits = 5
 
 
-NFT_COLLECTION_FLOW_WEIGHTS = {
-    NFTCollectionFlow.collection_assets: 1,
-    NFTCollectionFlow.collection_assets_for_sale: 1,
-    NFTCollectionFlow.collection_assets_by_trait: 0,
-    NFTCollectionFlow.collection_assets_by_trait_for_sale: 0,
-    NFTCollectionFlow.collection_traits: 1,
-}
-
-
 def generate_nft_collection_flow(items: Optional[List[NFTCollection]] = None, item: Optional[NFTCollection] = None, depth: Optional[int] = 0) -> Iterable[Message]:
     if depth > 0 and rf() < 0.5:
         return
@@ -141,19 +132,23 @@ def generate_nft_collection_flow(items: Optional[List[NFTCollection]] = None, it
     original_item = item
 
     num = len(items)
-    if num > 0:
+    if num > 0 and item is None:
         choice = random.randint(0, num - 1)
         item = items[choice]
-        remaining_items = list(items)
-        remaining_items.remove(item)
-        for msg in generate_nft_collection_flow(items=remaining_items, item=item, depth=depth + 1):
-            yield msg
+        items = list(items)
+        items.remove(item)
 
-    for msg in generate_nft_collection_flow(items=items, item=item, depth=depth+1):
-        yield msg
+    if item is None:
+        return
 
     name = perturb(item.name)
-    flow = random_weighted_choice(NFTCollectionFlow, NFT_COLLECTION_FLOW_WEIGHTS)
+    flow = random_weighted_choice({
+        NFTCollectionFlow.collection_assets: 1,
+        NFTCollectionFlow.collection_assets_for_sale: 1,
+        NFTCollectionFlow.collection_assets_by_trait: 0,
+        NFTCollectionFlow.collection_assets_by_trait_for_sale: 0,
+        NFTCollectionFlow.collection_traits: 1,
+    })
     if flow == NFTCollectionFlow.collection_assets:
         message = random.choice([
             f"let's look at {name}",
@@ -185,35 +180,38 @@ def generate_nft_collection_flow(items: Optional[List[NFTCollection]] = None, it
     else:
         assert 0, f'unrecognized flow: {flow}'
 
+    if rf() < 0.5:  # stay with current item
+        for msg in generate_nft_collection_flow(items=items, item=item, depth=depth+1):
+            yield msg
+    else:  # switch to a different one
+        for msg in generate_nft_collection_flow(items=items, item=None, depth=depth+1):
+            yield msg
 
-def generate_wallet_balance_flow():
-    token = random_token()
+
+
+def generate_wallet_balance_flow(token=None):
+    original_token = token
+    if token is None:
+        token = random_token()
     message = random.choice([
         f"what's the balance of {token} in my wallet",
         f"what's my balance of {token}",
         f"my {token} balance",
-    ])
+    ] + ([
+        f"what about {token}",
+        f"and {token}?",
+    ] if original_token is not None else []))
     yield Message("user", message)
-    yield Message("bot", f"<|fetch-my-balance({token})|>")
-    if rf() < 0.5:
-        token = random_token()
-        message = random.choice([
-            f"what about {token}",
-            f"and {token}?",
-        ])
-        yield Message("user", message)
-        yield Message("bot", f"<|fetch-my-balance({token})|>")
+    balance = random.random() * 10e5
+    yield Message("bot", f"<|fetch-my-balance({token})|>", f"{balance}")
+    if rf() < 0.3:
+        for msg in generate_wallet_balance_flow(token=random_token()):
+            yield msg
 
 
 class MessageFlow(enum.IntEnum):
     nft = 1
     wallet_balance = 2
-
-
-FLOW_WEIGHTS = {
-    MessageFlow.nft: 10,
-    MessageFlow.wallet_balance: 2,
-}
 
 
 def generate_conversation(depth: int = 0) -> Iterable[Message]:
@@ -223,7 +221,10 @@ def generate_conversation(depth: int = 0) -> Iterable[Message]:
     for msg in generate_conversation(depth=depth + 1):
         yield msg
 
-    flow = random_weighted_choice(MessageFlow, FLOW_WEIGHTS)
+    flow = random_weighted_choice({
+        MessageFlow.nft: 10,
+        MessageFlow.wallet_balance: 2,
+    })
     if flow == MessageFlow.nft:
         for msg in generate_nft_flow():
             yield msg
