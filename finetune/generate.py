@@ -109,7 +109,7 @@ def generate_nft_flow() -> Iterable[Message]:
         address = random_address()
         name = random_name()
         num_assets = random.randint(0, 10000)
-        preview_image_url = ""
+        preview_image_url = "http://" + random_name()
         items.append(NFTCollection(
             network=network,
             address=address,
@@ -173,7 +173,8 @@ def generate_nft_collection_flow(items: Optional[List[NFTCollection]] = None, it
         assets = []
         for i in range(num):
             token_id = random.randint(1, 9999)
-            preview_image_url = ""
+            preview_image_url = "http://" + random_name()
+            price = (str(random.randint(1, 1000) / 100) + ' eth') if rf() < 0.5 else None
             assets.append(NFTAsset(
                 network=item.network,
                 address=item.address,
@@ -181,6 +182,7 @@ def generate_nft_collection_flow(items: Optional[List[NFTCollection]] = None, it
                 collection_name=item.name,
                 name=f'Asset #{token_id}',
                 preview_image_url=preview_image_url,
+                price=price,
             ))
         nft_collection_assets = NFTCollectionAssets(
             collection=item,
