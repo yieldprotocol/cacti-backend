@@ -46,7 +46,7 @@ MAX_TOKENS = 200
 
 @registry.register_class
 class FineTunedChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, fallback_chat: Optional[BaseChat] = None, show_thinking: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, fallback_chat: Optional[BaseChat] = None, model_name: Optional[str] = None) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
@@ -57,7 +57,7 @@ class FineTunedChat(BaseChat):
         self.widget_index = widget_index
         self.top_k = top_k
         self.fallback_chat = fallback_chat
-        self.show_thinking = show_thinking
+        self.model_name = model_name or MODEL_NAME
 
     def receive_input(
             self,
@@ -159,13 +159,17 @@ class FineTunedChat(BaseChat):
                 timing.log('first_visible_widget_response_token')
             new_token_handler(token)
 
-        widgets = retry_on_exceptions_with_backoff(
-            lambda: self.widget_index.similarity_search(userinput, k=self.top_k),
-            [ErrorToRetry(TypeError)],
-        )
-        timing.log('widget_index_lookup_done')
-        # task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
-        task_info = format_widgets_for_prompt(widgets)
+        if self.widget_index is None:
+            task_info = ""
+        else:
+            widgets = retry_on_exceptions_with_backoff(
+                lambda: self.widget_index.similarity_search(userinput, k=self.top_k),
+                [ErrorToRetry(TypeError)],
+            )
+            timing.log('widget_index_lookup_done')
+            # task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
+            task_info = format_widgets_for_prompt(widgets)
+
         example = {
             "task_info": task_info,
             "chat_history": history_string,
@@ -173,7 +177,7 @@ class FineTunedChat(BaseChat):
             "stop": [STOP],
         }
 
-        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=MODEL_NAME, max_tokens=MAX_TOKENS)
+        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=self.model_name, max_tokens=MAX_TOKENS)
 
         with context.with_request_context(history.wallet_address, message_id):
             result = chain.run(example).strip()
