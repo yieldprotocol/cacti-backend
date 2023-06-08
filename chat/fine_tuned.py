@@ -46,7 +46,7 @@ MAX_TOKENS = 200
 
 @registry.register_class
 class FineTunedChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, fallback_chat: Optional[BaseChat] = None, model_name: Optional[str] = None) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, fallback_chat: Optional[BaseChat] = None, model_name: Optional[str] = None, evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
@@ -58,6 +58,7 @@ class FineTunedChat(BaseChat):
         self.top_k = top_k
         self.fallback_chat = fallback_chat
         self.model_name = model_name or MODEL_NAME
+        self.evaluate_widgets = evaluate_widgets
 
     def receive_input(
             self,
@@ -115,7 +116,7 @@ class FineTunedChat(BaseChat):
             timing.log('first_widget_token')  # for comparison with basic agent
 
             response_buffer += token
-            while '<|' in response_buffer:
+            while '<|' in response_buffer and self.evaluate_widgets:
                 if '|>' in response_buffer:
                     # parse fetch command
                     response_buffer = iterative_evaluate(response_buffer)
