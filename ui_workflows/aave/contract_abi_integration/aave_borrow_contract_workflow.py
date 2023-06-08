@@ -7,7 +7,7 @@ from ...base import RunnableStep, WorkflowStepClientPayload, BaseMultiStepContra
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
-from ..common import AAVE_SUPPORTED_TOKENS, AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, AAVE_VARIABLE_DEBT_TOKEN_ADDRESS, get_aave_wrapped_token_gateway_contract, get_aave_variable_debt_token_contract, get_aave_pool_v3_address_contract
+from ..common import AAVE_SUPPORTED_TOKENS, AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, AAVE_VARIABLE_DEBT_TOKEN_ADDRESS, get_aave_wrapped_token_gateway_contract, get_aave_variable_debt_token_contract, get_aave_pool_v3_address_contract, common_aave_validation
 
 class AaveBorrowContractWorkflow(BaseMultiStepContractWorkflow):
     """
@@ -36,8 +36,7 @@ class AaveBorrowContractWorkflow(BaseMultiStepContractWorkflow):
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, self.WORKFLOW_TYPE, multistep_workflow, workflow_params, curr_step_client_payload, steps, final_step_type)
 
     def _general_workflow_validation(self):
-        if (self.token not in AAVE_SUPPORTED_TOKENS):
-            raise WorkflowValidationError(f"Token {self.token} not supported by Aave")
+        common_aave_validation(self.token)
 
         # TODO: add a check to verify that the user has deposited collateral
 

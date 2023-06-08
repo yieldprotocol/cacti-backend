@@ -7,7 +7,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from web3 import Web3
 
 from utils import load_contract_abi
-from ..base import StepProcessingResult, revoke_erc20_approval, set_erc20_allowance, TEST_WALLET_ADDRESS, USDC_ADDRESS
+from ..base import StepProcessingResult, revoke_erc20_approval, set_erc20_allowance, TEST_WALLET_ADDRESS, USDC_ADDRESS, WorkflowValidationError
 
 FIVE_SECONDS = 5000
 AAVE_POOL_V3_PROXY_ADDRESS = Web3.to_checksum_address("0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2")
@@ -39,6 +39,10 @@ def get_aave_wrapped_token_gateway_contract():
 def get_aave_variable_debt_token_contract():
     web3_provider = context.get_web3_provider()
     return web3_provider.eth.contract(address=AAVE_VARIABLE_DEBT_TOKEN_ADDRESS, abi=load_contract_abi(__file__, "./abis/aave_variable_debt_token.abi.json"))
+
+def common_aave_validation(token):
+    if (token not in AAVE_SUPPORTED_TOKENS):
+        raise WorkflowValidationError(f"Token {token} not supported by Aave")
 
 class AaveMixin:
     def _goto_page_and_open_walletconnect(self, page):
