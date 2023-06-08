@@ -48,10 +48,9 @@ HISTORY_TOKEN_LIMIT = 2500
 
 @registry.register_class
 class BasicAgentChat(BaseChat):
-    def __init__(self, tools: List[BaseTool], show_thinking: bool = True) -> None:
+    def __init__(self, tools: List[BaseTool]) -> None:
         super().__init__()
         self.tools = tools
-        self.show_thinking = show_thinking
 
     def receive_input(
             self,

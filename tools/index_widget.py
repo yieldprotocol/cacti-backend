@@ -54,12 +54,15 @@ class IndexWidgetTool(IndexLookupTool):
     """Tool for searching a widget index and figuring out how to respond to the question."""
 
     _chain: LLMChain
+    _evaluate_widgets: bool
 
     def __init__(
             self,
             *args,
             **kwargs
     ) -> None:
+        evaluate_widgets = kwargs.pop('evaluate_widgets', True)
+
         prompt = PromptTemplate(
             input_variables=["task_info", "question"],
             template=TEMPLATE,
@@ -87,7 +90,7 @@ class IndexWidgetTool(IndexLookupTool):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
-                while '<|' in response_buffer:
+                while '<|' in response_buffer and self._evaluate_widgets:
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
@@ -132,6 +135,7 @@ class IndexWidgetTool(IndexLookupTool):
         super().__init__(
             *args,
             _chain=chain,
+            _evaluate_widgets=evaluate_widgets,
             content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear. You can look up live prices, DeFi yields, wallet balances, ENS information, token contract addresses, do transfers or swaps or deposit tokens to farm yields, or search for NFTs, and retrieve data about NFT collections, assets, trait names and trait values. It cannot help the user with understanding how to use the app or how to perform certain actions.",
             input_description="a standalone query phrase with all relevant contextual details mentioned explicitly without using pronouns in order to invoke the right widget",
             output_description="a summarized answer with relevant magic command for widget(s), or a question prompt for more information to be provided",

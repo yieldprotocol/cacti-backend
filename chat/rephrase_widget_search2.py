@@ -56,7 +56,7 @@ HISTORY_TOKEN_LIMIT = 1800
 
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
@@ -66,7 +66,7 @@ class RephraseWidgetSearchChat(BaseChat):
         )
         self.widget_index = widget_index
         self.top_k = top_k
-        self.show_thinking = show_thinking
+        self.evaluate_widgets = evaluate_widgets
 
     def receive_input(
             self,
@@ -137,7 +137,7 @@ class RephraseWidgetSearchChat(BaseChat):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
-                while '<|' in response_buffer:
+                while '<|' in response_buffer and self.evaluate_widgets:
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
