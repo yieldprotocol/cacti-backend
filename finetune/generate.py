@@ -20,6 +20,9 @@ from .dataset import (
 )
 
 
+NUM_DATAPOINTS = 500
+
+
 @dataclass
 class Message:
     actor: str
@@ -343,7 +346,7 @@ def generate_conversation() -> Iterable[Message]:
         count += 1
 
         flow = random_weighted_choice({
-            MessageFlow.nft: 5,
+            MessageFlow.nft: 10,
             MessageFlow.wallet_balance: 2,
             MessageFlow.app_info: 2,
             MessageFlow.scraped_sites: 2,
@@ -370,7 +373,7 @@ def generate_conversation() -> Iterable[Message]:
 
 def generate_dataset():
     conversations = []
-    for _ in range(100):
+    for _ in range(NUM_DATAPOINTS):
         conversations.append(Conversation(messages=list(generate_conversation())))
 
     for conv in conversations:
