@@ -1,162 +1,276 @@
 import collections
+import copy
 import uuid
+from typing import Iterable
 
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
+from integrations.center import (
+    NFTCollection, NFTAsset, NFTCollectionAssets, NFTAssetTraits, NFTAssetTraitValue,
+    NFTCollectionTraits, NFTCollectionTrait, NFTCollectionTraitValue,
+)
+from chat.base import ChatHistory, ChatMessage
+import chat
+import config
+import utils.timing as timing
 from tools.index_widget import (
     StreamingListContainer,
     _get_result_list_prefix,
 )
-from integrations.center import (
-    NFTCollection, NFTAsset,
-)
-from chat.base import ChatHistory, ChatMessage
-from chat.fine_tuned import (
-    format_widgets_for_prompt,
-    HISTORY_TOKEN_LIMIT,
-    TEMPLATE,
-    STOP,
-    NO_WIDGET_TOKEN,
-)
+
 from .generate import (
     Conversation, Message, StreamingListContainer,
     stream_to_str,
 )
 
-MODEL_NAME = 'curie:ft-yield-inc-2023-05-30-20-19-41'
-#MODEL_NAME = 'curie:ft-yield-inc:truncate-task-info-2023-06-01-00-37-29'
-#MODEL_NAME = 'curie:ft-macro-2023-06-06-07-03-08'
-MODEL_NAME = 'curie:ft-yield-inc-2023-06-06-07-37-06'
-MAX_TOKENS = 200
 
-
-query = "penguin"
-ETH_NETWORK = "ethereum-maintnet"
-network1 = ETH_NETWORK
-address1 = "0xBd3531dA5CF5857e7CfAA92426877b022e612cf8"
-name1 = "PudgyPenguins"
-network2 = ETH_NETWORK
-address2 = "0x31F3bba9b71cB1D5e96cD62F0bA3958C034b55E9"
-name2 = "Party Penguins"
-token_id = "1234"
-token_name = "Asset #1234"
-price = "1.2 ETH"
-
-
-validation_conversations = [
-    Conversation(
-        messages=[
-            Message("user", f"find some {query} NFTs"),
-            Message("bot", f"<|fetch-nft-search({query})|>", stream_to_str([
-                StreamingListContainer(operation="create", prefix="Searching"),
-                StreamingListContainer(operation="append", item=NFTCollection(
-                    network=f"{network1}",
-                    address=f"{address1}",
-                    name=f"{name1}",
-                    num_assets="{num_assets1}",
-                    preview_image_url="{preview_image_url1}",
-                )),
-                StreamingListContainer(operation="append", item=NFTCollection(
-                    network=f"{network2}",
-                    address=f"{address2}",
-                    name=f"{name2}",
-                    num_assets="{num_assets2}",
-                    preview_image_url="{preview_image_url1}",
-                )),
-                StreamingListContainer(operation="update", prefix=_get_result_list_prefix(2))
-            ])),
-            Message("user", f"let's look at {name2}"),
-            Message("bot", f"<|fetch-nft-collection-info({network2},{address2})|>"),
-            Message("user", f"what are the assets for sale for this collection"),
-            Message("bot", f"<|fetch-nft-collection-assets-for-sale({network2},{address2})|>", stream_to_str([
-                StreamingListContainer(operation="create", prefix="Searching"),
-                StreamingListContainer(operation="append", item=NFTAsset(
-                    network=f"{network2}",
-                    address=f"{address2}",
-                    collection_name=f"{name2}",
-                    token_id=f"{token_id}",
-                    name=f"{token_name}",
-                    preview_image_url="{preview_image_url1}",
-                    price=f"{price}",
-                )),
-            ])),
-            Message("user", f"what are the traits for this asset"),
-            Message("bot", f"<|fetch-nft-asset-traits({network2},{address2},{token_id})|>"),
-            Message("user", f"what are the traits for this collection"),
-            Message("bot", f"<|fetch-nft-collection-traits({network2},{address2})|>"),
+chat_configs = [
+    dict(
+        type='chat.fine_tuned.FineTunedChat',
+        widget_index=None,
+        model_name='curie:ft-yield-inc:gen-500-2023-06-08-08-20-51',
+        evaluate_widgets=False,
+    ),
+]
+_ = [
+    dict(
+        type='chat.rephrase_widget_search.RephraseWidgetSearchChat',
+        widget_index=config.widget_index,
+        top_k=18,
+        evaluate_widgets=False,
+    ),
+    dict(
+        type='chat.rephrase_widget_search2.RephraseWidgetSearchChat',
+        widget_index=config.widget_index,
+        top_k=18,
+        evaluate_widgets=False,
+    ),
+    dict(
+        type="chat.basic_agent.BasicAgentChat",
+        tools=[
+            dict(
+                type="tools.index_widget.IndexWidgetTool",
+                _streaming=True,
+                name="WidgetIndexAnswer",
+                index=config.widget_index,
+                top_k=10,
+                evaluate_widgets=False,
+            ),
         ],
     ),
 ]
 
 
-def generate_validation_dataset():
-    from finetune.dataset import Datapoint
+def get_nft_flow() -> Iterable[Message]:
+    query = "penguin"
+    yield Message("user", f"find some {query} NFTs")
 
-    for conv in validation_conversations:
+    ETH_NETWORK = "ethereum-mainnet"
+    network1 = ETH_NETWORK
+    address1 = "0xBd3531dA5CF5857e7CfAA92426877b022e612cf8"
+    name1 = "PudgyPenguins"
+    network2 = ETH_NETWORK
+    address2 = "0x31F3bba9b71cB1D5e96cD62F0bA3958C034b55E9"
+    name2 = "Party Penguins"
+
+    collection1 = NFTCollection(
+        network=f"{network1}",
+        address=f"{address1}",
+        name=f"{name1}",
+        num_assets=123,
+        preview_image_url="http://preview_image_url1",
+    )
+    collection2 = NFTCollection(
+        network=f"{network2}",
+        address=f"{address2}",
+        name=f"{name2}",
+        num_assets=456,
+        preview_image_url="https://preview_image_url2",
+    )
+    yield Message("bot", f"<|fetch-nft-search({query})|>", stream_to_str([
+        StreamingListContainer(operation="create", prefix="Searching"),
+        StreamingListContainer(operation="append", item=collection1),
+        StreamingListContainer(operation="append", item=collection2),
+        StreamingListContainer(operation="update", prefix=_get_result_list_prefix(2)),
+    ]))
+
+    yield Message("user", f"let's look at {name2}")
+
+    token_id1 = "1234"
+    token_name1 = "Asset #1234"
+    token_id2 = "1235"
+    token_name2 = "Asset #1235"
+    price = "1.2 ETH"
+    assets = [
+        NFTAsset(
+            network=collection2.network,
+            address=collection2.address,
+            token_id=token_id1,
+            collection_name=collection2.name,
+            name=token_name1,
+            preview_image_url='',
+            price=None,
+        ),
+        NFTAsset(
+            network=collection2.network,
+            address=collection2.address,
+            token_id=token_id2,
+            collection_name=collection2.name,
+            name=token_name2,
+            preview_image_url='',
+            price=price,
+        ),
+    ]
+    collection_assets_container = NFTCollectionAssets(
+        collection=collection2,
+        assets=assets,
+    )
+    yield Message("bot", f"<|fetch-nft-collection-info({network2},{address2})|>", str(collection_assets_container))
+
+    yield Message("user", f"what are the assets for sale for this collection")
+
+    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale({network2},{address2})|>", stream_to_str([
+        StreamingListContainer(operation="create", prefix="Searching"),
+        StreamingListContainer(operation="append", item=assets[1]),
+        StreamingListContainer(operation="update", prefix=_get_result_list_prefix(1)),
+    ]))
+
+    yield Message("user", f"what are the traits for this asset")
+
+    values = [
+        NFTAssetTraitValue(
+            trait='Hat',
+            value='Pirate Hat',
+        ),
+        NFTAssetTraitValue(
+            trait='Head',
+            value='Big',
+        ),
+    ]
+    asset_traits_container = NFTAssetTraits(
+        asset=assets[1],
+        values=values,
+    )
+    yield Message("bot", f"<|fetch-nft-asset-traits({network2},{address2},{token_id2})|>", str(asset_traits_container))
+
+    yield Message("user", f"what are the traits for this collection")
+
+    collection_traits = [
+        NFTCollectionTrait(
+            trait='trait1',
+            values=[
+                NFTCollectionTraitValue(trait='trait1', value='value1', count=10, total=100),
+                NFTCollectionTraitValue(trait='trait1', value='value2', count=10, total=100),
+            ],
+        ),
+        NFTCollectionTrait(
+            trait='trait2',
+            values=[
+                NFTCollectionTraitValue(trait='trait2', value='another_value1', count=10, total=100),
+                NFTCollectionTraitValue(trait='trait2', value='another_value2', count=10, total=100),
+            ],
+        ),
+    ]
+    collection_traits_container = NFTCollectionTraits(
+        collection=collection2,
+        traits=collection_traits,
+    )
+    yield Message("bot", f"<|fetch-nft-collection-traits({network2},{address2})|>", str(collection_traits_container))
+
+    trait_name = 'trait1'
+    trait_value = 'value1'
+    yield Message("user", f"what are the assets with {trait_value} for {trait_name}?")
+
+    yield Message("bot", f"<|fetch-nft-collection-assets-by-trait({network2},{address2},{trait_name},{trait_value})|>", stream_to_str([
+        StreamingListContainer(operation="create", prefix="Searching"),
+        StreamingListContainer(operation="append", item=assets[1]),
+        StreamingListContainer(operation="update", prefix=_get_result_list_prefix(1)),
+    ]))
+
+    yield Message("user", f"which of these are for sale?")
+    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale-by-trait({network2},{address2},{trait_name},{trait_value})|>", stream_to_str([
+        StreamingListContainer(operation="create", prefix="Searching"),
+        StreamingListContainer(operation="update", prefix=_get_result_list_prefix(0)),
+    ]))
+
+    trait_value2 = 'value2'
+    yield Message("user", f"what about assets with {trait_value2}?")
+    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale-by-trait({network2},{address2},{trait_name},{trait_value2})|>", stream_to_str([
+        StreamingListContainer(operation="create", prefix="Searching"),
+        StreamingListContainer(operation="append", item=assets[0]),
+        StreamingListContainer(operation="update", prefix=_get_result_list_prefix(1)),
+    ]))
+
+    yield Message("user", f"let's buy this one.")
+    yield Message("bot", f"<|fetch-nft-buy-asset({network2},{address2},{token_id1})|>", f"<|display-buy-nft({address2},{token_id1})|>")
+
+
+def get_validation_conversations() -> Iterable[Conversation]:
+    yield Conversation(messages=list(get_nft_flow()))
+
+
+def evaluate_chat(chat: chat.BaseChat):
+    for conv in get_validation_conversations():
         chat_history = ChatHistory.new(uuid.UUID('da2321e5-8bcf-45e8-bb29-deee71b379cb'))
-        datapoints = []
         for i in range(0, len(conv.messages), 2):
             user_message  = conv.messages[i]
             bot_message = conv.messages[i + 1]
 
-            history_string = chat_history.to_string(token_limit=HISTORY_TOKEN_LIMIT)
-
             user_input = user_message.raw_payload
-            completion = bot_message.raw_payload  # unprocessed version
-            bot_response = bot_message.payload  # processed version
-            datapoint_task_info = ""  # TODO: handle this
+            completion = bot_message.raw_payload  # unprocessed version, expected output
+            bot_response = bot_message.payload  # processed version, for history
 
+            # invoke the chat on user input, gather bot output
+            bot_output = None
+            message_id = None
+            def send_response(response, **kwargs):
+                nonlocal bot_output, message_id
+                if message_id is None:
+                    message_id = 0  # emulate this to get the correct operations to be used
+                if response.actor == 'bot' and response.operation == 'replace':
+                    bot_output = response.response
+                return message_id
+
+            chat_history_copy = copy.deepcopy(chat_history)
+            chat.receive_input(chat_history_copy, user_input, send_response)
+            assert bot_output is not None
+
+            yield (bot_output, completion)
+
+            # prepare for next round, but use ground truth response instead
             chat_history.add_interaction(user_input, bot_response)
 
-            datapoint = Datapoint(
-                user_input=user_input,
-                history=history_string,
-                completion=completion,
-                task_info=datapoint_task_info,
-            )
-            datapoints.append(datapoint)
-        for datapoint in datapoints:
-            yield datapoint
-
-
-def get_chain():
-    prompt = PromptTemplate(
-        input_variables=["task_info", "chat_history", "user_input"],
-        template=TEMPLATE,
-    )
-    llm = OpenAI(
-        temperature=0.0,
-        max_tokens=MAX_TOKENS,
-        model_name=MODEL_NAME,
-    )
-    return LLMChain(llm=llm, prompt=prompt, verbose=True)
 
 
 def run():
-    chain = get_chain()
-
-    counter = collections.Counter()
-
-    results = []
-    for datapoint in generate_validation_dataset():
-        example = {
-            "task_info": datapoint.task_info,
-            "chat_history": datapoint.history,
-            "user_input": datapoint.user_input,
-            "stop": [STOP],
-        }
-        result = chain.run(example).strip()
-        if result == datapoint.completion:
-            counter['match'] += 1
-        else:
-            counter['no_match'] += 1
-        results.append((datapoint.completion, result))
-
-    print(counter)
-    for row in results:
-        print(row)
+    summary = collections.Counter()
+    for chat_config in chat_configs:
+        chat = config.initialize(chat_config)
+        counter = collections.Counter()
+        pairs = []
+        for prediction, label in evaluate_chat(chat):
+            prediction = prediction.strip()
+            label = label.strip()
+            widget_param_match = prediction == label
+            widget_match = prediction.split('(')[0] == label.split('(')[0]
+            if widget_param_match:
+                counter['widget_param_match'] += 1
+            if widget_match:
+                counter['widget_match'] += 1
+            counter['first_token'] += timing.get('first_visible_bot_token')
+            counter['total'] += 1
+            pairs.append((prediction, label))
+        for k, v in sorted(counter.items()):
+            print(f'{k}: {v}')
+        for p, l in pairs:
+            print(f'{p} :: {l}')
+        summary[chat_config['type'] + '/accuracy/widget'] = counter['widget_match'] / counter['total']
+        summary[chat_config['type'] + '/accuracy/widget_param'] = counter['widget_param_match'] / counter['total']
+        summary[chat_config['type'] + '/latency'] = counter['first_token'] / counter['total']
+    for k, v in sorted(summary.items()):
+        print(f'{k}: {v: .2f}')
 
 
 if __name__ == "__main__":
