@@ -9,7 +9,7 @@ from tools.index_widget import (
     _get_result_list_prefix,
 )
 from integrations.center import (
-    NFTCollection,
+    NFTCollection, NFTAsset, NFTCollectionAssets, NFTAssetTraits, NFTAssetTraitValue,
 )
 from chat.base import ChatHistory, ChatMessage
 
@@ -165,7 +165,34 @@ def generate_nft_collection_flow(items: Optional[List[NFTCollection]] = None, it
             "what are the assets",
         ] if original_item is not None else []))
         yield Message("user", message)
-        yield Message("bot", f"<|fetch-nft-collection-info({item.network},{item.address})|>")
+
+        num = random.randint(0, 12)
+        assets = []
+        for i in range(num):
+            token_id = random.randint(1, 9999)
+            preview_image_url = ""
+            assets.append(NFTAsset(
+                network=item.network,
+                address=item.address,
+                token_id=str(token_id),
+                collection_name=item.name,
+                name=f'Asset #{token_id}',
+                preview_image_url=preview_image_url,
+            ))
+        nft_collection_assets = NFTCollectionAssets(
+            collection=item,
+            assets=assets,
+        )
+        yield Message("bot", f"<|fetch-nft-collection-info({item.network},{item.address})|>", str(nft_collection_assets))
+
+        asset = None
+        while rf() < 0.5 and len(assets):
+            original_asset = asset
+            if asset is None or rf() < 0.5:
+                asset = random.choice(assets)
+            for msg in generate_nft_asset_flow(asset=asset, already_referenced=original_asset is not None):
+                yield msg
+
     elif flow == NFTCollectionFlow.collection_assets_for_sale:
         message = random.choice([
             f"what are the assets of {name} for sale",
@@ -195,8 +222,49 @@ def generate_nft_collection_flow(items: Optional[List[NFTCollection]] = None, it
             yield msg
 
 
+class NFTAssetFlow(enum.IntEnum):
+    asset_traits = 1
+    asset_purchase = 2
 
-def generate_wallet_balance_flow(token=None):
+
+def generate_nft_asset_flow(asset: NFTAsset, already_referenced: bool):
+    flow = random_weighted_choice({
+        NFTAssetFlow.asset_traits: 2,
+        NFTAssetFlow.asset_purchase: 1,
+    })
+    if flow == NFTAssetFlow.asset_traits:
+        message = random.choice([
+            f"let's look at {asset.token_id}",
+            f"what are the traits of {asset.token_id}",
+        ] + ([
+            "let's look at it",
+            "what are its traits",
+            "what are the traits of this asset",
+        ] if already_referenced else []))
+        yield Message("user", message)
+        values = []
+        for _ in range(5):
+            values.append(NFTAssetTraitValue(trait=random_name(), value=random_name()))
+        nft_asset_traits = NFTAssetTraits(
+            asset=asset,
+            values=values,
+        )
+        yield Message("bot", f"<|fetch-nft-asset-traits({asset.network},{asset.address},{asset.token_id})|>", str(nft_asset_traits))
+    elif flow == NFTAssetFlow.asset_purchase:
+        message = random.choice([
+            f"let's buy {asset.token_id}",
+            f"is {asset.token_id} for sale",
+        ] + ([
+            "let's buy it",
+            "is it for sale",
+            "can I buy it?",
+            "purchase this asset",
+        ] if already_referenced else []))
+        yield Message("user", message)
+        yield Message("bot", f"<|fetch-nft-buy-asset({asset.network},{asset.address},{asset.token_id})|>", f"<|display-buy-nft({asset.address},{asset.token_id})|>")
+
+
+def generate_wallet_balance_flow(token=None) -> Iterable[Message]:
     original_token = token
     if token is None:
         token = random_token()
@@ -216,30 +284,88 @@ def generate_wallet_balance_flow(token=None):
             yield msg
 
 
+def generate_app_info_flow() -> Iterable[Message]:
+    messages, query, response = random.choice([
+        (["what is this app about"], "What is this app about?", "This app helps you to interact with web3 protocols."),
+        (["what can you do", "what functions do you provide"], "What can you do with this app?", "This app lets you interact with web3 protocols."),
+        (["who are you?"], "Who are you?", "I am an assistant that lets you interact with web3."),
+        (["how do i transact", "how do i do transactions"], "How do I perform a transaction?", "Connect your wallet and interact with the widget."),
+        (["what sort of transactions do you support", "what transactions"], "What transactions can you do?", "There are many operations possible."),
+    ])
+    message = random.choice(messages)
+    yield Message("user", message)
+    yield Message("bot", f"<|fetch-app-info({query})|>", f"{response}")
+    if rf() < 0.2:
+        for msg in generate_app_info_flow():
+            yield msg
+
+
+def generate_scraped_sites_flow() -> Iterable[Message]:
+    messages, query, response = random.choice([
+        (["what is web3"], "Explain web3", "Web3 is a term describing decentralized protocols."),
+        (["why do I need a wallet", "what use is a wallet"], "Why is a wallet necessary?", "Wallets allow you to interact with web3."),
+        (["what borrowing protocols are out there?"], "What are the protocols available for borrowing?", "There are a few protocols available for borrowing."),
+        (["can I use $UNI collateral on aave?"], "Can $UNI collateral be used on AAVE?", "Maybe."),
+        (["what is the staking reward for Balancer"], "What is the staking reward for Balancer?", "Unknown."),
+    ])
+    message = random.choice(messages)
+    yield Message("user", message)
+    yield Message("bot", f"<|fetch-scraped-sites({query})|>", f"{response}")
+    if rf() < 0.2:
+        for msg in generate_scraped_sites_flow():
+            yield msg
+
+
+def generate_gather_more_info_flow() -> Iterable[Message]:
+    messages, response = random.choice([
+        (["buy NFT", "search NFT", "find NFT"], "What kind of NFTs are you looking for?"),
+        (["wallet balance", "token balance", "how many tokens"], "Which token would you like to check your balance for?"),
+    ])
+    message = random.choice(messages)
+    yield Message("user", message)
+    yield Message("bot", f"{response}")
+    if rf() < 0.3:
+        for msg in generate_gather_more_info_flow():
+            yield msg
+
+
 class MessageFlow(enum.IntEnum):
     nft = 1
     wallet_balance = 2
+    app_info = 3
+    scraped_sites = 4
+    gather_more_info = 5
 
 
-def generate_conversation(depth: int = 0) -> Iterable[Message]:
-    if depth > 0 and rf() < 0.5 or depth > 5:
-        return
+def generate_conversation() -> Iterable[Message]:
+    count = 0
+    while count == 0 or count < 5 and rf() < 0.5:
+        count += 1
 
-    for msg in generate_conversation(depth=depth + 1):
-        yield msg
-
-    flow = random_weighted_choice({
-        MessageFlow.nft: 10,
-        MessageFlow.wallet_balance: 2,
-    })
-    if flow == MessageFlow.nft:
-        for msg in generate_nft_flow():
-            yield msg
-    elif flow == MessageFlow.wallet_balance:
-        for msg in generate_wallet_balance_flow():
-            yield msg
-    else:
-        assert 0, f'unrecognized flow: {flow}'
+        flow = random_weighted_choice({
+            MessageFlow.nft: 5,
+            MessageFlow.wallet_balance: 2,
+            MessageFlow.app_info: 2,
+            MessageFlow.scraped_sites: 2,
+            MessageFlow.gather_more_info: 2,
+        })
+        if flow == MessageFlow.nft:
+            for msg in generate_nft_flow():
+                yield msg
+        elif flow == MessageFlow.wallet_balance:
+            for msg in generate_wallet_balance_flow():
+                yield msg
+        elif flow == MessageFlow.app_info:
+            for msg in generate_app_info_flow():
+                yield msg
+        elif flow == MessageFlow.scraped_sites:
+            for msg in generate_scraped_sites_flow():
+                yield msg
+        elif flow == MessageFlow.gather_more_info:
+            for msg in generate_gather_more_info_flow():
+                yield msg
+        else:
+            assert 0, f'unrecognized flow: {flow}'
 
 
 def generate_dataset():
