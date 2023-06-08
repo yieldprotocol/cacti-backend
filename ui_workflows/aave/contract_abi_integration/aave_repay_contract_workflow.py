@@ -47,7 +47,6 @@ class AaveRepayContractWorkflow(BaseMultiStepContractWorkflow):
         
         return ContractStepProcessingResult(status="success", tx=tx)
 
- 
     def initiate_ERC20_approval(self):
         if (has_sufficient_erc20_allowance(self.web3_provider, self.wallet_chain_id, self.token, self.wallet_address, AAVE_POOL_V3_PROXY_ADDRESS, self.amount)):
             return ContractStepProcessingResult(status="replace", replace_with_step_type="confirm_ERC20_repay")
