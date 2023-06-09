@@ -10,6 +10,7 @@ from tools.index_widget import (
 )
 from integrations.center import (
     NFTCollection, NFTAsset, NFTCollectionAssets, NFTAssetTraits, NFTAssetTraitValue,
+    NFTCollectionTraits, NFTCollectionTrait, NFTCollectionTraitValue,
 )
 from chat.base import ChatHistory, ChatMessage
 
@@ -103,27 +104,27 @@ def generate_nft_flow() -> Iterable[Message]:
     yield Message("user", message)
     stream = [StreamingListContainer(operation="create", prefix="Searching")]
     num = random.randint(0, 12)
-    items = []
+    collections = []
     for i in range(num):
         network = random_network()
         address = random_address()
         name = random_name()
         num_assets = random.randint(0, 10000)
         preview_image_url = "http://" + random_name()
-        items.append(NFTCollection(
+        collections.append(NFTCollection(
             network=network,
             address=address,
             name=name,
             num_assets=num_assets,
             preview_image_url=preview_image_url,
         ))
-    for item in items:
-        stream.append(StreamingListContainer(operation="append", item=item))
+    for collection in collections:
+        stream.append(StreamingListContainer(operation="append", item=collection))
     stream.append(StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num)))
     yield Message("bot", f"<|fetch-nft-search({query})|>", stream_to_str(stream))
     if num == 0 or rf() < 0.1:
         return
-    for msg in generate_nft_collection_flow(items=items):
+    for msg in generate_nft_collection_flow(collections=collections):
         yield msg
 
 
@@ -135,23 +136,39 @@ class NFTCollectionFlow(enum.IntEnum):
     collection_traits = 5
 
 
-def generate_nft_collection_flow(items: Optional[List[NFTCollection]] = None, item: Optional[NFTCollection] = None, depth: Optional[int] = 0) -> Iterable[Message]:
+def generate_nft_collection_flow(collections: Optional[List[NFTCollection]] = None, collection: Optional[NFTCollection] = None, depth: Optional[int] = 0) -> Iterable[Message]:
     if depth > 0 and rf() < 0.5:
         return
 
-    original_item = item
+    original_collection = collection
 
-    num = len(items)
-    if num > 0 and item is None:
+    num = len(collections)
+    if num > 0 and collection is None:
         choice = random.randint(0, num - 1)
-        item = items[choice]
-        items = list(items)
-        items.remove(item)
+        collection = collections[choice]
+        collections = list(collections)
+        collections.remove(collection)
 
-    if item is None:
+    if collection is None:
         return
 
-    name = perturb(item.name)
+    num = random.randint(0, 12)
+    assets = []
+    for i in range(num):
+        token_id = random.randint(1, 9999)
+        preview_image_url = "http://" + random_name()
+        price = (str(random.randint(1, 1000) / 100) + ' eth') if rf() < 0.5 else None
+        assets.append(NFTAsset(
+            network=collection.network,
+            address=collection.address,
+            token_id=str(token_id),
+            collection_name=collection.name,
+            name=f'Asset #{token_id}',
+            preview_image_url=preview_image_url,
+            price=price,
+        ))
+
+    name = perturb(collection.name)
     flow = random_weighted_choice({
         NFTCollectionFlow.collection_assets: 1,
         NFTCollectionFlow.collection_assets_for_sale: 1,
@@ -166,29 +183,14 @@ def generate_nft_collection_flow(items: Optional[List[NFTCollection]] = None, it
             f"what about {name}",
         ] + ([
             "what are the assets",
-        ] if original_item is not None else []))
+        ] if original_collection is not None else []))
         yield Message("user", message)
 
-        num = random.randint(0, 12)
-        assets = []
-        for i in range(num):
-            token_id = random.randint(1, 9999)
-            preview_image_url = "http://" + random_name()
-            price = (str(random.randint(1, 1000) / 100) + ' eth') if rf() < 0.5 else None
-            assets.append(NFTAsset(
-                network=item.network,
-                address=item.address,
-                token_id=str(token_id),
-                collection_name=item.name,
-                name=f'Asset #{token_id}',
-                preview_image_url=preview_image_url,
-                price=price,
-            ))
         nft_collection_assets = NFTCollectionAssets(
-            collection=item,
+            collection=collection,
             assets=assets,
         )
-        yield Message("bot", f"<|fetch-nft-collection-info({item.network},{item.address})|>", str(nft_collection_assets))
+        yield Message("bot", f"<|fetch-nft-collection-info({collection.network},{collection.address})|>", str(nft_collection_assets))
 
         asset = None
         while rf() < 0.5 and len(assets):
@@ -205,26 +207,90 @@ def generate_nft_collection_flow(items: Optional[List[NFTCollection]] = None, it
         ] + ([
             "what are the assets for sale",
             "which assets can I buy",
-        ] if original_item is not None else []))
+        ] if original_collection is not None else []))
         yield Message("user", message)
-        yield Message("bot", f"<|fetch-nft-collection-assets-for-sale({item.network},{item.address})|>")
+        assets_for_sale = [asset for asset in assets if asset.price is not None]
+        yield Message("bot", f"<|fetch-nft-collection-assets-for-sale({collection.network},{collection.address})|>", stream_to_str([
+            StreamingListContainer(operation="create", prefix="Searching"),
+        ] + [
+            StreamingListContainer(operation="append", item=asset) for asset in assets_for_sale
+        ] + [
+            StreamingListContainer(operation="update", prefix=_get_result_list_prefix(len(assets_for_sale))),
+        ]))
+
+        asset = None
+        while rf() < 0.5 and len(assets_for_sale):
+            original_asset = asset
+            if asset is None or rf() < 0.5:
+                asset = random.choice(assets_for_sale)
+            for msg in generate_nft_asset_flow(asset=asset, already_referenced=original_asset is not None):
+                yield msg
+
     elif flow == NFTCollectionFlow.collection_traits:
         message = random.choice([
             f"what are the traits of {name}",
         ] + ([
             "what are the traits of the collection",
-        ] if original_item is not None else []))
+        ] if original_collection is not None else []))
         yield Message("user", message)
-        yield Message("bot", f"<|fetch-nft-collection-traits({item.network},{item.address})|>")
+
+        collection_traits = []
+        for _ in range(5):
+            trait_name = random_name()
+            trait_values = [random_name(), random_name(), random_name()]
+            collection_traits.append(NFTCollectionTrait(
+                trait=trait_name,
+                values=[
+                    NFTCollectionTraitValue(trait=trait_value, value=trait_value, count=3, total=12)
+                    for trait_value in trait_values
+                ],
+            ))
+        collection_traits_container = NFTCollectionTraits(
+            collection=collection,
+            traits=collection_traits,
+        )
+
+        yield Message("bot", f"<|fetch-nft-collection-traits({collection.network},{collection.address})|>", str(collection_traits_container))
+
+        collection_trait = None
+        trait_name = None
+        trait_value = None
+        while rf() < 0.5 and len(collection_traits):
+            original_trait_name = trait_name
+            if trait_name is None or rf() < 0.5:
+                collection_trait = random.choice(collection_traits)
+                trait_name = collection_trait.trait
+            trait_value = random.choice(collection_trait.values).value
+            for msg in generate_nft_collection_trait_flow(collection=collection, trait_name=trait_name, trait_value=trait_value, already_referenced=original_trait_name == trait_name):
+                yield msg
+
     else:
         assert 0, f'unrecognized flow: {flow}'
 
-    if rf() < 0.5:  # stay with current item
-        for msg in generate_nft_collection_flow(items=items, item=item, depth=depth+1):
+    if rf() < 0.5:  # stay with current collection
+        for msg in generate_nft_collection_flow(collections=collections, collection=collection, depth=depth+1):
             yield msg
     else:  # switch to a different one
-        for msg in generate_nft_collection_flow(items=items, item=None, depth=depth+1):
+        for msg in generate_nft_collection_flow(collections=collections, collection=None, depth=depth+1):
             yield msg
+
+
+def generate_nft_collection_trait_flow(collection: NFTCollection, trait_name: str, trait_value: str, already_referenced: bool):
+    message = random.choice([
+        f"what assets of the collection have trait {trait_name} and value {trait_value}",
+        f"what are all the assets that have the value {trait_value} for {trait_name}?",
+        f"which NFTs have {trait_value} for the trait {trait_name}?",
+        f"which assets of {collection.name} have the trait {trait_name} as {trait_value}",
+    ] + ([
+        f"what about {trait_value}?",
+        f"which have {trait_value}?",
+    ] if already_referenced else []))
+    yield Message("user", message)
+
+    yield Message("bot", f"<|fetch-nft-collection-assets-by-trait({collection.network},{collection.address},{trait_name},{trait_value})|>", stream_to_str([
+        StreamingListContainer(operation="create", prefix="Searching"),
+        StreamingListContainer(operation="update", prefix=_get_result_list_prefix(0)),
+    ]))
 
 
 class NFTAssetFlow(enum.IntEnum):

@@ -33,8 +33,6 @@ chat_configs = [
         model_name='curie:ft-yield-inc:gen-500-2023-06-08-08-20-51',
         evaluate_widgets=False,
     ),
-]
-_ = [
     dict(
         type='chat.rephrase_widget_search.RephraseWidgetSearchChat',
         widget_index=config.widget_index,
@@ -207,8 +205,44 @@ def get_nft_flow() -> Iterable[Message]:
     yield Message("bot", f"<|fetch-nft-buy-asset({network2},{address2},{token_id1})|>", f"<|display-buy-nft({address2},{token_id1})|>")
 
 
+def get_wallet_balance_flow() -> Iterable[Message]:
+    token = "ETH"
+    balance = 123.456
+    yield Message("user", f"what's my balance of {token}?")
+    yield Message("bot", f"<|fetch-my-balance({token})|>", f"{balance}")
+    token2 = "USDC"
+    balance2 = 654.321
+    yield Message("user", f"how about {token2}?")
+    yield Message("bot", f"<|fetch-my-balance({token2})|>", f"{balance2}")
+
+
+def get_app_info_flow() -> Iterable[Message]:
+    yield Message("user", f"what can I do in this app?")
+    query = "What can this app do?"
+    response = "Lots of stuff."
+    yield Message("bot", f"<|fetch-app-info({query})|>", f"{response}")
+    yield Message("user", f"how do I use this app?")
+    query = "How do I interact with this app?"
+    response = "Chat with it"
+    yield Message("bot", f"<|fetch-app-info({query})|>", f"{response}")
+
+
+def get_scraped_sites_flow() -> Iterable[Message]:
+    yield Message("user", f"who invented Ethereum?")
+    query = "Who invented Ethereum?"
+    response = "Vitalik."
+    yield Message("bot", f"<|fetch-scraped-sites({query})|>", f"{response}")
+    yield Message("user", f"What is AAVE")
+    query = "What is AAVE?"
+    response = "A protocol"
+    yield Message("bot", f"<|fetch-scraped-sites({query})|>", f"{response}")
+
+
 def get_validation_conversations() -> Iterable[Conversation]:
-    yield Conversation(messages=list(get_nft_flow()))
+    #yield Conversation(messages=list(get_nft_flow()))
+    #yield Conversation(messages=list(get_wallet_balance_flow()))
+    yield Conversation(messages=list(get_app_info_flow()))
+    yield Conversation(messages=list(get_scraped_sites_flow()))
 
 
 def evaluate_chat(chat: chat.BaseChat):
@@ -269,6 +303,7 @@ def run():
         summary[chat_config['type'] + '/accuracy/widget'] = counter['widget_match'] / counter['total']
         summary[chat_config['type'] + '/accuracy/widget_param'] = counter['widget_param_match'] / counter['total']
         summary[chat_config['type'] + '/latency'] = counter['first_token'] / counter['total']
+        summary[chat_config['type'] + '/total'] = counter['total']
     for k, v in sorted(summary.items()):
         print(f'{k}: {v: .2f}')
 
