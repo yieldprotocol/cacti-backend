@@ -218,7 +218,10 @@ class BaseMultiStepMixin():
         if self.workflow_approach == WorkflowApproach.UI:
             return runnable_step.function(page, browser_context, replacement_extra_params)
         else:
-            return runnable_step.function(replacement_extra_params)
+            if replacement_extra_params:
+                return runnable_step.function(replacement_extra_params)
+            else:
+                return runnable_step.function()
         
     def _find_runnable_step_index_by_step_type(self, step_type) -> int:
         return [i for i,s in enumerate(self.runnable_steps) if s.type == step_type][0]

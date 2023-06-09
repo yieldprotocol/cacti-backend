@@ -52,8 +52,12 @@ def process_multistep_workflow(payload: MessagePayload, send_message: Callable):
         result = register_ens_domain(workflow_params['domain'], user_chat_message_id, workflow_db_obj, step)
     elif workflow_type == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         result = exec_aave_operation(workflow_params['token'], workflow_params['amount'], "supply", user_chat_message_id, workflow_db_obj, step)
-    elif workflow_type == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
+    elif workflow_type == aave.AaveBorrowContractWorkflow.WORKFLOW_TYPE:
         result = exec_aave_operation(workflow_params['token'], workflow_params['amount'], "borrow", user_chat_message_id, workflow_db_obj, step)
+    elif workflow_type == aave.AaveRepayContractWorkflow.WORKFLOW_TYPE:
+        result = exec_aave_operation(workflow_params['token'], workflow_params['amount'], "repay", user_chat_message_id, workflow_db_obj, step)
+    elif workflow_type == aave.AaveWithdrawContractWorkflow.WORKFLOW_TYPE:
+        result = exec_aave_operation(workflow_params['token'], workflow_params['amount'], "withdraw", user_chat_message_id, workflow_db_obj, step)
     else:
         raise Exception(f'Workflow type {workflow_type} not supported.')
     
@@ -93,7 +97,11 @@ def exec_aave_operation(token: str, amount: str, operation: Literal["supply", "b
     if operation == 'supply':
         wf = aave.AaveSupplyContractWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, workflow_params, workflow, wf_step_client_payload)
     elif operation == 'borrow':
-        wf = aave.AaveBorrowUIWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, workflow_params, workflow, wf_step_client_payload)
+        wf = aave.AaveBorrowContractWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, workflow_params, workflow, wf_step_client_payload)
+    elif operation == 'repay':
+        wf = aave.AaveRepayContractWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, workflow_params, workflow, wf_step_client_payload)
+    elif operation == 'withdraw':
+        wf = aave.AaveWithdrawContractWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, workflow_params, workflow, wf_step_client_payload)
     else:
         raise Exception(f'Operation {operation} not supported.')
     

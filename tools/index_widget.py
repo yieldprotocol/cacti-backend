@@ -220,11 +220,11 @@ def replace_match(m: re.Match) -> Union[str | Generator]:
         return str(fetch_yields(*params))
     elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
-    elif command == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
+    elif command == aave.AaveBorrowContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='borrow'))
-    elif command == 'aave-repay':
+    elif command == aave.AaveRepayContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='repay'))
-    elif command == 'aave-withdraw':
+    elif command == aave.AaveWithdrawContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='withdraw'))
     elif command == 'ens-from-address':
         return str(ens_from_address(*params))
