@@ -239,8 +239,8 @@ def get_scraped_sites_flow() -> Iterable[Message]:
 
 
 def get_validation_conversations() -> Iterable[Conversation]:
-    #yield Conversation(messages=list(get_nft_flow()))
-    #yield Conversation(messages=list(get_wallet_balance_flow()))
+    yield Conversation(messages=list(get_nft_flow()))
+    yield Conversation(messages=list(get_wallet_balance_flow()))
     yield Conversation(messages=list(get_app_info_flow()))
     yield Conversation(messages=list(get_scraped_sites_flow()))
 
