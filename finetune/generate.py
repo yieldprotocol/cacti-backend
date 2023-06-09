@@ -21,7 +21,7 @@ from .dataset import (
 )
 
 
-NUM_DATAPOINTS = 500
+NUM_DATAPOINTS = 1000
 
 
 @dataclass

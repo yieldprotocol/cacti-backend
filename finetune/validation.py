@@ -30,7 +30,8 @@ chat_configs = [
     dict(
         type='chat.fine_tuned.FineTunedChat',
         widget_index=None,
-        model_name='curie:ft-yield-inc:gen-500-2023-06-08-08-20-51',
+        #model_name='curie:ft-yield-inc:gen-500-2023-06-08-08-20-51',
+        model_name='curie:ft-yield-inc:gen-1k-2023-06-09-18-41-36',
         evaluate_widgets=False,
     ),
     dict(
