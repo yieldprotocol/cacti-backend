@@ -1,7 +1,9 @@
+import enum
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+import sqlalchemy_utils
 
 from alembic import context
 
@@ -18,12 +20,40 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+import database.models
+target_metadata = database.models.Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+# https://stackoverflow.com/questions/30132370/trouble-when-using-alembic-with-sqlalchemy-utils
+def render_item(type_, obj, autogen_context):
+    """Apply custom rendering for selected items.
+
+    alembic does not work with sqlalchemy_utils (e.g. ChoiceType), so
+    add custom handling for these types.
+
+    """
+
+    if isinstance(obj, sqlalchemy_utils.ChoiceType):
+        choices_enum = obj.choices
+        impl = obj.impl
+        assert isinstance(choices_enum, enum.EnumMeta), f'add custom support for non-Enum ChoiceType {type(choices_enum)}'
+        autogen_context.imports.add(f'import {choices_enum.__module__}')
+
+        choices_str = f'{choices_enum.__module__}.{choices_enum.__qualname__}'
+        if impl is None:
+            impl_str = 'None'
+        else:
+            # sqlalchemy is imported as sa, see script.py.mako
+            impl_str = f'sa.{repr(impl)}'
+
+        return f'sqlalchemy_utils.ChoiceType({choices_str}, impl={impl_str})'
+
+    # default rendering for other objects
+    return False
 
 
 def run_migrations_offline() -> None:
@@ -44,6 +74,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        render_item=render_item,
     )
 
     with context.begin_transaction():
@@ -65,7 +96,9 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            render_item=render_item,
         )
 
         with context.begin_transaction():
