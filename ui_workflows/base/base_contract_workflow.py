@@ -8,6 +8,7 @@ from web3 import Web3, exceptions
 import context
 import env
 from utils import TENDERLY_API_KEY
+from .common import get_latest_simulation_id_on_fork
 
 class BaseContractWorkflow(ABC):
     """Grandparent base class for contract workflows. Do not directly use this class, use either BaseSingleStepContractWorkflow or BaseMultiStepContractWorkflow class"""
@@ -43,13 +44,16 @@ class BaseContractWorkflow(ABC):
         payload = {
             "save": False, 
             "save_if_fails": False, 
-            "simulation_type": "full",
+            "simulation_type": "quick",
             "network_id": self.wallet_chain_id,
             "from": tx['from'],
             "to": tx['to'],
             "input": tx['data'],
             "value": tx.get('value', 0),
         }
+
+        if not env.is_prod():
+            payload["root"] = get_latest_simulation_id_on_fork(context.get_web3_tenderly_fork_url())
 
         res = requests.post(tenderly_simulate_api_url, json=payload, headers={'X-Access-Key': TENDERLY_API_KEY})
 

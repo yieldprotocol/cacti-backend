@@ -99,16 +99,7 @@ def tenderly_simulate_tx_on_fork(wallet_address: str, tx: Dict) -> str:
     fork_web3 = Web3(Web3.HTTPProvider(fork_rpc_url))
     receipt = fork_web3.eth.wait_for_transaction_receipt(tx_hash)
 
-    get_latest_tx_payload = {
-        "jsonrpc": "2.0",
-        "method": "evm_getLatest",
-        "params": []
-    }
-
-    res = requests.post(fork_rpc_url, json=get_latest_tx_payload)
-    res.raise_for_status()
-
-    tenderly_simulation_id = res.json()['result']
+    tenderly_simulation_id = get_latest_simulation_id_on_fork(fork_rpc_url)
 
     tenderly_dashboard_link = f"https://dashboard.tenderly.co/Yield/chatweb3/fork/{fork_id}/simulation/{tenderly_simulation_id}"
 
@@ -125,6 +116,21 @@ def tenderly_simulate_tx_on_fork(wallet_address: str, tx: Dict) -> str:
         raise Exception(f"Transaction failed, error_message: {error_message}, check fork for more details - {tenderly_dashboard_link}")
     
     return tx_hash
+
+def get_latest_simulation_on_fork(fork_rpc_url):
+    get_latest_tx_payload = {
+        "jsonrpc": "2.0",
+        "method": "evm_getLatest",
+        "params": []
+    }
+
+    res = requests.post(fork_rpc_url, json=get_latest_tx_payload)
+    res.raise_for_status()
+
+    return res.json()
+
+def get_latest_simulation_id_on_fork(fork_rpc_url):
+    return get_latest_simulation_on_fork(fork_rpc_url)['result']
 
 def advance_fork_blocks(num_blocks) -> None:
     fork_rpc_url = context.get_web3_tenderly_fork_url()
