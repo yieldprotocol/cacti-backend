@@ -3,11 +3,11 @@ from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDic
 import web3
 
 from utils import get_token_balance, parse_token_amount, hexify_token_amount, estimate_gas, get_token_address, generate_erc20_approve_encoded_data, has_sufficient_erc20_allowance
-from ...base import RunnableStep, WorkflowStepClientPayload, BaseMultiStepContractWorkflow, WorkflowValidationError, ContractStepProcessingResult, tenderly_simulate_tx
+from ...base import RunnableStep, WorkflowStepClientPayload, BaseMultiStepContractWorkflow, WorkflowValidationError, ContractStepProcessingResult
 from database.models import (
     MultiStepWorkflow, WorkflowStepUserActionType
 )
-from ..common import AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, get_aave_wrapped_token_gateway_contract, get_aave_pool_v3_address_contract, common_aave_validation, get_aave_atoken_contract
+from ..common import AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, get_aave_wrapped_token_gateway_contract, get_aave_pool_v3_address_contract, common_aave_validation, get_aave_atoken_contract, aave_check_for_error_and_compute_result
 
 class AaveWithdrawContractWorkflow(BaseMultiStepContractWorkflow):        
     WORKFLOW_TYPE = 'aave-withdraw'
@@ -63,7 +63,7 @@ class AaveWithdrawContractWorkflow(BaseMultiStepContractWorkflow):
             'data': encoded_data,
         }
         
-        return ContractStepProcessingResult(status="success", tx=tx)
+        return aave_check_for_error_and_compute_result(self, tx)
 
     def confirm_ERC20_withdraw(self): 
         asset_address = get_token_address(self.wallet_chain_id, self.token)
@@ -76,4 +76,4 @@ class AaveWithdrawContractWorkflow(BaseMultiStepContractWorkflow):
             'data': encoded_data,
         }
         
-        return ContractStepProcessingResult(status="success", tx=tx)
+        return aave_check_for_error_and_compute_result(self, tx)

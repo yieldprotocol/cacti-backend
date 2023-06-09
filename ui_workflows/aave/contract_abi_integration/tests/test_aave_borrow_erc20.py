@@ -1,7 +1,3 @@
-
-"""
-Test for borrowing ETH on Aave 
-"""
 from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID
 from ...common import aave_supply_eth_for_borrow_test
 from ..aave_borrow_contract_workflow import AaveBorrowContractWorkflow

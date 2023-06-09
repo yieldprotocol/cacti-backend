@@ -122,14 +122,16 @@ class BaseMultiStepMixin():
         else:
             # For contract ABI approach
             tx = processing_result.tx
-            try:
-                tx['gas'] = estimate_gas(tx)
-            except Exception:
-                # If gas usage estimation fails, use fallback arbitary gas limit to attempt tx
-                tx['gas'] = FALLBACK_GAS_LIMIT
 
-        if tx and "value" not in tx:
-            tx['value'] = "0x0"
+            if tx:
+                try:
+                    tx['gas'] = estimate_gas(tx)
+                except Exception:
+                    # If gas usage estimation fails, use fallback arbitary gas limit to attempt tx
+                    tx['gas'] = FALLBACK_GAS_LIMIT
+                    
+                if "value" not in tx:
+                    tx['value'] = "0x0"
 
         computed_user_description = processing_result.override_user_description or self.curr_step_description
 

@@ -11,7 +11,7 @@ from database.models import (
     db_session, MultiStepWorkflow, WorkflowStepUserActionType
 )
 from ...base import BaseMultiStepContractWorkflow, WorkflowStepClientPayload, RunnableStep, WorkflowValidationError, ContractStepProcessingResult
-from ..common import AAVE_SUPPORTED_TOKENS, AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, get_aave_pool_v3_address_contract, get_aave_wrapped_token_gateway_contract
+from ..common import AAVE_SUPPORTED_TOKENS, AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, get_aave_pool_v3_address_contract, get_aave_wrapped_token_gateway_contract, aave_check_for_error_and_compute_result
 
 class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
     """
@@ -60,7 +60,7 @@ class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
             'value': hexify_token_amount(self.wallet_chain_id, self.token, self.amount),
         }
         
-        return ContractStepProcessingResult(status="success", tx=tx)
+        return aave_check_for_error_and_compute_result(self, tx)
 
     def initiate_ERC20_approval_step(self):
         """Initiate approval of ERC20 token to be spent by Aave"""
@@ -80,4 +80,4 @@ class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
             'data': encoded_data,
         }
         
-        return ContractStepProcessingResult(status="success", tx=tx)
+        return aave_check_for_error_and_compute_result(self, tx)

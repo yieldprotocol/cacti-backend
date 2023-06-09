@@ -3,11 +3,11 @@ from typing import Any, Callable, Dict, List, Optional, Union, Literal, TypedDic
 import web3
 
 from utils import get_token_balance, parse_token_amount, hexify_token_amount, estimate_gas, get_token_address
-from ...base import RunnableStep, WorkflowStepClientPayload, BaseMultiStepContractWorkflow, WorkflowValidationError, ContractStepProcessingResult, tenderly_simulate_tx
+from ...base import RunnableStep, WorkflowStepClientPayload, BaseMultiStepContractWorkflow, WorkflowValidationError, ContractStepProcessingResult
 from database.models import (
     db_session, MultiStepWorkflow, WorkflowStep, WorkflowStepStatus, WorkflowStepUserActionType, ChatMessage, ChatSession, SystemConfig
 )
-from ..common import AAVE_SUPPORTED_TOKENS, AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, AAVE_VARIABLE_DEBT_TOKEN_ADDRESS, get_aave_wrapped_token_gateway_contract, get_aave_variable_debt_token_contract, get_aave_pool_v3_address_contract, common_aave_validation
+from ..common import AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, AAVE_VARIABLE_DEBT_TOKEN_ADDRESS, get_aave_wrapped_token_gateway_contract, get_aave_variable_debt_token_contract, get_aave_pool_v3_address_contract, common_aave_validation, aave_parse_contract_error, aave_check_for_error_and_compute_result
 
 class AaveBorrowContractWorkflow(BaseMultiStepContractWorkflow):
     """
@@ -21,14 +21,12 @@ class AaveBorrowContractWorkflow(BaseMultiStepContractWorkflow):
         self.amount = workflow_params["amount"]
 
         if self.token == "ETH":
-            # check_ETH_liquidation_risk_step = RunnableStep("check_ETH_liquidation_risk", WorkflowStepUserActionType.acknowledge, f"Acknowledge liquidation risk due to high borrow amount of {self.amount} ETH on Aave", self.check_ETH_liquidation_risk)
             initiate_ETH_approval_step = RunnableStep("initiate_ETH_approval", WorkflowStepUserActionType.tx, f"Approve borrow of {self.amount} ETH on Aave", self.initiate_ETH_approval)
             confirm_ETH_borrow_step = RunnableStep("confirm_ETH_borrow", WorkflowStepUserActionType.tx, f"Confirm borrow of {self.amount} ETH on Aave", self.confirm_ETH_borrow)
             steps = [initiate_ETH_approval_step, confirm_ETH_borrow_step]
             
             final_step_type = "confirm_ETH_borrow"
         else:
-            # check_ERC20_liquidation_risk = RunnableStep("check_ERC20_liquidation_risk", WorkflowStepUserActionType.acknowledge, f"Acknowledge liquidation risk due to high borrow amount of {self.amount} {self.token} on Aave", self.check_ERC20_liquidation_risk)
             confirm_ERC20_borrow_step = RunnableStep("confirm_ERC20_borrow", WorkflowStepUserActionType.tx, f"Confirm borrow of {self.amount} {self.token} on Aave", self.confirm_ERC20_borrow)
             steps = [confirm_ERC20_borrow_step]
             final_step_type = "confirm_ERC20_borrow"
@@ -38,13 +36,6 @@ class AaveBorrowContractWorkflow(BaseMultiStepContractWorkflow):
     def _general_workflow_validation(self):
         common_aave_validation(self.token)
 
-        # TODO: add a check to verify that the user has deposited collateral
-
-
-    def check_ETH_liquidation_risk(self):
-        # TODO: add a check to get the health factor and ensure that it is not too high
-        pass
-     
     def initiate_ETH_approval(self):
         """Initiate approval for ETH token"""
 
@@ -78,11 +69,8 @@ class AaveBorrowContractWorkflow(BaseMultiStepContractWorkflow):
             'to': AAVE_WRAPPED_TOKEN_GATEWAY, 
             'data': encoded_data,
         }
-        
-        return ContractStepProcessingResult(status="success", tx=tx)
 
-    def check_ERC20_liquidation_risk(self, page, browser_context):   
-        pass
+        return aave_check_for_error_and_compute_result(self, tx)
         
     def confirm_ERC20_borrow(self):
         asset_address = get_token_address(self.wallet_chain_id, self.token)
@@ -98,4 +86,4 @@ class AaveBorrowContractWorkflow(BaseMultiStepContractWorkflow):
             'data': encoded_data,
         }
         
-        return ContractStepProcessingResult(status="success", tx=tx)
+        return aave_check_for_error_and_compute_result(self, tx)
