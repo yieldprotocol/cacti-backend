@@ -33,7 +33,14 @@ class AaveWithdrawContractWorkflow(BaseMultiStepContractWorkflow):
         common_aave_validation(self.token)
 
     def initiate_ETH_approval(self): 
+        owner = self.wallet_address
         spender = AAVE_WRAPPED_TOKEN_GATEWAY
+
+        allowance = get_aave_atoken_contract().functions.allowance(owner, spender).call()
+
+        if parse_token_amount(self.wallet_chain_id, self.token, self.amount) <= allowance:
+            return ContractStepProcessingResult(status="replace", replace_with_step_type="confirm_ETH_withdraw")
+    
         amount = int(web3.constants.MAX_INT, 16)
 
         encoded_data = get_aave_atoken_contract().encodeABI(fn_name='approve', args=[spender, amount])
@@ -62,7 +69,7 @@ class AaveWithdrawContractWorkflow(BaseMultiStepContractWorkflow):
         asset_address = get_token_address(self.wallet_chain_id, self.token)
         amount = parse_token_amount(self.wallet_chain_id, self.token, self.amount)
         to_address = self.wallet_address
-        encoded_data = get_aave_pool_v3_address_contract().encodeABI(fn_name='withdrawETH', args=[asset_address, amount, to_address])
+        encoded_data = get_aave_pool_v3_address_contract().encodeABI(fn_name='withdraw', args=[asset_address, amount, to_address])
         tx = {
             'from': self.wallet_address, 
             'to': AAVE_POOL_V3_PROXY_ADDRESS, 

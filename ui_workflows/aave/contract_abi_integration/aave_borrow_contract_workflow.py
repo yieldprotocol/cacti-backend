@@ -67,7 +67,7 @@ class AaveBorrowContractWorkflow(BaseMultiStepContractWorkflow):
 
         return ContractStepProcessingResult(status="success", tx=tx)  
 
-    def confirm_ETH_borrow(self, extra_params=None):
+    def confirm_ETH_borrow(self):
         pool_address = AAVE_POOL_V3_PROXY_ADDRESS
         amount = parse_token_amount(self.wallet_chain_id, self.token, self.amount)
         interest_rate_mode = 2 # Variable
