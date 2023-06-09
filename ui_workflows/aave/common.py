@@ -8,7 +8,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from web3 import Web3
 
 from utils import load_contract_abi
-from ..base import StepProcessingResult, revoke_erc20_approval, set_erc20_allowance, TEST_WALLET_ADDRESS, USDC_ADDRESS, WorkflowValidationError, ContractStepProcessingResult
+from ..base import StepProcessingResult, revoke_erc20_approval, set_erc20_allowance, TEST_WALLET_ADDRESS, USDC_ADDRESS, WorkflowValidationError, ContractStepProcessingResult, BaseContractWorkflow
 
 def load_aave_contract_error_codes():
     with open(os.path.join(os.path.dirname(__file__), "./contract_abi_integration/aave_contract_error_codes.json")) as f:
@@ -117,8 +117,8 @@ def aave_parse_contract_error(code: str):
         return f"Unexpected Aave error. Check with support"
     return AAVE_CONTRACT_ERROR_CODES[code]
 
-def aave_check_for_error_and_compute_result(self, tx):
-    error_message = self._simulate_tx_for_error_check(tx)
+def aave_check_for_error_and_compute_result(contract_workflow: BaseContractWorkflow, tx):
+    error_message = contract_workflow._simulate_tx_for_error_check(tx)
     if error_message:
         return ContractStepProcessingResult(status="error", error_msg=aave_parse_contract_error(error_message))
     else:

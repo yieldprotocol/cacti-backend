@@ -44,7 +44,6 @@ class BaseContractWorkflow(ABC):
             "save": False, 
             "save_if_fails": False, 
             "simulation_type": "full",
-            "block_number": "latest",
             "network_id": self.wallet_chain_id,
             "from": tx['from'],
             "to": tx['to'],
@@ -53,10 +52,11 @@ class BaseContractWorkflow(ABC):
         }
 
         res = requests.post(tenderly_simulate_api_url, json=payload, headers={'X-Access-Key': TENDERLY_API_KEY})
-        
+
         if res.status_code == 200:
             simulation_data = res.json()
-            error_message = simulation_data['transaction']['error_message']
+            transaction = simulation_data['transaction']
+            error_message = transaction.get('error_message')
             return error_message
         else:
             return None
