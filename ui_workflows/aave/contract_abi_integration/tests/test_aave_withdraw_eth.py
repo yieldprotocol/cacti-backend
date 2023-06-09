@@ -1,5 +1,6 @@
 
-from utils import parse_token_amount
+import context
+from utils import get_token_balance, parse_token_amount
 from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID
 from ...common import aave_supply_eth_for_borrow_test, aave_set_eth_approval
 from ..aave_withdraw_contract_workflow import AaveWithdrawContractWorkflow
@@ -13,6 +14,8 @@ def test_contract_aave_withdraw_eth(setup_fork):
 
     # Pre-supply ETH to Aave to setup the test environment for borrow
     aave_supply_eth_for_borrow_test()
+
+    eth_balance_start = get_token_balance(context.get_web3_provider(), TEST_WALLET_CHAIN_ID, token, TEST_WALLET_ADDRESS)
 
     multistep_result = AaveWithdrawContractWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
 
@@ -54,3 +57,6 @@ def test_contract_aave_withdraw_eth(setup_fork):
 
     # Final state of workflow should be terminated
     assert multistep_result.status == "terminated"
+
+    eth_balance_end = get_token_balance(context.get_web3_provider(), TEST_WALLET_CHAIN_ID, token, TEST_WALLET_ADDRESS)
+    assert eth_balance_end == eth_balance_start + parse_token_amount(TEST_WALLET_CHAIN_ID, token, amount)

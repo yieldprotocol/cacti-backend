@@ -1,9 +1,8 @@
 """
 Test for supplying an ERC20 token on Aave without approval step as it is already pre-approved
 """
-from logging import basicConfig, INFO
-from dataclasses import dataclass, asdict
-
+import context
+from utils import get_token_balance, parse_token_amount
 from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, MOCK_CHAT_MESSAGE_ID, TEST_WALLET_ADDRESS, TEST_WALLET_CHAIN_ID
 from ...common import  aave_set_usdc_allowance
 from ..aave_supply_contract_workflow import AaveSupplyContractWorkflow
@@ -13,6 +12,8 @@ def test_contract_aave_supply_erc20_no_approval(setup_fork):
     token = "USDC"
     amount = 0.1
     workflow_params = {"token": token, "amount": amount}
+
+    usdc_balance_start = get_token_balance(context.get_web3_provider(), TEST_WALLET_CHAIN_ID, token, TEST_WALLET_ADDRESS)
 
     # Set allowance for pre-approval
     aave_set_usdc_allowance(int(amount * 10 ** 6))
@@ -43,4 +44,6 @@ def test_contract_aave_supply_erc20_no_approval(setup_fork):
     # Final state of workflow should be terminated
     assert multistep_result.status == "terminated"
 
-    # TODO - For thorough validation, ensure to assert the actual amount used in tx matches expectation by fetching decoded tx data from Tenderly
+    usdc_balance_end = get_token_balance(context.get_web3_provider(), TEST_WALLET_CHAIN_ID, token, TEST_WALLET_ADDRESS)
+
+    assert usdc_balance_end == usdc_balance_start - parse_token_amount(TEST_WALLET_CHAIN_ID, token, amount)

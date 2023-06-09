@@ -1,5 +1,6 @@
 
-from utils import parse_token_amount
+import context
+from utils import get_token_balance, parse_token_amount
 from ....base import process_result_and_simulate_tx, fetch_multi_step_workflow_from_db, TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID
 from ...common import aave_set_usdc_allowance
 from ..aave_withdraw_contract_workflow import AaveWithdrawContractWorkflow
@@ -15,6 +16,8 @@ def test_contract_aave_withdraw_erc20(setup_fork):
     aave_set_usdc_allowance(parse_token_amount(TEST_WALLET_CHAIN_ID, token, amount))
     multistep_result = AaveSupplyContractWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
     tx_hash = process_result_and_simulate_tx(TEST_WALLET_ADDRESS, multistep_result)
+
+    usdc_balance_start = get_token_balance(context.get_web3_provider(), TEST_WALLET_CHAIN_ID, token, TEST_WALLET_ADDRESS)
 
     multistep_result = AaveWithdrawContractWorkflow(TEST_WALLET_CHAIN_ID, TEST_WALLET_ADDRESS, MOCK_CHAT_MESSAGE_ID, workflow_params).run()
 
@@ -45,4 +48,5 @@ def test_contract_aave_withdraw_erc20(setup_fork):
     # Final state of workflow should be terminated
     assert multistep_result.status == "terminated"
 
-    # TODO - For thorough validation, ensure to assert the actual amount used in tx matches expectation by fetching decoded tx data from Tenderly
+    usdc_balance_end = get_token_balance(context.get_web3_provider(), TEST_WALLET_CHAIN_ID, token, TEST_WALLET_ADDRESS)
+    assert usdc_balance_end == usdc_balance_start + parse_token_amount(TEST_WALLET_CHAIN_ID, token, amount)
