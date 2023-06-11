@@ -51,7 +51,7 @@ class Conversation:
     messages: List[Message]
 
 
-def rf():
+def rf():  # random float
     return random.random()
 
 
@@ -71,8 +71,20 @@ def random_name(with_adjective=False) -> str:
     return name
 
 
+def random_amount():
+    return '%.3f' % (rf() * 1000)
+
+
 def random_adjective() -> str:
     return random.choice(["big", "small", "lazy", "wild", "cool", "awesome", "crazy"])
+
+
+def random_transfer_verb() -> str:
+    return random.choice(["transfer", "send", "give"])
+
+
+def random_swap_verb() -> str:
+    return random.choice(["swap", "uniswap", "exchange"])
 
 
 def random_token() -> str:
@@ -356,12 +368,14 @@ def generate_wallet_balance_flow(token=None) -> Iterable[Message]:
 
 
 def generate_app_info_flow() -> Iterable[Message]:
+    name = random_name()
     messages, query, response = random.choice([
         (["what is this app about"], "What is this app about?", "This app helps you to interact with web3 protocols."),
         (["what can you do", "what functions do you provide"], "What can you do with this app?", "This app lets you interact with web3 protocols."),
         (["who are you?"], "Who are you?", "I am an assistant that lets you interact with web3."),
         (["how do i transact", "how do i do transactions"], "How do I perform a transaction?", "Connect your wallet and interact with the widget."),
         (["what sort of transactions do you support", "what transactions"], "What transactions can you do?", "There are many operations possible."),
+        ([f"can you do {name}", f"is {name} something you can do?"], f"Can you do {name}?", "Yes I can."),
     ])
     message = random.choice(messages)
     yield Message("user", message)
@@ -372,12 +386,14 @@ def generate_app_info_flow() -> Iterable[Message]:
 
 
 def generate_scraped_sites_flow() -> Iterable[Message]:
+    name = random_name()
+    token = random_token()
     messages, query, response = random.choice([
-        (["what is web3"], "Explain web3", "Web3 is a term describing decentralized protocols."),
-        (["why do I need a wallet", "what use is a wallet"], "Why is a wallet necessary?", "Wallets allow you to interact with web3."),
-        (["what borrowing protocols are out there?"], "What are the protocols available for borrowing?", "There are a few protocols available for borrowing."),
-        (["can I use $UNI collateral on aave?"], "Can $UNI collateral be used on AAVE?", "Maybe."),
-        (["what is the staking reward for Balancer"], "What is the staking reward for Balancer?", "Unknown."),
+        ([f"what is {name}"], f"Explain {name}", f"{name} is a term describing decentralized protocols."),
+        ([f"why do I need a {name}", f"what use is a {name}"], f"Why is a {name} necessary?", f"{name} allows you to interact with web3."),
+        ([f"what {name} protocols are out there?"], f"What are the protocols available for {name}?", f"There are a few protocols available for {name}."),
+        ([f"can I use {token} collateral on {name}?"], f"Can {token} collateral be used on {name}?", "Maybe."),
+        ([f"what is the staking reward for {name}"], f"What is the staking reward for {name}?", "Unknown."),
     ])
     message = random.choice(messages)
     yield Message("user", message)
@@ -390,7 +406,9 @@ def generate_scraped_sites_flow() -> Iterable[Message]:
 def generate_gather_more_info_flow() -> Iterable[Message]:
     messages, response = random.choice([
         (["buy NFT", "search NFT", "find NFT"], "What kind of NFTs are you looking for?"),
-        (["wallet balance", "token balance", "how many tokens"], "Which token would you like to check your balance for?"),
+        (["what's my balance", "wallet balance", "token balance", "how many tokens"], "Which token would you like to check your balance for?"),
+        (["price", "live price", "fetch price"], "Which token would you like to check the price of?"),
+        ([random_transfer_verb()], "What token would you like to transfer and to which address?"),
     ])
     message = random.choice(messages)
     yield Message("user", message)
@@ -400,12 +418,189 @@ def generate_gather_more_info_flow() -> Iterable[Message]:
             yield msg
 
 
+def generate_transfer_flow(token=None, address=None, amount=None) -> Iterable[Message]:
+    ambiguous_fields = []
+    if address is None: ambiguous_fields.append('address')
+    if amount is None: ambiguous_fields.append('amount')
+    if token is None: ambiguous_fields.append('token')
+    if len(ambiguous_fields) == 0:
+        specified_fields = ['address', 'amount', 'token']
+        random.shuffle(specified_fields)
+        specified_fields = specified_fields[:random.randint(1, len(specified_fields))]
+        message = random_transfer_verb() if rf() < 0.2 else random.choice(["how about", "and", ""])
+        if 'amount' in specified_fields:
+            amount = random_amount()
+            message += f" {amount}"
+        if 'token' in specified_fields:
+            token = random_token()
+            message += random.choice(["", " of"])
+            message += f" {token}"
+        if 'address' in specified_fields:
+            address = random_address()
+            message += f" to {address}"
+        yield Message("user", message.strip())
+        yield Message("bot", f"<|display-transfer({token},{amount},{address})|>")
+        if rf() < 0.5:
+            for msg in generate_transfer_flow(token=token, address=address, amount=amount):
+                yield msg
+        return
+    random.shuffle(ambiguous_fields)
+    specified_fields = ambiguous_fields[:random.randint(1, len(ambiguous_fields))]
+    remaining_ambiguous_fields = set(ambiguous_fields) - set(specified_fields)
+    message = random_transfer_verb() if len(ambiguous_fields) == 3 or rf() < 0.6 else ""
+    if 'amount' in specified_fields:
+        amount = random_amount()
+        message += f" {amount}"
+    if 'token' in specified_fields:
+        token = random_token()
+        message += random.choice(["", " of"])
+        message += f" {token}"
+    if 'address' in specified_fields:
+        address = random_address()
+        message += f" to {address}"
+    yield Message("user", message.strip())
+    if len(remaining_ambiguous_fields) == 0:
+        yield Message("bot", f"<|display-transfer({token},{amount},{address})|>")
+        if rf() < 0.5:
+            for msg in generate_transfer_flow(token=token, address=address, amount=amount):
+                yield msg
+    elif len(remaining_ambiguous_fields) == 1:
+        if 'token' in remaining_ambiguous_fields:
+            yield Message("bot", f"Which token would you like to transfer {amount} of to {address}?")
+        elif 'amount' in remaining_ambiguous_fields:
+            yield Message("bot", f"What amount of {token} would you like to transfer to {address}?")
+        elif 'address' in remaining_ambiguous_fields:
+            yield Message("bot", f"Which address would you like to transfer {amount} of {token} to?")
+        for msg in generate_transfer_flow(token=token, address=address, amount=amount):
+            yield msg
+    elif len(remaining_ambiguous_fields) == 2:
+        if 'token' not in remaining_ambiguous_fields:
+            yield Message("bot", f"What quantity of {token} would you like to transfer, and to which address?")
+        elif 'amount' not in remaining_ambiguous_fields:
+            yield Message("bot", f"Which token would you like to transfer {amount} of, and to which address?")
+        elif 'address' not in remaining_ambiguous_fields:
+            yield Message("bot", f"Which token would you like to transfer to {address}, and what quantity?")
+        for msg in generate_transfer_flow(token=token, address=address, amount=amount):
+            yield msg
+
+
+def generate_price_flow(base_token=None, quote_token=None) -> Iterable[Message]:
+    original_base_token = base_token
+    original_quote_token = quote_token
+    if base_token is None:
+        base_token = random_token()
+    if quote_token is None and rf() < 0.5:
+        quote_token = random_token()
+    message = random.choice([
+        f"what's the price of {base_token}",
+        f"what is the price of {base_token}",
+        f"price {base_token}",
+        f"price of {base_token}",
+        f"{base_token} price",
+    ] + (
+        [f"what about {base_token}", f"how about {base_token}"] if original_quote_token is not None else []
+    ) + (
+        [f"what about", f"how about"] if original_base_token is not None else []
+    ))
+    if original_quote_token is not None and rf() < 0.5 or quote_token:
+        message += random.choice([f" in {quote_token}", f" in units of {quote_token}"])
+    message += "?"
+    yield Message("user", message)
+    price = random_amount()
+    if quote_token is None:
+        yield Message("bot", f"<|fetch-price({base_token})|>", f"{price}")
+    else:
+        yield Message("bot", f"<|fetch-price({base_token},{quote_token})|>", f"{price}")
+    if rf() < 0.4:
+        for msg in generate_price_flow(base_token=base_token, quote_token=quote_token):
+            yield msg
+
+
+def generate_swap_flow(sell_token=None, buy_token=None, keyword=None, amount=None) -> Iterable[Message]:
+    ambiguous_fields = []
+    if sell_token is None: ambiguous_fields.append('sell_token')
+    if buy_token is None: ambiguous_fields.append('buy_token')
+    if keyword is None: ambiguous_fields.append('keyword')
+    if amount is None: ambiguous_fields.append('amount')
+    if len(ambiguous_fields) == 0:
+        specified_fields = ['sell_token', 'buy_token', 'keyword', 'amount']
+        random.shuffle(specified_fields)
+        specified_fields = specified_fields[:random.randint(1, len(specified_fields))]
+        message = random_swap_verb() if rf() < 0.2 else random.choice(["how about", "and", ""])
+        if 'keyword' in specified_fields:
+            keyword = random.choice(['SELLAMOUNT', 'BUYAMOUNT'])
+        if 'amount' in specified_fields:
+            amount = random_amount()
+        if keyword == 'SELLAMOUNT' and 'amount' in specified_fields:
+            message += f" {amount}"
+        if 'sell_token' in specified_fields:
+            sell_token = random_token()
+            message += random.choice(["", " of"])
+            message += f" {sell_token}"
+        if 'buy_token' in specified_fields:
+            message += random.choice([" for", " to buy"])
+        if keyword == 'BUYAMOUNT' and 'amount' in specified_fields:
+            message += f" {amount}"
+        if 'buy_token' in specified_fields:
+            buy_token = random_token()
+            message += f" {buy_token}"
+        yield Message("user", message.strip())
+        yield Message("bot", f"<|display-uniswap({sell_token},{buy_token},{keyword},{amount})|>")
+        if rf() < 0.5:
+            for msg in generate_swap_flow(sell_token=sell_token, buy_token=buy_token, keyword=keyword, amount=amount):
+                yield msg
+        return
+    random.shuffle(ambiguous_fields)
+    specified_fields = ambiguous_fields[:random.randint(1, len(ambiguous_fields))]
+    remaining_ambiguous_fields = set(ambiguous_fields) - set(specified_fields)
+    message = random_swap_verb() if len(ambiguous_fields) == 4 or rf() < 0.6 else ""
+    if 'keyword' in specified_fields:
+        keyword = random.choice(['SELLAMOUNT', 'BUYAMOUNT'])
+    if 'amount' in specified_fields:
+        amount = random_amount()
+    if keyword == 'SELLAMOUNT' and 'amount' in specified_fields:
+        message += f" {amount}"
+    if 'sell_token' in specified_fields:
+        sell_token = random_token()
+        message += random.choice(["", " of"])
+        message += f" {sell_token}"
+    if 'buy_token' in specified_fields:
+        message += random.choice([" for", " to buy"])
+    if keyword == 'BUYAMOUNT' and 'amount' in specified_fields:
+        message += f" {amount}"
+    if 'buy_token' in specified_fields:
+        buy_token = random_token()
+        message += f" {buy_token}"
+    yield Message("user", message.strip())
+    if len(remaining_ambiguous_fields) == 0:
+        yield Message("bot", f"<|display-uniswap({sell_token},{buy_token},{keyword},{amount})|>")
+        if rf() < 0.5:
+            for msg in generate_swap_flow(sell_token=sell_token, buy_token=buy_token, keyword=keyword, amount=amount):
+                yield msg
+    else:
+        message = "I need more details to complete your swap."
+        if 'sell_token' in remaining_ambiguous_fields:
+            message += " Which token would you like to sell?"
+        if 'buy_token' in remaining_ambiguous_fields:
+            message += " Which token would you like to buy?"
+        if 'amount' in remaining_ambiguous_fields:
+            message += " How much would you like to swap?"
+        if 'keyword' in remaining_ambiguous_fields:
+            message += " Which token is represented by the amount?"
+        yield Message("bot", message)
+        for msg in generate_swap_flow(sell_token=sell_token, buy_token=buy_token, keyword=keyword, amount=amount):
+            yield msg
+
+
 class MessageFlow(enum.IntEnum):
     nft = 1
     wallet_balance = 2
     app_info = 3
     scraped_sites = 4
     gather_more_info = 5
+    transfer = 6
+    price = 7
+    swap = 8
 
 
 def generate_conversation() -> Iterable[Message]:
@@ -419,6 +614,9 @@ def generate_conversation() -> Iterable[Message]:
             MessageFlow.app_info: 2,
             MessageFlow.scraped_sites: 2,
             MessageFlow.gather_more_info: 2,
+            MessageFlow.transfer: 6,
+            MessageFlow.price: 3,
+            MessageFlow.swap: 6,
         })
         if flow == MessageFlow.nft:
             for msg in generate_nft_flow():
@@ -434,6 +632,15 @@ def generate_conversation() -> Iterable[Message]:
                 yield msg
         elif flow == MessageFlow.gather_more_info:
             for msg in generate_gather_more_info_flow():
+                yield msg
+        elif flow == MessageFlow.transfer:
+            for msg in generate_transfer_flow():
+                yield msg
+        elif flow == MessageFlow.price:
+            for msg in generate_price_flow():
+                yield msg
+        elif flow == MessageFlow.swap:
+            for msg in generate_swap_flow():
                 yield msg
         else:
             assert 0, f'unrecognized flow: {flow}'
@@ -474,7 +681,7 @@ def generate_dataset():
 def run():
     datapoints = []
     for datapoint in generate_dataset():
-        print(datapoint)
+        #print(datapoint)
         datapoints.append(datapoint)
     save_datapoints(datapoints, 'generated.jsonl')
 

@@ -30,10 +30,29 @@ chat_configs = [
     dict(
         type='chat.fine_tuned.FineTunedChat',
         widget_index=None,
-        #model_name='curie:ft-yield-inc:gen-500-2023-06-08-08-20-51',
+        model_name='curie:ft-yield-inc-2023-05-30-20-19-41',
+        evaluate_widgets=False,
+    ),
+    dict(
+        type='chat.fine_tuned.FineTunedChat',
+        widget_index=None,
+        model_name='curie:ft-yield-inc:gen-500-2023-06-08-08-20-51',
+        evaluate_widgets=False,
+    ),
+    dict(
+        type='chat.fine_tuned.FineTunedChat',
+        widget_index=None,
         model_name='curie:ft-yield-inc:gen-1k-2023-06-09-18-41-36',
         evaluate_widgets=False,
     ),
+    dict(
+        type='chat.fine_tuned.FineTunedChat',
+        widget_index=None,
+        model_name='curie:ft-yield-inc:gen-1000b-2023-06-11-03-18-04',
+        evaluate_widgets=False,
+    ),
+]
+_ = [
     dict(
         type='chat.rephrase_widget_search.RephraseWidgetSearchChat',
         widget_index=config.widget_index,
@@ -239,11 +258,53 @@ def get_scraped_sites_flow() -> Iterable[Message]:
     yield Message("bot", f"<|fetch-scraped-sites({query})|>", f"{response}")
 
 
+def get_transfer_flow() -> Iterable[Message]:
+    token = "ETH"
+    address = "0x1234"
+    amount = "123"
+    yield Message("user", f"transfer {token} to {address}")
+    yield Message("bot", f"What quantity would you like to transfer?")
+    yield Message("user", f"{amount}")
+    yield Message("bot", f"<|display-transfer({token},{amount},{address})|>")
+    token = "USDC"
+    address = "0x4321"
+    amount = "456"
+    yield Message("user", f"send {amount} of {token} to {address}")
+    yield Message("bot", f"<|display-transfer({token},{amount},{address})|>")
+
+
+def get_price_flow() -> Iterable[Message]:
+    base_token = "ETH"
+    quote_token = "USD"
+    yield Message("user", f"what's the price of {base_token}?")
+    yield Message("bot", f"<|fetch-price({base_token},{quote_token})|>", "1234")
+    quote_token = "USDC"
+    yield Message("user", f"what's the price of {base_token} in {quote_token}?")
+    yield Message("bot", f"<|fetch-price({base_token},{quote_token})|>", "1235")
+
+
+def get_swap_flow() -> Iterable[Message]:
+    sell_token = "ETH"
+    buy_token = "USDC"
+    keyword = "SELLAMOUNT"
+    amount = 123
+    yield Message("user", f"swap {sell_token} for {buy_token}")
+    yield Message("bot", f"What quantity of tokens would you like to swap?")
+    yield Message("user", f"swap {amount} {sell_token} for {buy_token}")
+    yield Message("bot", f"<|display-uniswap({sell_token},{buy_token},{keyword},{amount})|>")
+    yield Message("user", f"actually swap {sell_token} for {amount} {buy_token}")
+    keyword = "BUYAMOUNT"
+    yield Message("bot", f"<|display-uniswap({sell_token},{buy_token},{keyword},{amount})|>")
+
+
 def get_validation_conversations() -> Iterable[Conversation]:
     yield Conversation(messages=list(get_nft_flow()))
     yield Conversation(messages=list(get_wallet_balance_flow()))
     yield Conversation(messages=list(get_app_info_flow()))
     yield Conversation(messages=list(get_scraped_sites_flow()))
+    yield Conversation(messages=list(get_transfer_flow()))
+    yield Conversation(messages=list(get_price_flow()))
+    yield Conversation(messages=list(get_swap_flow()))
 
 
 def evaluate_chat(chat: chat.BaseChat):
@@ -281,7 +342,7 @@ def evaluate_chat(chat: chat.BaseChat):
 
 def run():
     summary = collections.Counter()
-    for chat_config in chat_configs:
+    for ci, chat_config in enumerate(chat_configs):
         chat = config.initialize(chat_config)
         counter = collections.Counter()
         pairs = []
@@ -301,10 +362,10 @@ def run():
             print(f'{k}: {v}')
         for p, l in pairs:
             print(f'{p} :: {l}')
-        summary[chat_config['type'] + '/accuracy/widget'] = counter['widget_match'] / counter['total']
-        summary[chat_config['type'] + '/accuracy/widget_param'] = counter['widget_param_match'] / counter['total']
-        summary[chat_config['type'] + '/latency'] = counter['first_token'] / counter['total']
-        summary[chat_config['type'] + '/total'] = counter['total']
+        summary[f"{ci}/{chat_config['type']}/accuracy/widget"] = counter['widget_match'] / counter['total']
+        summary[f"{ci}/{chat_config['type']}/accuracy/widget_param"] = counter['widget_param_match'] / counter['total']
+        summary[f"{ci}/{chat_config['type']}/latency"] = counter['first_token'] / counter['total']
+        summary[f"{ci}/{chat_config['type']}/total"] = counter['total']
     for k, v in sorted(summary.items()):
         print(f'{k}: {v: .2f}')
 
