@@ -10,7 +10,6 @@ class LidoTextWorkflow(BaseSingleStepContractWorkflow):
     WORKFLOW_TYPE = 'deposit-eth-lido'
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_type: str, workflow_params: Dict) -> None:
-        print(workflow_params)
         self.value = workflow_params['amount']
 
         user_description = f"Deposit {self.value} ETH to Lido"
