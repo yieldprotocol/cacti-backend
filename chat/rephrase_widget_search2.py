@@ -56,7 +56,7 @@ HISTORY_TOKEN_LIMIT = 1800
 
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
@@ -66,7 +66,7 @@ class RephraseWidgetSearchChat(BaseChat):
         )
         self.widget_index = widget_index
         self.top_k = top_k
-        self.show_thinking = show_thinking
+        self.evaluate_widgets = evaluate_widgets
 
     def receive_input(
             self,
@@ -137,17 +137,25 @@ class RephraseWidgetSearchChat(BaseChat):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
-                while '<|' in response_buffer:
+                while '<|' in response_buffer and self.evaluate_widgets:
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
-                        if isinstance(response_buffer, Generator):  # handle stream of widgets
+                        if isinstance(response_buffer, Callable):  # handle delegated streaming
+                            def handler(token):
+                                nonlocal new_token_handler
+                                timing.log('first_visible_widget_response_token')
+                                return new_token_handler(token)
+                            response_buffer(handler)
+                            response_buffer = ""
+                            return
+                        elif isinstance(response_buffer, Generator):  # handle stream of widgets
                             for item in response_buffer:
                                 timing.log('first_visible_widget_response_token')
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
-                        if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
                             # there are no two independent widgets on the same line, otherwise we can't

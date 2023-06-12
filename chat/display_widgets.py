@@ -40,6 +40,9 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
     elif command == 'uniswap':
         items = params.split(",")
         lines.append(f"A swap of {items[0]} to {items[1]} with transaction keyword {items[2]} and amount {items[3]}")
+    elif command == 'buy-nft':
+        items = params.split(",")
+        lines.append(f"A widget to purchase token {items[1]} of contract address {items[0]}")
     elif command == 'list-container':
         params = json.loads(params)
         items = params['items']
@@ -60,7 +63,10 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
             prefix = params.get('prefix') or ''
             suffix = params.get('suffix') or ''
             if prefix or suffix:
-                lines.append(f'{prefix} {suffix}')
+                line = f'{prefix} {suffix}'.strip()
+                if line.endswith(':'):
+                    line = line[:-1] + '.'
+                lines.append(line)
         elif operation == 'append':
             item = params['item']
             lines.append(f"-Item: {_widgetize(item['name'], json.dumps(item['params']), depth=depth)}")
