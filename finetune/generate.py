@@ -522,25 +522,39 @@ def generate_swap_flow(sell_token=None, buy_token=None, keyword=None, amount=Non
     if buy_token is None: ambiguous_fields.append('buy_token')
     if keyword is None: ambiguous_fields.append('keyword')
     if amount is None: ambiguous_fields.append('amount')
+
+    sell_words = ["", " of"]
+    buy_words = [" for", " to buy", " buying"]
+
     if len(ambiguous_fields) == 0:
         specified_fields = ['sell_token', 'buy_token', 'keyword', 'amount']
         random.shuffle(specified_fields)
         specified_fields = specified_fields[:random.randint(1, len(specified_fields))]
-        message = random_swap_verb() if rf() < 0.2 else random.choice(["how about", "and", ""])
+        if rf() < 0.2:
+            message = random_swap_verb()
+        else:
+            message = random.choice(["how about", "and", ""])
+            if 'sell_token' in specified_fields or keyword == 'SELLAMOUNT' and 'amount' in specified_fields:
+                message += random.choice([random_swap_verb()] + [" sell", " selling"])
         if 'keyword' in specified_fields:
             keyword = random.choice(['SELLAMOUNT', 'BUYAMOUNT'])
         if 'amount' in specified_fields:
             amount = random_amount()
         if keyword == 'SELLAMOUNT' and 'amount' in specified_fields:
             message += f" {amount}"
+            if 'sell_token' not in specified_fields:
+                message += random.choice(sell_words)
+                message += f" {sell_token}"
         if 'sell_token' in specified_fields:
             sell_token = random_token()
-            message += random.choice(["", " of"])
+            message += random.choice(sell_words)
             message += f" {sell_token}"
-        if 'buy_token' in specified_fields:
-            message += random.choice([" for", " to buy"])
+        if 'buy_token' in specified_fields or keyword == 'BUYAMOUNT' and 'amount' in specified_fields:
+            message += random.choice(buy_words)
         if keyword == 'BUYAMOUNT' and 'amount' in specified_fields:
             message += f" {amount}"
+            if 'buy_token' not in specified_fields:
+                message += f" {buy_token}"
         if 'buy_token' in specified_fields:
             buy_token = random_token()
             message += f" {buy_token}"
@@ -550,24 +564,38 @@ def generate_swap_flow(sell_token=None, buy_token=None, keyword=None, amount=Non
             for msg in generate_swap_flow(sell_token=sell_token, buy_token=buy_token, keyword=keyword, amount=amount):
                 yield msg
         return
-    random.shuffle(ambiguous_fields)
-    specified_fields = ambiguous_fields[:random.randint(1, len(ambiguous_fields))]
-    remaining_ambiguous_fields = set(ambiguous_fields) - set(specified_fields)
-    message = random_swap_verb() if len(ambiguous_fields) == 4 or rf() < 0.6 else ""
+    while True:
+        random.shuffle(ambiguous_fields)
+        specified_fields = ambiguous_fields[:random.randint(1, len(ambiguous_fields))]
+        remaining_ambiguous_fields = set(ambiguous_fields) - set(specified_fields)
+        if 'keyword' in specified_fields and 'amount' in remaining_ambiguous_fields:
+            # can't have keyword specified without an amount
+            continue
+        if 'amount' in specified_fields and 'keyword' in remaining_ambiguous_fields:
+            # can't have amount specified without a keyword
+            continue
+        break
+    message = random_swap_verb() if len(ambiguous_fields) == 4 or rf() < 0.6 or 'sell_token' in specified_fields else ""
     if 'keyword' in specified_fields:
         keyword = random.choice(['SELLAMOUNT', 'BUYAMOUNT'])
     if 'amount' in specified_fields:
         amount = random_amount()
     if keyword == 'SELLAMOUNT' and 'amount' in specified_fields:
         message += f" {amount}"
+        if 'sell_token' not in specified_fields and sell_token is not None:
+            message += random.choice(sell_words)
+            message += f" {sell_token}"
     if 'sell_token' in specified_fields:
         sell_token = random_token()
-        message += random.choice(["", " of"])
+        if not message.startswith("sell"):
+            message += random.choice(sell_words)
         message += f" {sell_token}"
     if 'buy_token' in specified_fields:
-        message += random.choice([" for", " to buy"])
+        message += random.choice(buy_words)
     if keyword == 'BUYAMOUNT' and 'amount' in specified_fields:
         message += f" {amount}"
+        if 'buy_token' not in specified_fields and buy_token is not None:
+            message += f" {buy_token}"
     if 'buy_token' in specified_fields:
         buy_token = random_token()
         message += f" {buy_token}"
