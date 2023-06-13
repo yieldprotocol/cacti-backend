@@ -106,13 +106,24 @@ def perturb(s: str) -> str:
     return s
 
 
-def generate_nft_flow() -> Iterable[Message]:
-    query = random_name(with_adjective=rf() < 0.5)
-    message = random.choice([
-        f"find some {query} NFTs",
-        f"find {query} NFTs",
-        f"show me {query} NFTs",
-    ])
+def generate_nft_flow(query=None) -> Iterable[Message]:
+    original_query = query
+    verb = random.choice(["find", "find some", "search", "search for", "show", "show me", "buy", "purchase", ""])
+    nft = random.choice(["nft", "NFT", "nfts", "NFTs", "non-fungible token", "non-fungible tokens"])
+    if query is None:
+        query = random_name(with_adjective=rf() < 0.5)
+    msg = []
+    if verb: msg.append(verb)
+    if original_query is None and rf() < 0.1:
+        msg.append(nft)
+        message = " ".join(msg)
+        yield Message("user", message)
+        yield Message("bot", "What kind of NFTs are you looking for?")
+        for msg in generate_nft_flow(query=query):
+            yield msg
+        return
+    msg.extend([query, nft] if rf() < 0.5 else [nft, query])
+    message = " ".join(msg)
     yield Message("user", message)
     stream = [StreamingListContainer(operation="create", prefix="Searching")]
     num = random.randint(0, 12)
