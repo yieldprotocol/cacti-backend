@@ -38,6 +38,7 @@ class BaseSingleStepContractWorkflow(BaseContractWorkflow):
             if "value" not in tx:
                 tx['value'] = "0x0"
             
+            print(f"Transaction to be submitted, {tx}")
 
             return result
         except WorkflowValidationError as e:
