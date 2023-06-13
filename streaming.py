@@ -1,14 +1,16 @@
 from typing import Any, Callable
 
-from langchain.llms import OpenAI
+from text_generation import Client
+from langchain.llms import OpenAI, HuggingFaceTextGenInference
 from langchain.chains import LLMChain
 from langchain.agents import initialize_agent
-from langchain.callbacks.base import CallbackManager
+from langchain.callbacks.base import BaseCallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 import config
 from agents.conversational import CUSTOM_AGENT_NAME
 from chains import IndexAPIChain
+from utils.constants import HUGGINGFACE_API_KEY, HUGGINGFACE_INFERENCE_ENDPOINT
 
 
 class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
@@ -26,27 +28,48 @@ class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
         self.new_token_handler(token)
 
 
-def streaming_callback_manager(new_token_handler: Callable) -> CallbackManager:
-    return CallbackManager([StreamingCallbackHandler(new_token_handler)])
+def streaming_callback_manager(new_token_handler: Callable) -> BaseCallbackManager:
+    return BaseCallbackManager([StreamingCallbackHandler(new_token_handler)])
 
 
 def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
-    # falls back to non-streaming if none provided
-    streaming_kwargs = dict(
-        streaming=True,
-        callback_manager=streaming_callback_manager(new_token_handler),
-    ) if new_token_handler else {}
+    if model_name=='huggingface-llm':
+        # falls back to non-streaming if none provided
+        streaming_kwargs = dict(
+            stream=True,
+            callbacks=[StreamingCallbackHandler(new_token_handler)],
+        ) if new_token_handler else {}
 
-    model_kwargs = dict(
-        model_name=model_name,
-    ) if model_name else {}
+        inference_server_url = HUGGINGFACE_INFERENCE_ENDPOINT
+        headers = {
+            "Authorization": f"Bearer {HUGGINGFACE_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        client = Client(inference_server_url, headers=headers)
+        llm = HuggingFaceTextGenInference(
+            inference_server_url=inference_server_url,
+            max_new_tokens=100, # -1 means generate no token
+            temperature=0.1, # should be strictly positive
+            **streaming_kwargs,
+        )
+        llm.client = client
+    else:
+        # falls back to non-streaming if none provided
+        streaming_kwargs = dict(
+            streaming=True,
+            callback_manager=streaming_callback_manager(new_token_handler),
+        ) if new_token_handler else {}
 
-    llm = OpenAI(
-        temperature=0.0,
-        max_tokens=max_tokens,
-        **streaming_kwargs,
-        **model_kwargs,
-    )
+        model_kwargs = dict(
+            model_name=model_name,
+        ) if model_name else {}
+
+        llm = OpenAI(
+            temperature=0.0,
+            max_tokens=max_tokens,
+            **streaming_kwargs,
+            **model_kwargs,
+        )
     return llm
 
 
@@ -67,7 +90,7 @@ def get_streaming_tools(tools, new_token_handler):
     return streaming_tools
 
 
-def get_streaming_agent(tools, new_token_handler, **agent_kwargs):
-    llm = get_streaming_llm(new_token_handler)
+def get_streaming_agent(tools, new_token_handler, model_name=None, **agent_kwargs):
+    llm = get_streaming_llm(new_token_handler, model_name=model_name)
     agent = initialize_agent(tools, llm, agent=CUSTOM_AGENT_NAME, **agent_kwargs)
     return agent
