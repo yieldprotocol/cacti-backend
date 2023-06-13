@@ -56,7 +56,7 @@ HISTORY_TOKEN_LIMIT = 1800
 
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, evaluate_widgets: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, model_name: Optional[str] = None, evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
@@ -67,6 +67,7 @@ class RephraseWidgetSearchChat(BaseChat):
         self.widget_index = widget_index
         self.top_k = top_k
         self.evaluate_widgets = evaluate_widgets
+        self.model_name = model_name
 
     def receive_input(
             self,
@@ -124,7 +125,7 @@ class RephraseWidgetSearchChat(BaseChat):
 
             timing.log('first_token')
             timing.log('first_widget_token')  # for comparison with basic agent
-
+    
             response_buffer += token
             if response_state == 0:  # we are still waiting for response_prefix to appear
                 if response_prefix not in response_buffer:
@@ -190,7 +191,7 @@ class RephraseWidgetSearchChat(BaseChat):
             "stop": ["Input", "User"],
         }
 
-        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler)
+        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=self.model_name)
 
         with context.with_request_context(history.wallet_address, message_id):
             result = chain.run(example).strip()
