@@ -1,3 +1,4 @@
+import os
 import re
 import json
 from typing import Optional, Union, Literal
@@ -7,11 +8,18 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from web3 import Web3
 
 from utils import load_contract_abi
-from ..base import StepProcessingResult, revoke_erc20_approval, set_erc20_allowance, TEST_WALLET_ADDRESS, USDC_ADDRESS
+from ..base import StepProcessingResult, revoke_erc20_approval, set_erc20_allowance, TEST_WALLET_ADDRESS, USDC_ADDRESS, WorkflowValidationError, ContractStepProcessingResult, BaseContractWorkflow
 
+def load_aave_contract_error_codes():
+    with open(os.path.join(os.path.dirname(__file__), "./contract_abi_integration/aave_contract_error_codes.json")) as f:
+        return json.load(f)
+
+AAVE_CONTRACT_ERROR_CODES = load_aave_contract_error_codes()
 FIVE_SECONDS = 5000
 AAVE_POOL_V3_PROXY_ADDRESS = Web3.to_checksum_address("0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2")
 AAVE_WRAPPED_TOKEN_GATEWAY = Web3.to_checksum_address("0xd322a49006fc828f9b5b37ab215f99b4e5cab19c")
+AAVE_VARIABLE_DEBT_TOKEN_ADDRESS = Web3.to_checksum_address("0xea51d7853eefb32b6ee06b1c12e6dcca88be0ffe")
+AAVE_ATOKEN_ADDRESS = Web3.to_checksum_address("0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8")
 
 AAVE_SUPPORTED_TOKENS = [
     "ETH",
@@ -34,6 +42,18 @@ def get_aave_pool_v3_address_contract():
 def get_aave_wrapped_token_gateway_contract():
     web3_provider = context.get_web3_provider()
     return web3_provider.eth.contract(address=AAVE_WRAPPED_TOKEN_GATEWAY, abi=load_contract_abi(__file__, "./abis/aave_wrapped_token_gateway.abi.json"))
+
+def get_aave_variable_debt_token_contract():
+    web3_provider = context.get_web3_provider()
+    return web3_provider.eth.contract(address=AAVE_VARIABLE_DEBT_TOKEN_ADDRESS, abi=load_contract_abi(__file__, "./abis/aave_variable_debt_token.abi.json"))
+
+def get_aave_atoken_contract():
+    web3_provider = context.get_web3_provider()
+    return web3_provider.eth.contract(address=AAVE_ATOKEN_ADDRESS, abi=load_contract_abi(__file__, "./abis/aave_atoken.abi.json"))
+
+def common_aave_validation(token):
+    if (token not in AAVE_SUPPORTED_TOKENS):
+        raise WorkflowValidationError(f"Token {token} not supported by Aave")
 
 class AaveMixin:
     def _goto_page_and_open_walletconnect(self, page):
@@ -90,3 +110,16 @@ def aave_revoke_eth_approval():
     # https://docs.aave.com/developers/tokens/debttoken#approvedelegation
     aave_set_eth_approval(0)
 
+def aave_parse_contract_error(code: str):
+    # Ref: https://github.com/aave/aave-v3-core/blob/master/contracts/protocol/libraries/helpers/Errors.sol
+    print(f"Aave error code: {code}")
+    if code not in AAVE_CONTRACT_ERROR_CODES:
+        return f"Unexpected Aave error. Check with support"
+    return AAVE_CONTRACT_ERROR_CODES[code]
+
+def aave_check_for_error_and_compute_result(contract_workflow: BaseContractWorkflow, tx):
+    error_message = contract_workflow._simulate_tx_for_error_check(tx)
+    if error_message:
+        return ContractStepProcessingResult(status="error", error_msg=aave_parse_contract_error(error_message))
+    else:
+        return ContractStepProcessingResult(status="success", tx=tx)  

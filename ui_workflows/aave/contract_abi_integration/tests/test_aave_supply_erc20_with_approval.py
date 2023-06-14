@@ -1,10 +1,8 @@
-
-import re
-import time
-import json
 """
 Test for supplying an ERC20 token on Aave with approval step
 """
+import context
+from utils import get_token_balance, parse_token_amount
 import os
 import requests
 from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Callable
@@ -16,11 +14,13 @@ from ..aave_supply_contract_workflow import AaveSupplyContractWorkflow
 
 from ...common import aave_revoke_usdc_approval
 
-# Invoke this with python3 -m pytest -s -k "test_aave_supply_erc20_with_approval"
+# Invoke this with python3 -m pytest -s -k "test_contract_aave_supply_erc20_with_approval"
 def test_contract_aave_supply_erc20_with_approval(setup_fork):
     token = "USDC"
     amount = 0.1
     workflow_params = {"token": token, "amount": amount}
+
+    usdc_balance_start = get_token_balance(context.get_web3_provider(), TEST_WALLET_CHAIN_ID, token, TEST_WALLET_ADDRESS)
 
     # Make sure to revoke any USDC pre-approval to ensure Aave UI is in the correct state to show approval flow
     aave_revoke_usdc_approval()
@@ -69,4 +69,5 @@ def test_contract_aave_supply_erc20_with_approval(setup_fork):
     # Final state of workflow should be terminated
     assert multi_step_result.status == "terminated"
 
-    # TODO - For thorough validation, ensure to assert the actual amount used in tx matches expectation by fetching decoded tx data from Tenderly
+    usdc_balance_end = get_token_balance(context.get_web3_provider(), TEST_WALLET_CHAIN_ID, token, TEST_WALLET_ADDRESS)
+    assert usdc_balance_end == usdc_balance_start - parse_token_amount(TEST_WALLET_CHAIN_ID, token, amount)

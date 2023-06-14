@@ -8,6 +8,7 @@ from web3 import Web3
 
 import requests
 import context
+from utils import TENDERLY_API_KEY
 from database.models import db_session, ChatMessage, ChatSession, SystemConfig
 from database.models import (MultiStepWorkflow)
 
@@ -72,7 +73,7 @@ class WorkflowValidationError(Exception):
 class WorkflowFailed(Exception):
     pass
 
-def tenderly_simulate_tx(wallet_address: str, tx: Dict) -> str:    
+def tenderly_simulate_tx_on_fork(wallet_address: str, tx: Dict) -> str:    
     payload = {
     "jsonrpc": "2.0",
     "method": "eth_sendTransaction",
@@ -98,14 +99,38 @@ def tenderly_simulate_tx(wallet_address: str, tx: Dict) -> str:
     fork_web3 = Web3(Web3.HTTPProvider(fork_rpc_url))
     receipt = fork_web3.eth.wait_for_transaction_receipt(tx_hash)
 
-    print("receipt:", receipt)
+    tenderly_simulation_id = get_latest_simulation_id_on_fork(fork_rpc_url)
 
-    print("Tenderly TxHash:", tx_hash)
+    tenderly_dashboard_link = f"https://dashboard.tenderly.co/Yield/chatweb3/fork/{fork_id}/simulation/{tenderly_simulation_id}"
 
+    print("Tenderly simulation dashboard link:", tenderly_dashboard_link)
+
+    # Tx Error handling
     if receipt['status'] == 0:
-        raise Exception(f"Transaction failed, tx_hash: {tx_hash}, check fork for more details - https://dashboard.tenderly.co/Yield/chatweb3/fork/{fork_id}")
+        tenderly_simulation_api = f"https://api.tenderly.co/api/v1/account/Yield/project/chatweb3/fork/{fork_id}/simulation/{tenderly_simulation_id}"
+        res = requests.get(tenderly_simulation_api, headers={'X-Access-Key': TENDERLY_API_KEY})
+        error_message = 'n/a'
+        if res.status_code == 200:
+            simulation_data = res.json()
+            error_message = simulation_data['transaction']['error_message']
+        raise Exception(f"Transaction failed, error_message: {error_message}, check fork for more details - {tenderly_dashboard_link}")
     
     return tx_hash
+
+def get_latest_simulation_on_fork(fork_rpc_url):
+    get_latest_tx_payload = {
+        "jsonrpc": "2.0",
+        "method": "evm_getLatest",
+        "params": []
+    }
+
+    res = requests.post(fork_rpc_url, json=get_latest_tx_payload)
+    res.raise_for_status()
+
+    return res.json()
+
+def get_latest_simulation_id_on_fork(fork_rpc_url):
+    return get_latest_simulation_on_fork(fork_rpc_url)['result']
 
 def advance_fork_blocks(num_blocks) -> None:
     fork_rpc_url = context.get_web3_tenderly_fork_url()
@@ -169,7 +194,7 @@ def compute_abi_abspath(wf_file_path, abi_relative_path):
 
 def process_result_and_simulate_tx(wallet_address, result: Union[Result, MultiStepResult]) -> Optional[str]:
     if result.status == "success":
-        tx_hash = tenderly_simulate_tx(wallet_address, result.tx)
+        tx_hash = tenderly_simulate_tx_on_fork(wallet_address, result.tx)
         print("Workflow successful")
         return tx_hash
     elif result.status == "terminated":
