@@ -62,7 +62,7 @@ class IndexWidgetTool(IndexLookupTool):
             **kwargs
     ) -> None:
         evaluate_widgets = kwargs.pop('evaluate_widgets', True)
-        model_name = kwargs.pop('model_name', True)
+        model_name = kwargs.pop('model_name', None)
 
         prompt = PromptTemplate(
             input_variables=["task_info", "question"],
