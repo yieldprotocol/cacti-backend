@@ -28,10 +28,6 @@ class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
         self.new_token_handler(token)
 
 
-def streaming_callback_manager(new_token_handler: Callable) -> BaseCallbackManager:
-    return BaseCallbackManager([StreamingCallbackHandler(new_token_handler)])
-
-
 def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
     if model_name=='huggingface-llm':
         # falls back to non-streaming if none provided
@@ -48,7 +44,7 @@ def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
         client = Client(inference_server_url, headers=headers)
         llm = HuggingFaceTextGenInference(
             inference_server_url=inference_server_url,
-            max_new_tokens=100, # -1 means generate no token
+            max_new_tokens=200, # -1 means generate no token
             temperature=0.1, # should be strictly positive
             **streaming_kwargs,
         )
@@ -57,7 +53,7 @@ def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
         # falls back to non-streaming if none provided
         streaming_kwargs = dict(
             streaming=True,
-            callback_manager=streaming_callback_manager(new_token_handler),
+            callbacks=[StreamingCallbackHandler(new_token_handler)],
         ) if new_token_handler else {}
 
         model_kwargs = dict(

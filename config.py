@@ -37,7 +37,6 @@ default_config = dict(
     type="system.System",
     chat=dict(
         type="chat.basic_agent.BasicAgentChat",
-        model_name="huggingface-llm",
         tools=[
             dict(
                 type="tools.index_widget.IndexWidgetTool",

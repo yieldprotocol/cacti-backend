@@ -62,6 +62,7 @@ class IndexWidgetTool(IndexLookupTool):
             **kwargs
     ) -> None:
         evaluate_widgets = kwargs.pop('evaluate_widgets', True)
+        model_name = kwargs.pop('model_name', True)
 
         prompt = PromptTemplate(
             input_variables=["task_info", "question"],
@@ -131,7 +132,7 @@ class IndexWidgetTool(IndexLookupTool):
                     # we have found a line-break in the response, switch to the terminal state to mask subsequent output
                     response_state = 2
 
-        chain = streaming.get_streaming_chain(prompt, injection_handler)
+        chain = streaming.get_streaming_chain(prompt, injection_handler, model_name=model_name)
         super().__init__(
             *args,
             _chain=chain,
