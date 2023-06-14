@@ -1,7 +1,7 @@
 import os
 
 HUGGINGFACE_API_KEY = "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"
-HUGGINGFACE_INFERENCE_ENDPOINT = "https://zzjdjtmiizr3o4u9.us-east-1.aws.endpoints.huggingface.cloud" # may vary
+HUGGINGFACE_INFERENCE_ENDPOINT = "https://xczbh8zf5amwxdlc.us-east-1.aws.endpoints.huggingface.cloud" # may vary
 OPENAI_API_KEY = "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"
 CENTER_API_KEY = os.getenv('CENTER_API_KEY', 'key8f1af05afe473107c3ea2556')
 ETHERSCAN_API_KEY = 'ZCUTVCPHAJ5YRNB6SZTJN9ZV24FBEX86GJ'
