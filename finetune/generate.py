@@ -21,7 +21,7 @@ from .dataset import (
 )
 
 
-NUM_DATAPOINTS = 1000
+NUM_DATAPOINTS = 4000
 
 
 @dataclass
@@ -652,7 +652,7 @@ def generate_conversation() -> Iterable[Message]:
             MessageFlow.wallet_balance: 2,
             MessageFlow.app_info: 2,
             MessageFlow.scraped_sites: 2,
-            MessageFlow.gather_more_info: 2,
+            #MessageFlow.gather_more_info: 2,
             MessageFlow.transfer: 6,
             MessageFlow.price: 3,
             MessageFlow.swap: 6,
