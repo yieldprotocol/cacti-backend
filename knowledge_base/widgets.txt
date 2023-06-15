@@ -237,3 +237,10 @@ Required parameters:
 -{query}: a standalone question representing information to be retrieved from the index
 Return value description:
 -a summarized answer with source citations
+---
+Widget magic command: <|liquity-borrow({borrowAmount},{collateralAmount})|>
+Description of widget: This widget is used when the user wants to borrow LUSD using ETH as collateral from the Liquity protocol.
+Required Parameters:
+-{borrowAmount}: amount of LUSD to borrow
+-{collateralAmount}: amount of ETH to use as collateral
+---
