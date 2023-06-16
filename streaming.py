@@ -2,6 +2,7 @@ from typing import Any, Callable
 
 from text_generation import Client
 from langchain.llms import OpenAI, HuggingFaceTextGenInference
+from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.agents import initialize_agent
 from langchain.callbacks.base import BaseCallbackManager
@@ -28,7 +29,7 @@ class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
         self.new_token_handler(token)
 
 
-def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
+def get_streaming_llm(new_token_handler, model_name=None, max_tokens=None):
     if model_name=='huggingface-llm':
         # falls back to non-streaming if none provided
         streaming_kwargs = dict(
@@ -44,7 +45,7 @@ def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
         client = Client(inference_server_url, headers=headers)
         llm = HuggingFaceTextGenInference(
             inference_server_url=inference_server_url,
-            max_new_tokens=200, # -1 means generate no token
+            max_new_tokens=max_tokens if max_tokens is None else 200,
             temperature=0.1, # should be strictly positive
             **streaming_kwargs,
         )
@@ -60,7 +61,14 @@ def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
             model_name=model_name,
         ) if model_name else {}
 
-        llm = OpenAI(
+        if not model_name or model_name in ('text-davinci-003',):
+            model_cls = OpenAI
+            if max_tokens is None:
+                max_tokens = -1  # this is setting for unlimited
+        else:
+            model_cls = ChatOpenAI
+
+        llm = model_cls(
             temperature=0.0,
             max_tokens=max_tokens,
             **streaming_kwargs,
@@ -69,7 +77,7 @@ def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
     return llm
 
 
-def get_streaming_chain(prompt, new_token_handler, use_api_chain=False, model_name=None, max_tokens=-1):
+def get_streaming_chain(prompt, new_token_handler, use_api_chain=False, model_name=None, max_tokens=None):
     llm = get_streaming_llm(new_token_handler, model_name=model_name, max_tokens=max_tokens)
 
     if use_api_chain:
