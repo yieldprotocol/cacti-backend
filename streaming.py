@@ -29,7 +29,7 @@ class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
         self.new_token_handler(token)
 
 
-def get_streaming_llm(new_token_handler, model_name=None, max_tokens=200):
+def get_streaming_llm(new_token_handler, model_name=None, max_tokens=300):
     if model_name=='huggingface-llm':
         # falls back to non-streaming if none provided
         streaming_kwargs = dict(
@@ -64,14 +64,14 @@ def get_streaming_llm(new_token_handler, model_name=None, max_tokens=200):
         model = OpenAI if not model_name else ChatOpenAI
         llm = model(
             temperature=0.0,
-            max_tokens=200,
+            max_tokens=300,
             **streaming_kwargs,
             **model_kwargs,
         )
     return llm
 
 
-def get_streaming_chain(prompt, new_token_handler, use_api_chain=False, model_name=None, max_tokens=200):
+def get_streaming_chain(prompt, new_token_handler, use_api_chain=False, model_name=None, max_tokens=300):
     llm = get_streaming_llm(new_token_handler, model_name=model_name, max_tokens=max_tokens)
 
     if use_api_chain:

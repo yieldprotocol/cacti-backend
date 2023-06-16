@@ -12,12 +12,7 @@ from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-from langchain.schema import (
-    BaseMessage,
-    AIMessage,
-    HumanMessage,
-    SystemMessage
-)
+from langchain.schema import BaseMessage
 
 import context
 import utils
@@ -26,7 +21,7 @@ from utils.common import FUNCTIONS
 import registry
 import streaming
 from .base import (
-    BaseChat, Response, ChatHistory2
+    BaseChat, Response, ChatHistory
 )
 from ui_workflows import (
     aave, ens
@@ -43,15 +38,16 @@ class ChatGPTFunctionCallChat(BaseChat):
 
     def receive_input(
             self,
-            history: ChatHistory2,
+            history: ChatHistory,
             userinput: str,
             send: Callable,
             message_id: Optional[uuid.UUID] = None,
             before_message_id: Optional[uuid.UUID] = None,
     ) -> None:
         userinput = userinput.strip()
-        history.messages += [HumanMessage(content=userinput, additional_kwargs={'message_id':message_id, 'before_message_id': before_message_id})]
-
+        history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
+        
+        history_messages = history.to_openai_messages(system_prefix=None)  # omit system messages
         timing.init()
 
         bot_chat_message_id = None
@@ -67,7 +63,7 @@ class ChatGPTFunctionCallChat(BaseChat):
                 actor='bot',
                 operation='replace',
             ), last_chat_message_id=bot_chat_message_id, before_message_id=before_message_id)
-            history.messages.append(AIMessage(content=response, additional_kwargs={'message_id':bot_chat_message_id, 'before_message_id':before_message_id}))
+            history.add_bot_message(response, message_id=bot_chat_message_id, before_message_id=before_message_id)
 
         def bot_new_token_handler(token):
             nonlocal bot_chat_message_id, bot_response, has_sent_bot_response
@@ -88,16 +84,18 @@ class ChatGPTFunctionCallChat(BaseChat):
 
         model = streaming.get_streaming_llm(bot_new_token_handler, model_name=self.model_name)
 
-        ai_message = model.predict_messages(history.messages, functions=FUNCTIONS)
+        ai_message = model.predict_messages(history_messages, functions=FUNCTIONS)
         with context.with_request_context(history.wallet_address, message_id):
             if not has_sent_bot_response:  # when the output has function_call  
                 bot_response = evaluate(ai_message)
+                timing.log('response_done')
                 bot_flush(bot_response)
-        timing.log('response_done')
+            else:
+                timing.log('response_done')
 
         response = f'Timings - {timing.report()}'
         system_chat_message_id = send(Response(response=response, actor='system'), before_message_id=before_message_id)
-        history.messages.append(SystemMessage(content=response, additional_kwargs={'message_id':system_chat_message_id, 'before_message_id':before_message_id}))
+        history.add_system_message(response, message_id=system_chat_message_id, before_message_id=before_message_id)
 
 def evaluate(message: BaseMessage):
     command = message.additional_kwargs['function_call']['name']

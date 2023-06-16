@@ -6,7 +6,12 @@ import uuid
 
 from langchain.schema import AgentAction, AgentFinish, LLMResult
 from langchain.prompts.base import BaseOutputParser
-from langchain.schema import BaseMessage
+from langchain.schema import (
+    BaseMessage,
+    AIMessage,
+    HumanMessage,
+    SystemMessage
+)
 
 import utils
 from .display_widgets import parse_widgets_into_text
@@ -26,13 +31,6 @@ class ChatMessage:
     actor: str
     content: str
     message_id: Optional[uuid.UUID]
-
-
-@dataclass
-class ChatHistory2: # for ChatOpenAI models
-    messages: List[BaseMessage]
-    session_id: uuid.UUID
-    wallet_address: Optional[str]
 
 
 @dataclass
@@ -148,6 +146,27 @@ class ChatHistory:
                 total_count += count
         return "\n".join(ret)
 
+    def to_openai_messages(self, system_prefix: Optional[str] = "System", before_message_id : Optional[uuid.UUID] = None) -> List[BaseMessage]:
+        ret = []
+        for message in self:
+            if before_message_id is not None and message.message_id == before_message_id:
+                break
+            if message.actor == 'user':
+                Message = HumanMessage
+            elif message.actor == 'system':
+                if system_prefix is None:
+                    continue
+                Message = SystemMessage
+            elif message.actor == 'bot':
+                Message = AIMessage
+            elif message.actor == 'commenter':
+                # ignore these
+                continue
+            else:
+                assert 0, f'unrecognized actor: {message.actor}'
+            ret.append(Message(content=message.content))
+        return ret
+    
     @classmethod
     def new(cls, session_id: uuid.UUID, wallet_address: Optional[str] = None):
         return cls(messages=[], session_id=session_id, wallet_address=wallet_address)
