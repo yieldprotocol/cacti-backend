@@ -1,5 +1,6 @@
 import inspect
 import os
+import json
 
 from web3 import Web3
 import tiktoken
@@ -10,6 +11,10 @@ import traceback
 import context
 
 from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL
+
+
+with open(f"{os.getcwd()}/knowledge_base/functions.json", 'r') as f:
+    FUNCTIONS = json.load(f)
 
 
 def set_api_key():
