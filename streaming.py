@@ -2,6 +2,7 @@ from typing import Any, Callable
 
 from text_generation import Client
 from langchain.llms import OpenAI, HuggingFaceTextGenInference
+from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.agents import initialize_agent
 from langchain.callbacks.base import BaseCallbackManager
@@ -28,7 +29,7 @@ class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
         self.new_token_handler(token)
 
 
-def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
+def get_streaming_llm(new_token_handler, model_name=None, max_tokens=200):
     if model_name=='huggingface-llm':
         # falls back to non-streaming if none provided
         streaming_kwargs = dict(
@@ -60,16 +61,17 @@ def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
             model_name=model_name,
         ) if model_name else {}
 
-        llm = OpenAI(
+        model = OpenAI if not model_name else ChatOpenAI
+        llm = model(
             temperature=0.0,
-            max_tokens=max_tokens,
+            max_tokens=200,
             **streaming_kwargs,
             **model_kwargs,
         )
     return llm
 
 
-def get_streaming_chain(prompt, new_token_handler, use_api_chain=False, model_name=None, max_tokens=-1):
+def get_streaming_chain(prompt, new_token_handler, use_api_chain=False, model_name=None, max_tokens=200):
     llm = get_streaming_llm(new_token_handler, model_name=model_name, max_tokens=max_tokens)
 
     if use_api_chain:

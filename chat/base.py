@@ -6,6 +6,7 @@ import uuid
 
 from langchain.schema import AgentAction, AgentFinish, LLMResult
 from langchain.prompts.base import BaseOutputParser
+from langchain.schema import BaseMessage
 
 import utils
 from .display_widgets import parse_widgets_into_text
@@ -25,6 +26,13 @@ class ChatMessage:
     actor: str
     content: str
     message_id: Optional[uuid.UUID]
+
+
+@dataclass
+class ChatHistory2: # for ChatOpenAI models
+    messages: List[BaseMessage]
+    session_id: uuid.UUID
+    wallet_address: Optional[str]
 
 
 @dataclass
