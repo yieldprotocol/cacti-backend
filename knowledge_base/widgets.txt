@@ -239,13 +239,13 @@ Return value description:
 -a summarized answer with source citations
 ---
 Widget magic command: <|display-zksync-deposit({token},{amount})|>
-Description of widget: This widget is used when the user wants to bridge and deposit tokens from mainnet to zksync L2
+Description of widget: This widget is used when the user wants to bridge and deposit tokens from mainnet L1 to zksync L2
 Required parameters:
 -{token}: token to deposit
 -{amount}: quantity to deposit
 ---
 Widget magic command: <|display-zksync-withdraw({token},{amount})|>
-Description of widget: This widget is used when the user wants to withdraw tokens from zksync L2 to mainnet
+Description of widget: This widget is used when the user wants to withdraw tokens from zksync L2 to mainnet L1
 Required parameters:
 -{token}: token to withdraw
 -{amount}: quantity to withdraw
