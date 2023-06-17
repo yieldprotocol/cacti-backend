@@ -82,26 +82,58 @@ class ChatGPTFunctionCallChat(BaseChat):
             ), last_chat_message_id=bot_chat_message_id, before_message_id=before_message_id)
             has_sent_bot_response = True
 
-        model = streaming.get_streaming_llm(bot_new_token_handler, model_name=self.model_name)
+        new_token_handler = bot_new_token_handler
+        response_buffer = ""
+
+        def injection_handler(token):
+            nonlocal new_token_handler, response_buffer
+
+            response_buffer = response_buffer + token if type(token)==str else token
+            response_buffer = evaluate(response_buffer)
+            
+            if isinstance(response_buffer, Callable):  # handle delegated streaming
+                def handler(token):
+                    nonlocal new_token_handler
+                    timing.log('first_visible_widget_response_token')
+                    return new_token_handler(token)
+                response_buffer(handler)
+                response_buffer = ""
+                return
+            elif isinstance(response_buffer, Generator):  # handle stream of widgets
+                for item in response_buffer:
+                    timing.log('first_visible_widget_response_token')
+                    new_token_handler(str(item) + "\n")
+                response_buffer = ""
+                return
+            else:
+                # keep waiting
+                token = response_buffer
+                response_buffer = ""
+                new_token_handler(token)
+                return
+
+        model = streaming.get_streaming_llm(injection_handler, model_name=self.model_name)
 
         ai_message = model.predict_messages(history_messages, functions=FUNCTIONS)
         with context.with_request_context(history.wallet_address, message_id):
             if not has_sent_bot_response:  # when the output has function_call  
-                bot_response = evaluate(ai_message)
+                injection_handler(ai_message)
                 timing.log('response_done')
-                bot_flush(bot_response)
             else:
                 timing.log('response_done')
+
+        if bot_chat_message_id is not None:
+            bot_flush(bot_response)
 
         response = f'Timings - {timing.report()}'
         system_chat_message_id = send(Response(response=response, actor='system'), before_message_id=before_message_id)
         history.add_system_message(response, message_id=system_chat_message_id, before_message_id=before_message_id)
 
 def evaluate(message: BaseMessage):
-    command = message.additional_kwargs['function_call']['name']
-    params = list(json.loads(message.additional_kwargs['function_call']['arguments']).values())
+    command = message.additional_kwargs['function_call']['name'] if type(message)!=str else message
+    params = list(json.loads(message.additional_kwargs['function_call']['arguments']).values()) if type(message)!=str else ''
 
-    print('found command:', command, params)
+    if type(message)!=str: print('found command:', command, params) 
     if command == 'fetch_nft_search':
         return fetch_nft_search(*params)
     elif command == 'fetch_price':
@@ -142,30 +174,31 @@ def evaluate(message: BaseMessage):
         return fetch_app_info(*params)
     elif command == 'fetch_scraped_sites':
         return fetch_scraped_sites(*params)
-    elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
+    elif command == '_'.join(aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE.split('-')):
         return str(exec_aave_operation(*params, operation='supply'))
-    elif command == aave.AaveBorrowContractWorkflow.WORKFLOW_TYPE:
+    elif command == '_'.join(aave.AaveBorrowContractWorkflow.WORKFLOW_TYPE.split('-')):
         return str(exec_aave_operation(*params, operation='borrow'))
-    elif command == aave.AaveRepayContractWorkflow.WORKFLOW_TYPE:
+    elif command == '_'.join(aave.AaveRepayContractWorkflow.WORKFLOW_TYPE.split('-')):
         return str(exec_aave_operation(*params, operation='repay'))
-    elif command == aave.AaveWithdrawContractWorkflow.WORKFLOW_TYPE:
+    elif command == '_'.join(aave.AaveWithdrawContractWorkflow.WORKFLOW_TYPE.split('-')):
         return str(exec_aave_operation(*params, operation='withdraw'))
     elif command == 'ens_from_address':
         return str(ens_from_address(*params))
     elif command == 'address_from_ens':
         return str(address_from_ens(*params))
-    elif command == ens.ENSRegistrationContractWorkflow.WORKFLOW_TYPE:
+    elif command == '_'.join(ens.ENSRegistrationContractWorkflow.WORKFLOW_TYPE.split('-')):
         return str(register_ens_domain(*params))
-    elif command == ens.ENSSetTextWorkflow.WORKFLOW_TYPE:
+    elif command == '_'.join(ens.ENSSetTextWorkflow.WORKFLOW_TYPE.split('-')):
         return str(set_ens_text(*params))
-    elif command == ens.ENSSetPrimaryNameWorkflow.WORKFLOW_TYPE:
+    elif command == '_'.join(ens.ENSSetPrimaryNameWorkflow.WORKFLOW_TYPE.split('-')):
         return str(set_ens_primary_name(*params))
-    elif command == ens.ENSSetAvatarNFTWorkflow.WORKFLOW_TYPE:
+    elif command == '_'.join(ens.ENSSetAvatarNFTWorkflow.WORKFLOW_TYPE.split('-')):
         return str(set_ens_avatar_nft(*params))
     elif command.startswith('display_'):
         return f"<|{'-'.join(command.split('_'))}({','.join(params)})|>"
     else:
         # unrecognized command, just return for now
-        # assert 0, 'unrecognized command: %s' % f"<|{'-'.join(command.split('_'))}({','.join(params)})|>"
-        return f"<|{'-'.join(command.split('_'))}({','.join(params)})|>"
+        # assert 0, 'unrecognized command: %s' % command
+        # return command
+        return command
 
