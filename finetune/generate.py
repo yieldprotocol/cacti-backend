@@ -21,7 +21,7 @@ from .dataset import (
 )
 
 
-NUM_DATAPOINTS = 4000
+NUM_DATAPOINTS = 1000
 
 
 @dataclass
@@ -713,8 +713,8 @@ def generate_dataset():
                 task_info=datapoint_task_info,
             )
             datapoints.append(datapoint)
-        if datapoints:
-            yield datapoints[-1]  # only yield last one for now, for better balance
+        for datapoint in datapoints:
+            yield datapoint
 
 
 def run():
