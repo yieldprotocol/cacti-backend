@@ -181,7 +181,7 @@ Required Parameters:
 -{value}: value of the text record
 ---
 Widget magic command: <|set-ens-primary-name({domain})|>
-Description of widget: This widget is used when the user wants to set a primary ENS name for their connected wallet account 
+Description of widget: This widget is used when the user wants to set a primary ENS name for their connected wallet account
 Required Parameters:
 -{domain}: domain name to use as primary ENS name
 ---
@@ -223,3 +223,17 @@ Required Parameters:
 -{network}: network or blockchain of the project. Default to Ethereum if not specified
 -{token}: token to deposit in the project
 -{amount}: amount of token to deposit in the project
+---
+Widget magic command: <|fetch-app-info({query})|>
+Description of widget: This widget is used when we need to handle common questions and answers about the chat assistant app, what it can do, how to interact with it, at a high-level. Only useful for questions about the chat app experience. It does not know specific information about the web3 ecosystem, of tokens or NFTs or contracts, or access to live data and APIs.
+Required parameters:
+-{query}: a standalone query with all relevant contextual details pertaining to the chat web application
+Return value description:
+-an answer to the question, with suggested follow-up questions if available
+---
+Widget magic command: <|fetch-scraped-sites({query})|>
+Description of widget: This widget is used when we need to answer questions using general content scraped from web3 sites. It does not know about this app or about widget magic commands for invoking transactions or fetching data about specific things like NFTs or balances.
+Required parameters:
+-{query}: a standalone question representing information to be retrieved from the index
+Return value description:
+-a summarized answer with source citations

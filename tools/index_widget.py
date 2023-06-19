@@ -3,7 +3,7 @@ import json
 import re
 import requests
 from dataclasses import dataclass, asdict
-from typing import Any, Dict, Generator, List, Optional, Union, Literal, TypedDict
+from typing import Any, Callable, Dict, Generator, List, Optional, Union, Literal, TypedDict
 import traceback
 
 from langchain.llms import OpenAI
@@ -12,6 +12,7 @@ from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
 
 import ui_workflows
+import config
 import context
 import utils
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
@@ -29,6 +30,7 @@ from ui_workflows import (
 from .index_lookup import IndexLookupTool
 
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
+
 
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
 
@@ -52,12 +54,16 @@ class IndexWidgetTool(IndexLookupTool):
     """Tool for searching a widget index and figuring out how to respond to the question."""
 
     _chain: LLMChain
+    _evaluate_widgets: bool
 
     def __init__(
             self,
             *args,
             **kwargs
     ) -> None:
+        evaluate_widgets = kwargs.pop('evaluate_widgets', True)
+        model_name = kwargs.pop('model_name', None)
+
         prompt = PromptTemplate(
             input_variables=["task_info", "question"],
             template=TEMPLATE,
@@ -85,17 +91,25 @@ class IndexWidgetTool(IndexLookupTool):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
-                while '<|' in response_buffer:
+                while '<|' in response_buffer and self._evaluate_widgets:
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
-                        if isinstance(response_buffer, Generator):  # handle stream of widgets
+                        if isinstance(response_buffer, Callable):  # handle delegated streaming
+                            def handler(token):
+                                nonlocal new_token_handler
+                                timing.log('first_visible_widget_response_token')
+                                return new_token_handler(token)
+                            response_buffer(handler)
+                            response_buffer = ""
+                            return
+                        elif isinstance(response_buffer, Generator):  # handle stream of widgets
                             for item in response_buffer:
                                 timing.log('first_visible_widget_response_token')
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
-                        if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
                             # there are no two independent widgets on the same line, otherwise we can't
@@ -118,10 +132,11 @@ class IndexWidgetTool(IndexLookupTool):
                     # we have found a line-break in the response, switch to the terminal state to mask subsequent output
                     response_state = 2
 
-        chain = streaming.get_streaming_chain(prompt, injection_handler)
+        chain = streaming.get_streaming_chain(prompt, injection_handler, model_name=model_name)
         super().__init__(
             *args,
             _chain=chain,
+            _evaluate_widgets=evaluate_widgets,
             content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear. You can look up live prices, DeFi yields, wallet balances, ENS information, token contract addresses, do transfers or swaps or deposit tokens to farm yields, or search for NFTs, and retrieve data about NFT collections, assets, trait names and trait values. It cannot help the user with understanding how to use the app or how to perform certain actions.",
             input_description="a standalone query phrase with all relevant contextual details mentioned explicitly without using pronouns in order to invoke the right widget",
             output_description="a summarized answer with relevant magic command for widget(s), or a question prompt for more information to be provided",
@@ -140,7 +155,7 @@ class IndexWidgetTool(IndexLookupTool):
         return result.strip()
 
 
-def iterative_evaluate(phrase: str) -> Union[str, Generator]: # fix syntax on python3.8.10 Union[str|Generator]
+def iterative_evaluate(phrase: str) -> Union[str, Generator, Callable]:
     while True:
         # before we had streaming, we could use this
         #eval_phrase = RE_COMMAND.sub(replace_match, phrase)
@@ -176,7 +191,7 @@ def sanitize_str(s: str) -> str:
     return s
 
 
-def replace_match(m: re.Match) -> Union[str, Generator]: # fix syntax on python3.8.10 Union[str|Generator]
+def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
     command = m.group('command')
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []
@@ -218,13 +233,17 @@ def replace_match(m: re.Match) -> Union[str, Generator]: # fix syntax on python3
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
+    elif command == 'fetch-app-info':
+        return fetch_app_info(*params)
+    elif command == 'fetch-scraped-sites':
+        return fetch_scraped_sites(*params)
     elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
-    elif command == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
+    elif command == aave.AaveBorrowContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='borrow'))
-    elif command == 'aave-repay':
+    elif command == aave.AaveRepayContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='repay'))
-    elif command == 'aave-withdraw':
+    elif command == aave.AaveWithdrawContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='withdraw'))
     elif command == 'ens-from-address':
         return str(ens_from_address(*params))
@@ -307,6 +326,40 @@ def fetch_eth_out(wallet_address: str) -> str:
 @error_wrap
 def fetch_gas(wallet_address: str) -> str:
     return etherscan.get_all_gas_for_address(wallet_address)
+
+
+@error_wrap
+def fetch_app_info(query: str) -> Callable:
+    def fn(token_handler):
+        app_info_index = config.initialize(config.app_info_index)
+        tool = dict(
+            type="tools.index_app_info.IndexAppInfoTool",
+            _streaming=True,
+            name="AppInfoIndexAnswer",
+            index=app_info_index,
+            top_k=3,
+        )
+        tool = streaming.get_streaming_tools([tool], token_handler)[0]
+        tool._run(query)
+    return fn
+
+
+@error_wrap
+def fetch_scraped_sites(query: str) -> Callable:
+    def fn(token_handler):
+        scraped_sites_index = config.initialize(config.scraped_sites_index)
+        tool = dict(
+            type="tools.index_answer.IndexAnswerTool",
+            _streaming=True,
+            name="ScrapedSitesIndexAnswer",
+            content_description="",  # not used
+            index=scraped_sites_index,
+            top_k=3,
+            source_key="url",
+        )
+        tool = streaming.get_streaming_tools([tool], token_handler)[0]
+        tool._run(query)
+    return fn
 
 
 class ListContainer(ContainerMixin, list):

@@ -48,12 +48,11 @@ HISTORY_TOKEN_LIMIT = 2500
 
 @registry.register_class
 class BasicAgentChat(BaseChat):
-    def __init__(self, tools: List[BaseTool], show_thinking: bool = True) -> None:
+    def __init__(self, tools: List[BaseTool], model_name: Optional[str] = None) -> None:
         super().__init__()
-        self.tools = tools # gives a list of tools 
-        self.show_thinking = show_thinking
+        self.tools = tools
+        self.model_name = model_name
 
-    # core function of interaction between bot and user, utilizes various data wrappers from base.py
     def receive_input(
             self,
             history: ChatHistory,
@@ -92,7 +91,6 @@ class BasicAgentChat(BaseChat):
         bot_response = ''
         has_sent_bot_response = False
 
-        # the below nested functions are mainly taking care of streaming, with core function send() -- for generator on Response
         def system_flush(response):
             nonlocal system_chat_message_id, has_sent_bot_response
             response = response.strip()
@@ -162,6 +160,7 @@ class BasicAgentChat(BaseChat):
             tools,
             system_new_token_handler,
             verbose=True,
+            model_name=self.model_name,
             agent_kwargs=dict(
                 ai_prefix="Assistant",
                 human_prefix="User",

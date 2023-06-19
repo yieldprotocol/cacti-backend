@@ -4,7 +4,7 @@ import registry
 #  5 types of indexes used for info/doc retrieval and question - answering
 widget_index = dict(
     type="index.weaviate.WeaviateIndex",
-    index_name="WidgetV10",
+    index_name="WidgetV11",
     text_key="content",
 )
 app_info_index = dict(
@@ -40,36 +40,11 @@ default_config = dict(
         type="chat.basic_agent.BasicAgentChat", # type of chat agent
         tools=[
             dict(
-                type="tools.index_answer.IndexAnswerTool",
-                _streaming=True,  # if specified, this is lazily constructed in chat to support streaming
-                name="ScrapedSitesIndexAnswer",
-                content_description="general content scraped from web3 sites. It does not know about this app or about widget magic commands for invoking transactions or fetching data about specific things like NFTs or balances.",
-                index=scraped_sites_index,
-                top_k=3,
-                source_key="url",
-            ),
-            dict(
                 type="tools.index_widget.IndexWidgetTool",
                 _streaming=True,  # if specified, this is lazily constructed in chat to support streaming
                 name="WidgetIndexAnswer",
                 index=widget_index,
                 top_k=10,
-            ),
-            dict(
-                type="tools.index_app_info.IndexAppInfoTool",
-                _streaming=True,  # if specified, this is lazily constructed in chat to support streaming
-                name="AppInfoIndexAnswer",
-                index=app_info_index,
-                top_k=3,
-            ),
-            dict(
-                type="tools.index_api_tool.IndexAPITool",
-                _streaming=True,
-                name="IndexAPITool",
-                index=api_docs_index,
-                crypto_tokens_index=crypto_tokens_index,
-                top_k=1,
-                return_direct=True,
             ),
         ],
     )

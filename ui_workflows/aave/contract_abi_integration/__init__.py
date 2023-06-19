@@ -1,1 +1,4 @@
 from .aave_supply_contract_workflow import AaveSupplyContractWorkflow
+from .aave_borrow_contract_workflow import AaveBorrowContractWorkflow
+from .aave_repay_contract_workflow import AaveRepayContractWorkflow
+from .aave_withdraw_contract_workflow import AaveWithdrawContractWorkflow

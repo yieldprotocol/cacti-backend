@@ -60,7 +60,7 @@ HISTORY_TOKEN_LIMIT = 1800
 
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True, model_name: Optional[str] = None, evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.rephrase_prompt = PromptTemplate(
@@ -77,6 +77,8 @@ class RephraseWidgetSearchChat(BaseChat):
         self.widget_index = widget_index
         self.top_k = top_k
         self.show_thinking = show_thinking
+        self.evaluate_widgets = evaluate_widgets
+        self.model_name = model_name
 
     def receive_input(
             self,
@@ -153,7 +155,7 @@ class RephraseWidgetSearchChat(BaseChat):
 
             timing.log('first_token')
             timing.log('first_widget_token')  # for comparison with basic agent
-
+    
             response_buffer += token
             if response_state == 0:  # we are still waiting for response_prefix to appear
                 if response_prefix not in response_buffer:
@@ -166,17 +168,25 @@ class RephraseWidgetSearchChat(BaseChat):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
-                while '<|' in response_buffer:
+                while '<|' in response_buffer and self.evaluate_widgets:
                     if '|>' in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
-                        if isinstance(response_buffer, Generator):  # handle stream of widgets
+                        if isinstance(response_buffer, Callable):  # handle delegated streaming
+                            def handler(token):
+                                nonlocal new_token_handler
+                                timing.log('first_visible_widget_response_token')
+                                return new_token_handler(token)
+                            response_buffer(handler)
+                            response_buffer = ""
+                            return
+                        elif isinstance(response_buffer, Generator):  # handle stream of widgets
                             for item in response_buffer:
                                 timing.log('first_visible_widget_response_token')
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
-                        if len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
                             # there are no two independent widgets on the same line, otherwise we can't
@@ -210,7 +220,7 @@ class RephraseWidgetSearchChat(BaseChat):
             "stop": ["Input", "User"],
         }
 
-        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler)
+        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=self.model_name)
 
         with context.with_request_context(history.wallet_address, message_id):
             result = chain.run(example).strip()
