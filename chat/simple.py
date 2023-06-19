@@ -22,7 +22,7 @@ Chat History:
 {history}
 Assistant:'''
 
-
+# this is an old obsolete toy demo
 
 @registry.register_class
 class SimpleChat(BaseChat):

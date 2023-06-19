@@ -1,6 +1,7 @@
 import registry
 
-
+# start everything from this page
+#  5 types of indexes used for info/doc retrieval and question - answering
 widget_index = dict(
     type="index.weaviate.WeaviateIndex",
     index_name="WidgetV10",
@@ -32,11 +33,11 @@ crypto_tokens_index = dict(
     extra_keys=["name", "symbol"],
 )
 
-
+# config is mirroring a json
 default_config = dict(
     type="system.System",
     chat=dict(
-        type="chat.basic_agent.BasicAgentChat",
+        type="chat.basic_agent.BasicAgentChat", # type of chat agent
         tools=[
             dict(
                 type="tools.index_answer.IndexAnswerTool",
@@ -75,13 +76,13 @@ default_config = dict(
 )
 
 
-def initialize(cfg):
+def initialize(cfg): # initialize the config of the chat model
     if isinstance(cfg, dict):
         # recursively initialize objects
         _cfg = {k: initialize(v) for k, v in cfg.items()}
         if 'type' in _cfg and not _cfg.get('_streaming'):
             _type = _cfg.pop('type')
-            _cls = registry.get_class(_type)
+            _cls = registry.get_class(_type) # registry maps the type to a class name
             print(f'Initializing instance of type: {_type}')
             return _cls(**_cfg)
         return _cfg
@@ -93,7 +94,7 @@ def initialize(cfg):
     return cfg
 
 
-def initialize_streaming(cfg, new_token_handler):
+def initialize_streaming(cfg, new_token_handler): # dedicated to streaming service
     if isinstance(cfg, dict):
         # recursively initialize objects
         _cfg = {k: initialize_streaming(v, new_token_handler) for k, v in cfg.items()}

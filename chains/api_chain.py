@@ -7,7 +7,7 @@ from langchain.requests import RequestsWrapper
 import registry
 
 @registry.register_class
-class IndexAPIChain(LangChainAPIChain):
+class IndexAPIChain(LangChainAPIChain): # deprecated
     api_docs_key: str = "api_docs"
     headers_key: str = "headers"
 

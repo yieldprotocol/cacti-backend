@@ -50,9 +50,10 @@ HISTORY_TOKEN_LIMIT = 2500
 class BasicAgentChat(BaseChat):
     def __init__(self, tools: List[BaseTool], show_thinking: bool = True) -> None:
         super().__init__()
-        self.tools = tools
+        self.tools = tools # gives a list of tools 
         self.show_thinking = show_thinking
 
+    # core function of interaction between bot and user, utilizes various data wrappers from base.py
     def receive_input(
             self,
             history: ChatHistory,
@@ -91,6 +92,7 @@ class BasicAgentChat(BaseChat):
         bot_response = ''
         has_sent_bot_response = False
 
+        # the below nested functions are mainly taking care of streaming, with core function send() -- for generator on Response
         def system_flush(response):
             nonlocal system_chat_message_id, has_sent_bot_response
             response = response.strip()

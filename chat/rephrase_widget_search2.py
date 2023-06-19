@@ -55,7 +55,7 @@ HISTORY_TOKEN_LIMIT = 1800
 
 
 @registry.register_class
-class RephraseWidgetSearchChat(BaseChat):
+class RephraseWidgetSearchChat(BaseChat): # the second LLM invoke, called from basic_agent.py
     def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()

@@ -140,7 +140,7 @@ class IndexWidgetTool(IndexLookupTool):
         return result.strip()
 
 
-def iterative_evaluate(phrase: str) -> Union[str | Generator]:
+def iterative_evaluate(phrase: str) -> Union[str, Generator]: # fix syntax on python3.8.10 Union[str|Generator]
     while True:
         # before we had streaming, we could use this
         #eval_phrase = RE_COMMAND.sub(replace_match, phrase)
@@ -176,7 +176,7 @@ def sanitize_str(s: str) -> str:
     return s
 
 
-def replace_match(m: re.Match) -> Union[str | Generator]:
+def replace_match(m: re.Match) -> Union[str, Generator]: # fix syntax on python3.8.10 Union[str|Generator]
     command = m.group('command')
     params = m.group('params')
     params = list(map(sanitize_str, params.split(','))) if params else []

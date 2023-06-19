@@ -4,8 +4,8 @@ from dataclasses_json import dataclass_json
 from typing import Any, Callable, Dict, List, Optional, Union
 import uuid
 
-from langchain.schema import AgentAction, AgentFinish, LLMResult
-from langchain.prompts.base import BaseOutputParser
+from langchain.schema import AgentAction, AgentFinish, LLMResult # schemes for langchain to commute in thought process
+from langchain.prompts.base import BaseOutputParser # output parser
 
 import utils
 from .display_widgets import parse_widgets_into_text
@@ -13,7 +13,7 @@ from .display_widgets import parse_widgets_into_text
 
 @dataclass_json
 @dataclass
-class Response:
+class Response: # custom wrapper json for the response of the prompt+input sequence
     response: str
     actor: str = 'bot'
     still_thinking: bool = False
@@ -21,14 +21,14 @@ class Response:
 
 
 @dataclass
-class ChatMessage:
+class ChatMessage: # wrapper for the chat message in an OpenAI way (actor=assistant, user, system, etc.)
     actor: str
     content: str
     message_id: Optional[uuid.UUID]
 
 
 @dataclass
-class ChatHistory:
+class ChatHistory: # used for recording the chat history with the user, incorporating the above, utility class.
     messages: List[ChatMessage]
     session_id: uuid.UUID
     wallet_address: Optional[str]
@@ -146,7 +146,7 @@ class ChatHistory:
 
 
 
-class BaseChat(ABC):
+class BaseChat(ABC): # base class of BasicAgentChat (call 1), is an abstract class
     """Common interface for chat."""
 
     @abstractmethod
