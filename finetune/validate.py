@@ -80,6 +80,23 @@ _ = [
         ],
     ),
 ]
+chat_configs = [
+    #dict(
+    #    type="chat.chatgpt_function_call.ChatGPTFunctionCallChat",
+    #    model_name="gpt-3.5-turbo-0613",
+    #    evaluate_widgets=False,
+    #),
+    #dict(
+    #    type="chat.chatgpt_function_call.ChatGPTFunctionCallChat",
+    #    model_name="gpt-3.5-turbo-16k-0613",
+    #    evaluate_widgets=False,
+    #),
+    dict(
+        type="chat.chatgpt_function_call.ChatGPTFunctionCallChat",
+        model_name="gpt-4-0613",
+        evaluate_widgets=False,
+    ),
+]
 
 
 def get_nft_flow() -> Iterable[Message]:

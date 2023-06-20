@@ -40,6 +40,7 @@ class Message:
                 return payload[:1].upper() + payload[1:]
             else:
                 return payload
+        return self.raw_payload
         return self.eval_payload if self.eval_payload is not None else self.raw_payload
 
 

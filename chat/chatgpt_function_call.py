@@ -32,9 +32,10 @@ from tools.index_widget import *
 
 @registry.register_class
 class ChatGPTFunctionCallChat(BaseChat):
-    def __init__(self, model_name: Optional[str] = "gpt-3.5-turbo-0613") -> None:
+    def __init__(self, model_name: Optional[str] = "gpt-3.5-turbo-0613", evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.model_name = model_name
+        self.evaluate_widgets = evaluate_widgets
 
     def receive_input(
             self,
@@ -46,7 +47,7 @@ class ChatGPTFunctionCallChat(BaseChat):
     ) -> None:
         userinput = userinput.strip()
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
-        
+
         history_messages = history.to_openai_messages(system_prefix=None)  # omit system messages
         timing.init()
 
@@ -88,9 +89,12 @@ class ChatGPTFunctionCallChat(BaseChat):
         def injection_handler(token):
             nonlocal new_token_handler, response_buffer
 
-            response_buffer = response_buffer + token if type(token)==str else token
-            response_buffer = evaluate(response_buffer)
-            
+            if isinstance(token, str):
+                response_buffer = response_buffer + token
+            else:
+                response_buffer = token
+                response_buffer = evaluate(response_buffer, self.evaluate_widgets)
+
             if isinstance(response_buffer, Callable):  # handle delegated streaming
                 def handler(token):
                     nonlocal new_token_handler
@@ -106,7 +110,12 @@ class ChatGPTFunctionCallChat(BaseChat):
                 response_buffer = ""
                 return
             else:
-                # keep waiting
+                if '<' in response_buffer:
+                    if '|>' in response_buffer:
+                        response_buffer = evaluate(response_buffer, self.evaluate_widgets)
+                    else:
+                        # keep waiting
+                        return
                 token = response_buffer
                 response_buffer = ""
                 new_token_handler(token)
@@ -116,7 +125,7 @@ class ChatGPTFunctionCallChat(BaseChat):
 
         ai_message = model.predict_messages(history_messages, functions=FUNCTIONS)
         with context.with_request_context(history.wallet_address, message_id):
-            if not has_sent_bot_response:  # when the output has function_call  
+            if not has_sent_bot_response:  # when the output has function_call
                 injection_handler(ai_message)
                 timing.log('response_done')
             else:
@@ -129,11 +138,24 @@ class ChatGPTFunctionCallChat(BaseChat):
         system_chat_message_id = send(Response(response=response, actor='system'), before_message_id=before_message_id)
         history.add_system_message(response, message_id=system_chat_message_id, before_message_id=before_message_id)
 
-def evaluate(message: BaseMessage):
+def evaluate(message: BaseMessage, evaluate_widgets: bool):
+    if isinstance(message, str):
+        print('str', message)
+        if '<|' in message:
+            if not evaluate_widgets:
+                return message.replace('_', '-')
+        return message
+
+    print('evaluate', message)
     command = message.additional_kwargs['function_call']['name'] if type(message)!=str else message
     params = list(json.loads(message.additional_kwargs['function_call']['arguments']).values()) if type(message)!=str else ''
 
-    if type(message)!=str: print('found command:', command, params) 
+    if not evaluate_widgets:
+        ret = f"<|{command.replace('_', '-')}({','.join(params)})|>"
+        print('ret', ret)
+        return ret
+
+    if type(message)!=str: print('found command:', command, params)
     if command == 'fetch_nft_search':
         return fetch_nft_search(*params)
     elif command == 'fetch_price':
@@ -201,4 +223,3 @@ def evaluate(message: BaseMessage):
         # assert 0, 'unrecognized command: %s' % command
         # return command
         return command
-

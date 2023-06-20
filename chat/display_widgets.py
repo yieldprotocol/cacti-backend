@@ -13,6 +13,7 @@ RE_WIDGET = re.compile(r"\<\|(?P<command>display-[\w\-]*)\((?P<params>[^\n]*)\)\
 
 
 def parse_widgets_into_text(text: str) -> str:
+    #return text
     return RE_WIDGET.sub(_replace_match, text)
 
 
