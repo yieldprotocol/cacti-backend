@@ -306,6 +306,108 @@ def get_swap_flow() -> Iterable[Message]:
     yield Message("bot", f"<|display-uniswap({sell_token},{buy_token},{keyword},{amount})|>")
 
 
+def get_ens_lookup_flow() -> Iterable[Message]:
+    address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+    domain = "mydomain"
+    yield Message("user", f"ens for {address}")
+    yield Message("bot", f"<|ens-from-address({address})|>", domain)
+    address = "0x1234567890"
+    domain = "abcdef.eth"
+    yield Message("user", f"address for {domain}")
+    yield Message("bot", f"<|address-from-ens({domain})|>", address)
+
+
+def get_ens_registration_flow() -> Iterable[Message]:
+    domain = "abcdef.eth"
+    yield Message("user", f"register {domain}")
+    yield Message("bot", f"<|register-ens-domain({domain})|>", "A workflow step was presented.")
+    yield Message("user", f"set primary ENS name to {domain}")
+    yield Message("bot", f"<|set-ens-primary-name({domain})|>", "A transaction was presented for sending.")
+    query = "Rumble Kong"
+    yield Message("user", f"find some {query} NFTs")
+
+    network = "ethereum-mainnet"
+    address1 = "0xEf0182dc0574cd5874494a120750FD222FdB909a"
+    address2 = "0x0b87320F22C94e290e763c2F337dC0B44693a548"
+    collection1 = NFTCollection(
+        network=network,
+        address=address1,
+        name="RumbleKongLeague",
+        num_assets=10000,
+        preview_image_url="https://cdn.center.app/1/0xEf0182dc0574cd5874494a120750FD222FdB909a/4205/b75787d89f1204cb9e49293a15e3792ab3b96315ca1c8afb78b82d47bc6f172e.png",
+    )
+    collection2 = NFTCollection(
+        network=network,
+        address=address2,
+        name="Rumble Kong League Curry Flow",
+        num_assets=1278,
+        preview_image_url="https://cdn.center.app/1/0x0b87320F22C94e290e763c2F337dC0B44693a548/952/497e8ef8f7ab76542449afc1ceeeded124837ca3d686105383053ad4c5652f2e.png",
+    )
+
+    yield Message("bot", f"<|fetch-nft-search({query})|>", stream_to_str([
+        StreamingListContainer(operation="create", prefix="Searching"),
+        StreamingListContainer(operation="append", item=collection1),
+        StreamingListContainer(operation="append", item=collection2),
+        StreamingListContainer(operation="update", prefix=_get_result_list_prefix(2)),
+    ]))
+
+    price = "0.71 ETH"
+    token_id1 = "858"
+    token_name1 = f"Kong #{token_id1}"
+    token_id2 = "1136"
+    token_name2 = f"Kong #{token_id2}"
+    assets = [
+        NFTAsset(
+            network=collection1.network,
+            address=collection1.address,
+            token_id=token_id1,
+            collection_name=collection1.name,
+            name=token_name1,
+            preview_image_url='',
+            price=price,
+        ),
+        NFTAsset(
+            network=collection1.network,
+            address=collection1.address,
+            token_id=token_id2,
+            collection_name=collection1.name,
+            name=token_name2,
+            preview_image_url='',
+            price=price,
+        ),
+    ]
+    collection_assets_container = NFTCollectionAssets(
+        collection=collection1,
+        assets=assets,
+    )
+    name = "RumbleKongLeague"
+    yield Message("user", f"show me NFTs for sale with {name}")
+    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale({network},{address1})|>", str(collection_assets_container))
+    yield Message("user", f"buy nft {token_id2}")
+    yield Message("bot", f"<|fetch-nft-buy-asset({network},{address1},{token_id2})|>", f"<|display-buy-nft({address1},{token_id2})|>")
+    yield Message("user", f"set nft {token_id2} as avatar for {domain}")
+    yield Message("bot", f"<|set-ens-avatar-nft({domain},{address1},{token_id2})|>")
+
+
+def get_aave_flow() -> Iterable[Message]:
+    amount = 1
+    token = "ETH"
+    yield Message("user", f"deposit {amount} {token} into Aave")
+    yield Message("bot", f"<|aave-supply({token},{amount})|>", "A workflow step was presented.")
+    amount = 10
+    token = "USDC"
+    yield Message("user", f"borrow {amount} {token} on Aave")
+    yield Message("bot", f"<|aave-borrow({token},{amount})|>", "A workflow step was presented.")
+    amount = 2
+    token = "USDC"
+    yield Message("user", f"repay {amount} {token} on Aave")
+    yield Message("bot", f"<|aave-repay({token},{amount})|>", "A workflow step was presented.")
+    amount = 0.1
+    token = "ETH"
+    yield Message("user", f"withdraw {amount} {token} on Aave")
+    yield Message("bot", f"<|aave-withdraw({token},{amount})|>", "A workflow step was presented.")
+
+
 def get_validation_conversations() -> Iterable[Conversation]:
     yield Conversation(messages=list(get_nft_flow()))
     yield Conversation(messages=list(get_wallet_balance_flow()))
@@ -314,6 +416,9 @@ def get_validation_conversations() -> Iterable[Conversation]:
     yield Conversation(messages=list(get_transfer_flow()))
     yield Conversation(messages=list(get_price_flow()))
     yield Conversation(messages=list(get_swap_flow()))
+    yield Conversation(messages=list(get_ens_lookup_flow()))
+    yield Conversation(messages=list(get_ens_registration_flow()))
+    yield Conversation(messages=list(get_aave_flow()))
 
 
 def evaluate_chat(chat: chat.BaseChat):
@@ -358,6 +463,10 @@ def _get_widget_name(output):
         return None
 
 
+def _strip_quotes(output):
+    return output.replace('"', '').replace("'", "")
+
+
 def run():
     summary = collections.Counter()
     for ci, chat_config in enumerate(chat_configs):
@@ -367,7 +476,7 @@ def run():
         for prediction, label in evaluate_chat(chat):
             prediction = prediction.strip()
             label = label.strip()
-            widget_param_match = prediction == label
+            widget_param_match = _strip_quotes(prediction) == _strip_quotes(label)
             widget_match = _get_widget_name(prediction) == _get_widget_name(label)
             if widget_param_match:
                 counter['widget_param_match'] += 1
