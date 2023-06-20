@@ -118,7 +118,9 @@ class ChatGPTFunctionCallChat(BaseChat):
                         return
                 token = response_buffer
                 response_buffer = ""
-                new_token_handler(token)
+                if token:
+                    #print('flush', token)
+                    new_token_handler(token)
                 return
 
         model = streaming.get_streaming_llm(injection_handler, model_name=self.model_name)

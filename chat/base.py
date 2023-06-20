@@ -148,9 +148,7 @@ class ChatHistory:
 
     def to_openai_messages(self, system_prefix: Optional[str] = "System", before_message_id : Optional[uuid.UUID] = None) -> List[BaseMessage]:
         ret = [SystemMessage(content=(
-            "You are an assistant provided some fuctions. "
-            "You have to decide if they can answer the user's query. "
-            "If you found a suitable function but not all the input parameters are known, use an empty string for the missing parameters. "
+            "You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."
         ))]
         for message in self:
             if before_message_id is not None and message.message_id == before_message_id:
