@@ -313,6 +313,8 @@ def evaluate_chat(chat: chat.BaseChat):
         for i in range(0, len(conv.messages), 2):
             user_message  = conv.messages[i]
             bot_message = conv.messages[i + 1]
+            assert user_message.actor == 'user', user_message
+            assert bot_message.actor == 'bot', bot_message
 
             user_input = user_message.raw_payload
             completion = bot_message.raw_payload  # unprocessed version, expected output
@@ -340,6 +342,13 @@ def evaluate_chat(chat: chat.BaseChat):
 
 
 
+def _get_widget_name(output):
+    if '(' in output:
+        return output.split('(')[0]
+    else:
+        return None
+
+
 def run():
     summary = collections.Counter()
     for ci, chat_config in enumerate(chat_configs):
@@ -350,7 +359,7 @@ def run():
             prediction = prediction.strip()
             label = label.strip()
             widget_param_match = prediction == label
-            widget_match = prediction.split('(')[0] == label.split('(')[0]
+            widget_match = _get_widget_name(prediction) == _get_widget_name(label)
             if widget_param_match:
                 counter['widget_param_match'] += 1
             if widget_match:
