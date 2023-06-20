@@ -23,6 +23,7 @@ from tools.index_widget import (
 from .generate import (
     Conversation, Message, StreamingListContainer,
     stream_to_str,
+    handle_empty_params,
 )
 
 
@@ -234,6 +235,14 @@ def get_wallet_balance_flow() -> Iterable[Message]:
     balance2 = 654.321
     yield Message("user", f"how about {token2}?")
     yield Message("bot", f"<|fetch-my-balance({token2})|>", f"{balance2}")
+    address1 = "0x123456"
+    balance3 = 0.123
+    yield Message("user", f"what about that in {address1}?")
+    yield Message("bot", f"<|fetch-balance({token2},{address1})|>", f"{balance3}")
+    address2 = "0x789123"
+    balance4 = 0.1531
+    yield Message("user", f"and {address2}?")
+    yield Message("bot", f"<|fetch-balance({token2},{address2})|>", f"{balance4}")
 
 
 def get_app_info_flow() -> Iterable[Message]:
@@ -263,7 +272,7 @@ def get_transfer_flow() -> Iterable[Message]:
     address = "0x1234"
     amount = "123"
     yield Message("user", f"transfer {token} to {address}")
-    yield Message("bot", f"What quantity would you like to transfer?")
+    yield handle_empty_params(Message("bot", f"<|display-transfer({token},,{address})|>", f"What quantity would you like to transfer?"))
     yield Message("user", f"{amount}")
     yield Message("bot", f"<|display-transfer({token},{amount},{address})|>")
     token = "USDC"
@@ -289,7 +298,7 @@ def get_swap_flow() -> Iterable[Message]:
     keyword = "SELLAMOUNT"
     amount = 123
     yield Message("user", f"swap {sell_token} for {buy_token}")
-    yield Message("bot", f"What quantity of tokens would you like to swap?")
+    yield handle_empty_params(Message("bot", f"<|display-uniswap({sell_token},{buy_token},)|>", f"What quantity of tokens would you like to swap?"))
     yield Message("user", f"swap {amount} {sell_token} for {buy_token}")
     yield Message("bot", f"<|display-uniswap({sell_token},{buy_token},{keyword},{amount})|>")
     yield Message("user", f"actually swap {sell_token} for {amount} {buy_token}")

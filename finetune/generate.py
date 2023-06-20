@@ -21,6 +21,7 @@ from .dataset import (
 )
 
 
+EMPTY_PARAMS_ALLOWED = True
 NUM_DATAPOINTS = 1000
 
 
@@ -40,6 +41,15 @@ class Message:
             else:
                 return payload
         return self.eval_payload if self.eval_payload is not None else self.raw_payload
+
+
+
+def handle_empty_params(message):
+    if EMPTY_PARAMS_ALLOWED:
+        return message
+    else:
+        # omit the empty params payload and use the eval (text) version
+        return Message(message.actor, message.eval_payload)
 
 
 def stream_to_str(stream: List) -> str:
@@ -118,7 +128,7 @@ def generate_nft_flow(query=None) -> Iterable[Message]:
         msg.append(nft)
         message = " ".join(msg)
         yield Message("user", message)
-        yield Message("bot", "What kind of NFTs are you looking for?")
+        yield handle_empty_params(Message("bot", f"<|fetch-nft-search()|>", "What kind of NFTs are you looking for?"))
         for msg in generate_nft_flow(query=query):
             yield msg
         return
@@ -415,15 +425,15 @@ def generate_scraped_sites_flow() -> Iterable[Message]:
 
 
 def generate_gather_more_info_flow() -> Iterable[Message]:
-    messages, response = random.choice([
-        (["buy NFT", "search NFT", "find NFT"], "What kind of NFTs are you looking for?"),
-        (["what's my balance", "wallet balance", "token balance", "how many tokens"], "Which token would you like to check your balance for?"),
-        (["price", "live price", "fetch price"], "Which token would you like to check the price of?"),
-        ([random_transfer_verb()], "What token would you like to transfer and to which address?"),
+    messages, command, response = random.choice([
+        (["buy NFT", "search NFT", "find NFT"], "<|fetch-nft-search()|>", "What kind of NFTs are you looking for?"),
+        (["what's my balance", "wallet balance", "token balance", "how many tokens"], "<|fetch-my-balance()|>", "Which token would you like to check your balance for?"),
+        (["price", "live price", "fetch price"], "<|fetch-price()|>", "Which token would you like to check the price of?"),
+        ([random_transfer_verb()], "<|display-transfer(,,)|>", "What token would you like to transfer and to which address?"),
     ])
     message = random.choice(messages)
     yield Message("user", message)
-    yield Message("bot", f"{response}")
+    yield handle_empty_params(Message("bot", command, response))
     if rf() < 0.3:
         for msg in generate_gather_more_info_flow():
             yield msg
@@ -477,20 +487,20 @@ def generate_transfer_flow(token=None, address=None, amount=None) -> Iterable[Me
                 yield msg
     elif len(remaining_ambiguous_fields) == 1:
         if 'token' in remaining_ambiguous_fields:
-            yield Message("bot", f"Which token would you like to transfer {amount} of to {address}?")
+            yield handle_empty_params(Message("bot", f"<|display-transfer(,{amount},{address})|>", f"Which token would you like to transfer {amount} of to {address}?"))
         elif 'amount' in remaining_ambiguous_fields:
-            yield Message("bot", f"What amount of {token} would you like to transfer to {address}?")
+            yield handle_empty_params(Message("bot", f"<|display-transfer({token},,{address})|>", f"What amount of {token} would you like to transfer to {address}?"))
         elif 'address' in remaining_ambiguous_fields:
-            yield Message("bot", f"Which address would you like to transfer {amount} of {token} to?")
+            yield handle_empty_params(Message("bot", f"<|display-transfer({token},{amount},)|>", f"Which address would you like to transfer {amount} of {token} to?"))
         for msg in generate_transfer_flow(token=token, address=address, amount=amount):
             yield msg
     elif len(remaining_ambiguous_fields) == 2:
         if 'token' not in remaining_ambiguous_fields:
-            yield Message("bot", f"What quantity of {token} would you like to transfer, and to which address?")
+            yield handle_empty_params(Message("bot", f"<|display-transfer({token},,)|>", f"What quantity of {token} would you like to transfer, and to which address?"))
         elif 'amount' not in remaining_ambiguous_fields:
-            yield Message("bot", f"Which token would you like to transfer {amount} of, and to which address?")
+            yield handle_empty_params(Message("bot", f"<|display-transfer(,{amount},)|>", f"Which token would you like to transfer {amount} of, and to which address?"))
         elif 'address' not in remaining_ambiguous_fields:
-            yield Message("bot", f"Which token would you like to transfer to {address}, and what quantity?")
+            yield handle_empty_params(Message("bot", f"<|display-transfer(,,{address})|>", f"Which token would you like to transfer to {address}, and what quantity?"))
         for msg in generate_transfer_flow(token=token, address=address, amount=amount):
             yield msg
 
@@ -618,15 +628,28 @@ def generate_swap_flow(sell_token=None, buy_token=None, keyword=None, amount=Non
                 yield msg
     else:
         message = "I need more details to complete your swap."
+        command = "<|display-uniswap("
         if 'sell_token' in remaining_ambiguous_fields:
             message += " Which token would you like to sell?"
+        else:
+            command += sell_token
+        command += ","
         if 'buy_token' in remaining_ambiguous_fields:
             message += " Which token would you like to buy?"
+        else:
+            command += buy_token
+        command += ","
         if 'amount' in remaining_ambiguous_fields:
             message += " How much would you like to swap?"
+        else:
+            command += keyword
+        command += ","
         if 'keyword' in remaining_ambiguous_fields:
             message += " Which token is represented by the amount?"
-        yield Message("bot", message)
+        else:
+            command += amount
+        command += ")|>"
+        yield handle_empty_params(Message("bot", command, message))
         for msg in generate_swap_flow(sell_token=sell_token, buy_token=buy_token, keyword=keyword, amount=amount):
             yield msg
 
