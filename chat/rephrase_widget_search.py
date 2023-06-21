@@ -32,8 +32,6 @@ from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operat
 from tools.index_widget import *
 
 
-RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
-
 REPHRASE_TEMPLATE = \
 '''You are a rephrasing agent. You will be given a query which you have to rephrase, explicitly restating the task without pronouns and restating details based on the conversation history and new input. Restate verbatim ALL details/names/figures/facts/etc from past observations relevant to the task and ALL related entities.
 # Chat History:
@@ -155,7 +153,7 @@ class RephraseWidgetSearchChat(BaseChat):
 
             timing.log('first_token')
             timing.log('first_widget_token')  # for comparison with basic agent
-    
+
             response_buffer += token
             if response_state == 0:  # we are still waiting for response_prefix to appear
                 if response_prefix not in response_buffer:
@@ -168,8 +166,8 @@ class RephraseWidgetSearchChat(BaseChat):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
-                while '<|' in response_buffer and self.evaluate_widgets:
-                    if '|>' in response_buffer:
+                while WIDGET_START in response_buffer and self.evaluate_widgets:
+                    if WIDGET_END in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
                         if isinstance(response_buffer, Callable):  # handle delegated streaming
@@ -186,12 +184,12 @@ class RephraseWidgetSearchChat(BaseChat):
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
-                        elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        elif len(response_buffer.split(WIDGET_START)) == len(response_buffer.split(WIDGET_END)):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
                             # there are no two independent widgets on the same line, otherwise we can't
                             # detect the closing tag properly when there is nesting.
-                            response_buffer = response_buffer.replace('|>', '|>\n')
+                            response_buffer = response_buffer.replace(WIDGET_END, WIDGET_END + '\n')
                             break
                         else:
                             # keep waiting
@@ -199,6 +197,9 @@ class RephraseWidgetSearchChat(BaseChat):
                     else:
                         # keep waiting
                         return
+                if len(response_buffer) < len(WIDGET_START):
+                    # keep waiting
+                    return
                 token = response_buffer
                 response_buffer = ""
                 if token.strip():
