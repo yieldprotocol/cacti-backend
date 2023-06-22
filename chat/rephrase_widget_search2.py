@@ -51,8 +51,8 @@ Previous conversation history:
 Input: {question}
 ## Tool input:'''
 
-HISTORY_TOKEN_LIMIT = 1800
-
+# HISTORY_TOKEN_LIMIT = 1800
+HISTORY_TOKEN_LIMIT = 600
 
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
@@ -123,10 +123,13 @@ class RephraseWidgetSearchChat(BaseChat):
         def injection_handler(token):
             nonlocal new_token_handler, response_buffer, response_state, response_prefix
 
+            # this will ignore any subsequent token even if getting logged
             timing.log('first_token')
             timing.log('first_widget_token')  # for comparison with basic agent
     
             response_buffer += token
+            print("internal buffer:" + response_buffer + ", current token:" + token + ", response state:" + str(response_state))
+
             if response_state == 0:  # we are still waiting for response_prefix to appear
                 if response_prefix not in response_buffer:
                     # keep waiting
@@ -181,14 +184,15 @@ class RephraseWidgetSearchChat(BaseChat):
         widgets = retry_on_exceptions_with_backoff(
             lambda: self.widget_index.similarity_search(userinput, k=self.top_k),
             [ErrorToRetry(TypeError)],
-        )
+        ) 
+        # this searches the top k widgets to the model by appending them to the prompt
         timing.log('widget_index_lookup_done')
         task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
         example = {
             "task_info": task_info,
             "chat_history": history_string,
-            "question": userinput,
-            "stop": ["Input", "User"],
+            "question": userinput
+            # "stop": ["Input","User"]
         }
 
         chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=self.model_name)

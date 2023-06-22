@@ -1,5 +1,6 @@
 import os
 
+os.environ['RUNPOD_API_KEY'] = 'EZ2ZWDWQ4ECHHE19WDET114I0EL2SGALIZJO0YNM'
 HUGGINGFACE_API_KEY = "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"
 HUGGINGFACE_INFERENCE_ENDPOINT = "https://xczbh8zf5amwxdlc.us-east-1.aws.endpoints.huggingface.cloud" # may vary
 OPENAI_API_KEY = "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"

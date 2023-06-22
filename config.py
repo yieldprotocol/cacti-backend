@@ -4,7 +4,7 @@ import registry
 #  5 types of indexes used for info/doc retrieval and question - answering
 widget_index = dict(
     type="index.weaviate.WeaviateIndex",
-    index_name="WidgetV11",
+    index_name="WidgetV12",
     text_key="content",
 )
 app_info_index = dict(
@@ -36,17 +36,25 @@ crypto_tokens_index = dict(
 # config is mirroring a json
 default_config = dict(
     type="system.System",
+    # chat=dict(
+    #     type="chat.basic_agent.BasicAgentChat", # type of chat agent
+    #     tools=[
+    #         dict(
+    #             type="tools.index_widget.IndexWidgetTool",
+    #             _streaming=True,  # if specified, this is lazily constructed in chat to support streaming
+    #             name="WidgetIndexAnswer",
+    #             index=widget_index,
+    #             top_k=10,
+    #         ),
+    #     ],
+    #     model_name = "huggingface-llm"
+    # )
     chat=dict(
-        type="chat.basic_agent.BasicAgentChat", # type of chat agent
-        tools=[
-            dict(
-                type="tools.index_widget.IndexWidgetTool",
-                _streaming=True,  # if specified, this is lazily constructed in chat to support streaming
-                name="WidgetIndexAnswer",
-                index=widget_index,
-                top_k=10,
-            ),
-        ],
+        type='chat.rephrase_widget_search2.RephraseWidgetSearchChat',
+        widget_index=widget_index,
+        top_k=4,
+        model_name = "huggingface-llm",
+        evaluate_widgets=True
     )
 )
 

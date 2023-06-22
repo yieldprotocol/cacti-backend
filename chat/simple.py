@@ -47,7 +47,7 @@ class SimpleChat(BaseChat):
             "task_info": task_info,
             "summary": "",
             "history": history_string,
-            "stop": "User",
+            "stop": ["User"],
         })
         result = result.strip()
         history.add_interaction(userinput, result)
