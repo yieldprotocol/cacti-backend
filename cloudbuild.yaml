@@ -21,6 +21,7 @@ steps:
    - 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
    - '--region'
    - 'us-east1'
+   - '--allow-unauthenticated'
 
 # _SERVICE_NAME and _ENV_TAG are custom substitutions defined within
 # the GCP Cloud Build triggers
