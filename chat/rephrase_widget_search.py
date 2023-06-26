@@ -32,8 +32,6 @@ from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operat
 from tools.index_widget import *
 
 
-RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
-
 REPHRASE_TEMPLATE = \
 '''You are a rephrasing agent. You will be given a query which you have to rephrase, explicitly restating the task without pronouns and restating details based on the conversation history and new input. Restate verbatim ALL details/names/figures/facts/etc from past observations relevant to the task and ALL related entities.
 # Chat History:
@@ -60,7 +58,7 @@ HISTORY_TOKEN_LIMIT = 1800
 
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True, evaluate_widgets: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True, model_name: Optional[str] = None, evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.rephrase_prompt = PromptTemplate(
@@ -78,6 +76,7 @@ class RephraseWidgetSearchChat(BaseChat):
         self.top_k = top_k
         self.show_thinking = show_thinking
         self.evaluate_widgets = evaluate_widgets
+        self.model_name = model_name
 
     def receive_input(
             self,
@@ -167,8 +166,8 @@ class RephraseWidgetSearchChat(BaseChat):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
-                while '<|' in response_buffer and self.evaluate_widgets:
-                    if '|>' in response_buffer:
+                while WIDGET_START in response_buffer and self.evaluate_widgets:
+                    if WIDGET_END in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
                         if isinstance(response_buffer, Callable):  # handle delegated streaming
@@ -185,12 +184,12 @@ class RephraseWidgetSearchChat(BaseChat):
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
-                        elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        elif len(response_buffer.split(WIDGET_START)) == len(response_buffer.split(WIDGET_END)):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
                             # there are no two independent widgets on the same line, otherwise we can't
                             # detect the closing tag properly when there is nesting.
-                            response_buffer = response_buffer.replace('|>', '|>\n')
+                            response_buffer = response_buffer.replace(WIDGET_END, WIDGET_END + '\n')
                             break
                         else:
                             # keep waiting
@@ -198,6 +197,9 @@ class RephraseWidgetSearchChat(BaseChat):
                     else:
                         # keep waiting
                         return
+                if len(response_buffer) < len(WIDGET_START):
+                    # keep waiting
+                    return
                 token = response_buffer
                 response_buffer = ""
                 if token.strip():
@@ -219,7 +221,7 @@ class RephraseWidgetSearchChat(BaseChat):
             "stop": ["Input", "User"],
         }
 
-        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler)
+        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=self.model_name)
 
         with context.with_request_context(history.wallet_address, message_id):
             result = chain.run(example).strip()

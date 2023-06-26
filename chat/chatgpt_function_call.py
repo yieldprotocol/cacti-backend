@@ -1,6 +1,7 @@
 # This chat variant determines if the user's query is related to a widget or a search
 import re
 import time
+import json
 import uuid
 import traceback
 from dataclasses import dataclass, asdict
@@ -11,53 +12,31 @@ from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+from langchain.schema import BaseMessage
 
 import context
 import utils
 import utils.timing as timing
-from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
+from utils.common import FUNCTIONS
 import registry
 import streaming
-from chat.container import ContainerMixin, dataclass_to_container_params
 from .base import (
-    BaseChat, ChatHistory, Response, ChatOutputParser,
-)
-from integrations import (
-    etherscan, defillama, center, opensea,
+    BaseChat, Response, ChatHistory
 )
 from ui_workflows import (
     aave, ens
 )
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 from tools.index_widget import *
-from finetune.dataset import (
-    format_widgets_for_prompt,
-    HISTORY_TOKEN_LIMIT,
-    TEMPLATE,
-    STOP,
-    NO_WIDGET_TOKEN,
-)
-
-
-# MODEL_NAME = 'curie:ft-yield-inc-2023-05-30-20-19-41'
-MODEL_NAME = 'curie:ft-yield-inc:truncate-task-info-2023-06-01-00-37-29'
-MAX_TOKENS = 200
 
 
 @registry.register_class
-class FineTunedChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, fallback_chat: Optional[BaseChat] = None, model_name: Optional[str] = None, evaluate_widgets: bool = True) -> None:
+class ChatGPTFunctionCallChat(BaseChat):
+    def __init__(self, widget_index: Any, model_name: Optional[str] = "gpt-3.5-turbo-0613", top_k: int = 5, evaluate_widgets: bool = True) -> None:
         super().__init__()
-        self.output_parser = ChatOutputParser()
-        self.widget_prompt = PromptTemplate(
-            input_variables=["task_info", "chat_history", "user_input"],
-            template=TEMPLATE,
-            output_parser=self.output_parser,
-        )
         self.widget_index = widget_index
+        self.model_name = model_name
         self.top_k = top_k
-        self.fallback_chat = fallback_chat
-        self.model_name = model_name or MODEL_NAME
         self.evaluate_widgets = evaluate_widgets
 
     def receive_input(
@@ -69,9 +48,9 @@ class FineTunedChat(BaseChat):
             before_message_id: Optional[uuid.UUID] = None,
     ) -> None:
         userinput = userinput.strip()
-        history_string = history.to_string(system_prefix=None, token_limit=HISTORY_TOKEN_LIMIT, before_message_id=before_message_id)  # omit system messages
-
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
+
+        history_messages = history.to_openai_messages(system_prefix=None)  # omit system messages
         timing.init()
 
         bot_chat_message_id = None
@@ -116,6 +95,9 @@ class FineTunedChat(BaseChat):
             timing.log('first_widget_token')  # for comparison with basic agent
 
             response_buffer += token
+
+            # although this is for gpt functions, we also handle the case where the bot message
+            # might come back as a widget command in string form.
             while WIDGET_START in response_buffer and self.evaluate_widgets:
                 if WIDGET_END in response_buffer:
                     # parse fetch command
@@ -147,14 +129,7 @@ class FineTunedChat(BaseChat):
                 else:
                     # keep waiting
                     return
-
-            if len(response_buffer) < len(NO_WIDGET_TOKEN) and NO_WIDGET_TOKEN.startswith(response_buffer):
-                # keep waiting
-                return
-            elif response_buffer.startswith(NO_WIDGET_TOKEN):
-                # don't emit this in the stream, we will handle the final response below
-                return
-            elif len(response_buffer) < len(WIDGET_START):
+            if len(response_buffer) < len(WIDGET_START):
                 # keep waiting
                 return
             token = response_buffer
@@ -164,47 +139,35 @@ class FineTunedChat(BaseChat):
             new_token_handler(token)
 
         if self.widget_index is None:
-            task_info = ""
+            functions = FUNCTIONS
         else:
             widgets = retry_on_exceptions_with_backoff(
                 lambda: self.widget_index.similarity_search(userinput, k=self.top_k),
                 [ErrorToRetry(TypeError)],
             )
-            timing.log('widget_index_lookup_done')
-            # task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
-            task_info = format_widgets_for_prompt(widgets)
+            function_names = [fn['name'] for fn in FUNCTIONS]
+            functions = []
+            for w in widgets:
+                fn_name = '_'.join(RE_COMMAND.search(w.page_content.replace('{', '').replace('}', '')).group('command').split('-'))
+                try:
+                    idx = function_names.index(fn_name)
+                except ValueError:
+                    continue
+                functions.append(FUNCTIONS[idx])
 
-        example = {
-            "task_info": task_info,
-            "chat_history": history_string,
-            "user_input": userinput,
-            "stop": [STOP],
-        }
-
-        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=self.model_name, max_tokens=MAX_TOKENS)
+        llm = streaming.get_streaming_llm(injection_handler, model_name=self.model_name)
 
         with context.with_request_context(history.wallet_address, message_id):
-            result = chain.run(example).strip()
+            ai_message = llm.predict_messages(history_messages, functions=functions)
 
-        if result == NO_WIDGET_TOKEN:
-            if self.fallback_chat is not None:
-                # call the fallback chat
-                self.fallback_chat._inner_receive_input(
-                    history,
-                    history_string,
-                    userinput,
-                    send,
-                    message_id=message_id,
-                    before_message_id=before_message_id,
-                )
-            else:
-                bot_chat_message_id = send(Response(
-                    response="I'm sorry, I don't understand. Please try again.",
-                    still_thinking=False,
-                    actor='bot',
-                    operation='replace' if bot_chat_message_id is not None else 'create',
-                ), last_chat_message_id=bot_chat_message_id, before_message_id=before_message_id)
-            return
+            if 'function_call' in ai_message.additional_kwargs:
+                # when there is a function call, the callback is not called, so we process it
+                # here and call it ourselves with the widget str
+                function_call = ai_message.additional_kwargs['function_call']
+                command = '-'.join(function_call['name'].split('_'))
+                params = ','.join(json.loads(function_call['arguments']).values())
+                widget_str = f"{WIDGET_START}{command}({params}){WIDGET_END}"
+                injection_handler(widget_str)
 
         timing.log('response_done')
 

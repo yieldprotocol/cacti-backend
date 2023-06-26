@@ -32,6 +32,13 @@ def _replace_match(m: re.Match) -> str:
 
 
 def _widgetize(command: str, params: str, depth: int = 0) -> str:
+    try:
+        return _widgetize_inner(command, params, depth)
+    except Exception:
+        return f"An error occurred evaluating command: {command}({params})"
+
+
+def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     command = command.lower().replace('display-', '')
     lines = []
     if command == 'transfer':

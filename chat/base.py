@@ -6,6 +6,12 @@ import uuid
 
 from langchain.schema import AgentAction, AgentFinish, LLMResult
 from langchain.prompts.base import BaseOutputParser
+from langchain.schema import (
+    BaseMessage,
+    AIMessage,
+    HumanMessage,
+    SystemMessage,
+)
 
 import utils
 from .display_widgets import parse_widgets_into_text
@@ -23,7 +29,7 @@ class Response:
 @dataclass
 class ChatMessage:
     actor: str
-    content: str
+    content: Union[str, Dict]
     message_id: Optional[uuid.UUID]
 
 
@@ -47,6 +53,10 @@ class ChatHistory:
         text = parse_widgets_into_text(text)
         self._add_message(text, 'bot', message_id=message_id, before_message_id=before_message_id)
 
+    def add_function_message(self, text: Dict, message_id: Optional[uuid.UUID] = None, before_message_id: Optional[uuid.UUID] = None) -> None:
+        """Add function message to history."""
+        self._add_message(text, 'function', message_id=message_id, before_message_id=before_message_id)
+
     def add_system_message(self, text: str, message_id: Optional[uuid.UUID] = None, before_message_id: Optional[uuid.UUID] = None) -> None:
         """Add system message to history."""
         self._add_message(text, 'system', message_id=message_id, before_message_id=before_message_id)
@@ -55,7 +65,7 @@ class ChatHistory:
         """Add commenter message to history."""
         self._add_message(text, 'commenter', message_id=message_id, before_message_id=before_message_id)
 
-    def _add_message(self, text: str, actor: str, message_id: Optional[uuid.UUID] = None, before_message_id: Optional[uuid.UUID] = None) -> None:
+    def _add_message(self, text: Union[str, Dict], actor: str, message_id: Optional[uuid.UUID] = None, before_message_id: Optional[uuid.UUID] = None) -> None:
         """Add message to history with given message id if specified, before message id if specified."""
         insert_idx = None
         if before_message_id is not None:
@@ -127,6 +137,9 @@ class ChatHistory:
             elif message.actor == 'commenter':
                 # ignore these
                 continue
+            elif message.actor == 'function':
+                # ignore in text representation, might cause hallucination
+                continue
             else:
                 assert 0, f'unrecognized actor: {message.actor}'
             ret.append(f"{prefix}: {message.content}")
@@ -139,6 +152,31 @@ class ChatHistory:
                     break
                 total_count += count
         return "\n".join(ret)
+
+    def to_openai_messages(self, system_prefix: Optional[str] = "System", before_message_id : Optional[uuid.UUID] = None) -> List[BaseMessage]:
+        ret = [SystemMessage(content=("You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."))]
+        for message in self:
+            additional_kwargs = {}
+            if before_message_id is not None and message.message_id == before_message_id:
+                break
+            if message.actor == 'user':
+                message_cls = HumanMessage
+            elif message.actor == 'system':
+                if system_prefix is None:
+                    continue
+                message_cls = AIMessage
+            elif message.actor == 'function':
+                message_cls = AIMessage
+                additional_kwargs['function_call'] = message.content
+            elif message.actor == 'bot':
+                message_cls = AIMessage
+            elif message.actor == 'commenter':
+                # ignore these
+                continue
+            else:
+                assert 0, f'unrecognized actor: {message.actor}'
+            ret.append(message_cls(content=message.content, additional_kwargs=additional_kwargs))
+        return ret
 
     @classmethod
     def new(cls, session_id: uuid.UUID, wallet_address: Optional[str] = None):
