@@ -10,7 +10,7 @@ import functools
 import traceback
 import context
 
-from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL
+from .constants import OPENAI_API_KEY, OPENAI_ORGANIZATION, TENDERLY_FORK_URL
 
 
 with open(f"{os.getcwd()}/knowledge_base/functions.json", 'r') as f:
@@ -19,7 +19,9 @@ with open(f"{os.getcwd()}/knowledge_base/functions.json", 'r') as f:
 
 def set_api_key():
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+    os.environ["OPENAI_ORGANIZATION"] = OPENAI_ORGANIZATION
     OpenAI.api_key = OPENAI_API_KEY
+    OpenAI.organization = OPENAI_ORGANIZATION
 
 
 w3 = Web3(Web3.HTTPProvider(TENDERLY_FORK_URL))
