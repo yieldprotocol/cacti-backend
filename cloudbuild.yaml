@@ -17,11 +17,16 @@ steps:
    - 'run'
    - 'deploy'
    - '${_SERVICE_NAME}'
-   - '--image'
-   - 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
-   - '--region'
-   - 'us-east1'
+   - '--image=gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
+   - '--region=us-east1'
    - '--allow-unauthenticated'
+   - '--port=9999'
+   - '--cpu=2'
+   - '--memory=1Gi'
+   - '--min-instances=1'
+   - '--max-instances=3'
+   - '--concurrency=5'
+   - '--set-secrets=OPENSEA_API_KEY=OPENSEA_API_KEY:latest,CENTER_API_KEY=CENTER_API_KEY:latest'
 
 # _SERVICE_NAME and _ENV_TAG are custom substitutions defined within
 # the GCP Cloud Build triggers
