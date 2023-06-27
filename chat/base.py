@@ -154,8 +154,8 @@ class ChatHistory:
                 total_count += count
         return "\n".join(ret)
 
-    def to_openai_messages(self, system_prefix: Optional[str] = "System", before_message_id : Optional[uuid.UUID] = None) -> List[BaseMessage]:
-        ret = [SystemMessage(content=("You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."))]
+    def to_openai_messages(self, system_message: str, system_prefix: Optional[str] = "System", before_message_id : Optional[uuid.UUID] = None) -> List[BaseMessage]:
+        ret = [SystemMessage(content=(system_message))]
         for message in self:
             additional_kwargs = {}
             content = message.content
