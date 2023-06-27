@@ -53,7 +53,7 @@ chat_configs = [
         evaluate_widgets=False,
     ),
 ]
-_ = [
+chat_configs = [
     dict(
         type='chat.rephrase_widget_search.RephraseWidgetSearchChat',
         widget_index=config.widget_index,
@@ -80,7 +80,15 @@ _ = [
         ],
     ),
 ]
-
+chat_configs = [
+    dict(
+        type='chat.chatgpt_function_call.ChatGPTFunctionCallChat',
+        model_name='gpt-4-0613',
+        widget_index=config.widget_index,
+        top_k=10,
+        evaluate_widgets=False,
+    ),
+]
 
 def get_nft_flow() -> Iterable[Message]:
     query = "penguin"
@@ -436,13 +444,16 @@ def evaluate_chat(chat: chat.BaseChat):
 
             # invoke the chat on user input, gather bot output
             bot_output = None
+            function_output = None
             message_id = None
             def send_response(response, **kwargs):
-                nonlocal bot_output, message_id
+                nonlocal bot_output, function_output, message_id
                 if message_id is None:
                     message_id = 0  # emulate this to get the correct operations to be used
                 if response.actor == 'bot' and response.operation == 'replace':
                     bot_output = response.response
+                if response.actor == 'function':
+                    function_output = response.response
                 return message_id
 
             chat_history_copy = copy.deepcopy(chat_history)
@@ -452,7 +463,13 @@ def evaluate_chat(chat: chat.BaseChat):
             yield (bot_output, completion)
 
             # prepare for next round, but use ground truth response instead
-            chat_history.add_interaction(user_input, bot_response)
+            #chat_history.add_interaction(user_input, bot_response)
+            chat_history.add_user_message(user_input)
+            if function_output is not None:
+                # this is not ground truth, but whatever was generated
+                # TODO: have ground truth for this
+                chat_history.add_function_message(function_output)
+            chat_history.add_bot_message(bot_response)  # this is ground truth
 
 
 
