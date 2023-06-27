@@ -224,11 +224,12 @@ Required Parameters:
 -{token}: token to deposit in the project
 -{amount}: amount of token to deposit in the project
 ---
-Widget magic command: <|yield-protocol-lend({token},{amount})|>
+Widget magic command: <|yield-protocol-lend({token},{amount},{seriesName})|>
 Description of widget: This widget is used when the user wants to supply or lend tokens into Yield Protocol project.
 Required Parameters:
 -{token}: token to lend
 -{amount}: quantity to lend
+-{seriesName}: name of the series where each year has a series corresponding to march, june, september, and december
 ---
 Widget magic command: <|fetch-app-info({query})|>
 Description of widget: This widget is used when we need to handle common questions and answers about the chat assistant app, what it can do, how to interact with it, at a high-level. Only useful for questions about the chat app experience. It does not know specific information about the web3 ecosystem, of tokens or NFTs or contracts, or access to live data and APIs.
