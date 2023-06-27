@@ -29,15 +29,18 @@ from ui_workflows import (
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 from tools.index_widget import *
 
+SYSTEM_MESSAGE_EVAL = "You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."
+SYSTEM_MESSAGE_DEFAULT = "You are an agent that is trained to execute functions based on a user request. Ask the user if any of the input parameter value is unknown."
 
 @registry.register_class
 class ChatGPTFunctionCallChat(BaseChat):
-    def __init__(self, widget_index: Any, model_name: Optional[str] = "gpt-3.5-turbo-0613", top_k: int = 5, evaluate_widgets: bool = True) -> None:
+    def __init__(self, widget_index: Any, model_name: Optional[str] = "gpt-3.5-turbo-0613", top_k: int = 5, evaluate_widgets: bool = False) -> None:
         super().__init__()
         self.widget_index = widget_index
         self.model_name = model_name
         self.top_k = top_k
         self.evaluate_widgets = evaluate_widgets
+        self.system_message = SYSTEM_MESSAGE_EVAL if evaluate_widgets else SYSTEM_MESSAGE_DEFAULT
 
     def receive_input(
             self,
@@ -50,7 +53,7 @@ class ChatGPTFunctionCallChat(BaseChat):
         userinput = userinput.strip()
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
 
-        history_messages = history.to_openai_messages(system_prefix=None)  # omit system messages
+        history_messages = history.to_openai_messages(system_message=self.system_message, system_prefix=None)  # omit system messages
         timing.init()
 
         bot_chat_message_id = None
