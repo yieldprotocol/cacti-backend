@@ -101,6 +101,8 @@ def _load_existing_history_and_messages(session_id):
                 history.add_system_message(message.payload, message_id=message.id)
             elif message.actor == 'commenter':
                 history.add_commenter_message(message.payload, message_id=message.id)
+            elif message.actor == 'function':
+                history.add_function_message(message.payload, message_id=message.id)
             else:
                 assert 0, f'unrecognized actor: {message.actor}'
 

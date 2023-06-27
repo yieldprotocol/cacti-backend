@@ -164,6 +164,8 @@ class ChatGPTFunctionCallChat(BaseChat):
                 # when there is a function call, the callback is not called, so we process it
                 # here and call it ourselves with the widget str
                 function_call = ai_message.additional_kwargs['function_call']
+                function_message_id = send(Response(response=json.dumps(function_call), actor='function'), before_message_id=before_message_id)
+                bot_chat_message_id = None
                 command = '-'.join(function_call['name'].split('_'))
                 params = ','.join(json.loads(function_call['arguments']).values())
                 widget_str = f"{WIDGET_START}{command}({params}){WIDGET_END}"
