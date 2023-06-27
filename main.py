@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Optional, Set
+from typing import Dict, Optional, Set
 
 from fastapi import FastAPI, Request, Response, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -62,6 +62,11 @@ async def api_logout(request: Request):
 @app.post("/share")
 async def api_share(request: Request, data: auth.AcceptJSON):
     return share.handle_share(request, data)
+
+
+@app.get("/api/chats")
+async def api_chats(request: Request) -> Dict:
+    return share.get_visible_chats(request)
 
 
 @app.websocket("/chat")
