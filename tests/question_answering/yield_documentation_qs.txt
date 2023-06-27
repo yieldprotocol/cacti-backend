@@ -1,0 +1,1160 @@
+What is the main advantage of fixed-rate borrowing and lending over floating-rate?
+What are fyTokens and how do they work?
+Do fyTokens pay interest?
+How is the interest rate calculated for fyTokens?
+Where can I learn more about fyTokens and the Yield Protocol?
+What is the formula for calculating the price of a zero coupon bond?
+How is the interest rate calculated for a zero coupon bond?
+Who audited Yieldspace TV?
+Which organizations audited Yield Protocol?
+Where can users and developers interact with the Yield Protocol community?
+What is the bug bounty reward for Yield Protocol?
+Where can known bugs for Yield Protocol be found?
+Does Yield Protocol currently have a governance token?
+How is the development of Yield Protocol currently performed?
+Where can open roles for Yield Protocol be found?
+What is the purpose of the Yield protocol?
+What is the role of the Yield token in the protocol?
+How does the Yield protocol ensure the safety of user funds?
+What is the difference between the Yield protocol and other DeFi protocols?
+Can the Yield protocol be integrated with other smart contracts?
+What is the Yield Protocol?
+What is the difference between fixed yield borrowing and lending and other types of borrowing and lending?
+How does the Yield Protocol ensure that borrowers and lenders are matched fairly?
+What is the role of the Yield Protocol's governance token?
+Can the Yield Protocol be integrated with both client-side and smart contract code?
+What is the Yield protocol?
+What are the benefits of using Yield protocol?
+What is the role of the Yield token in the protocol?
+How does Yield protocol ensure security?
+What are the requirements for integrating Yield protocol using smart contract code?
+What are the different types of users in the Yield Protocol?
+What is the purpose of the Cauldron contract?
+What is the Ladle contract used for?
+What is the FYToken contract and how does it work?
+How can developers build new features on the Yield Protocol?
+What is the purpose of the Liquidations document in the Yield Protocol Docs?
+What is the Emergency Procedure document in the Operations section of the Yield Protocol Docs?
+What is the Technical Reference document in the Yield Protocol Docs?
+What is the Code Review Procedures document in the Operations section of the Yield Protocol Docs?
+What is the How To Hack the Yield Protocol document in the Operations section of the Yield Protocol Docs?
+What is the goal of the Yield Protocol?
+What is the main differentiator of Yield Protocol from other lending protocols?
+Has Yield Protocol released a token?
+What is the approach of Yield Protocol towards community control?
+What is the significance of fixed-rate in Yield Protocol's vision for decentralized finance?
+What are fyTokens and how do they work?
+What assets can be borrowed or lent using Yield Protocol?
+What assets can be used as collateral on Yield Protocol?
+Does Yield Protocol have protocol fees?
+Is Yield Protocol available on Uniswap?
+When was Yield launched?
+How can I start borrowing on Yield?
+How much collateral is required for borrowing?
+What is a Vault in Yield protocol?
+What happens if I don't close the loan at the time of maturity?
+What collateralization ratio should I choose to avoid liquidation?
+How does lending work in Yield?
+Can I purchase fyTokens directly?
+Why is my current value as shown less than the amount I lent?
+How do interest rate changes affect me as a lender?
+How is the portfolio value calculated?
+What is the difference between pool and lend?
+What is a liquidity strategy?
+Why would I want to be a Liquidity Provider?
+How do interest rates and fyToken prices relate to each other?
+What is the minimum amount of collateral borrowers must maintain in their vault?
+What happens if a borrower fails to maintain the minimum amount of collateral in their vault?
+When is a borrowing position put up for auction?
+Who can liquidate an insufficiently collateralized borrowing position?
+Has Yield Protocol been audited? If so, by whom?
+What are the risks involved in using the protocol?
+Is there a bug bounty program?
+What is the maximum bounty reward for disclosing a bug?
+How does impermanent loss occur in Yield Protocol?
+How is the interest rate for fyTokens determined?
+What is impermanent loss and how does it affect liquidity providers?
+Is impermanent loss present in Yield protocol for liquidity providers?
+Does lending and borrowing happen in a single transaction in Yield protocol?
+What is YieldSpace and how does it improve liquidity of fyTokens?
+What is a Flash Loan and how is it used in Yield protocol?
+What is the founding team's belief about decentralization and community control of the Yield Protocol?
+How does the Yield Protocol plan to achieve community ownership and control?
+What is the current approach to community involvement in the Yield Protocol?
+What is the process of progressive decentralization?
+Is the Yield Protocol currently community-owned and community-controlled?
+What should I do if the app is not loading?
+How can I avoid transaction aborted errors?
+What should I do if I encounter a connection error?
+What is the minimum debt allowed in a vault?
+How can I verify that I own a liquidated vault?
+Where can I check for existing issues related to the Yield protocol?
+What should I do if I can't solve my issue with the provided instructions?
+What information should I provide when opening a support ticket?
+Is support available on public channels?
+Are there any limitations to the support provided?
+What should be done if the page is not loading?
+How can transaction aborted error be resolved?
+What should be done in case of a connection error?
+What can cause the 'Remaining Debt will be Below Dust Levels' error?
+What should be done if none of the provided solutions work?
+What are the two repositories that the Yield Protocol is divided into?
+What are Vaults in the Yield Protocol?
+What is the Cauldron in the Yield Protocol?
+What are fyTokens in the Yield Protocol?
+What is the purpose of Join contracts in the Yield Protocol?
+What is the Ladle contract in Yield Protocol?
+What is the function of the Oracle contracts in Yield?
+What happens if users fail to maintain the appropriate level of collateral in Yield?
+What is Witch in Yield Protocol?
+What is YieldSpace and where is it implemented?
+Where can I find the contract addresses for the Yield protocol?
+What is the purpose of the 'Download' button on the Yield protocol application?
+Is it possible to obtain contract addresses through other means besides the 'Download' button?
+Can the contract addresses be edited or modified?
+Are there any specific identifiers that are associated with the contract addresses?
+What are the two types of emergency procedures in Yield v2?
+Where are emergency plans stored in Yield v2?
+How can executed emergency plans be reverted in Yield v2?
+What are Emergency Proposals used for in Yield v2?
+What is the difference between Emergency Plans and Emergency Proposals in Yield v2?
+What is the role of the Timelock in the Yield protocol?
+What should be done in case the Timelock is compromised?
+How can a new Timelock be added to the protocol?
+What is the procedure to remove an existing Timelock?
+What happens if there are no accounts with ROOT access to a smart contract?
+What is the purpose of the Cloak in the Yield protocol?
+How can a compromised Cloak be rendered powerless?
+What is the process for disabling a malfunctioning oracle source in the CompoundMultiOracle?
+What is the process for disabling a malfunctioning oracle source in the ChainlinkMultiOracle?
+How can a generalized Oracle malfunction be addressed in the Yield protocol?
+What is the role of Factories in the Yield protocol?
+What is the recommended action in case of a malfunctioning Join?
+What is the impact of a malfunctioning Cauldron?
+What is the Ladle Emergency Plan?
+How can a token integration be removed if necessary?
+What is the Emergency Plan for the Witch?
+What is the potential risk of a compromised Wand?
+How can a compromised Pool be removed from the Ladle?
+Are the Pools controlled by governance?
+What is the limitation of removing a malfunctioning Strategy from the Ladle?
+What is the Ladle in the Yield Protocol?
+How are features built in the Yield Protocol?
+What is the purpose of a batch in the Yield Protocol?
+Where can I find an overview of the pattern used in the Yield Protocol?
+Can I edit the Feature Building page on the Yield Protocol documentation website?
+What is the role of the governor in the Yield protocol?
+What is the minimum number of actors needed to operate the protocol safely?
+What is the AccessControl contract in the Yield protocol?
+What is the role of the operations team in the Yield protocol?
+How is the risk profile of individual accounts reduced in the Yield protocol over time?
+What permissions does the Timelock have over the protocol?
+What is the role of the governor in the Timelock?
+What is the delay set in the Timelock?
+What is the purpose of the operations team in the Timelock?
+Why must a governance takeover be avoided at all costs?
+What is the role of the EmergencyBrake in the Yield protocol?
+What permissions does the EmergencyBrake have in the protocol?
+Can the EmergencyBrake grant permission to itself in any contract?
+What is the role of the Timelock in the EmergencyBrake?
+Who has the permission to execute plans in the EmergencyBrake?
+What is the format of the identifier used by Yield Protocol?
+How many bytes are used to generate identifiers for assets and series?
+What is the difference in identifier generation before and after 2023?
+How is the iteration value calculated for series?
+What is the purpose of the provider identifier in the Yield identifier?
+What is the purpose of the naming scheme used in the Yield protocol?
+What are some examples of basic assets in the Yield protocol?
+What is the identifier for the FYETHDEC22 series in the Yield protocol?
+What is the identifier for the YSDAI6MJD strategy in the Yield protocol?
+What is the difference between a basic asset and a derivative asset in the Yield protocol?
+What contract manages the liquidations process in Yield protocol?
+How many steps are involved in the liquidations process?
+What is the first step in the liquidations process?
+What is the second step in the liquidations process?
+What is the third step in the liquidations process?
+What is the purpose of the `cauldron.level` function?
+Under what circumstances can a vault be sequestered by the Witch for liquidation?
+What are the exceptions to the rule of liquidating undercollateralized vaults?
+What type of auction does Yield protocol follow?
+How can governance modify the parameters of an auction?
+What is the soft limit on collateral for a given pair in the Yield protocol?
+What happens when the soft limit on collateral is passed for a pair in the Yield protocol?
+Is the first auction to reach the soft limit allowed to pass it in the Yield protocol?
+What does the Witch do once the auction is ready to start in the Yield protocol?
+What method is used to transfer the vault from the user to the Witch in the Yield protocol?
+What is the currency used for debt denomination in the Yield Protocol?
+What is fyToken and how can it be bought?
+Is it possible for liquidators to pay the debt directly with underlying? If yes, what is the exchange rate applied?
+How is the collateral obtained for the payment calculated?
+When can an auction finish in the Yield Protocol?
+What permissions does the Witch have on other contracts in the Yield Protocol?
+What would happen if the 'point' action is taken in governance?
+How can the 'setLineAndLimit' action be misused in governance?
+What are the dependencies of the Witch in the Yield Protocol?
+Why is it important to disclose the worst that could happen in governance actions?
+What is the batch pattern used by the Witch in the Yield Protocol?
+What function is used to change orchestration throughout the Yield Protocol?
+How does the Yield Protocol ensure safety against reentrancy?
+Why is calling `_auctionEnded` from within `_updateAccounting` considered wonky?
+What aspect of rounding has the Yield Protocol paid special attention to?
+What is the purpose of the Yield v2 smart contract architecture?
+What do the vault contracts in the Yield Protocol enable users to do?
+How does the Yield Protocol use its own Oracle interface?
+What is the function of the IOracle interface in the Yield Protocol?
+What is the purpose of spot oracles in the Yield Protocol?
+What is the purpose of the rate and chi oracles in the Yield protocol?
+Where do the rates for base come from in the Yield protocol?
+What is the role of the Ladle in the Yield protocol?
+What is the function of the Join contract in the Yield protocol?
+Can the Join contract be used for flash loans in the Yield protocol?
+What is a fyToken and how does it work?
+What is the process for redeeming fyTokens?
+What is the chi accrual and how is it calculated?
+What is the role of the Ladle in the mint and burn functions?
+What is the Cauldron and what are its external dependencies?
+What is a fyToken and how is it used in Vaults?
+What is the relationship between a series and an ilk in Vaults?
+What are the two separate structs that make up the vault data?
+What is the purpose of the 'stir' function in Yield protocol?
+How does the debt of a vault change after maturity?
+What is the collateralization ratio for a vault to remain collateralized?
+What happens when the value of collateral in a vault is lower than the debt owed by the vault?
+What is the purpose of liquidation engines in the Yield protocol?
+Can liquidation engines have multiple implementations?
+What are the ceiling debt limits in the Cauldron and how are they enforced?
+What is the Witch in the Yield protocol and what does it do?
+How does the Witch settle debt in the Yield protocol?
+What is the Ladle in the Yield protocol and what is its role?
+What privileges does the Ladle have in the Yield protocol?
+What is the role of the Ladle in minting and burning fyToken in the Yield protocol?
+What is the Ladle and how is it used in the Yield protocol?
+What is the difference between using 'batch' and 'route' with the Ladle in the Yield protocol?
+How are modules used to extend the functionality of the Ladle in the Yield protocol?
+What is the role of governance in authorizing modules to be used with the Ladle in the Yield protocol?
+Why is modifying Ladle storage discouraged when using modules in the Yield protocol?
+What is the process for a user to deposit collateral and borrow a fyToken using the Ladle?
+How does the Ladle handle repayment of debt and withdrawal of collateral?
+Can users pay their debt with the underlying asset instead of fyTokens? If so, how does the Ladle handle this?
+What is the 'stir' feature of the Ladle and how can it be used?
+What are some other features of the Ladle besides depositing, borrowing, and repaying debt?
+What is Wand and what are its functions?
+What is the process of adding an asset to the protocol?
+What is the process of making a base out of an existing asset?
+What is the process of adding a series to the protocol?
+What libraries are used in YieldSpace and what functions are implemented in YieldMath?
+How is the marginal interest rate determined in Yield protocol?
+What is the process for liquidity providers to provide assets using 'mint'?
+What is the requirement for providing liquidity in terms of the proportion of underlying and fyToken?
+How are 'virtual fyTokens' added to the fyToken balance in a Pool?
+What functions are available for liquidity providers to convert underlying to fyToken and vice versa?
+What is the purpose of the 'sellBasePreview' and 'sellFYTokenPreview' functions in the Yield protocol?
+What is the difference between buying and selling assets in the Yield protocol?
+How does the Pool determine the amount to be taken in a buy trade?
+What are the TS, G1, and G2 parameters used for in the Yield protocol?
+What is the purpose of the PoolFactory contract in the Yield protocol?
+What functions are included in the PoolExtensions library?
+What is the purpose of the Strategy contracts?
+How do liquidity providers receive a share of Strategy tokens?
+What happens if the Strategy is not invested in any Pool?
+Who can call the 'endPool' function?
+What is the purpose of the access control contract in the Yield Protocol?
+How are roles defined in the access control contract?
+What is the special role of the ROOT role in the access control contract?
+What is the ERC2162 extension used for in the Yield Protocol ERC20 contracts?
+What is the EmergencyBrake in the Yield Protocol and when is it intended to be used?
+What is the role of the governor in the Yield protocol?
+What is the AccessControl contract in the Yield protocol?
+Who has the ability to execute permissioned functions in the protocol?
+What is the process for making changes to the protocol?
+Can there be multiple Timelocks with different permissions and delays in the protocol?
+What is a timelock proposal in the Yield protocol?
+How are timelock proposals identified?
+What are the 3 tools used to decode a timelock proposal?
+What is the purpose of decoding the target in a timelock proposal?
+What is the ChainlinkMultiOracle in the Yield protocol?
+What is the purpose of decoding function calls in the Yield protocol?
+How can the 4byte signature database be used in the Yield protocol?
+What is the function signature obtained from the 4byte signature database in the Yield protocol?
+What is the role of the Timelock in the Yield protocol?
+What is the ChainlinkMultiOracle and how is it used in the Yield protocol?
+What is the purpose of the adibas03 abi encoder/decoder?
+How do you decode function arguments using the adibas03 abi encoder/decoder?
+What should you remove from the original data field to get the function arguments?
+What is the Argument Types field in the adibas03 abi encoder/decoder?
+What is etherscan and how is it used in the decoding process?
+What is the purpose of the Timelock in relation to the ChainlinkMultiOracle?
+Where can more information on the parameters be found in the ChainlinkMultiOracle code?
+What is the BaseId for the new source being set by the Timelock?
+What is the QuoteId for the new source being set by the Timelock?
+What is the role parameter used for in proposals and how can it be identified?
+What is the Yield protocol and what problem does it solve?
+How does the Yield protocol use collateral to generate yield?
+What is the role of the Yield token in the protocol?
+What are the different types of pools in the Yield protocol?
+How can users interact with the Yield protocol using smart contracts?
+What is the Yieldcurity Standard?
+What are the requirements for creating a pull request?
+What should be included in the pull request description?
+What is the SMTChecker and when should it be used?
+What is the purpose of the video review session?
+What are the Solcurity smart contract code quality standards?
+What are some general tips for conducting a thorough review of the Yield protocol?
+What is the Solcurity standards checklist for events?
+What are some additional Yield security precautions to consider?
+What should be considered when approaching testing for the Yield protocol?
+What are some examples of edge cases and states that are being tested?
+How are bug fixes tested to ensure they are caught?
+What happens if there are issues that should hold up merge?
+What is the process for marking a PR as 'Changes Requested'?
+When should a PR be approved?
+What is the process for obtaining final approval and merging a PR in the Yield protocol?
+What is the requirement for obtaining final approval before merging a PR in the Yield protocol?
+How should comments or changes requested in a PR be addressed in the Yield protocol?
+What should be done if any changes are made to a PR in the Yield protocol?
+What is the minimum number of approvals required before merging a PR in the Yield protocol?
+What is the purpose of the ladle, witch, and wand in the Yield protocol?
+What is the meaning of the hash values in the table?
+What is the significance of the join function in the Yield protocol?
+What is the fyToken in the Yield protocol and how is it used?
+How can client-side and smart contract code be integrated in the Yield protocol?
+What is fyToken?
+What is ladle?
+What is the purpose of the join function?
+What is the significance of the hexadecimal values in the document?
+How can client-side code be used to interact with the Yield protocol?
+What is the purpose of the Yield protocol?
+How does the Yield protocol handle emergency situations?
+What is the role of the Yield Guardian in the protocol?
+What is the difference between a Yield Token and a Yield Dollar?
+How can users participate in the Yield protocol's governance process?
+What is the purpose of the Emergency Procedures for Yield Protocol document?
+How is an emergency situation defined in the document?
+What are some examples of emergency scenarios listed in the document?
+What are the roles assigned to Yield contributors in an emergency situation?
+What is the role of the Facilitator in an emergency situation?
+What is the role of the Multi-sig Herder in the Yield protocol?
+What are the main responsibilities of the Smart Contract Lead during an emergency?
+What kind of changes can the Web Lead make during an emergency?
+What is the responsibility of the Ops team in the Yield protocol?
+What are some specific tasks that the Ops team is responsible for during an emergency?
+What is the primary objective of the emergency steps outlined in the document?
+Who is the focus of the emergency steps outlined in the document?
+What should drive all decisions made during an incident according to the document?
+Are there any additional resources provided in the document for emergency situations?
+Is there a checklist provided in the document for emergency situations?
+What is the purpose of the War Room in the Yield protocol?
+What information should be considered private in the War Room?
+What is the team's first milestone in assessing an incident?
+What questions should guide the team in assessing the situation?
+Who should begin to notify signers and clear the queue in preparation for emergency transactions?
+What are the immediate corrective actions that should be taken once an issue has been confirmed as valid?
+What questions should guide the decisions of the team when taking immediate corrective actions?
+What is the purpose of scripting and executing immediate corrective actions?
+What questions/actions can help the team identify the root cause of an issue?
+What questions can help the team prioritize possible solutions to an issue?
+What is the purpose of the War Room in the Yield protocol?
+What actions are needed if a solution to a problem takes longer than a few hours?
+What are the possible steps for a longer term plan in the Yield protocol?
+What are the possible actions needed to confirm a solution in the Yield protocol?
+Who is responsible for preparing a disclosure in the Yield protocol?
+What is the purpose of the Emergency Checklist?
+What are the steps to be complemented with the Emergency Checklist?
+What is the first step in the Emergency Checklist?
+What is the purpose of assigning Key Roles to War Room members?
+What is the purpose of conducting a Post Mortem?
+What is the primary tool for code sharing in the Yield protocol?
+What are the secondary tools for code sharing in the Yield protocol?
+What is the primary tool for transaction details in the Yield protocol?
+What is the primary tool for debugging in the Yield protocol?
+What are the recommended tools for screen sharing in the Yield protocol?
+What is the purpose of conducting a Post Mortem after an incident in the Yield protocol?
+When should the Post Mortem be conducted?
+Who should be involved in the Post Mortem session?
+What are the expected outputs of the Post Mortem?
+What is the objective of the Post Mortem?
+What are the necessary outputs for the post mortem session?
+What is the recommended tool for identifying root causes?
+What is the purpose of assigning action items?
+What are some possible improvements that can result from the post mortem process?
+Who is responsible for tracking completion of action items?
+What is the ROOT signature in the Yield Protocol?
+What is the consequence of failing to remove ROOT permission manually in Yield-Utils?
+What is the purpose of the math libraries in Yield-Utils?
+What is the risk of a malfunction in the casting operations in Yield-Utils?
+How could a governance attack on EmergencyBrake affect the Yield Protocol?
+What is a Timelock attack and what are its consequences?
+What is ERC20Rewards Rewards Fat-Fingering and how can it affect the rewards program?
+How can a rebasing token affect the Yield Protocol and what is the Ladle?
+What is Join Governance Capture and what can happen if exit access is obtained?
+What is Oracle Fat-Fingering and how can it lead to draining of the protocol?
+What happens if the chi oracle returns zero in the `_mature` call?
+What could be the consequences of reconfiguring a fyToken to point at a new oracle after maturity?
+What are the risks associated with capturing `mint` access in a fyToken contract?
+What are the potential issues that could arise from fat-fingering the `setLendingOracle` function in the Cauldron?
+What are the consequences of fat-fingering the `setFee` function in the Ladle?
+What is the risk of improperly configured batches in the Yield protocol?
+How can Ladle Governance Capture lead to the loss of assets in the Yield protocol?
+What are the potential consequences of Witch Fat-Fingering in the Yield protocol?
+How can Witch Governance Capture potentially lead to protocol insolvency?
+What is the risk of error on 'banIlk' in the Yield protocol?
+What are the potential consequences of setting the wrong ratio guards when investing on an ongoing pool in the Yield protocol?
+How can a malicious pool drain all assets from a strategy in the Yield protocol?
+What are the risks associated with setting unfavourable fees for traders or LPs in the YieldSpace-TV pool?
+What safeguards are provided in the YieldSpace-TV pool to prevent front-running of pool operations?
+What are the potential issues that can arise if the fyToken cached balance grows over the supply in the Yield protocol?
+What is the goal of the support procedure for Yield Protocol?
+What is the focus of the support procedure for Yield Protocol?
+What is the importance of the limited availability of support resources in the support procedure for Yield Protocol?
+What kind of user requests does the support procedure for Yield Protocol deal with?
+How does the support procedure for Yield Protocol aim to maximize user satisfaction?
+What is the process for acknowledging and resolving support requests in Yield protocol?
+How are support operators defined in Yield protocol?
+What is the Emergency Procedure in Yield protocol and when is it invoked?
+What is the reimbursement policy for user losses in Yield protocol?
+What happens if a support operator is unable to work towards a resolution in Yield protocol?
+What is the process for handling support issues that cannot be solved by the support operator?
+Is there a specific timeframe for providing updates on escalated support issues?
+How does the escalation engineer introduce themselves to the user?
+Will the knowledge base of known issues be updated for escalated support issues?
+What happens when a support issue is resolved?
+What is the purpose of the Yield protocol?
+What are the steps involved in the Yield protocol's support procedure?
+How does the Yield protocol handle disputes between users?
+What is the role of the Yield protocol's governance token?
+Can the Yield protocol be integrated with both client-side and smart contract code?
+What is the process for borrowing on the Yield Protocol?
+How is the fixed interest rate determined when borrowing on the Yield Protocol?
+What is overcollateralization and why is it required for loans on Yield?
+Can borrowers repay their loans early on Yield? If so, what are the implications?
+Where can users access the Yield v2 App to begin borrowing?
+What is the process of borrowing in the Yield protocol?
+What are fyTokens and how are they used in the Yield protocol?
+What is YieldSpace and how does it enable efficient selling of fyTokens?
+What happens if you don't close your borrowing position after maturity in the Yield protocol?
+How can interest rate changes affect the amount of the borrowed asset needed to obtain fyTokens in the Yield protocol?
+What is fyDai and how is it used in the Yield Protocol?
+How is the interest rate calculated in the Yield Protocol?
+What happens after maturity is reached in the Yield Protocol?
+What are the variable interest rate fees in the Yield Protocol?
+What is the collateralization ratio and how does it relate to liquidations in the Yield Protocol?
+What is the minimum amount of collateral required for borrowers in the Yield protocol?
+What happens if a borrower fails to maintain the required collateral in the system?
+What is the collateralization ratio used for ETH collateral in fyDAI?
+Will different collateral and assets have different collateralization ratios in the Yield protocol?
+Is there a way for borrowers to avoid being liquidated in the Yield protocol?
+What is the goal of Yield v2 in terms of gas cost?
+What are the gas costs of building, posting, and borrowing in Yield v2?
+How much does it cost in ETH to repay and remove collateral in Yield v2?
+What is the gas cost of lending or closing lending in Yield v2?
+Are the gas costs of Yield v2 transactions fixed or dynamic?
+What are fyTokens and how do they work?
+How is the fixed interest rate determined when lending?
+Can fyTokens be redeemed before maturity?
+How does selling fyTokens early affect the amount of underlying assets received?
+How are lenders compensated for not redeeming fyTokens right away after maturity?
+What is the current interest rate for fyDai after maturity?
+Do all fyTokens pay interest after maturity?
+Why is it necessary to pay interest on mature fyTokens?
+Is it possible for fyTokens to exist without being backed by a loan?
+How can losses be mitigated in the Yield protocol?
+What is the role of liquidity providers in the Yield Protocol v2?
+How can a user provide liquidity in the Yield v2 App?
+What is the benefit of pooling liquidity in Yield Protocol v2?
+How does Yield Protocol v2 automatically rollover liquidity from one pool to another?
+What is the predefined way in which the various liquidity strategies rollover?
+What is YieldSpace and how does it improve liquidity for fyTokens?
+How does YieldSpace minimize losses from arbitrage?
+What is the custom fee model used by YieldSpace and how is it optimized for fyTokens?
+What are Liquidity Provider shares and how are they obtained?
+Are fyDaiLP21Sep30 tokens ERC-20 tokens and how can they be used in the Defi ecosystem?
+What is the purpose of the YieldSpace pool?
+How are fyTokens traded with their underlying assets?
+Is there an automated process for swapping fyTokens with different maturities?
+What is the relationship between fyTokens and Yield protocol?
+Can Yield protocol be integrated with both client-side and smart contract code?
+How does the Yield Pool formula reduce market impact for traders of fyToken?
+What is the x-axis in the chart that illustrates market impact?
+What is the y-axis in the chart that illustrates market impact?
+What is the assumption made about the reserves of Uniswap and the Yield Pool in the chart?
+What is the implication of YieldSpace consistently outperforming Uniswap on both interest rates and market quotes?
+What can you do with the Yield App?
+What are the user-owned vaults in Yield?
+What does each vault in Yield represent?
+What is a series in Yield?
+How does providing liquidity in Yield work?
+What is the purpose of the CauldronMath add function?
+What events are emitted when a new asset is added?
+What is the purpose of the DebtLimitsSet event?
+What mappings are used in the Cauldron contract?
+What is the purpose of the SeriesMatured event?
+What is the purpose of the 'spotOracles' mapping?
+What is the 'debt' mapping used for?
+What is the function of 'setLendingOracle'?
+What is the purpose of the 'addIlks' function?
+What is the use of the 'destroy' function?
+What is the purpose of the _tweak function?
+Can we change the series if there is any debt in the vault using the tweak function?
+What is the use of the _give function?
+What does the debtFromBase function do?
+What is the purpose of the stir function?
+What is the purpose of the _pour function?
+What is the difference between the pour and slurp functions?
+What is the roll function used for?
+What does the level function return?
+What is the purpose of the mature function?
+What is the purpose of the _accrual function in the Yield protocol?
+When should the _accrual function be called?
+What does the _level function in the Yield protocol return?
+Is the collateralization level returned by the _level function always positive?
+What are the input parameters for the _level function in the Yield protocol?
+What is the purpose of the Point event?
+What is the FlashFeeFactorSet event used for?
+What does the SeriesMatured event signify?
+What is the underlying asset returned on redemption?
+What is the purpose of the setFlashFeeFactor function?
+What is the purpose of the accrual function?
+What is the difference between the accrual and _accrual functions?
+What is the purpose of the redeem function?
+What is the difference between the mintWithUnderlying and mint functions?
+What is the purpose of the maxFlashLoan function?
+What is the purpose of the flashFee function?
+What parameters does the flashFee function take?
+What is the purpose of the _flashFee function?
+What parameters does the flashLoan function take?
+What interface does the receiver contract need to implement for the flashLoan function?
+What is the purpose of the FlashFeeFactorSet event?
+What is the FLASH_LOAN_RETURN constant used for?
+What is the maxFlashLoan function used for?
+What is the flashFee function used for?
+What is the _flashFee function used for?
+What is the purpose of the flashLoan function?
+What is the required interface for the receiver contract in the flashLoan function?
+What type of contract must the token parameter be in the flashLoan function?
+What happens if the principal + fee are transferred to the contract in the flashLoan function?
+What is the purpose of the data parameter in the flashLoan function?
+What is the purpose of the 'asset' parameter in the 'Join' function?
+What is the purpose of the 'storedBalance' variable?
+What is the difference between the 'join' and '_join' functions?
+What is the purpose of the 'exit' function?
+What is the 'retrieve' function used for?
+What is the purpose of the Ladle contract in the Yield Protocol v2?
+What is the function of the getVault method in the Ladle contract?
+What is the getSeries method used for in the Ladle contract?
+What is the addIntegration method used for in the Ladle contract?
+What is the addJoin method used for in the Ladle contract?
+What is the purpose of the addPool function?
+What is the purpose of the addModule function?
+What is the purpose of the setFee function?
+What is the purpose of the batch function?
+What is the purpose of the forwardDaiPermit function?
+What is the purpose of the 'transfer' function in the Yield protocol?
+What does the 'retrieve' function do in the Yield protocol?
+What is the function of the 'receive' function in the Yield protocol?
+What is the purpose of the 'build' function in the Yield protocol?
+What is the difference between the 'build' and '_build' functions in the Yield protocol?
+What is the purpose of the 'tweak' function in the Yield protocol?
+Can a user give their vault to another user using the 'give' function?
+What is the purpose of the 'destroy' function in the Yield protocol?
+What does the 'stir' function do in the Yield protocol?
+What is the difference between the '_pour' and 'pour' functions in the Yield protocol?
+What is the purpose of the 'close' function in the Yield protocol?
+How does the 'repay' function work in the Yield protocol?
+What is the difference between the 'repay' and 'repayVault' functions in the Yield protocol?
+What is the 'roll' function used for in the Yield protocol?
+In what context is the 'repayFromLadle' function used in the Yield protocol?
+What is the purpose of the closeFromLadle function in the Yield protocol?
+When is it safe to assume a 1:1 exchange rate in the closeFromLadle function?
+What is the redeem function used for in the Yield protocol?
+What happens if 0 is passed as the amount to redeem in the redeem function?
+Is it possible for the closeFromLadle function to revert in certain contexts? If so, what happens?
+What is the purpose of the LadleStorage contract in the Yield Protocol v2?
+What is the JoinAdded event and what parameters does it take?
+What is the purpose of the PoolAdded event and what parameters does it take?
+What is the role of the cachedVaultId variable in the LadleStorage contract?
+What is the purpose of the FeeSet event and what parameter does it take?
+What is the purpose of the Router in the Yield protocol?
+What permissions are stripped from calls forwarded by the Router?
+Why is the Router useful for implementing call routing functions?
+What is the 'owner' in the Router contract?
+What is the purpose of the 'route' function in the Router contract?
+What is the purpose of the 'Point' event?
+What is the purpose of the 'IlkSet' event?
+What is the purpose of the 'Bought' event?
+What is the purpose of the 'Auctioned' event?
+What is the purpose of the 'setIlk' function?
+What is the purpose of the 'buy' function in the Yield protocol?
+What is the difference between the 'buy' and 'payAll' functions in the Yield protocol?
+What does the 'settle' function do in the Yield protocol?
+How is the 'inkPrice' calculated in the Yield protocol?
+What is the purpose of the '_isVaultUndercollateralised' function in the Yield protocol?
+What is the purpose of the 'bannedIlks' mapping?
+What event is emitted after an ilk is banned?
+What is the purpose of the 'give' function?
+What is the purpose of the 'seize' function?
+What is the input parameter for the 'banIlk' function?
+What is the purpose of the Pool contract?
+What caution should be taken when using the setYield function?
+What is the purpose of the startPool function?
+What parameters are required for the startPool function?
+What is the purpose of the mint function?
+What is the purpose of the 'burn' function in the Yield protocol?
+What is the difference between 'burn' and 'burnForBase' functions in the Yield protocol?
+What is the requirement for the strategy tokens that the user burns in the Yield protocol?
+What is the 'YieldSet' event in the Yield protocol used for?
+What is the 'PoolStarted' event in the Yield protocol used for?
+What is the purpose of the addAsset function?
+What does the setDebtLimits function do?
+How does the build function create a new vault?
+What is the purpose of the tweak function?
+What information does the vaultData function return?
+What is the purpose of the debtFromBase function?
+What is the purpose of the debtToBase function?
+What does the stir function do?
+What is the purpose of the slurp function?
+What does the level function return?
+What does the 'accrual' function do?
+What does the '_level' function return?
+What is the purpose of the 'AssetAdded' event?
+What is the purpose of the 'DebtLimitsSet' event?
+What does the 'SeriesMatured' event signify?
+What is the purpose of the 'add' function in the Yield protocol?
+Can the 'add' function handle negative numbers?
+What happens if the result of the 'add' function is negative?
+Is the 'add' function accessible to external users or only internal?
+Does the 'add' function return a value and if so, what type of value?
+What is the purpose of the 'point' function?
+What does the 'mature' function do?
+How does the 'accrual' function work?
+What is the difference between the 'redeem' and 'burn' functions?
+What is the 'maxFlashLoan' function used for?
+What is the purpose of the flashFee function?
+What is the parameter required for the flashFee function?
+What is the purpose of the flashLoan function?
+What are the parameters required for the flashLoan function?
+What happens if the borrower transfers the principal + fee to the contract in the flashLoan function?
+What is the required interface that the `receiver` contract needs to implement?
+What type of contract must the `token` parameter be?
+What is the purpose of the `data` parameter?
+What triggers the `Point` event?
+What triggers the `SeriesMatured` event?
+What is the purpose of the FYTokenFactory?
+What function does the FYTokenFactory provide?
+What is the return type of the createFYToken function?
+What does the createFYToken function do?
+How does the FYTokenFactory create new FYToken instances?
+What is the purpose of the setFlashFeeFactor function?
+What does the join function do?
+What is the purpose of the exit function?
+What is the maxFlashLoan function used for?
+What is the flashFee function used for?
+What is the 'token' parameter used for in the Yield protocol?
+What is the 'amount' parameter used for in the Yield protocol?
+What is the return value of the '_flashFee' function in the Yield protocol?
+What is the purpose of the 'flashLoan' function in the Yield protocol?
+What is the 'data' parameter used for in the 'flashLoan' function of the Yield protocol?
+What is the required interface that the 'receiver' contract needs to implement?
+What type of contract must the 'token' parameter be?
+What is the purpose of the 'amount' parameter?
+What is the 'data' parameter used for?
+What event is emitted when the flash fee factor is set?
+What is the purpose of the JoinFactory?
+What function does the JoinFactory provide?
+What parameter does the createJoin function take?
+What is the return value of the createJoin function?
+What is the Join address used for?
+What is the purpose of Ladle in the Yield Protocol v2?
+What does the getVault function do?
+What does the getSeries function do?
+What is the addIntegration function used for?
+What is the addJoin function used for?
+What is the purpose of the addModule function?
+What restrictions are placed on modules in the Yield protocol?
+What is the purpose of the batch function?
+What is the purpose of the forwardDaiPermit function?
+What is the purpose of the receive function in the Yield protocol?
+What is the purpose of the joinEther function?
+What is the purpose of the exitEther function?
+What does the build function do?
+What is the purpose of the pour function?
+What is the purpose of the serve function?
+What is the purpose of the 'close' function in the Yield protocol?
+Can collateral be added or removed using the 'close' function?
+What is the difference between the 'repay' and 'repayVault' functions in the Yield protocol?
+When can the 'roll' function be used in the Yield protocol?
+In what context is the 'repayFromLadle' function used in the Yield protocol?
+What is the purpose of the closeFromLadle function?
+What is returned by the closeFromLadle function?
+In what context is it safe to assume a 1:1 exchange rate for the closeFromLadle function?
+What is the purpose of the redeem function?
+What happens if 0 is passed as the amount to redeem in the redeem function?
+What is the purpose of Ladle in the Yield Protocol v2?
+What parameters does the constructor function of Ladle take?
+What is the JoinAdded event in the Yield Protocol v2?
+What is the purpose of the FeeSet event in the Yield Protocol v2?
+What is the IntegrationAdded event in the Yield Protocol v2?
+What is the purpose of the Router in the Yield protocol?
+How does the Router handle permissions when forwarding calls between contracts?
+In what situations is the Router useful for implementing call routing functions?
+What is the 'route' function in the Router and what does it do?
+How can the 'route' function be used in conjunction with batch in the Yield protocol?
+What is the purpose of the Ladle in the Yield Protocol v2?
+What are the functions of the Ladle contract?
+What does the addAsset function do in the Ladle contract?
+What is the makeBase function used for in the Ladle contract?
+What is the addSeries function used for in the Ladle contract?
+What is the purpose of the 'point' function in the Yield protocol?
+What are the parameters that can be set using the 'setIlk' function in the Yield protocol?
+What happens when the 'auction' function is called in the Yield protocol?
+What is the difference between the 'buy' and 'payAll' functions in the Yield protocol?
+What events are emitted by the Yield protocol?
+What is the purpose of the pow function in the Yield protocol?
+What happens if the denominator z is zero in the pow function?
+What is the purpose of the log_2 function in the Yield protocol?
+What happens if the input x is zero in the log_2 function?
+What is the purpose of the pow_2 function in the Yield protocol?
+What is the purpose of the Yield protocol?
+What is the significance of the 'x' parameter in the protocol?
+How is the 'x' parameter used in the protocol?
+What is the expected return value of the Yield protocol?
+Can the Yield protocol be integrated using both client-side and smart contract code?
+What is a signed 64.64-bit fixed point number?
+How are signed 64.64-bit fixed point numbers represented in Solidity?
+What is the purpose of the 'fromInt' function?
+What happens if there is an overflow in the 'fromInt' function?
+What is the purpose of the 'toInt' function?
+What is the purpose of the 'fromUInt' function in the Yield protocol?
+What is the parameter type for the 'from128x128' function in the Yield protocol?
+What is the return type for the 'toUInt' function in the Yield protocol?
+What happens if there is an overflow in the 'from128x128' function in the Yield protocol?
+What is the purpose of the 'toUInt' function in the Yield protocol?
+What is the purpose of the to128x128 function?
+What is the input type of the to128x128 function?
+What is the return type of the add function?
+What happens when the add function encounters an overflow?
+What is the purpose of the add function?
+What is the data type of the 'signed' return value in the 'sub' function?
+What is the purpose of the 'sub' function?
+What is the data type of the 'x' parameter in the 'mul' function?
+What is the purpose of the 'mul' function?
+What happens if there is an overflow in the 'mul' function?
+What is the purpose of the muli function?
+What are the parameters of the mulu function?
+What is the return value of the div function?
+What happens when y is zero in the div function?
+What is the difference between the muli and mulu functions?
+What is the purpose of the divi function?
+What is the purpose of the divu function?
+What are the parameters required for the divi function?
+What are the return values of the divu function?
+What happens when y is zero in the divu function?
+What is the purpose of the Yield protocol?
+What are the parameters required for the 'neg' function?
+What is the return value of the 'abs' function?
+What happens if there is an overflow in the 'neg' function?
+What type of number is the 'signed' return value of the 'abs' function?
+What is the purpose of the 'inv' function in the Yield protocol?
+What happens when the 'inv' function in the Yield protocol encounters an overflow or a zero value?
+What is the input parameter type for the 'avg' function in the Yield protocol?
+What is the output type of the 'avg' function in the Yield protocol?
+How does the 'avg' function in the Yield protocol calculate the arithmetic average of two numbers?
+What is the purpose of the gavg function in the Yield protocol?
+What are the parameters of the pow function in the Yield protocol?
+What is the return value of the sqrt function in the Yield protocol?
+What happens if x * y is negative in the gavg function of the Yield protocol?
+What is the data type of the y parameter in the pow function of the Yield protocol?
+What is the Yield protocol?
+What is the 'log_2' function used for in the protocol?
+What is the input parameter type for the 'ln' function?
+What happens if the input parameter for the 'ln' function is less than or equal to 0?
+What is the return value type for the 'log_2' function?
+What is the purpose of the 'exp_2' function in the Yield protocol?
+What is the input parameter type for the 'exp' function in the Yield protocol?
+What happens if there is an overflow in the 'exp_2' function of the Yield protocol?
+What is the output type of the 'exp' function in the Yield protocol?
+What is the difference between the 'exp' and 'exp_2' functions in the Yield protocol?
+What is the purpose of the Pool contract?
+What is the formula used to define the price of exchanging base for fyToken?
+What does the 'sync' function do?
+What is the difference between the 'getFYTokenBalance' and '_getFYTokenBalance' functions?
+What is the purpose of the 'retrieveBase' function?
+What is the purpose of the 'mint' function in the Yield protocol?
+What is the 'to' parameter in the 'mint' function used for?
+What is the difference between the 'mint' and 'mintWithBase' functions in the Yield protocol?
+What is the 'minRatio' parameter used for in the 'mint' and 'mintWithBase' functions?
+What are the return values of the 'mint' function in the Yield protocol?
+What is the purpose of the '_mintInternal' function?
+What is the 'to' parameter used for in both functions?
+What is the 'fyTokenToBuy' parameter used for in the '_mintInternal' function?
+What is the difference between the 'minRatio' and 'maxRatio' parameters?
+What are the return values of the '_mintInternal' function?
+What is the purpose of the 'burn' function in the Yield protocol?
+What are the parameters required for the 'burn' function?
+What is the purpose of the 'burnForBase' function in the Yield protocol?
+What is the difference between the 'burn' and 'burnForBase' functions?
+What are the return values of the 'burn' function?
+What is the purpose of the _burnInternal function?
+What is the difference between tokensBurned and tokenOut in the _burnInternal function?
+What is the purpose of the sellBase function?
+What is the parameter 'min' in the sellBase function?
+What does the 'tradeToBase' parameter do in the _burnInternal function?
+What is the 'to' parameter used for in the Yield protocol?
+What is the 'min' parameter used for in the Yield protocol?
+What is the return value of the 'sellBasePreview' function in the Yield protocol?
+What is the 'baseIn' parameter used for in the 'sellBasePreview' function of the Yield protocol?
+What is the requirement for a trader to be able to use the 'buyBase' function in the Yield protocol?
+What is the 'to' parameter used for in the buyBase function?
+What is the return value of the buyBasePreview function?
+What is the 'min' parameter used for in the sellFYToken function?
+What is required for a trader to be able to sell fyToken for base using the sellFYToken function?
+Can the sellFYToken function be used without first transferring the amount of fyToken to sell to the pool?
+What is the 'to' parameter used for in the Yield protocol?
+What is the return value of the 'sellFYTokenPreview' function?
+What is the 'fyTokenIn' parameter used for in the 'sellFYTokenPreview' function?
+What is the purpose of the 'max' parameter in the 'buyFYToken' function?
+What action does a trader need to take before calling the 'buyFYToken' function?
+What is the 'to' parameter used for in the Yield protocol?
+What is the 'fyTokenOut' parameter used for in the Yield protocol?
+What is the 'max' parameter used for in the Yield protocol?
+What does the 'buyFYTokenPreview' function do in the Yield protocol?
+What events are emitted in the Yield protocol?
+What is the purpose of the PoolFactory?
+What are the parameters of the calculatePoolAddress function?
+What is the return value of the calculatePoolAddress function?
+What is the purpose of the getPool function?
+What is the return value of the getPool function?
+What is the purpose of the createPool function?
+What are the parameters required for the createPool function?
+What is the return value of the createPool function?
+What is the purpose of the setParameter function?
+What event is emitted by the ParameterSet function?
+What is the purpose of the Yield protocol?
+What is the 'invariant' function used for?
+What parameters does the 'fyTokenOutForBaseIn' function take?
+What is the formula used in the 'fyTokenOutForBaseIn' function?
+What is the formula used in the 'baseOutForFYTokenIn' function?
+What is the purpose of the fyTokenInForBaseOut function?
+What are the parameters required for the fyTokenInForBaseOut function?
+What is the return value of the fyTokenInForBaseOut function?
+What is the formula used to calculate the amount of fyToken a user could sell for a given amount of Base?
+How is the time till maturity coefficient used in the Yield protocol?
+What is the purpose of the baseInForFYTokenOut function?
+What are the parameters required for the baseInForFYTokenOut function?
+What is the formula used in the baseInForFYTokenOut function?
+What is the meaning of the fyTokenReserves parameter?
+What is the meaning of the g parameter?
+What is the purpose of the maxFYTokenOut function?
+What are the parameters required for the maxFYTokenIn function?
+How is the max amount of fyTokens calculated in the maxFYTokenOut function?
+What is the return value of the maxFYTokenIn function?
+Where can I find more information about the YieldSpace White paper?
+What is the purpose of the maxBaseIn function?
+What are the parameters required for the maxBaseOut function?
+What is the return value of the maxBaseOut function?
+How is the max amount of base that can be sold to the pool calculated in the maxBaseIn function?
+What is the role of the timeTillMaturity parameter in both the maxBaseIn and maxBaseOut functions?
+What is the 'baseReserves' parameter in the Yield protocol?
+What is the 'fyTokenReserves' parameter in the Yield protocol?
+What is the 'timeTillMaturity' parameter in the Yield protocol?
+What is the 'ts' return value in the Yield protocol?
+What is the 'max' return value in the Yield protocol?
+What is the purpose of the AccumulatorMultiOracle in the Yield protocol?
+What happens when the setSource function is called in the Accumulator?
+What does the sources mapping in the AccumulatorMultiOracle store?
+What is the purpose of the PerSecondRateUpdated event in the AccumulatorMultiOracle?
+How can you retrieve the latest stored accumulated rate in the Yield protocol?
+What is the purpose of the 'get' function in the Yield protocol?
+How does the 'get' function compute the accumulated rate?
+Why is the naive implementation of 'get' not ideal?
+What is the workaround used in the 'get' function to improve performance?
+What is the significance of the 'accumulated' field in the 'get' function?
+What is the purpose of the AggregatorV3Interface in the Yield protocol?
+What does the 'decimals' function do in the AggregatorV3Interface?
+What does the 'description' function do in the AggregatorV3Interface?
+What is the difference between the 'getRoundData' and 'latestRoundData' functions in the AggregatorV3Interface?
+How can the AggregatorV3Interface be integrated into client-side and smart contract code in the Yield protocol?
+What is the purpose of checking the sequencer status on some L2 networks according to Chainlink?
+What is the function of the `chainlinkFlags` in the Solidity API?
+What is the `FLAG_ARBITRUM_SEQ_OFFLINE` in the Solidity API?
+What is the purpose of the `onlyFresh` modifier in the Solidity API?
+What is the difference between the `peek` and `get` functions in the Solidity API?
+What quote currencies does Chainlink use in its aggregators?
+What is the purpose of the SourceSet event?
+What is the purpose of the Source struct?
+What is the purpose of the peek function?
+What is the difference between the get and peek functions?
+What quote currencies does Chainlink use in its aggregators?
+What is the purpose of the 'setSource' function?
+What does the 'peek' function do?
+What is the '_getPriceInUSD' function used for?
+How does the '_peekThroughUSD' function convert base to quote currency?
+What is the purpose of the FlagsInterface in the Yield protocol?
+What does the getFlag function do in the FlagsInterface?
+How does the raiseFlag function work in the FlagsInterface?
+What is the setRaisingAccessController function used for in the FlagsInterface?
+Can the lowerFlags function be used to lower the flags of multiple addresses at once?
+What is the purpose of the CompositeMultiOracle Solidity API?
+What is the SourceSet event used for in the CompositeMultiOracle Solidity API?
+What is the setSource function used for in the CompositeMultiOracle Solidity API?
+What is the peek function used for in the CompositeMultiOracle Solidity API?
+What is the difference between the baseId and quoteId parameters in the CompositeMultiOracle Solidity API?
+What is the purpose of the 'get' function in the Yield protocol?
+What parameters does the 'get' function take?
+What is the purpose of the '_peek' function in the Yield protocol?
+What parameters does the '_peek' function take?
+What is the return value of the '_peek' function in the Yield protocol?
+What is the purpose of the _get function in the Yield protocol?
+What are the parameters required for the _get function?
+What is the return type of the _get function?
+What is the significance of the updateTimeIn parameter in the _get function?
+How does the _get function determine the amount of quote token converted from base?
+What does the borrowIndex function in the CTokenInterface do?
+What is the purpose of the exchangeRateCurrent function in the CTokenInterface?
+What is the return type of the exchangeRateCurrent function in the CTokenInterface?
+What is the difference between the exchangeRateCurrent and exchangeRateStored functions in the CTokenInterface?
+What does the underlying function in the CTokenInterface return?
+What is the purpose of the SourceSet event in the CTokenMultiOracle?
+What is the Source struct in the CTokenMultiOracle?
+What is the purpose of the setSource function in the CTokenMultiOracle?
+What is the difference between the peek and get functions in the CTokenMultiOracle?
+What is the sources mapping used for in the CTokenMultiOracle?
+What is the purpose of the SourceSet event in the CompoundMultiOracle?
+What is the sources mapping used for in the CompoundMultiOracle?
+What is the setSource function used for in the CompoundMultiOracle?
+What does the peek function do in the CompoundMultiOracle?
+What is the difference between the get and peek functions in the CompoundMultiOracle?
+What does the Cvx3CrvOracle Solidity API provide?
+What are the parameters of the setSource function?
+What is the purpose of the SourceSet event?
+What is the return type of the min function?
+What are the AggregatorV3Interface contracts used for in the Cvx3CrvOracle?
+What is the purpose of the peek function in the Yield protocol?
+What are the accepted asset identifiers for the peek and get functions?
+What is the return type of the get function in the Yield protocol?
+What is the difference between the peek and get functions in the Yield protocol?
+What is the input parameter for the baseAmount in the peek and get functions?
+What is the purpose of the _peek function in the Yield protocol?
+What are the accepted asset identifiers for the _peek function?
+What is the data type of the baseAmount parameter in the _peek function?
+What is the data type of the quoteAmount return value in the _peek function?
+What is the data type of the updateTime return value in the _peek function?
+What is the purpose of the ICurvePool interface in the Yield protocol?
+What does the get_virtual_price function do in the ICurvePool interface?
+Is the get_virtual_price function a view or a pure function?
+What is the return type of the get_virtual_price function?
+Can the get_virtual_price function be called from outside the smart contract?
+What is the purpose of the IWstETH interface?
+What is the function of getWstETHByStETH in the IWstETH interface?
+What is the function of getStETHByWstETH in the IWstETH interface?
+What does the stEthPerToken function do in the IWstETH interface?
+What does the tokensPerStEth function do in the IWstETH interface?
+What is the purpose of the 'wrap' function in the Yield protocol?
+What is the input parameter for the 'wrap' function?
+What is the requirement for the user to call the 'unwrap' function?
+What is the output of the 'unwrap' function?
+What is the difference between stETH and wstETH in the Yield protocol?
+What is the purpose of the LidoOracle?
+What is the wstETH function in the LidoOracle contract?
+What is the stEthId function in the LidoOracle contract?
+What is the difference between the peek and get functions in the LidoOracle contract?
+What are the accepted asset identifiers in the LidoOracle contract?
+What is the IUniswapV3PoolImmutables interface?
+What does the 'factory' method return?
+What does the 'token0' method return?
+What is the 'fee' method used for?
+What is the 'tickSpacing' method used for?
+What is the purpose of maxLiquidityPerTick function?
+Why is maxLiquidityPerTick enforced per tick?
+What is the data type of the returned value of maxLiquidityPerTick function?
+How does maxLiquidityPerTick prevent liquidity from overflowing?
+What is the significance of preventing out-of-range liquidity in maxLiquidityPerTick?
+What is the purpose of the UniswapV3Oracle Solidity API?
+What is the SourceSet event and what parameters does it take?
+What is the Source struct and what information does it contain?
+What is the purpose of the peek function and what parameters does it take?
+What is the difference between the get and peek functions in the UniswapV3Oracle Solidity API?
+What does the pricePerShare function do in the IYvToken interface?
+What is the return type of the pricePerShare function in the IYvToken interface?
+What does the withdraw function do in the IYvToken interface?
+What is the return type of the withdraw function in the IYvToken interface?
+What does the token function do in the IYvToken interface?
+What is the purpose of the YearnVaultMultiOracle Solidity API?
+What are the provided functions for the YearnVaultMultiOracle Solidity API?
+What is the SourceSet event used for in the YearnVaultMultiOracle Solidity API?
+What is the sources mapping used for in the YearnVaultMultiOracle Solidity API?
+What is the difference between the setSource and _setSource functions in the YearnVaultMultiOracle Solidity API?
+What is the purpose of the 'get' function in the Yield protocol?
+What is the purpose of the 'peek' function in the Yield protocol?
+What is the difference between the 'get' and 'peek' functions in the Yield protocol?
+What is the purpose of the '_peek' function in the Yield protocol?
+Which functions in the Yield protocol are external and which are internal?
+What is the purpose of the IPoolOracle interface in the Yield protocol?
+What does the peek function of the IPoolOracle interface return?
+What is the difference between the get and peek functions of the IPoolOracle interface?
+What does the update function of the IPoolOracle interface do?
+How often is each observation updated in the update function of the IPoolOracle interface?
+What is the purpose of the PoolOracle contract?
+What is the ObservationRecorded event used for?
+What is the granularity variable used for?
+What is the purpose of the observationIndexOf function?
+What is the minTimeElapsed variable used for?
+What is the purpose of the getOldestObservationInWindow function?
+How is the observation updated in the update function?
+What does the peek function return?
+What is the difference between the peek and get functions?
+Does the get function record a new observation if necessary?
+What is the purpose of the _getCurrentCumulativeRatio function?
+What is the data type of the returned value of the _getCurrentCumulativeRatio function?
+Is the _getCurrentCumulativeRatio function accessible from outside the contract?
+What is the input parameter of the _getCurrentCumulativeRatio function?
+What is the visibility of the _getCurrentCumulativeRatio function?
+What is the purpose of the SourceSet event in the YieldSpaceMultiOracle contract?
+What is the structure of the Source in the YieldSpaceMultiOracle contract?
+What is the purpose of the poolOracle variable in the YieldSpaceMultiOracle contract?
+What is the purpose of the wad64x64 variable in the YieldSpaceMultiOracle contract?
+What is the purpose of the get function in the YieldSpaceMultiOracle contract?
+What is the purpose of the _discount function in the Yield protocol?
+What are the input parameters for the _discount function?
+What is the output of the _discount function?
+How does the _discount function use the TWAR oracle rates?
+In what situations is the output of the _discount function less than the input amount?
+What is the purpose of the ContangoLadle constructor in the Yield protocol's Solidity API?
+What parameters does the build function in the ContangoLadle contract take?
+What does the build function in the ContangoLadle contract return?
+What is the purpose of the deterministicBuild function in the Yield protocol's Solidity API?
+What is the return type of the deterministicBuild function in the ContangoLadle contract?
+What is the purpose of the Yield protocol?
+What is the ContangoWitch in the Yield protocol?
+What is the constructor function in the ContangoWitch contract?
+What are the parameters of the constructor function in the ContangoWitch contract?
+What are the contracts ICauldron and ILadle used for in the Yield protocol?
+What is the purpose of the ConvexJoin wrapper?
+What is the EarnedData struct used for?
+What is the RewardType struct used for?
+What is the CRV_INDEX used for?
+What events are emitted by the ConvexJoin contract?
+What is the purpose of the VaultRemoved event?
+What parameters are required for the addVault function?
+What is the purpose of the nonReentrant modifier?
+What is the default reward token added by the addRewards function?
+What does the aggregatedAssetsOf function return?
+What is the purpose of the join function in the Yield protocol?
+What is the purpose of the exit function in the Yield protocol?
+What is the _calcRewardIntegral function used for in the Yield protocol?
+What is the purpose of the _checkpoint function in the Yield protocol?
+How does the Yield protocol calculate and distribute reward tokens?
+What does the 'checkpoint' function do in the Yield protocol?
+What is the purpose of the 'getReward' function in the Yield protocol?
+What type of parameter does the 'earned' function take in the Yield protocol?
+What does the 'earned' function return in the Yield protocol?
+Is the 'earned' function in the Yield protocol a view or a pure function?
+What is the purpose of the ConvexModule constructor?
+What is the parameter type for the 'convexJoin' argument in the addVault function?
+What is the purpose of the 'vaultId' parameter in the addVault function?
+What is the purpose of the removeVault function?
+What is the parameter type for the 'account' argument in the removeVault function?
+What is the purpose of the CvxMining Solidity API?
+What is the cvx function in the CvxMining Solidity API?
+What is the ConvertCrvToCvx function in the CvxMining Solidity API?
+What parameter does the ConvertCrvToCvx function take?
+What is the return value of the ConvertCrvToCvx function?
+What is the purpose of the WrapEtherModule in the Yield protocol?
+What is the constructor function of the WrapEtherModule?
+What is the parameter of the constructor function of the WrapEtherModule?
+What is the wrap function in the WrapEtherModule used for?
+What are the parameters of the wrap function in the WrapEtherModule?
+What is the purpose of the StEthConverter contract?
+What is the wstETH function in the StEthConverter contract used for?
+What is the stETH function in the StEthConverter contract used for?
+What is the wrap function in the StEthConverter contract used for?
+What is the unwrap function in the StEthConverter contract used for?
+What is the purpose of the ERC1155 standard implementation in the Yield protocol?
+What are the events emitted by the ERC1155 implementation in the Yield protocol?
+What is the 'balanceOf' mapping used for in the ERC1155 implementation?
+What is the purpose of the 'supportsInterface' function in the ERC1155 implementation?
+What are the functions used for minting and burning tokens in the ERC1155 implementation?
+What is the purpose of the ERC1155TokenReceiver interface?
+What is the function signature of onERC1155Received?
+What is the function signature of onERC1155BatchReceived?
+What parameters are passed to the onERC1155Received function?
+What parameters are passed to the onERC1155BatchReceived function?
+What is the purpose of the ERC1155Mock in the Yield protocol?
+What does the 'uri' function do in the ERC1155Mock?
+What parameters does the 'mint' function take in the ERC1155Mock?
+What is the return type of the 'uri' function in the ERC1155Mock?
+Can the 'mint' function be called by anyone or only specific addresses in the Yield protocol?
+What is the purpose of the FCashMock contract?
+What is the 'underlying' variable in the FCashMock contract?
+What is the 'accrual' variable in the FCashMock contract?
+What is the 'batchBalanceAction' function used for in the FCashMock contract?
+How can the 'uri' function be used in the FCashMock contract?
+What is the DepositActionType enum used for in the Yield protocol's IBatchAction?
+What are the different options for the DepositActionType enum?
+What is the BalanceAction struct used for in the Yield protocol's IBatchAction?
+What parameters does the batchBalanceAction function take in the Yield protocol's IBatchAction?
+In what order must the balance actions be sorted in the array passed to the batchBalanceAction function in the Yield protocol's IBatchAction?
+What is the purpose of the FlashFeeFactorSet event?
+What does the Redeemed event signify?
+What is the FLASH_LOAN_RETURN constant used for?
+What is the purpose of the supportsInterface function?
+What does the join function do?
+What does the _join function do?
+What is the purpose of the exit function?
+What is the difference between the exit and _exit functions?
+What does the redeem function do?
+What is the retrieveERC1155 function used for?
+How are fCash assets valued in the Yield protocol?
+What is the purpose of the SourceSet event in the NotionalMultiOracle?
+What is the FCASH_DECIMALS variable used for in the NotionalMultiOracle?
+What is the function of the peek method in the NotionalMultiOracle?
+How does the setSource method work in the NotionalMultiOracle?
+What is the purpose of the Transfer1155Module in the Yield protocol?
+What parameters are required in the constructor of the Transfer1155Module?
+What is the purpose of the transfer1155 function in the Transfer1155Module?
+Can the transfer1155 function be used for batch transfers?
+Is there a fee associated with using the transfer1155 function in the Yield protocol?
+What does the 'invariant' function do?
+What does the 'maxFYTokenOut' function return?
+What is the purpose of the 'maxFYTokenIn' function?
+What does the 'maxBaseIn' function determine?
+What is the output of the 'maxBaseOut' function?
+What does the 'invariant' function do?
+What does the 'maxFYTokenOut' function do?
+What does the 'maxFYTokenIn' function do?
+What does the 'maxBaseIn' function do?
+What does the 'maxBaseOut' function do?
+What is the purpose of the IContangoLadle interface in the Yield protocol?
+What does the deterministicBuild function do in the IContangoLadle interface?
+What parameters does the deterministicBuild function take in the IContangoLadle interface?
+What is the return type of the deterministicBuild function in the IContangoLadle interface?
+What is the role of the DataTypes.Vault struct in the deterministicBuild function of the IContangoLadle interface?
+What is the purpose of the IConvexDeposits interface in the Yield protocol?
+What parameters does the deposit function in the IConvexDeposits interface take?
+What does the 'stake' parameter in the deposit function of the IConvexDeposits interface do?
+What is the difference between the two deposit functions in the IConvexDeposits interface?
+What is the return value of the deposit function in the IConvexDeposits interface?
+What is the purpose of the IConvexJoin Solidity API?
+What does the addVault function do?
+What parameters does the removeVault function take?
+What is the data type of the vault parameter in the addVault function?
+Can the removeVault function be called by anyone or only specific accounts?
+What does the 'reductionPerCliff' function do in the ICvx Solidity API?
+What does the 'totalSupply' function return in the ICvx Solidity API?
+What does the 'totalCliffs' function return in the ICvx Solidity API?
+What does the 'maxSupply' function do in the ICvx Solidity API?
+Are there any parameters required for the functions in the ICvx Solidity API?
+What is the purpose of the IRewardStaking Solidity API?
+What is the difference between the stakeFor and stake functions?
+What is the earned function used for?
+What is the purpose of the getReward function?
+What does the balanceOf function return?
+What quote currencies does the Yield protocol use in its aggregators?
+What is the purpose of the 'setSource' function in the Yield protocol?
+What does the 'peek' function in the Yield protocol do?
+What is the difference between the 'get' and 'peek' functions in the Yield protocol?
+What event is emitted when a new oracle source is set in the Yield protocol?
+What does the 'setSource' function do?
+What does the 'peek' function return?
+What does the 'get' function do?
+Does the 'get' function update the accumulator if necessary?
+What event is emitted by the 'SourceSet' function?
