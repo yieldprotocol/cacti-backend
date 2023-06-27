@@ -1,5 +1,6 @@
 import inspect
 import os
+import json
 
 from web3 import Web3
 import tiktoken
@@ -8,21 +9,12 @@ from ens import ENS
 import functools
 import traceback
 import context
-import env
 
 from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL
 
-def _get_weaviate_url(config):
-    return f"{config.get('protocol', 'https')}://{config['user']}:{config['password']}@{config['host']}:{config['port']}"
 
-
-def _get_postgres_url(config, database_name):
-    return f"postgresql://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{database_name}"
-
-
-WEAVIATE_URL = _get_weaviate_url(env.env_config['weaviate'])
-CHATDB_URL = _get_postgres_url(env.env_config['chatdb'], 'chatdb')
-SCRAPEDB_URL = _get_postgres_url(env.env_config['scrapedb'], 'scrapedb')
+with open(f"{os.getcwd()}/knowledge_base/functions.json", 'r') as f:
+    FUNCTIONS = json.load(f)
 
 
 def set_api_key():

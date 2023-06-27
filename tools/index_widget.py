@@ -32,6 +32,9 @@ from .index_lookup import IndexLookupTool
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 
 
+WIDGET_START = '<|'
+WIDGET_END = '|>'
+
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
 
 
@@ -54,12 +57,16 @@ class IndexWidgetTool(IndexLookupTool):
     """Tool for searching a widget index and figuring out how to respond to the question."""
 
     _chain: LLMChain
+    _evaluate_widgets: bool
 
     def __init__(
             self,
             *args,
             **kwargs
     ) -> None:
+        evaluate_widgets = kwargs.pop('evaluate_widgets', True)
+        model_name = kwargs.pop('model_name', None)
+
         prompt = PromptTemplate(
             input_variables=["task_info", "question"],
             template=TEMPLATE,
@@ -87,8 +94,8 @@ class IndexWidgetTool(IndexLookupTool):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
-                while '<|' in response_buffer:
-                    if '|>' in response_buffer:
+                while WIDGET_START in response_buffer and self._evaluate_widgets:
+                    if WIDGET_END in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
                         if isinstance(response_buffer, Callable):  # handle delegated streaming
@@ -105,12 +112,12 @@ class IndexWidgetTool(IndexLookupTool):
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
-                        elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        elif len(response_buffer.split(WIDGET_START)) == len(response_buffer.split(WIDGET_END)):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
                             # there are no two independent widgets on the same line, otherwise we can't
                             # detect the closing tag properly when there is nesting.
-                            response_buffer = response_buffer.replace('|>', '|>\n')
+                            response_buffer = response_buffer.replace(WIDGET_END, WIDGET_END + '\n')
                             break
                         else:
                             # keep waiting
@@ -119,6 +126,9 @@ class IndexWidgetTool(IndexLookupTool):
                         # keep waiting
                         return
 
+                if len(response_buffer) < len(WIDGET_START):
+                    # keep waiting
+                    return
                 token = response_buffer
                 response_buffer = ""
                 if token.strip():
@@ -128,10 +138,11 @@ class IndexWidgetTool(IndexLookupTool):
                     # we have found a line-break in the response, switch to the terminal state to mask subsequent output
                     response_state = 2
 
-        chain = streaming.get_streaming_chain(prompt, injection_handler)
+        chain = streaming.get_streaming_chain(prompt, injection_handler, model_name=model_name)
         super().__init__(
             *args,
             _chain=chain,
+            _evaluate_widgets=evaluate_widgets,
             content_description="widget magic command definitions for users to invoke web3 transactions or live data when the specific user action or transaction is clear. You can look up live prices, DeFi yields, wallet balances, ENS information, token contract addresses, do transfers or swaps or deposit tokens to farm yields, or search for NFTs, and retrieve data about NFT collections, assets, trait names and trait values. It cannot help the user with understanding how to use the app or how to perform certain actions.",
             input_description="a standalone query phrase with all relevant contextual details mentioned explicitly without using pronouns in order to invoke the right widget",
             output_description="a summarized answer with relevant magic command for widget(s), or a question prompt for more information to be provided",
@@ -234,11 +245,11 @@ def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
         return fetch_scraped_sites(*params)
     elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
-    elif command == aave.AaveBorrowUIWorkflow.WORKFLOW_TYPE:
+    elif command == aave.AaveBorrowContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='borrow'))
-    elif command == 'aave-repay':
+    elif command == aave.AaveRepayContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='repay'))
-    elif command == 'aave-withdraw':
+    elif command == aave.AaveWithdrawContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='withdraw'))
     elif command == 'ens-from-address':
         return str(ens_from_address(*params))

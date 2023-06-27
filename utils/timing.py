@@ -22,6 +22,13 @@ def log(name):
     return duration
 
 
+def get(name, default_value=None):
+    global _timestamps, _start
+    if not _start or name not in _timestamps:
+        return default_value
+    return _timestamps[name]
+
+
 def report():
     return ', '.join([
         f'{name}: {duration: .2f}s'

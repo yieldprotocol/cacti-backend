@@ -46,7 +46,7 @@ MAX_TOKENS = 200
 
 @registry.register_class
 class FineTunedChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, fallback_chat: Optional[BaseChat] = None, show_thinking: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, fallback_chat: Optional[BaseChat] = None, model_name: Optional[str] = None, evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
@@ -57,7 +57,8 @@ class FineTunedChat(BaseChat):
         self.widget_index = widget_index
         self.top_k = top_k
         self.fallback_chat = fallback_chat
-        self.show_thinking = show_thinking
+        self.model_name = model_name or MODEL_NAME
+        self.evaluate_widgets = evaluate_widgets
 
     def receive_input(
             self,
@@ -115,8 +116,8 @@ class FineTunedChat(BaseChat):
             timing.log('first_widget_token')  # for comparison with basic agent
 
             response_buffer += token
-            while '<|' in response_buffer:
-                if '|>' in response_buffer:
+            while WIDGET_START in response_buffer and self.evaluate_widgets:
+                if WIDGET_END in response_buffer:
                     # parse fetch command
                     response_buffer = iterative_evaluate(response_buffer)
                     if isinstance(response_buffer, Callable):  # handle delegated streaming
@@ -133,12 +134,12 @@ class FineTunedChat(BaseChat):
                             new_token_handler(str(item) + "\n")
                         response_buffer = ""
                         return
-                    elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                    elif len(response_buffer.split(WIDGET_START)) == len(response_buffer.split(WIDGET_END)):
                         # matching pairs of open/close, just flush
                         # NB: for better frontend parsing of nested widgets, we need an invariant that
                         # there are no two independent widgets on the same line, otherwise we can't
                         # detect the closing tag properly when there is nesting.
-                        response_buffer = response_buffer.replace('|>', '|>\n')
+                        response_buffer = response_buffer.replace(WIDGET_END, WIDGET_END + '\n')
                         break
                     else:
                         # keep waiting
@@ -153,19 +154,26 @@ class FineTunedChat(BaseChat):
             elif response_buffer.startswith(NO_WIDGET_TOKEN):
                 # don't emit this in the stream, we will handle the final response below
                 return
+            elif len(response_buffer) < len(WIDGET_START):
+                # keep waiting
+                return
             token = response_buffer
             response_buffer = ""
             if token.strip():
                 timing.log('first_visible_widget_response_token')
             new_token_handler(token)
 
-        widgets = retry_on_exceptions_with_backoff(
-            lambda: self.widget_index.similarity_search(userinput, k=self.top_k),
-            [ErrorToRetry(TypeError)],
-        )
-        timing.log('widget_index_lookup_done')
-        # task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
-        task_info = format_widgets_for_prompt(widgets)
+        if self.widget_index is None:
+            task_info = ""
+        else:
+            widgets = retry_on_exceptions_with_backoff(
+                lambda: self.widget_index.similarity_search(userinput, k=self.top_k),
+                [ErrorToRetry(TypeError)],
+            )
+            timing.log('widget_index_lookup_done')
+            # task_info = '\n'.join([f'Widget: {widget.page_content}' for widget in widgets])
+            task_info = format_widgets_for_prompt(widgets)
+
         example = {
             "task_info": task_info,
             "chat_history": history_string,
@@ -173,7 +181,7 @@ class FineTunedChat(BaseChat):
             "stop": [STOP],
         }
 
-        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=MODEL_NAME, max_tokens=MAX_TOKENS)
+        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=self.model_name, max_tokens=MAX_TOKENS)
 
         with context.with_request_context(history.wallet_address, message_id):
             result = chain.run(example).strip()

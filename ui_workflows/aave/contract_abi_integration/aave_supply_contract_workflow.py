@@ -11,7 +11,7 @@ from database.models import (
     db_session, MultiStepWorkflow, WorkflowStepUserActionType
 )
 from ...base import BaseMultiStepContractWorkflow, WorkflowStepClientPayload, RunnableStep, WorkflowValidationError, ContractStepProcessingResult
-from ..common import AAVE_SUPPORTED_TOKENS, AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, get_aave_pool_v3_address_contract, get_aave_wrapped_token_gateway_contract
+from ..common import AAVE_SUPPORTED_TOKENS, AAVE_POOL_V3_PROXY_ADDRESS, AAVE_WRAPPED_TOKEN_GATEWAY, get_aave_pool_v3_address_contract, get_aave_wrapped_token_gateway_contract, aave_check_for_error_and_compute_result
 
 class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
     """
@@ -60,24 +60,11 @@ class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
             'value': hexify_token_amount(self.wallet_chain_id, self.token, self.amount),
         }
         
-        return ContractStepProcessingResult(status="success", tx=tx)
+        return aave_check_for_error_and_compute_result(self, tx)
 
     def initiate_ERC20_approval_step(self):
         """Initiate approval of ERC20 token to be spent by Aave"""
-
-        if (has_sufficient_erc20_allowance(self.web3_provider, self.wallet_chain_id, self.token, self.wallet_address, AAVE_POOL_V3_PROXY_ADDRESS, self.amount)):
-            return ContractStepProcessingResult(status="replace", replace_with_step_type="confirm_ERC20_supply")
-
-        spender = AAVE_POOL_V3_PROXY_ADDRESS
-        value = parse_token_amount(self.wallet_chain_id, self.token, self.amount)
-        encoded_data = generate_erc20_approve_encoded_data(self.web3_provider, self.wallet_chain_id, self.token, spender, value)
-        tx = {
-            'from': self.wallet_address, 
-            'to': get_token_address(self.wallet_chain_id, self.token), 
-            'data': encoded_data,
-        }
-        return ContractStepProcessingResult(status="success", tx=tx)
-        
+        return self._initiate_ERC20_approval(AAVE_POOL_V3_PROXY_ADDRESS, self.token, self.amount, 'confirm_ERC20_supply')
 
     def confirm_ERC20_supply_step(self, extra_params=None) -> ContractStepProcessingResult:
         """Confirm supply of ERC20 token"""
@@ -93,4 +80,4 @@ class AaveSupplyContractWorkflow(BaseMultiStepContractWorkflow):
             'data': encoded_data,
         }
         
-        return ContractStepProcessingResult(status="success", tx=tx)
+        return aave_check_for_error_and_compute_result(self, tx)

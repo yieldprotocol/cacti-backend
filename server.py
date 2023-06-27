@@ -7,6 +7,7 @@ from urllib.parse import urlparse, parse_qs
 
 from sqlalchemy import func
 
+import env
 import chat
 import index
 import system
@@ -60,13 +61,34 @@ def _get_default_system_config_id():
 default_system_config_id = _get_default_system_config_id()
 
 
+# uuid to display random conversation (only for non-prod)
+RANDOM_CONVERSATION_UUID = uuid.UUID('00000000-0000-0000-0000-000000000000')
+
+
+def _generate_random_conversation():
+    from finetune.generate import generate_conversation
+    for i, msg in enumerate(generate_conversation()):
+        yield ChatMessage(
+            actor=msg.actor,
+            type='text',
+            payload=msg.payload,
+            sequence_number=i,
+            chat_session_id=RANDOM_CONVERSATION_UUID,
+            system_config_id=default_system_config_id,
+        )
+
 
 def _load_existing_history_and_messages(session_id):
     """Given an existing session_id, recreate the ChatHistory instance along with the individual Messages"""
     history = chat.ChatHistory.new(session_id)
     messages = []
 
-    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.sequence_number, ChatMessage.created).all():
+    if session_id == RANDOM_CONVERSATION_UUID and not env.is_prod():
+        message_iter = _generate_random_conversation()
+    else:
+        message_iter = ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.sequence_number, ChatMessage.created).all()
+
+    for message in message_iter:
         messages.append(message)
 
         # register user/bot messages to history
@@ -79,6 +101,8 @@ def _load_existing_history_and_messages(session_id):
                 history.add_system_message(message.payload, message_id=message.id)
             elif message.actor == 'commenter':
                 history.add_commenter_message(message.payload, message_id=message.id)
+            elif message.actor == 'function':
+                history.add_function_message(message.payload, message_id=message.id)
             else:
                 assert 0, f'unrecognized actor: {message.actor}'
 
@@ -127,17 +151,9 @@ def message_received(client_state, send_response, message):
     if typ == 'init':
         assert history is None, f'received a session resume request for existing session {history.session_id}'
 
-        # HACK: legacy payload is a query string of the format '?s=some_session_id', temporarily preserve backwards compatibility
-        if isinstance(payload, str):
-            # parse query string for session id
-            params = parse_qs(urlparse(payload).query)
-            session_id = uuid.UUID(params['s'][0])
-            resume_from_message_id = None
-            before_message_id = None
-        else:
-            session_id = uuid.UUID(payload['sessionId'])
-            resume_from_message_id = payload.get('resumeFromMessageId')
-            before_message_id = payload.get('insertBeforeMessageId')
+        session_id = uuid.UUID(payload['sessionId'])
+        resume_from_message_id = payload.get('resumeFromMessageId')
+        before_message_id = payload.get('insertBeforeMessageId')
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)

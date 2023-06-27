@@ -48,10 +48,10 @@ HISTORY_TOKEN_LIMIT = 2500
 
 @registry.register_class
 class BasicAgentChat(BaseChat):
-    def __init__(self, tools: List[BaseTool], show_thinking: bool = True) -> None:
+    def __init__(self, tools: List[BaseTool], model_name: Optional[str] = None) -> None:
         super().__init__()
         self.tools = tools
-        self.show_thinking = show_thinking
+        self.model_name = model_name
 
     def receive_input(
             self,
@@ -160,6 +160,7 @@ class BasicAgentChat(BaseChat):
             tools,
             system_new_token_handler,
             verbose=True,
+            model_name=self.model_name,
             agent_kwargs=dict(
                 ai_prefix="Assistant",
                 human_prefix="User",

@@ -32,8 +32,6 @@ from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operat
 from tools.index_widget import *
 
 
-RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
-
 TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget magic commands that you can delegate work to, by invoking them and chaining them together, to provide a response to an input query. Magic commands have the structure "<|command(parameter1, parameter2, ...)|>" specifying the command and its input parameters. They can only be used with all parameters having known and assigned values, otherwise, they have to be kept secret. The command may either have a display- or a fetch- prefix. When you return a display- command, the user will see data, an interaction box, or other inline item rendered in its place. When you return a fetch- command, data is fetched over an API and injected in place. Users cannot type or use magic commands, so do not tell them to use them. Fill in the command with parameters as inferred from the input. If there are missing parameters, do not use magic commands but mention what parameters are needed instead. If there is no appropriate widget available, explain that more information is needed. Do not make up a non-existent widget magic command, only use the applicable ones for the situation, and only if all parameters are available. You might need to use the output of widget magic commands as the input to another to get your final answer. Here are the widgets that may be relevant:
 ---
 {task_info}
@@ -56,7 +54,7 @@ HISTORY_TOKEN_LIMIT = 1800
 
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, model_name: Optional[str] = None, evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
@@ -66,7 +64,8 @@ class RephraseWidgetSearchChat(BaseChat):
         )
         self.widget_index = widget_index
         self.top_k = top_k
-        self.show_thinking = show_thinking
+        self.evaluate_widgets = evaluate_widgets
+        self.model_name = model_name
 
     def receive_input(
             self,
@@ -137,8 +136,8 @@ class RephraseWidgetSearchChat(BaseChat):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
-                while '<|' in response_buffer:
-                    if '|>' in response_buffer:
+                while WIDGET_START in response_buffer and self.evaluate_widgets:
+                    if WIDGET_END in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
                         if isinstance(response_buffer, Callable):  # handle delegated streaming
@@ -155,12 +154,12 @@ class RephraseWidgetSearchChat(BaseChat):
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
-                        elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        elif len(response_buffer.split(WIDGET_START)) == len(response_buffer.split(WIDGET_END)):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
                             # there are no two independent widgets on the same line, otherwise we can't
                             # detect the closing tag properly when there is nesting.
-                            response_buffer = response_buffer.replace('|>', '|>\n')
+                            response_buffer = response_buffer.replace(WIDGET_END, WIDGET_END + '\n')
                             break
                         else:
                             # keep waiting
@@ -168,6 +167,9 @@ class RephraseWidgetSearchChat(BaseChat):
                     else:
                         # keep waiting
                         return
+                if len(response_buffer) < len(WIDGET_START):
+                    # keep waiting
+                    return
                 token = response_buffer
                 response_buffer = ""
                 if token.strip():
@@ -190,7 +192,7 @@ class RephraseWidgetSearchChat(BaseChat):
             "stop": ["Input", "User"],
         }
 
-        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler)
+        chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=self.model_name)
 
         with context.with_request_context(history.wallet_address, message_id):
             result = chain.run(example).strip()
