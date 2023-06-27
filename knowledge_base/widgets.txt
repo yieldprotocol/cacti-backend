@@ -244,6 +244,19 @@ Required Parameters:
 -{borrowAmount}: amount of LUSD to borrow
 -{collateralAmount}: amount of ETH to use as collateral
 ---
+Widget magic command: <|liquity-close()|>
+Description of widget: This widget is used when the user wants to close their trove from Liquity protocol.
+---
+Widget magic command: <|liquity-adjust({borrowAmount},{repayAmount},{depositCollateral},{withdrawCollateral})|>
+Description of widget: This widget is used when the user wants to adjust their trove from Liquity protocol.
+Required Parameters:
+If the user is trying to borrow more LUSD and/or deposit more collateral
+-{borrowAmount}: amount of LUSD to borrow
+-{collateralAmount}: amount of ETH to use as collateral
+If the user is trying to repay debt and/or withdraw collateral
+-{repayAmount}: amount of LUSD to repay
+-{withdrawCollateral}: amount of ETH collateral to withdraw
+---
 Widget magic command: <|display-zksync-deposit({token},{amount})|>
 Description of widget: This widget is used when the user wants to bridge and deposit tokens from mainnet L1 to zksync L2
 Required parameters:
