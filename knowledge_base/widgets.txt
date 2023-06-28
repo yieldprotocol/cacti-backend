@@ -238,6 +238,18 @@ Required parameters:
 Return value description:
 -a summarized answer with source citations
 ---
+Widget magic command: <|display-zksync-deposit({token},{amount})|>
+Description of widget: This widget is used when the user wants to bridge and deposit tokens from mainnet L1 to zksync L2
+Required parameters:
+-{token}: token to deposit
+-{amount}: quantity to deposit
+---
+Widget magic command: <|display-zksync-withdraw({token},{amount})|>
+Description of widget: This widget is used when the user wants to withdraw tokens from zksync L2 to mainnet L1
+Required parameters:
+-{token}: token to withdraw
+-{amount}: quantity to withdraw
+---
 Widget magic command: <|liquity-borrow({borrowAmount},{collateralAmount})|>
 Description of widget: This widget is used when the user wants to borrow LUSD using ETH as collateral from the Liquity protocol.
 Required Parameters:
@@ -256,15 +268,3 @@ If the user is trying to borrow more LUSD and/or deposit more collateral
 If the user is trying to repay debt and/or withdraw collateral
 -{repayAmount}: amount of LUSD to repay
 -{withdrawCollateral}: amount of ETH collateral to withdraw
----
-Widget magic command: <|display-zksync-deposit({token},{amount})|>
-Description of widget: This widget is used when the user wants to bridge and deposit tokens from mainnet L1 to zksync L2
-Required parameters:
--{token}: token to deposit
--{amount}: quantity to deposit
----
-Widget magic command: <|display-zksync-withdraw({token},{amount})|>
-Description of widget: This widget is used when the user wants to withdraw tokens from zksync L2 to mainnet L1
-Required parameters:
--{token}: token to withdraw
--{amount}: quantity to withdraw
