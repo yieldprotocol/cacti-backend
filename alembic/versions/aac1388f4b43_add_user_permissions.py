@@ -44,7 +44,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('user_id', 'wallet_id')
     )
     op.create_index('wallet_user_id', 'user_wallet', ['wallet_id', 'user_id'], unique=False)
-    op.add_column('chat_session', sa.Column('privacy_type', sqlalchemy_utils.ChoiceType(database.models.PrivacyType, impl=sa.Integer()), nullable=False))
+    op.add_column('chat_session', sa.Column('privacy_type', sqlalchemy_utils.ChoiceType(database.models.PrivacyType, impl=sa.Integer()), nullable=True))
     op.add_column('chat_session', sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=True))
     op.create_index('chat_session_user', 'chat_session', ['user_id'], unique=False)
     op.create_foreign_key(None, 'chat_session', 'user', ['user_id'], ['id'])
