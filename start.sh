@@ -4,7 +4,7 @@
 if [[ -z "${SKIP_DB_CHECK}" ]]
 then
     echo "Checking current database revision..."
-    alembic current | grep head || { echo "WARNING: Database schema not in sync. Run \"ENV_TAG=$ENV_TAG ./db_schema_sync.sh\" to update the $ENV_TAG database, or prepend SKIP_DB_CHECK=1 to your command to ignore this warning."; exit 1; }
+    alembic check || { echo "WARNING: Database schema not in sync. Run \"ENV_TAG=$ENV_TAG ./db_schema_sync.sh\" to update the $ENV_TAG database, or prepend SKIP_DB_CHECK=1 to your command to ignore this warning."; exit 1; }
 fi
 
 xvfb_cmd=xvfb-run
