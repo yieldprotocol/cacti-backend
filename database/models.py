@@ -80,7 +80,7 @@ class UserWallet(Base, Timestamp):  # type: ignore
 class ChatSession(Base, Timestamp):  # type: ignore
     __tablename__ = 'chat_session'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    privacy_type = Column(ChoiceType(PrivacyType, impl=Integer()), default=PrivacyType.private, nullable=False)
+    privacy_type = Column(ChoiceType(PrivacyType, impl=Integer()), server_default=str(int(PrivacyType.private)), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=True)
 
     Index('chat_session_user', user_id)
