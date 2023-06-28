@@ -15,10 +15,10 @@ Alternatively, you can manually craft a migration file. Alembic has limitations 
 ## Run migration to update schema
 
 Update the database schema with
-`ENV_TAG=dev alembic upgrade head`
+`ENV_TAG=dev ./db_schema_sync.sh`
 
 This will run all migrations from the database's current Alembic version up until the most recent one. If things are working as intended after the schema change, bring the prod instance up to parity:
-`ENV_TAG=prod alembic upgrade head`
+`ENV_TAG=prod ./db_schema_sync.sh`
 
 
 ## Other
