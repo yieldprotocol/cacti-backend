@@ -6,6 +6,7 @@ with them.
 
 To run the backend locally:
 ```
+cp env/local.example.yaml env/local.yaml
 python3 -m venv ../venv
 source ../venv/bin/activate
 pip install -r requirements.txt
@@ -25,7 +26,6 @@ docker-compose up
 
 ## Steps to add new widget command
 - Update `widgets.txt` with the widget command details
-- Bump up the widget index version in `INDEX_NAME` https://github.com/yieldprotocol/chatweb3-backend/blob/dev/index/widgets.py#L9 
-- Similarly, bump up the index version in `index_name`   https://github.com/yieldprotocol/chatweb3-backend/blob/dev/config.py#L6
-- Run this Python command to update our Weaviate Vector DB with the new widget `python3 -c "from index import widgets; widgets.backfill()"`
-- Add the widget's handler function in `replace_match()` https://github.com/yieldprotocol/chatweb3-backend/blob/dev/tools/index_widget.py#L189
+- Increment the numeric version in `WIDGET_INDEX_NAME` constant in `utils/constants.py`
+- For local env, the widget index name would use your OS login name to create an isolated index. For dev/prod, the widget index would be the numeric version mentioned above. (more info in `scripts/update_widget_index.py`)
+- Run this Python command to update our Weaviate Vector DB with the new widget `python -m scripts.update_widget_index`
