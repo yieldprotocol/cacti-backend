@@ -46,6 +46,10 @@ MAINNET_TOKEN_TO_PROFILE_MAP = {
         "address": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
         "decimals": 8
     },
+    "SavingsDAI": {
+        "address": "0x83F20F44975D03b1b09e64809B757c47f942BEeA",
+        "decimals": 18
+    },
 }
 
 def parse_token_amount(chain_id: int, token: str, amount: str) -> int:

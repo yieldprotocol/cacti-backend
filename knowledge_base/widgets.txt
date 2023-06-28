@@ -216,6 +216,16 @@ Required Parameters:
 -{token}: token to withdraw
 -{amount}: quantity to withdraw
 ---
+Widget magic command: <|savings-dai-deposit({amount})|>
+Description of widget: This widget is used when the user wants to deposit DAI into SavingsDAI to get SavingsDAI, that can be later redeemed for a profit.
+Required Parameters:
+-{amount}: amount of DAI to deposit
+---
+Widget magic command: <|savings-dai-redeem({amount})|>
+Description of widget: This widget is used when the user wants to redeem their SavingsDAI to get DAI, realizing a profit.
+Required Parameters:
+-{amount}: amount of SavingsDAI to redeem
+---
 Widget magic command: <|display-yield-farm({project},{network}, {token}, {amount})|>
 Description of widget: This widget is only to be used for the Compound project to allow the user to yield farm by putting tokens or depositing tokens of a certain amount into the Compound project
 Required Parameters:
