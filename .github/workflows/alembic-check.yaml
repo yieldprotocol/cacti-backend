@@ -39,7 +39,7 @@ jobs:
 
     - name: Set environment for branch
       run: |
-        if [[ $GITHUB_REF == 'refs/heads/master' ]]; then
+        if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' ]]; then
           echo "ENV_TAG=prod" >> "$GITHUB_ENV"
         else
           echo "ENV_TAG=dev" >> "$GITHUB_ENV"
