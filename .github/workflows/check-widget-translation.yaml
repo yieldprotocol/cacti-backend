@@ -1,12 +1,14 @@
 #
-name: Widget
+name: Check widget translation
 
 on:
   push:
     branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
 
 jobs:
-  build:
+  update-widget-index:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -39,7 +41,8 @@ jobs:
           else
             echo "ENV_TAG=dev" >> "$GITHUB_ENV"
           fi
-      - name: Run check
+
+      - name: Update widget index
         run: |
           cd backend
-          alembic check
+          python -m scripts.check_widget_translation
