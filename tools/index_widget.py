@@ -32,6 +32,9 @@ from .index_lookup import IndexLookupTool
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 
 
+WIDGET_START = '<|'
+WIDGET_END = '|>'
+
 RE_COMMAND = re.compile(r"\<\|(?P<command>[^(]+)\((?P<params>[^)<{}]*)\)\|\>")
 
 
@@ -91,8 +94,8 @@ class IndexWidgetTool(IndexLookupTool):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
-                while '<|' in response_buffer and self._evaluate_widgets:
-                    if '|>' in response_buffer:
+                while WIDGET_START in response_buffer and self._evaluate_widgets:
+                    if WIDGET_END in response_buffer:
                         # parse fetch command
                         response_buffer = iterative_evaluate(response_buffer)
                         if isinstance(response_buffer, Callable):  # handle delegated streaming
@@ -109,12 +112,12 @@ class IndexWidgetTool(IndexLookupTool):
                                 new_token_handler(str(item) + "\n")
                             response_buffer = ""
                             return
-                        elif len(response_buffer.split('<|')) == len(response_buffer.split('|>')):
+                        elif len(response_buffer.split(WIDGET_START)) == len(response_buffer.split(WIDGET_END)):
                             # matching pairs of open/close, just flush
                             # NB: for better frontend parsing of nested widgets, we need an invariant that
                             # there are no two independent widgets on the same line, otherwise we can't
                             # detect the closing tag properly when there is nesting.
-                            response_buffer = response_buffer.replace('|>', '|>\n')
+                            response_buffer = response_buffer.replace(WIDGET_END, WIDGET_END + '\n')
                             break
                         else:
                             # keep waiting
@@ -123,6 +126,9 @@ class IndexWidgetTool(IndexLookupTool):
                         # keep waiting
                         return
 
+                if 0 < len(response_buffer) < len(WIDGET_START) and WIDGET_START.startswith(response_buffer):
+                    # keep waiting if we could potentially be receiving WIDGET_START
+                    return
                 token = response_buffer
                 response_buffer = ""
                 if token.strip():

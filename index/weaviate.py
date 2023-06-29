@@ -25,4 +25,4 @@ class WeaviateIndex(Weaviate):
     """Thin wrapper around langchain's vector store."""
     def __init__(self, index_name: str, text_key: str, extra_keys: Optional[List[str]] = None) -> None:
         client = get_client()
-        super().__init__(client, index_name, text_key, extra_keys or [])
+        super().__init__(client, index_name, text_key, attributes=extra_keys or [])

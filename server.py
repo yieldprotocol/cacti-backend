@@ -7,13 +7,14 @@ from urllib.parse import urlparse, parse_qs
 
 from sqlalchemy import func
 
+import env
 import chat
 import index
 import system
 import config
 from database import utils as db_utils
 from database.models import (
-    db_session, FeedbackStatus,
+    db_session, FeedbackStatus, PrivacyType,
     ChatSession, ChatMessage, ChatMessageFeedback,
     SystemConfig,
 )
@@ -60,13 +61,34 @@ def _get_default_system_config_id():
 default_system_config_id = _get_default_system_config_id()
 
 
+# uuid to display random conversation (only for non-prod)
+RANDOM_CONVERSATION_UUID = uuid.UUID('00000000-0000-0000-0000-000000000000')
+
+
+def _generate_random_conversation():
+    from finetune.generate import generate_conversation
+    for i, msg in enumerate(generate_conversation()):
+        yield ChatMessage(
+            actor=msg.actor,
+            type='text',
+            payload=msg.payload,
+            sequence_number=i,
+            chat_session_id=RANDOM_CONVERSATION_UUID,
+            system_config_id=default_system_config_id,
+        )
+
 
 def _load_existing_history_and_messages(session_id):
     """Given an existing session_id, recreate the ChatHistory instance along with the individual Messages"""
     history = chat.ChatHistory.new(session_id)
     messages = []
 
-    for message in ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.sequence_number, ChatMessage.created).all():
+    if session_id == RANDOM_CONVERSATION_UUID and not env.is_prod():
+        message_iter = _generate_random_conversation()
+    else:
+        message_iter = ChatMessage.query.filter(ChatMessage.chat_session_id == session_id).order_by(ChatMessage.sequence_number, ChatMessage.created).all()
+
+    for message in message_iter:
         messages.append(message)
 
         # register user/bot messages to history
@@ -79,6 +101,8 @@ def _load_existing_history_and_messages(session_id):
                 history.add_system_message(message.payload, message_id=message.id)
             elif message.actor == 'commenter':
                 history.add_commenter_message(message.payload, message_id=message.id)
+            elif message.actor == 'function':
+                history.add_function_message(message.payload, message_id=message.id)
             else:
                 assert 0, f'unrecognized actor: {message.actor}'
 
@@ -86,18 +110,74 @@ def _load_existing_history_and_messages(session_id):
 
 
 def _ensure_authenticated(client_state, send_response):
-    if client_state.wallet_address:
+    """Returns true if we are authenticated."""
+    if client_state.user_id:
         return True
     msg = json.dumps({
         'messageId': 0,
         'actor': 'bot',
         'type': 'text',
-        'payload': 'Please connect your wallet to chat.',
+        'payload': 'Please sign in to chat.',
         'stillThinking': False,
         'operation': 'create',
-        'feedback': 'none',
+        'feedback': 'n/a',
     })
     send_response(msg)
+    return False
+
+
+def _ensure_can_view_chat_session(session_id, client_state, send_response):
+    """Returns true if we are allowed to view the chat session."""
+    user_id = client_state.user_id
+    assert user_id, 'expecting user id to be known here'
+
+    chat_session = ChatSession.query.filter(ChatSession.id == session_id).one_or_none()
+    if not chat_session:
+        # non-existent session, treat as if no permissions
+        pass
+
+    elif str(chat_session.user_id) == str(user_id) or chat_session.privacy_type == PrivacyType.public:
+        # allow to view your own sessions, or those shared publicly
+        # TODO: add case where session is shared with specific user ids / wallet addresses
+        return True
+
+    msg = json.dumps({
+        'messageId': 0,
+        'actor': 'bot',
+        'type': 'text',
+        'payload': 'No permissions to view this chat.',
+        'stillThinking': False,
+        'operation': 'create',
+        'feedback': 'n/a',
+    })
+    send_response(msg)
+
+    return False
+
+
+def _ensure_can_edit_chat_session(session_id, client_state, send_response):
+    """Returns true if we are allowed to view the chat session."""
+    user_id = client_state.user_id
+    assert user_id, 'expecting user id to be known here'
+
+    chat_session = ChatSession.query.filter(ChatSession.id == session_id).one_or_none()
+    assert chat_session, 'expecting chat session to be known here'
+
+    if str(chat_session.user_id) == str(user_id):
+        # only allow users to edit their own chats for now
+        return True
+
+    msg = json.dumps({
+        'messageId': 0,
+        'actor': 'bot',
+        'type': 'text',
+        'payload': 'No permissions to edit this chat.',
+        'stillThinking': False,
+        'operation': 'create',
+        'feedback': 'n/a',
+    })
+    send_response(msg)
+
     return False
 
 
@@ -130,6 +210,9 @@ def message_received(client_state, send_response, message):
         session_id = uuid.UUID(payload['sessionId'])
         resume_from_message_id = payload.get('resumeFromMessageId')
         before_message_id = payload.get('insertBeforeMessageId')
+
+        if not _ensure_can_view_chat_session(session_id, client_state, send_response):
+            return
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)
@@ -191,9 +274,12 @@ def message_received(client_state, send_response, message):
 
     chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
     if not chat_session:
-        chat_session = ChatSession(id=history.session_id)
+        chat_session = ChatSession(id=history.session_id, user_id=client_state.user_id)
         db_session.add(chat_session)
         db_session.flush()
+
+    if not _ensure_can_edit_chat_session(history.session_id, client_state, send_response):
+        return
 
     def send_message(resp, last_chat_message_id=None, before_message_id=None):
         """Send message function.

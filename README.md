@@ -21,11 +21,13 @@ you are modifying weaviate schema.
 ```
 cd docker
 docker-compose up
+# ensure schema is created/up-to-date
+ENV_TAG=local ./db_schema_sync.sh
 ```
 
 ## Steps to add new widget command
 - Update `widgets.txt` with the widget command details
-- Bump up the widget index version in `INDEX_NAME` https://github.com/yieldprotocol/chatweb3-backend/blob/dev/index/widgets.py#L9 
+- Bump up the widget index version in `INDEX_NAME` https://github.com/yieldprotocol/chatweb3-backend/blob/dev/index/widgets.py#L9
 - Similarly, bump up the index version in `index_name`   https://github.com/yieldprotocol/chatweb3-backend/blob/dev/config.py#L6
 - Run this Python command to update our Weaviate Vector DB with the new widget `python3 -c "from index import widgets; widgets.backfill()"`
 - Add the widget's handler function in `replace_match()` https://github.com/yieldprotocol/chatweb3-backend/blob/dev/tools/index_widget.py#L189
