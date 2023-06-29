@@ -132,8 +132,8 @@ class ChatGPTFunctionCallChat(BaseChat):
                 else:
                     # keep waiting
                     return
-            if len(response_buffer) < len(WIDGET_START):
-                # keep waiting
+            if 0 < len(response_buffer) < len(WIDGET_START) and WIDGET_START.startswith(response_buffer):
+                # keep waiting if we could potentially be receiving WIDGET_START
                 return
             token = response_buffer
             response_buffer = ""
