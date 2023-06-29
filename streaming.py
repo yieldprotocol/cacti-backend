@@ -10,15 +10,9 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import config
 from agents.conversational import CUSTOM_AGENT_NAME
 from chains import IndexAPIChain
-from utils.constants import HUGGINGFACE_API_KEY, HUGGINGFACE_INFERENCE_ENDPOINT
+from utils.constants import RUNPOD_API_KEY, HUGGINGFACE_API_KEY, HUGGINGFACE_INFERENCE_ENDPOINT
 
 import runpod
-import os
-RPD_GPU = 1 # 1 for 7B
-RPD_VOL = 75 #225 GB volume 
-RPD_DISK = 25 # 75 disk space
-RPD_MODEL_NAME = "tiiuae/falcon-7b-instruct"
-RPD_GPU_ID = "NVIDIA A100 80GB PCIe"
 
 class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
     """Override the minimal handler to get the token."""
@@ -35,23 +29,6 @@ class StreamingCallbackHandler(StreamingStdOutCallbackHandler):
         self.new_token_handler(token)
 
 
-def create_runpod():
-    # this is one-time declaration, start when the server starts, and return the pod object to the calling stream once done
-    pod = runpod.create_pod(
-            name="Falcon Small Test Streaming",
-            image_name="ghcr.io/huggingface/text-generation-inference:0.8.2",
-            gpu_type_id= RPD_GPU_ID,
-            cloud_type="SECURE",
-            docker_args=f"--model-id {RPD_MODEL_NAME} --num-shard {RPD_GPU}",
-            gpu_count=RPD_GPU,
-            volume_in_gb=RPD_VOL,
-            container_disk_in_gb=RPD_DISK,
-            ports="80/http",
-            volume_mount_path="/data",
-        )
-    print("created runpod!")
-    return pod
-
 def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
     
     if model_name=='huggingface-llm':
@@ -61,31 +38,50 @@ def get_streaming_llm(new_token_handler, model_name=None, max_tokens=-1):
             callbacks=[StreamingCallbackHandler(new_token_handler)],
         ) if new_token_handler else {}
 
-        # TODO: fix runpod booting issue (15 min+)
-        # this is not a working solution
-        runpod.api_key = os.getenv("RUNPOD_API_KEY", "EZ2ZWDWQ4ECHHE19WDET114I0EL2SGALIZJO0YNM")
-        podid = "bvxte4qal3wv2o"
-        inference_server_url = f'https://{podid}-80.proxy.runpod.net'
-        
-        # inference_server_url = HUGGINGFACE_INFERENCE_ENDPOINT
-        
-        # headers = {
-        #     "Authorization": f"Bearer {HUGGINGFACE_API_KEY}",
-        #     "Content-Type": "application/json",
-        # }
-        
-        # client = Client(inference_server_url, headers=headers)
+        # this must run 
+        runpod.api_key = RUNPOD_API_KEY
 
-        # this got called for each inference, or each streaming, in the chat
-        llm = HuggingFaceTextGenInference(
-            inference_server_url=inference_server_url,
-            max_new_tokens=150, # -1 means generate no token
-            temperature=0.05, # should be strictly positive
-            **streaming_kwargs,
-        ) # this is repeatedly called each time, starting from here
-        # llm.client = client
-        print("starting custom LLM with streaming=true")
+        def get_pod_id():
+            with open("runpod_id.txt", "r") as file:
+                existing_runpod_id = file.read().strip()
 
+            if existing_runpod_id is None:
+                print(f"No existing runpod ID found.")
+            else:
+                print(f"Using existing runpod ID: {existing_runpod_id}")
+
+            return existing_runpod_id
+
+        podid = get_pod_id() # once this is verified and set up 
+        # does not allow interrupt when the server runs.
+
+        if(podid): 
+            inference_server_url = f'https://{podid}-80.proxy.runpod.net'
+            # this got called for each inference, or each streaming, in the chat
+            llm = HuggingFaceTextGenInference(
+                inference_server_url=inference_server_url,
+                max_new_tokens=200, # -1 means generate no token
+                temperature=0.05, # should be strictly positive
+                **streaming_kwargs,
+            ) # this is repeatedly called each time, starting from here
+            print(f"starting custom LLM on runpod {podid}")
+        
+        else: # Harsh's code
+            inference_server_url = HUGGINGFACE_INFERENCE_ENDPOINT
+            headers = {
+                "Authorization": f"Bearer {HUGGINGFACE_API_KEY}",
+                "Content-Type": "application/json",
+            }
+            client = Client(inference_server_url, headers=headers)
+            llm = HuggingFaceTextGenInference(
+                inference_server_url=inference_server_url,
+                max_new_tokens=max_tokens if max_tokens is None else 200,
+                temperature=0.1, # should be strictly positive
+                **streaming_kwargs,
+            )
+            llm.client = client
+            print(f"starting custom LLM on HF Endpoint {HUGGINGFACE_INFERENCE_ENDPOINT}")
+        
     else:
         # falls back to non-streaming if none provided
         streaming_kwargs = dict(

@@ -52,7 +52,7 @@ default_config = dict(
     chat=dict(
         type='chat.rephrase_widget_search2.RephraseWidgetSearchChat',
         widget_index=widget_index,
-        top_k=4,
+        top_k=3,
         model_name = "huggingface-llm",
         evaluate_widgets=True
     )

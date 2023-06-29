@@ -40,7 +40,7 @@ TEMPLATE = '''You are a web3 widget tool. You have access to a list of widget ma
 ---
 Use the following format:
 
-## Tool Input: given a query which you have to rephrase, explicitly restating the task without pronouns and restating details based on the conversation history and new input. Restate verbatim ALL details/names/figures/facts/etc from past observations relevant to the task and ALL related entities.
+## Tool Input: Rephrase the user's input in plain sentence, omit personal pronoun subject.
 ## Widget Command: most relevant widget magic command to respond to Tool Input
 ## Known Parameters: parameter-value pairs representing inputs to the above widget magic command
 ## Response: return the widget magic command with ALL its respective input parameter values (omit parameter names)
@@ -51,8 +51,7 @@ Previous conversation history:
 Input: {question}
 ## Tool input:'''
 
-# HISTORY_TOKEN_LIMIT = 1800
-HISTORY_TOKEN_LIMIT = 600
+HISTORY_TOKEN_LIMIT = 1800
 
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
@@ -128,8 +127,7 @@ class RephraseWidgetSearchChat(BaseChat):
             timing.log('first_widget_token')  # for comparison with basic agent
     
             response_buffer += token
-            print("internal buffer:" + response_buffer + ", current token:" + token + ", response state:" + str(response_state))
-
+            print("\ninteral buffer: ", response_buffer, "\ncurrent token:", token, ",response state: ", str(response_state))
             if response_state == 0:  # we are still waiting for response_prefix to appear
                 if response_prefix not in response_buffer:
                     # keep waiting
@@ -141,6 +139,7 @@ class RephraseWidgetSearchChat(BaseChat):
                     response_buffer = response_buffer[response_buffer.index(response_prefix) + len(response_prefix):]
 
             if response_state == 1:  # we are going to output the response incrementally, evaluating any fetch commands
+                # when the chain of thought hit ## Response, the streaming changes mod from chunking stream to finegrained stream
                 while '<|' in response_buffer and self.evaluate_widgets:
                     if '|>' in response_buffer:
                         # parse fetch command
@@ -180,6 +179,7 @@ class RephraseWidgetSearchChat(BaseChat):
                 if '\n' in token:
                     # we have found a line-break in the response, switch to the terminal state to mask subsequent output
                     response_state = 2
+                    
 
         widgets = retry_on_exceptions_with_backoff(
             lambda: self.widget_index.similarity_search(userinput, k=self.top_k),
@@ -191,8 +191,8 @@ class RephraseWidgetSearchChat(BaseChat):
         example = {
             "task_info": task_info,
             "chat_history": history_string,
-            "question": userinput
-            # "stop": ["Input","User"]
+            "question": userinput,
+            "stop": ["Input","User"]
         }
 
         chain = streaming.get_streaming_chain(self.widget_prompt, injection_handler, model_name=self.model_name)
