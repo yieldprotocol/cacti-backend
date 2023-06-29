@@ -1,4 +1,6 @@
-#
+# This workflow will check if all widgets in the file and index have corresponding textual translation
+# More info in README 'Steps to add new widget command'
+
 name: Check widget translation
 
 on:

@@ -1,5 +1,4 @@
-#
-name: Update widget index
+name: Check and update widget index
 
 on:
   push:
@@ -40,7 +39,7 @@ jobs:
             echo "ENV_TAG=dev" >> "$GITHUB_ENV"
           fi
 
-      - name: Update widget index
+      - name: Check and update widget index
         run: |
           cd backend
-          python -m scripts.update_widget_index
+          python -m scripts.check_update_widget_index

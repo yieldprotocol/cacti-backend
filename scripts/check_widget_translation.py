@@ -1,3 +1,8 @@
+"""
+This script will check if all widgets in the file and index have corresponding textual translation.
+More info in README 'Steps to add new widget command'
+"""
+
 import re
 from chat.display_widgets import parse_widgets_into_text
 from index.widgets import backfill, get_client as weviate_get_client, TEXT_KEY
