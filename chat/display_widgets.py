@@ -129,6 +129,15 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     elif command == 'multistep-payload-container':
         params = json.loads(params)
         lines.append(f"A workflow step was presented: {params['description']}.")
+    elif command == 'yield-farm':
+        params = json.loads(params)
+        lines.append(f"Yield farm action for network: {params['network']}, project: {params['project']}, token: {params['token']}, amount: {params['amount']}.")
+    elif command == 'zksync-deposit':
+        params = json.loads(params)
+        lines.append(f"ZkSync bridge deposit action for token: {params['token']}, amount: {params['amount']}.")
+    elif command == 'zksync-withdraw':
+        params = json.loads(params)
+        lines.append(f"ZkSync bridge withdraw action for token: {params['token']}, amount: {params['amount']}.")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
