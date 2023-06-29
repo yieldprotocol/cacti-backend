@@ -22,6 +22,8 @@ you are modifying weaviate schema.
 ```
 cd docker
 docker-compose up
+# ensure schema is created/up-to-date
+ENV_TAG=local ./db_schema_sync.sh
 ```
 
 ## Steps to add new widget command

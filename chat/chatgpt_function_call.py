@@ -29,18 +29,18 @@ from ui_workflows import (
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 from tools.index_widget import *
 
-SYSTEM_MESSAGE_EVAL = "You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."
+SYSTEM_MESSAGE_FOR_EVAL = "You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."
 SYSTEM_MESSAGE_DEFAULT = "You are an agent that is trained to execute functions based on a user request. Ask the user if any of the input parameter value is unknown."
 
 @registry.register_class
 class ChatGPTFunctionCallChat(BaseChat):
-    def __init__(self, widget_index: Any, model_name: Optional[str] = "gpt-3.5-turbo-0613", top_k: int = 5, evaluate_widgets: bool = False) -> None:
+    def __init__(self, widget_index: Any, model_name: Optional[str] = "gpt-3.5-turbo-0613", top_k: int = 5, evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.widget_index = widget_index
         self.model_name = model_name
         self.top_k = top_k
-        self.evaluate_widgets = evaluate_widgets
-        self.system_message = SYSTEM_MESSAGE_EVAL if evaluate_widgets else SYSTEM_MESSAGE_DEFAULT
+        self.evaluate_widgets = evaluate_widgets  # this controls whether we want to execute widgets, set to false to get the raw command back
+        self.system_message = SYSTEM_MESSAGE_DEFAULT if evaluate_widgets else SYSTEM_MESSAGE_FOR_EVAL
 
     def receive_input(
             self,
@@ -132,8 +132,8 @@ class ChatGPTFunctionCallChat(BaseChat):
                 else:
                     # keep waiting
                     return
-            if len(response_buffer) < len(WIDGET_START):
-                # keep waiting
+            if 0 < len(response_buffer) < len(WIDGET_START) and WIDGET_START.startswith(response_buffer):
+                # keep waiting if we could potentially be receiving WIDGET_START
                 return
             token = response_buffer
             response_buffer = ""

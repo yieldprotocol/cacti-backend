@@ -154,8 +154,8 @@ class FineTunedChat(BaseChat):
             elif response_buffer.startswith(NO_WIDGET_TOKEN):
                 # don't emit this in the stream, we will handle the final response below
                 return
-            elif len(response_buffer) < len(WIDGET_START):
-                # keep waiting
+            elif 0 < len(response_buffer) < len(WIDGET_START) and WIDGET_START.startswith(response_buffer):
+                # keep waiting if we could potentially be receiving WIDGET_START
                 return
             token = response_buffer
             response_buffer = ""
