@@ -8,7 +8,7 @@ on:
     branches: [master, dev]
 
 jobs:
-  update-widget-index:
+  main:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -42,7 +42,7 @@ jobs:
             echo "ENV_TAG=dev" >> "$GITHUB_ENV"
           fi
 
-      - name: Update widget index
+      - name: Check widget translation
         run: |
           cd backend
           python -m scripts.check_widget_translation

@@ -6,7 +6,7 @@ on:
     branches: [master, dev]
 
 jobs:
-  update-widget-index:
+  main:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
