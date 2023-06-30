@@ -29,6 +29,7 @@ from ui_workflows import (
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 from tools.index_widget import *
 
+HISTORY_TOKEN_LIMIT = 8000 # for GPT-4-0613
 SYSTEM_MESSAGE_FOR_EVAL = "You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."
 SYSTEM_MESSAGE_DEFAULT = "You are an agent that is trained to execute functions based on a user request. Ask the user if any of the input parameter value is unknown."
 
@@ -53,7 +54,7 @@ class ChatGPTFunctionCallChat(BaseChat):
         userinput = userinput.strip()
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
 
-        history_messages = history.to_openai_messages(system_message=self.system_message, system_prefix=None)  # omit system messages
+        history_messages = history.to_openai_messages(system_message=self.system_message, system_prefix=None, token_limit=HISTORY_TOKEN_LIMIT)  # omit system messages
         timing.init()
 
         bot_chat_message_id = None
