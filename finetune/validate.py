@@ -445,35 +445,34 @@ def get_auto_flow(widget : List, system_message : SystemMessage, user_agent : Ch
     yield Message("bot", widget.split(':')[1].split('\n')[0].strip())
 
 
-def get_validation_conversations(auto : bool = True, **kwargs) -> Iterable[Conversation]:
-    if auto:
-        widgets = kwargs.get('widgets')
-        system_message = kwargs.get('system_message')
-        user_agent = kwargs.get('user_agent')
-        for widget in widgets:
-            yield Conversation(messages=list(get_auto_flow(widget, system_message, user_agent)))
-    else:
-        yield Conversation(messages=list(get_nft_flow()))
-        yield Conversation(messages=list(get_wallet_balance_flow()))
-        yield Conversation(messages=list(get_app_info_flow()))
-        yield Conversation(messages=list(get_scraped_sites_flow()))
-        yield Conversation(messages=list(get_transfer_flow()))
-        yield Conversation(messages=list(get_price_flow()))
-        yield Conversation(messages=list(get_swap_flow()))
-        yield Conversation(messages=list(get_ens_lookup_flow()))
-        yield Conversation(messages=list(get_ens_registration_flow()))
-        yield Conversation(messages=list(get_aave_flow()))
+def get_validation_conversations() -> Iterable[Conversation]:
+    yield Conversation(messages=list(get_nft_flow()))
+    yield Conversation(messages=list(get_wallet_balance_flow()))
+    yield Conversation(messages=list(get_app_info_flow()))
+    yield Conversation(messages=list(get_scraped_sites_flow()))
+    yield Conversation(messages=list(get_transfer_flow()))
+    yield Conversation(messages=list(get_price_flow()))
+    yield Conversation(messages=list(get_swap_flow()))
+    yield Conversation(messages=list(get_ens_lookup_flow()))
+    yield Conversation(messages=list(get_ens_registration_flow()))
+    yield Conversation(messages=list(get_aave_flow()))
+
+
+def get_auto_validation_conversations(widgets, system_message, user_agent) -> Iterable[Conversation]:
+    for widget in widgets:
+        yield Conversation(messages=list(get_auto_flow(widget, system_message, user_agent)))
 
 
 def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
-    kwargs = {}
+    iter = get_validation_conversations()
     if auto:
         with open(f"../knowledge_base/widgets.txt", 'r') as f: widgets = f.read()
-        kwargs['system_message'] = SystemMessage(content=SYSTEM_MESSAGE_AUTOEVAL)
-        kwargs['widgets'] = widgets.split('---')
-        kwargs['user_agent'] = get_user_agent(args.model_name)
+        system_message = SystemMessage(content=SYSTEM_MESSAGE_AUTOEVAL)
+        widgets = widgets.split('---')
+        user_agent = get_user_agent(args.model_name)
+        iter = get_auto_validation_conversations(widgets, system_message, user_agent)
         
-    for conv in get_validation_conversations(auto, **kwargs):
+    for conv in iter:
         chat_history = ChatHistory.new(uuid.UUID('da2321e5-8bcf-45e8-bb29-deee71b379cb'))
         for i in range(0, len(conv.messages), 2):
             user_message  = conv.messages[i]
