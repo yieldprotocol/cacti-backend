@@ -30,5 +30,5 @@ ENV_TAG=local ./db_schema_sync.sh
 - Update `widgets.txt` with the widget command details
 - Increment the numeric version in `WIDGET_INDEX_NAME` constant in `utils/constants.py`
 - For local env, the widget index name would use your OS login name to create an isolated index. For dev/prod, the widget index would be the numeric version mentioned above. (more info in `scripts/check_update_widget_index.py`)
-- Run this Python command to update our Weaviate Vector DB with the new widget `python -m scripts.update_widget_index`
+- Run this Python command to update your widget index with the new widget `python -m scripts.check_update_widget_index`
 - Ensure textual translation for the widget command is added to the `_widgetize_inner` function in `display_widget.py` file
