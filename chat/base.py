@@ -180,11 +180,11 @@ class ChatHistory:
                 assert 0, f'unrecognized actor: {message.actor}'
             ret.append(message_cls(content=content, additional_kwargs=additional_kwargs))
         if token_limit is not None:
-            total_count = 0
-            for idx in reversed(range(len(ret))):
+            total_count = utils.get_token_len(ret[0].content)
+            for idx in reversed(range(1, len(ret))):
                 count = utils.get_token_len(ret[idx].content) + utils.get_token_len(json.dumps(ret[idx].additional_kwargs))
                 if total_count + count > token_limit:
-                    ret = ret[idx + 1:]
+                    ret = [ret[0]] + ret[idx + 1:]
                     break
                 total_count += count
         return ret
