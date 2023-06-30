@@ -1,4 +1,6 @@
 import os
+import env
+import getpass
 
 HUGGINGFACE_API_KEY = "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"
 HUGGINGFACE_INFERENCE_ENDPOINT = "https://xczbh8zf5amwxdlc.us-east-1.aws.endpoints.huggingface.cloud" # may vary
@@ -13,3 +15,12 @@ DEFAULT_MAINNET_FORK_ID = "08f78838-4799-47a8-88fb-1f169fa99f57"
 TENDERLY_FORK_URL = f"{TENDERLY_FORK_BASE_URL}/{DEFAULT_MAINNET_FORK_ID}"
 
 TEST_TENDERLY_FORK_ID = os.getenv('TEST_TENDERLY_FORK_ID', "")
+
+# Widget Index
+WIDGET_INDEX_NAME = "WidgetV12"
+
+def get_widget_index_name():
+    if env.is_local():
+        return f"WidgetV{getpass.getuser()}"
+    else:
+        return WIDGET_INDEX_NAME

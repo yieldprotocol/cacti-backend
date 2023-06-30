@@ -1,9 +1,10 @@
 import registry
 
+from utils import get_widget_index_name
 
 widget_index = dict(
     type="index.weaviate.WeaviateIndex",
-    index_name="WidgetV12",
+    index_name=get_widget_index_name(),
     text_key="content",
 )
 app_info_index = dict(
