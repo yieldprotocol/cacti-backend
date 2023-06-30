@@ -4,9 +4,10 @@ import traceback
 
 from langchain.docstore.document import Document
 from .weaviate import get_client
+from utils import get_widget_index_name
 
 
-INDEX_NAME = 'WidgetV12'
+INDEX_NAME = get_widget_index_name()
 INDEX_DESCRIPTION = "Index of widgets"
 TEXT_KEY = 'content'
 

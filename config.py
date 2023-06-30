@@ -1,9 +1,10 @@
 import registry
 
+from utils import get_widget_index_name
 
 widget_index = dict(
     type="index.weaviate.WeaviateIndex",
-    index_name="WidgetV12",
+    index_name=get_widget_index_name(),
     text_key="content",
 )
 app_info_index = dict(
@@ -36,16 +37,10 @@ crypto_tokens_index = dict(
 default_config = dict(
     type="system.System",
     chat=dict(
-        type="chat.basic_agent.BasicAgentChat",
-        tools=[
-            dict(
-                type="tools.index_widget.IndexWidgetTool",
-                _streaming=True,  # if specified, this is lazily constructed in chat to support streaming
-                name="WidgetIndexAnswer",
-                index=widget_index,
-                top_k=10,
-            ),
-        ],
+        type="chat.chatgpt_function_call.ChatGPTFunctionCallChat",
+        model_name='gpt-4-0613',
+        widget_index=widget_index,
+        top_k=32,
     )
 )
 

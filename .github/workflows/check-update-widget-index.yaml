@@ -1,0 +1,48 @@
+name: Check and update widget index
+
+on:
+  workflow_run:
+    workflows: [Check widget translation]
+    types: [completed]
+    branches: [master, dev]
+
+jobs:
+  main:
+    runs-on: ${{ matrix.os }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10"]
+
+    steps:
+      - name: Checkout backend
+        uses: actions/checkout@v2
+        with:
+          path: backend
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          cd backend
+          pip install -r requirements.txt
+
+      - name: Set environment for branch
+        run: |
+          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' ]]; then
+            echo "ENV_TAG=prod" >> "$GITHUB_ENV"
+          else
+            echo "ENV_TAG=dev" >> "$GITHUB_ENV"
+          fi
+
+      - name: Check and update widget index
+        run: |
+          cd backend
+          python -m scripts.check_update_widget_index
