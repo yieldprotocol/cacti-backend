@@ -29,7 +29,8 @@ from ui_workflows import (
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 from tools.index_widget import *
 
-HISTORY_TOKEN_LIMIT = 8000 # for GPT-4-0613
+model_token_limit = 8000 # for GPT-4-0613
+HISTORY_TOKEN_LIMIT = max(1800, model_token_limit - 4000)
 SYSTEM_MESSAGE_FOR_EVAL = "You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."
 SYSTEM_MESSAGE_DEFAULT = "You are an agent that is trained to execute functions based on a user request. Ask the user if any of the input parameter value is unknown."
 
