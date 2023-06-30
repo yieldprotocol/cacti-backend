@@ -154,7 +154,7 @@ class ChatHistory:
                 total_count += count
         return "\n".join(ret)
 
-    def to_openai_messages(self, system_message: str, system_prefix: Optional[str] = "System", before_message_id : Optional[uuid.UUID] = None) -> List[BaseMessage]:
+    def to_openai_messages(self, system_message: str, system_prefix: Optional[str] = "System", token_limit: Optional[int] = None, before_message_id : Optional[uuid.UUID] = None) -> List[BaseMessage]:
         ret = [SystemMessage(content=(system_message))]
         for message in self:
             additional_kwargs = {}
@@ -179,6 +179,14 @@ class ChatHistory:
             else:
                 assert 0, f'unrecognized actor: {message.actor}'
             ret.append(message_cls(content=content, additional_kwargs=additional_kwargs))
+        if token_limit is not None:
+            total_count = 0
+            for idx in reversed(range(len(ret))):
+                count = utils.get_token_len(ret[idx].content) + utils.get_token_len(json.dumps(ret[idx].additional_kwargs))
+                if total_count + count > token_limit:
+                    ret = ret[idx + 1:]
+                    break
+                total_count += count
         return ret
 
     @classmethod
