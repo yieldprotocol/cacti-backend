@@ -1,6 +1,7 @@
 import inspect
 import os
 import json
+import yaml
 
 from web3 import Web3
 import tiktoken
@@ -13,8 +14,37 @@ import context
 from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL
 
 
-with open(f"{os.getcwd()}/knowledge_base/functions.json", 'r') as f:
-    FUNCTIONS = json.load(f)
+def yaml2functions(file_path):
+    functions = []
+    with open(file_path, 'r') as file:
+        dict_yml = yaml.safe_load(file)
+    for _, value in dict_yml.items():
+        dict_ = {}
+        dict_['name'] = value['name']
+        dict_['description'] = value['description']
+        dict_['parameters'] = value['parameters']
+        functions.append(dict_)
+    return functions
+
+
+def yaml2widgetsdoc(file_path):
+    doc = ""
+    with open(file_path, 'r') as file:
+        dict_yaml = yaml.safe_load(file)
+    for _, values in dict_yaml.items():
+        doc += f"Widget magic command: {values['widget_command']}\n"
+        doc += f"Description of widget: {values['description']}\n"
+        doc += f"Required parameters:\n"
+        for param_name, prop in values['parameters']['properties'].items():
+            doc += "-{" + param_name + "}" + f": {prop['description']}\n"
+        if len(values["return_value_description"].strip()) > 0: 
+            doc += f"Return value description:\n-{values['return_value_description']}\n"
+        doc += "---\n"
+    return doc.strip().strip('---').strip()
+
+yaml_file_path = f"{os.getcwd()}/knowledge_base/widgets.yaml"
+WIDGETS = yaml2widgetsdoc(yaml_file_path)
+FUNCTIONS = yaml2functions(yaml_file_path)
 
 
 def set_api_key():
