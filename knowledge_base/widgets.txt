@@ -249,3 +249,9 @@ Description of widget: This widget is used when the user wants to withdraw token
 Required parameters:
 -{token}: token to withdraw
 -{amount}: quantity to withdraw
+
+Widget magic command: <|display-zksync-deposit({token},{amount})|>
+Description of widget: This widget is used when the user wants to exchange ETH for sfrxETH
+Required parameters:
+-{receiver}: address to receive the sfrxETH
+-{value}: amount of ETH to exchange for frxETH

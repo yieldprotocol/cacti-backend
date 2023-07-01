@@ -17,7 +17,7 @@ TENDERLY_FORK_URL = f"{TENDERLY_FORK_BASE_URL}/{DEFAULT_MAINNET_FORK_ID}"
 TEST_TENDERLY_FORK_ID = os.getenv('TEST_TENDERLY_FORK_ID', "")
 
 # Widget Index
-WIDGET_INDEX_NAME = "WidgetV12"
+WIDGET_INDEX_NAME = "WidgetV13"
 
 def get_widget_index_name():
     if env.is_local():
