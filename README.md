@@ -11,7 +11,7 @@ python3 -m venv ../venv
 source ../venv/bin/activate
 pip install -r requirements.txt
 
-cp env/local.example.yaml env/local.yaml
+python -m scripts.check_update_widget_index
 ENV_TAG=local ./start.sh
 ```
 

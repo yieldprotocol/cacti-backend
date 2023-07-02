@@ -1,6 +1,5 @@
-widget 1:
+- _name_: display_transfer
   description: Transfer a token from a user's wallet to another address
-  name: display_transfer
   parameters:
     properties:
       address:
@@ -18,12 +17,10 @@ widget 1:
     - address
     type: object
   return_value_description: ''
-  widget_command: <|display-transfer({token},{amount},{address})|>
-widget 10:
+- _name_: fetch_nft_buy_asset
   description: Buy an NFT asset of a collection on the OpenSea marketplace, given
     its network, address, and token ID. Don't use this if we don't have the collection
     network and address and token ID of the asset we want to purchase.
-  name: fetch_nft_buy_asset
   parameters:
     properties:
       address:
@@ -41,11 +38,9 @@ widget 10:
     - tokenID
     type: object
   return_value_description: a transaction dialog for purchase of the NFT
-  widget_command: <|fetch-nft-buy-asset({network},{address},{tokenID})|>
-widget 11:
+- _name_: fetch_nft_search
   description: Search for NFT collections given a query phrase, a description, or
     a name
-  name: fetch_nft_search
   parameters:
     properties:
       query:
@@ -56,14 +51,12 @@ widget 11:
     - query
     type: object
   return_value_description: a list of text describing NFT collections that were found
-  widget_command: <|fetch-nft-search({query})|>
-widget 12:
+- _name_: fetch_nft_collection_assets_by_trait
   description: 'List assets with a particular trait name and value from a specific
     NFT collection given its network and address. Don''t use this if we don''t have
     the collection network and address.
 
     Required parameters:'
-  name: fetch_nft_collection_assets_by_trait
   parameters:
     properties:
       address:
@@ -86,12 +79,10 @@ widget 12:
     type: object
   return_value_description: a list of text describing NFT assets that match the trait
     value
-  widget_command: <|fetch-nft-collection-assets-by-trait({network},{address},{traitName},{traitValue})|>
-widget 13:
+- _name_: fetch_nft_collection_assets_for_sale_by_trait
   description: List assets available for purchase with a particular trait name and
     value from a specific NFT collection given its network and address. Don't use
     this if we don't have the collection network and address.
-  name: fetch_nft_collection_assets_for_sale_by_trait
   parameters:
     properties:
       address:
@@ -114,11 +105,9 @@ widget 13:
     type: object
   return_value_description: a list of text describing NFT assets for sale/available
     for purchase that match the trait value
-  widget_command: <|fetch-nft-collection-assets-for-sale-by-trait({network},{address},{traitName},{traitValue})|>
-widget 14:
+- _name_: fetch_nft_collection_info
   description: Retrieve data and assets of an NFT collection given its network and
     address.
-  name: fetch_nft_collection_info
   parameters:
     properties:
       address:
@@ -132,11 +121,9 @@ widget 14:
     - address
     type: object
   return_value_description: text with data and some assets of the NFT collection
-  widget_command: <|fetch-nft-collection-info({network},{address})|>
-widget 15:
+- _name_: fetch_nft_collection_assets_for_sale
   description: Retrieve assets available for purchase of an NFT collection given its
     network and address.
-  name: fetch_nft_collection_assets_for_sale
   parameters:
     properties:
       address:
@@ -151,10 +138,8 @@ widget 15:
     type: object
   return_value_description: text with assets of the NFT collection that are for sale/available
     for purchase
-  widget_command: <|fetch-nft-collection-assets-for-sale({network},{address})|>
-widget 16:
+- _name_: fetch_nft_collection_traits
   description: Retrieve traits of an NFT collection given its network and address.
-  name: fetch_nft_collection_traits
   parameters:
     properties:
       address:
@@ -168,11 +153,9 @@ widget 16:
     - address
     type: object
   return_value_description: a list of text describing traits of the NFT collection
-  widget_command: <|fetch-nft-collection-traits({network},{address})|>
-widget 17:
+- _name_: fetch_nft_collection_trait_values
   description: Retrieve trait values of a trait of an NFT collection given its network
     and address.
-  name: fetch_nft_collection_trait_values
   parameters:
     properties:
       address:
@@ -191,11 +174,9 @@ widget 17:
     type: object
   return_value_description: a list of text describing values of the trait of the NFT
     collection
-  widget_command: <|fetch-nft-collection-trait-values({network},{address},{traitName})|>
-widget 18:
+- _name_: fetch_nft_asset_traits
   description: Retrieve data and traits of an NFT asset in a collection given its
     network, address, and token ID.
-  name: fetch_nft_asset_traits
   parameters:
     properties:
       address:
@@ -214,11 +195,9 @@ widget 18:
     type: object
   return_value_description: text with data and list of trait names and values of the
     NFT asset
-  widget_command: <|fetch-nft-asset-traits({network},{address},{tokenID})|>
-widget 19:
+- _name_: fetch_yields
   description: Get the yields for crypto assets. The user may not specify all parameters
     so do not guess any parameter.
-  name: fetch_yields
   parameters:
     properties:
       count:
@@ -240,11 +219,9 @@ widget 19:
     - count
     type: object
   return_value_description: JSON object with yield information
-  widget_command: <|fetch-yields({token},{network},{count})|>
-widget 2:
+- _name_: fetch_price
   description: Get the price of a token. Note, when the quoteToken isn't explicitly
     specified assume it to be USD
-  name: fetch_price
   parameters:
     properties:
       basetoken:
@@ -258,10 +235,8 @@ widget 2:
     - quotetoken
     type: object
   return_value_description: price of a base token in units of a quote token.
-  widget_command: <|fetch-price({baseToken},{quoteToken})|>
-widget 20:
+- _name_: ens_from_address
   description: Get the ENS domain name (*.eth) for a wallet address.
-  name: ens_from_address
   parameters:
     properties:
       address:
@@ -271,10 +246,8 @@ widget 20:
     - address
     type: object
   return_value_description: a humanreadable string with ENS domain
-  widget_command: <|ens-from-address({address})|>
-widget 21:
+- _name_: address_from_ens
   description: Get the wallet address for an ENS domain name (*.eth).
-  name: address_from_ens
   parameters:
     properties:
       domain:
@@ -284,10 +257,8 @@ widget 21:
     - domain
     type: object
   return_value_description: a humanreadable string with wallet address
-  widget_command: <|address-from-ens({domain})|>
-widget 22:
+- _name_: register_ens_domain
   description: Register an ENS domain that ends with *.eth
-  name: register_ens_domain
   parameters:
     properties:
       domain:
@@ -297,11 +268,9 @@ widget 22:
     - domain
     type: object
   return_value_description: ''
-  widget_command: <|register-ens-domain({domain})|>
-widget 23:
+- _name_: set_ens_text
   description: Set the text record for an ENS domain that ends with *.eth in a key
     value pair format.
-  name: set_ens_text
   parameters:
     properties:
       domain:
@@ -319,10 +288,8 @@ widget 23:
     - value
     type: object
   return_value_description: ''
-  widget_command: <|set-ens-text({domain},{key},{value})|>
-widget 24:
+- _name_: set_ens_primary_name
   description: Set a primary ENS name for their connected wallet account.
-  name: set_ens_primary_name
   parameters:
     properties:
       domain:
@@ -332,11 +299,9 @@ widget 24:
     - domain
     type: object
   return_value_description: ''
-  widget_command: <|set-ens-primary-name({domain})|>
-widget 25:
+- _name_: set_ens_avatar_nft
   description: Set an nft as their ENS domain's avatar. Do not guess any parameter,
     if any parameter is missing, set the default value as 'None'.
-  name: set_ens_avatar_nft
   parameters:
     properties:
       domain:
@@ -354,10 +319,8 @@ widget 25:
     - nftId
     type: object
   return_value_description: ''
-  widget_command: <|set-ens-avatar-nft({domain},{nftContractAddress},{nftId})|>
-widget 26:
+- _name_: aave_supply
   description: Deposit or supply tokens into Aave project
-  name: aave_supply
   parameters:
     properties:
       amount:
@@ -371,10 +334,8 @@ widget 26:
     - amount
     type: object
   return_value_description: ''
-  widget_command: <|aave-supply({token},{amount})|>
-widget 27:
+- _name_: aave_borrow
   description: Borrow tokens from Aave project
-  name: aave_borrow
   parameters:
     properties:
       amount:
@@ -388,10 +349,8 @@ widget 27:
     - amount
     type: object
   return_value_description: ''
-  widget_command: <|aave-borrow({token},{amount})|>
-widget 28:
+- _name_: aave_repay
   description: Repay back borrowed tokens from Aave project
-  name: aave_repay
   parameters:
     properties:
       amount:
@@ -405,10 +364,8 @@ widget 28:
     - amount
     type: object
   return_value_description: ''
-  widget_command: <|aave-repay({token},{amount})|>
-widget 29:
+- _name_: aave_withdraw
   description: Withdraw deposited tokens from Aave project
-  name: aave_withdraw
   parameters:
     properties:
       amount:
@@ -422,11 +379,9 @@ widget 29:
     - amount
     type: object
   return_value_description: ''
-  widget_command: <|aave-withdraw({token},{amount})|>
-widget 3:
+- _name_: fetch_balance
   description: Get the balance of a token in an account or wallet. Don't use this
     if we don't have the address.
-  name: fetch_balance
   parameters:
     properties:
       address:
@@ -441,11 +396,9 @@ widget 3:
     type: object
   return_value_description: balance of a token in an account or wallet, in decimal
     units
-  widget_command: <|fetch-balance({token},{address})|>
-widget 30:
+- _name_: display_yield_farm
   description: Used for the Compound project to allow the user to yield farm by putting
     tokens or depositing tokens of a certain amount into the Compound project.
-  name: display_yield_farm
   parameters:
     properties:
       amount:
@@ -468,14 +421,12 @@ widget 30:
     - amount
     type: object
   return_value_description: ''
-  widget_command: <|display-yield-farm({project},{network}, {token}, {amount})|>
-widget 31:
+- _name_: fetch_app_info
   description: Used when we need to handle common questions and answers about the
     chat assistant app, what it can do, how to interact with it, at a high-level.
     Only useful for questions about the chat app experience. It does not know specific
     information about the web3 ecosystem, of tokens or NFTs or contracts, or access
     to live data and APIs.
-  name: fetch_app_info
   parameters:
     properties:
       query:
@@ -487,12 +438,10 @@ widget 31:
     type: object
   return_value_description: an answer to the question, with suggested followup questions
     if available
-  widget_command: <|fetch-app-info({query})|>
-widget 32:
+- _name_: fetch_scraped_sites
   description: Answer questions using general content scraped from web3 sites. It
     does not know about this app or about widget magic commands for invoking transactions
     or fetching data about specific things like NFTs or balances.
-  name: fetch_scraped_sites
   parameters:
     properties:
       query:
@@ -503,10 +452,8 @@ widget 32:
     - query
     type: object
   return_value_description: a summarized answer with source citations
-  widget_command: <|fetch-scraped-sites({query})|>
-widget 33:
+- _name_: display_zksync_deposit
   description: Used to bridge and deposit tokens from mainnet L1 to zksync L2.
-  name: display_zksync_deposit
   parameters:
     properties:
       amount:
@@ -520,10 +467,8 @@ widget 33:
     - amount
     type: object
   return_value_description: ''
-  widget_command: <|display-zksync-deposit({token},{amount})|>
-widget 34:
+- _name_: display_zksync_withdraw
   description: Used to withdraw tokens from zksync L2 to mainnet L1
-  name: display_zksync_withdraw
   parameters:
     properties:
       amount:
@@ -537,10 +482,8 @@ widget 34:
     - amount
     type: object
   return_value_description: ''
-  widget_command: <|display-zksync-withdraw({token},{amount})|>
-widget 4:
+- _name_: fetch_my_balance
   description: Get the balance of a token in the user's connected wallet
-  name: fetch_my_balance
   parameters:
     properties:
       token:
@@ -550,10 +493,8 @@ widget 4:
     - token
     type: object
   return_value_description: balance of a token in connected wallet, in decimal units
-  widget_command: <|fetch-my-balance({token})|>
-widget 5:
+- _name_: fetch_transactions
   description: Get the transaction details in an account or wallet
-  name: fetch_transactions
   parameters:
     properties:
       address:
@@ -567,10 +508,8 @@ widget 5:
     - last_n
     type: object
   return_value_description: the transaction details
-  widget_command: <|fetch-transactions({address},{last_n})|>
-widget 6:
+- _name_: fetch_gas
   description: Get all gas used for transactions in an account or wallet
-  name: fetch_gas
   parameters:
     properties:
       address:
@@ -580,10 +519,8 @@ widget 6:
     - address
     type: object
   return_value_description: the gas amount used
-  widget_command: <|fetch-gas({address})|>
-widget 7:
+- _name_: fetch_eth_in
   description: Get all ETH inflow into an account or wallet
-  name: fetch_eth_in
   parameters:
     properties:
       address:
@@ -593,10 +530,8 @@ widget 7:
     - address
     type: object
   return_value_description: the inflow ETH amount
-  widget_command: <|fetch-eth-in({address})|>
-widget 8:
+- _name_: fetch_eth_out
   description: Get all ETH outflow from an account or wallet
-  name: fetch_eth_out
   parameters:
     properties:
       address:
@@ -606,8 +541,7 @@ widget 8:
     - address
     type: object
   return_value_description: the outflow ETH amount
-  widget_command: <|fetch-eth-out({address})|>
-widget 9:
+- _name_: display_uniswap
   description: 'use the Uniswap decentralized application for trading one token for
     another. To create a Uniswap transaction, you need either:
 
@@ -616,7 +550,6 @@ widget 9:
 
     2.) A token to sell, a token to buy, the transaction keyword "BUYAMOUNT", and
     an amount to buy.'
-  name: display_uniswap
   parameters:
     properties:
       amount:
@@ -640,4 +573,3 @@ widget 9:
     - amount
     type: object
   return_value_description: ''
-  widget_command: <|display-uniswap({tokenToSell},{tokenToBuy},{transactionKeyword},{amount})|>
