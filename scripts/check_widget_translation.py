@@ -7,9 +7,8 @@ import re
 from chat.display_widgets import parse_widgets_into_text
 from index.widgets import backfill, get_client as weviate_get_client, TEXT_KEY
 from utils import get_widget_index_name
+from utils.common import WIDGETS
 
-# Widgets file is the canonical source
-WIDGETS_FILE = 'knowledge_base/widgets.txt'
 
 BATCH_SIZE = 20
 CLASS_PROPERTIES = [TEXT_KEY]
@@ -38,12 +37,6 @@ def read_widgets_from_index():
         offset += BATCH_SIZE
     return all_content
 
-def read_widgets_from_file():
-    with open(WIDGETS_FILE, 'r') as f:
-        all_content = f.read()
-    
-    return all_content.split('---')
-
 def check_widgets_for_textual_translation(widgets, is_from_index):
     for w in widgets:
         matches = RE_WIDGET_COMMAND.findall(w)
@@ -57,7 +50,7 @@ def check_widgets_for_textual_translation(widgets, is_from_index):
 
 def main():
     widgets_from_index = read_widgets_from_index()
-    widgets_from_file = read_widgets_from_file()
+    widgets_from_file = WIDGETS.split('---')
 
     check_widgets_for_textual_translation(widgets_from_index, True)
     check_widgets_for_textual_translation(widgets_from_file, False)
