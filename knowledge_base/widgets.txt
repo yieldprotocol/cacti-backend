@@ -255,3 +255,11 @@ Description of widget: This widget is used when the user wants to supply or lend
 Required parameters:
 -{token}: token to lend
 -{amount}: quantity to lend
+---
+Widget magic command: <|display-yield-protocol-borrow({borrowToken},{borrowAmount},{collateralToken},{collateralAmount})|>
+Description of widget: This widget is used when the user wants to borrow tokens using collateral tokens using Yield Protocol project.
+Required parameters:
+-{borrowToken}: token to borrow
+-{borrowAmount}: quantity to borrow
+-{collateralToken}: token to use as collateral
+-{collateralAmount}: quantity to use as collateral

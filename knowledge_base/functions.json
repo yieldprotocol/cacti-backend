@@ -569,5 +569,33 @@
       },
       "required": ["token", "amount"]
     }
+  },
+  {
+    "name": "display_yield_protocol_borrow",
+    "description": "This widget is used when the user wants to borrow tokens using Yield Protocol project.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "borrowToken": { "type": "string", "description": "token to borrow" },
+        "borrowAmount": {
+          "type": "string",
+          "description": "quantity to borrow"
+        },
+        "collateralToken": {
+          "type": "string",
+          "description": "token to borrow"
+        },
+        "collateralAmount": {
+          "type": "string",
+          "description": "quantity to borrow"
+        }
+      },
+      "required": [
+        "borrowToken",
+        "borrowAmount",
+        "collateralToken",
+        "collateralAmount"
+      ]
+    }
   }
 ]
