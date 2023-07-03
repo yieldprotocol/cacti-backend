@@ -250,8 +250,8 @@ Required parameters:
 -{token}: token to withdraw
 -{amount}: quantity to withdraw
 ---
-Widget magic command: <|yield-protocol-lend({token},{amount})|>
+Widget magic command: <|display-yield-protocol-lend({token},{amount})|>
 Description of widget: This widget is used when the user wants to supply or lend tokens into Yield Protocol project.
+Required parameters:
 -{token}: token to lend
 -{amount}: quantity to lend
----
