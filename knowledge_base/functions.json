@@ -557,5 +557,17 @@
       },
       "required": ["token", "amount"]
     }
+  },
+  {
+    "name": "display_yield_protocol_lend",
+    "description": "This widget is used when the user wants to supply or lend tokens into Yield Protocol project.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "token": { "type": "string", "description": "token to lend" },
+        "amount": { "type": "string", "description": "quantity to lend" }
+      },
+      "required": ["token", "amount"]
+    }
   }
 ]
