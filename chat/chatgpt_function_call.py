@@ -170,7 +170,14 @@ class ChatGPTFunctionCallChat(BaseChat):
                 function_message_id = send(Response(response=json.dumps(function_call), actor='function'), before_message_id=before_message_id)
                 bot_chat_message_id = None
                 command = '-'.join(function_call['name'].split('_'))
-                params = ','.join(json.loads(function_call['arguments']).values())
+                params = ','.join([param.strip() for param in function_call['arguments'].replace('{', '').replace('}', '').split(',')])
+                # TODO this may fail if the param ordering in FUNCTIONS[n]['parameters']['required'] isnt correct
+                if 'display-' in command:
+                    for func in FUNCTIONS:
+                        if func['name'].replace('_', '-') == command:
+                            params = sorted(json.loads(function_call['arguments']).items(), key=lambda pair: func['parameters']['required'].index(pair[0]))
+                            params = ','.join([param[0] for param in params])
+                            break
                 widget_str = f"{WIDGET_START}{command}({params}){WIDGET_END}"
                 injection_handler(widget_str)
 

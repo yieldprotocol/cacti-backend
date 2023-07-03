@@ -1,3 +1,4 @@
+import json
 import collections
 import copy
 import uuid
@@ -18,6 +19,8 @@ import utils.timing as timing
 from tools.index_widget import (
     StreamingListContainer,
     _get_result_list_prefix,
+    WIDGET_START,
+    WIDGET_END,
 )
 
 from .generate import (
@@ -116,7 +119,7 @@ def get_nft_flow() -> Iterable[Message]:
         num_assets=456,
         preview_image_url="https://preview_image_url2",
     )
-    yield Message("bot", f"<|fetch-nft-search({query})|>", stream_to_str([
+    yield Message("bot", f"<|fetch-nft-search(query:{query})|>", stream_to_str([
         StreamingListContainer(operation="create", prefix="Searching"),
         StreamingListContainer(operation="append", item=collection1),
         StreamingListContainer(operation="append", item=collection2),
@@ -154,11 +157,11 @@ def get_nft_flow() -> Iterable[Message]:
         collection=collection2,
         assets=assets,
     )
-    yield Message("bot", f"<|fetch-nft-collection-info({network2},{address2})|>", str(collection_assets_container))
+    yield Message("bot", f"<|fetch-nft-collection-info(network:{network2},address:{address2})|>", str(collection_assets_container))
 
     yield Message("user", f"what are the assets for sale for this collection")
 
-    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale({network2},{address2})|>", stream_to_str([
+    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale(network:{network2},address:{address2})|>", stream_to_str([
         StreamingListContainer(operation="create", prefix="Searching"),
         StreamingListContainer(operation="append", item=assets[1]),
         StreamingListContainer(operation="update", prefix=_get_result_list_prefix(1)),
@@ -180,7 +183,7 @@ def get_nft_flow() -> Iterable[Message]:
         asset=assets[1],
         values=values,
     )
-    yield Message("bot", f"<|fetch-nft-asset-traits({network2},{address2},{token_id2})|>", str(asset_traits_container))
+    yield Message("bot", f"<|fetch-nft-asset-traits(network:{network2},address:{address2},tokenID:{token_id2})|>", str(asset_traits_container))
 
     yield Message("user", f"what are the traits for this collection")
 
@@ -204,75 +207,75 @@ def get_nft_flow() -> Iterable[Message]:
         collection=collection2,
         traits=collection_traits,
     )
-    yield Message("bot", f"<|fetch-nft-collection-traits({network2},{address2})|>", str(collection_traits_container))
+    yield Message("bot", f"<|fetch-nft-collection-traits(network:{network2},address:{address2})|>", str(collection_traits_container))
 
     trait_name = 'trait1'
     trait_value = 'value1'
     yield Message("user", f"what are the assets with {trait_value} for {trait_name}?")
 
-    yield Message("bot", f"<|fetch-nft-collection-assets-by-trait({network2},{address2},{trait_name},{trait_value})|>", stream_to_str([
+    yield Message("bot", f"<|fetch-nft-collection-assets-by-trait(network:{network2},address:{address2},traitName:{trait_name},traitValue:{trait_value})|>", stream_to_str([
         StreamingListContainer(operation="create", prefix="Searching"),
         StreamingListContainer(operation="append", item=assets[1]),
         StreamingListContainer(operation="update", prefix=_get_result_list_prefix(1)),
     ]))
 
     yield Message("user", f"which of these are for sale?")
-    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale-by-trait({network2},{address2},{trait_name},{trait_value})|>", stream_to_str([
+    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale-by-trait(network:{network2},address:{address2},traitName:{trait_name},traitValue:{trait_value})|>", stream_to_str([
         StreamingListContainer(operation="create", prefix="Searching"),
         StreamingListContainer(operation="update", prefix=_get_result_list_prefix(0)),
     ]))
 
     trait_value2 = 'value2'
     yield Message("user", f"what about assets with {trait_value2}?")
-    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale-by-trait({network2},{address2},{trait_name},{trait_value2})|>", stream_to_str([
+    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale-by-trait(network:{network2},address:{address2},traitName:{trait_name},traitValue:{trait_value2})|>", stream_to_str([
         StreamingListContainer(operation="create", prefix="Searching"),
         StreamingListContainer(operation="append", item=assets[0]),
         StreamingListContainer(operation="update", prefix=_get_result_list_prefix(1)),
     ]))
 
     yield Message("user", f"let's buy this one.")
-    yield Message("bot", f"<|fetch-nft-buy-asset({network2},{address2},{token_id1})|>", f"<|display-buy-nft({address2},{token_id1})|>")
+    yield Message("bot", f"<|fetch-nft-buy-asset(network:{network2},address:{address2},tokenID:{token_id1})|>", f"<|display-buy-nft(address:{address2},token_id:{token_id1})|>")
 
 
 def get_wallet_balance_flow() -> Iterable[Message]:
     token = "ETH"
     balance = 123.456
     yield Message("user", f"what's my balance of {token}?")
-    yield Message("bot", f"<|fetch-my-balance({token})|>", f"{balance}")
+    yield Message("bot", f"<|fetch-my-balance(token:{token})|>", f"{balance}")
     token2 = "USDC"
     balance2 = 654.321
     yield Message("user", f"how about {token2}?")
-    yield Message("bot", f"<|fetch-my-balance({token2})|>", f"{balance2}")
+    yield Message("bot", f"<|fetch-my-balance(token:{token2})|>", f"{balance2}")
     address1 = "0x123456"
     balance3 = 0.123
     yield Message("user", f"what about that in {address1}?")
-    yield Message("bot", f"<|fetch-balance({token2},{address1})|>", f"{balance3}")
+    yield Message("bot", f"<|fetch-balance(token:{token2},address:{address1})|>", f"{balance3}")
     address2 = "0x789123"
     balance4 = 0.1531
     yield Message("user", f"and {address2}?")
-    yield Message("bot", f"<|fetch-balance({token2},{address2})|>", f"{balance4}")
+    yield Message("bot", f"<|fetch-balance(token:{token2},address:{address2})|>", f"{balance4}")
 
 
 def get_app_info_flow() -> Iterable[Message]:
     yield Message("user", f"what can I do in this app?")
     query = "What can this app do?"
     response = "Lots of stuff."
-    yield Message("bot", f"<|fetch-app-info({query})|>", f"{response}")
+    yield Message("bot", f"<|fetch-app-info(query:{query})|>", f"{response}")
     yield Message("user", f"how do I use this app?")
     query = "How do I interact with this app?"
     response = "Chat with it"
-    yield Message("bot", f"<|fetch-app-info({query})|>", f"{response}")
+    yield Message("bot", f"<|fetch-app-info(query:{query})|>", f"{response}")
 
 
 def get_scraped_sites_flow() -> Iterable[Message]:
     yield Message("user", f"who invented Ethereum?")
     query = "Who invented Ethereum?"
     response = "Vitalik."
-    yield Message("bot", f"<|fetch-scraped-sites({query})|>", f"{response}")
+    yield Message("bot", f"<|fetch-scraped-sites(query:{query})|>", f"{response}")
     yield Message("user", f"What is AAVE")
     query = "What is AAVE?"
     response = "A protocol"
-    yield Message("bot", f"<|fetch-scraped-sites({query})|>", f"{response}")
+    yield Message("bot", f"<|fetch-scraped-sites(query:{query})|>", f"{response}")
 
 
 def get_transfer_flow() -> Iterable[Message]:
@@ -280,24 +283,24 @@ def get_transfer_flow() -> Iterable[Message]:
     address = "0x1234"
     amount = "123"
     yield Message("user", f"transfer {token} to {address}")
-    yield handle_empty_params(Message("bot", f"<|display-transfer({token},,{address})|>", f"What quantity would you like to transfer?"))
+    yield handle_empty_params(Message("bot", f"<|display-transfer(token:{token},amount:,address:{address})|>", f"What quantity would you like to transfer?"))
     yield Message("user", f"{amount}")
-    yield Message("bot", f"<|display-transfer({token},{amount},{address})|>")
+    yield Message("bot", f"<|display-transfer(token:{token},amount:{amount},address:{address})|>")
     token = "USDC"
     address = "0x4321"
     amount = "456"
     yield Message("user", f"send {amount} of {token} to {address}")
-    yield Message("bot", f"<|display-transfer({token},{amount},{address})|>")
+    yield Message("bot", f"<|display-transfer(token:{token},amount:{amount},address:{address})|>")
 
 
 def get_price_flow() -> Iterable[Message]:
     base_token = "ETH"
     quote_token = "USD"
     yield Message("user", f"what's the price of {base_token}?")
-    yield Message("bot", f"<|fetch-price({base_token},{quote_token})|>", "1234")
+    yield Message("bot", f"<|fetch-price(basetoken:{base_token},quotetoken:{quote_token})|>", "1234")
     quote_token = "USDC"
     yield Message("user", f"what's the price of {base_token} in {quote_token}?")
-    yield Message("bot", f"<|fetch-price({base_token},{quote_token})|>", "1235")
+    yield Message("bot", f"<|fetch-price(basetoken:{base_token},quotetoken:{quote_token})|>", "1235")
 
 
 def get_swap_flow() -> Iterable[Message]:
@@ -306,31 +309,31 @@ def get_swap_flow() -> Iterable[Message]:
     keyword = "SELLAMOUNT"
     amount = 123
     yield Message("user", f"swap {sell_token} for {buy_token}")
-    yield handle_empty_params(Message("bot", f"<|display-uniswap({sell_token},{buy_token},,)|>", f"What quantity of tokens would you like to swap?"))
+    yield handle_empty_params(Message("bot", f"<|display-uniswap(tokenToSell:{sell_token},tokenToBuy:{buy_token},transactionKeyword:,amount:)|>", f"What quantity of tokens would you like to swap?"))
     yield Message("user", f"swap {amount} {sell_token} for {buy_token}")
-    yield Message("bot", f"<|display-uniswap({sell_token},{buy_token},{keyword},{amount})|>")
+    yield Message("bot", f"<|display-uniswap(tokenToSell:{sell_token},tokenToBuy:{buy_token},transactionKeyword:{keyword},amount:{amount})|>")
     yield Message("user", f"actually swap {sell_token} for {amount} {buy_token}")
     keyword = "BUYAMOUNT"
-    yield Message("bot", f"<|display-uniswap({sell_token},{buy_token},{keyword},{amount})|>")
+    yield Message("bot", f"<|display-uniswap(tokenToSell:{sell_token},tokenToBuy:{buy_token},transactionKeyword:{keyword},amount:{amount})|>")
 
 
 def get_ens_lookup_flow() -> Iterable[Message]:
     address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
     domain = "mydomain"
     yield Message("user", f"ens for {address}")
-    yield Message("bot", f"<|ens-from-address({address})|>", domain)
+    yield Message("bot", f"<|ens-from-address(address:{address})|>", domain)
     address = "0x1234567890"
     domain = "abcdef.eth"
     yield Message("user", f"address for {domain}")
-    yield Message("bot", f"<|address-from-ens({domain})|>", address)
+    yield Message("bot", f"<|address-from-ens(domain:{domain})|>", address)
 
 
 def get_ens_registration_flow() -> Iterable[Message]:
     domain = "abcdef.eth"
     yield Message("user", f"register {domain}")
-    yield Message("bot", f"<|register-ens-domain({domain})|>", "A workflow step was presented.")
+    yield Message("bot", f"<|register-ens-domain(domain:{domain})|>", "A workflow step was presented.")
     yield Message("user", f"set primary ENS name to {domain}")
-    yield Message("bot", f"<|set-ens-primary-name({domain})|>", "A transaction was presented for sending.")
+    yield Message("bot", f"<|set-ens-primary-name(domain:{domain})|>", "A transaction was presented for sending.")
     query = "Rumble Kong"
     yield Message("user", f"find some {query} NFTs")
 
@@ -352,7 +355,7 @@ def get_ens_registration_flow() -> Iterable[Message]:
         preview_image_url="https://cdn.center.app/1/0x0b87320F22C94e290e763c2F337dC0B44693a548/952/497e8ef8f7ab76542449afc1ceeeded124837ca3d686105383053ad4c5652f2e.png",
     )
 
-    yield Message("bot", f"<|fetch-nft-search({query})|>", stream_to_str([
+    yield Message("bot", f"<|fetch-nft-search(query:{query})|>", stream_to_str([
         StreamingListContainer(operation="create", prefix="Searching"),
         StreamingListContainer(operation="append", item=collection1),
         StreamingListContainer(operation="append", item=collection2),
@@ -390,30 +393,30 @@ def get_ens_registration_flow() -> Iterable[Message]:
     )
     name = "RumbleKongLeague"
     yield Message("user", f"show me NFTs for sale with {name}")
-    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale({network},{address1})|>", str(collection_assets_container))
+    yield Message("bot", f"<|fetch-nft-collection-assets-for-sale(network:{network},address:{address1})|>", str(collection_assets_container))
     yield Message("user", f"buy nft {token_id2}")
-    yield Message("bot", f"<|fetch-nft-buy-asset({network},{address1},{token_id2})|>", f"<|display-buy-nft({address1},{token_id2})|>")
+    yield Message("bot", f"<|fetch-nft-buy-asset(network:{network},address:{address1},token_id:{token_id2})|>", f"<|display-buy-nft(address1:{address1},token_id2:{token_id2})|>")
     yield Message("user", f"set nft {token_id2} as avatar for {domain}")
-    yield Message("bot", f"<|set-ens-avatar-nft({domain},{address1},{token_id2})|>")
+    yield Message("bot", f"<|set-ens-avatar-nft(domain:{domain},address:{address1},token_id:{token_id2})|>")
 
 
 def get_aave_flow() -> Iterable[Message]:
     amount = 1
     token = "ETH"
     yield Message("user", f"deposit {amount} {token} into Aave")
-    yield Message("bot", f"<|aave-supply({token},{amount})|>", "A workflow step was presented.")
+    yield Message("bot", f"<|aave-supply(token:{token},amount:{amount})|>", "A workflow step was presented.")
     amount = 10
     token = "USDC"
     yield Message("user", f"borrow {amount} {token} on Aave")
-    yield Message("bot", f"<|aave-borrow({token},{amount})|>", "A workflow step was presented.")
+    yield Message("bot", f"<|aave-borrow(token:{token},amount:{amount})|>", "A workflow step was presented.")
     amount = 2
     token = "USDC"
     yield Message("user", f"repay {amount} {token} on Aave")
-    yield Message("bot", f"<|aave-repay({token},{amount})|>", "A workflow step was presented.")
+    yield Message("bot", f"<|aave-repay(token:{token},amount:{amount})|>", "A workflow step was presented.")
     amount = 0.1
     token = "ETH"
     yield Message("user", f"withdraw {amount} {token} on Aave")
-    yield Message("bot", f"<|aave-withdraw({token},{amount})|>", "A workflow step was presented.")
+    yield Message("bot", f"<|aave-withdraw(token:{token},amount:{amount})|>", "A workflow step was presented.")
 
 
 def get_validation_conversations() -> Iterable[Conversation]:
@@ -484,6 +487,18 @@ def _strip_quotes(output):
     return output.replace('"', '').replace("'", "")
 
 
+def _get_params(output):
+    output = _strip_quotes(output)
+    if WIDGET_START in output and WIDGET_END in output:
+        params = {}
+        output = output.split('(')[1].split(')')[0]
+        for s in output.split(','):
+            params[s.split(':')[0].strip()] = s.split(':')[1].strip()
+        return str(sorted(params.items()))
+    else:
+        return None
+
+
 def run():
     summary = collections.Counter()
     for ci, chat_config in enumerate(chat_configs):
@@ -493,7 +508,7 @@ def run():
         for prediction, label in evaluate_chat(chat):
             prediction = prediction.strip()
             label = label.strip()
-            widget_param_match = _strip_quotes(prediction) == _strip_quotes(label)
+            widget_param_match = _get_params(prediction) == _get_params(label)
             widget_match = _get_widget_name(prediction) == _get_widget_name(label)
             if widget_param_match:
                 counter['widget_param_match'] += 1

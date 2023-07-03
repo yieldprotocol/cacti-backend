@@ -200,69 +200,72 @@ def sanitize_str(s: str) -> str:
 def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
     command = m.group('command')
     params = m.group('params')
-    params = list(map(sanitize_str, params.split(','))) if params else []
+    try: # for function call
+        params = json.loads('{' + params + '}')
+    except json.JSONDecodeError:
+        params = list(map(sanitize_str, params.split(','))) if params else []
     timing.log('first_widget_command')
     print('found command:', command, params)
     if command == 'fetch-nft-search':
-        return fetch_nft_search(*params)
+        return fetch_nft_search(**params) if isinstance(params, dict) else fetch_nft_search(*params)
     elif command == 'fetch-price':
-        return str(fetch_price(*params))
+        return str(fetch_price(**params)) if isinstance(params, dict) else str(fetch_price(*params))
     elif command == 'fetch-nft-collection-assets-by-trait':
-        return fetch_nft_search_collection_by_trait(*params, for_sale_only=False)
+        return fetch_nft_search_collection_by_trait(**params, for_sale_only=False) if isinstance(params, dict) else fetch_nft_search_collection_by_trait(*params, for_sale_only=False)
     elif command == 'fetch-nft-collection-assets-for-sale-by-trait':
-        return fetch_nft_search_collection_by_trait(*params, for_sale_only=True)
+        return fetch_nft_search_collection_by_trait(**params, for_sale_only=True) if isinstance(params, dict) else fetch_nft_search_collection_by_trait(*params, for_sale_only=True)
     elif command == 'fetch-nft-collection-info':
         # return str(fetch_nft_collection(*params))
         # we also fetch some collection assets as a convenience
-        return str(fetch_nft_collection_assets(*params))
+        return str(fetch_nft_collection_assets(**params)) if isinstance(params, dict) else str(fetch_nft_collection_assets(*params))
     elif command == 'fetch-nft-collection-assets-for-sale':
-        return fetch_nft_collection_assets_for_sale(*params)
+        return fetch_nft_collection_assets_for_sale(**params) if isinstance(params, dict) else fetch_nft_collection_assets_for_sale(*params)
     elif command == 'fetch-nft-collection-traits':
-        return str(fetch_nft_collection_traits(*params))
+        return str(fetch_nft_collection_traits(**params)) if isinstance(params, dict) else str(fetch_nft_collection_traits(*params))
     elif command == 'fetch-nft-collection-trait-values':
-        return str(fetch_nft_collection_trait_values(*params))
+        return str(fetch_nft_collection_trait_values(**params)) if isinstance(params, dict) else str(fetch_nft_collection_trait_values(*params))
     # elif command == 'fetch-nft-asset-info':
     #    return str(fetch_nft_asset(*params))
     elif command == 'fetch-nft-asset-traits':
-        return str(fetch_nft_asset_traits(*params))
+        return str(fetch_nft_asset_traits(**params)) if isinstance(params, dict) else str(fetch_nft_asset_traits(*params))
     elif command == 'fetch-nft-buy-asset':
-        return str(fetch_nft_buy(*params))
+        return str(fetch_nft_buy(**params)) if isinstance(params, dict) else str(fetch_nft_buy(*params))
     elif command == 'fetch-balance':
-        return str(fetch_balance(*params))
+        return str(fetch_balance(**params)) if isinstance(params, dict) else str(fetch_balance(*params)) 
     elif command == 'fetch-my-balance':
-        return str(fetch_my_balance(*params))
+        return str(fetch_my_balance(**params)) if isinstance(params, dict) else str(fetch_my_balance(*params)) 
     elif command == 'fetch-eth-in':
-        return str(fetch_eth_in(*params))
+        return str(fetch_eth_in(**params)) if isinstance(params, dict) else str(fetch_eth_in(*params))
     elif command == 'fetch-eth-out':
-        return str(fetch_eth_out(*params))
+        return str(fetch_eth_out(**params)) if isinstance(params, dict) else str(fetch_eth_out(*params))
     elif command == 'fetch-gas':
-        return str(fetch_gas(*params))
+        return str(fetch_gas(**params)) if isinstance(params, dict) else str(fetch_gas(*params))
     elif command == 'fetch-yields':
-        return str(fetch_yields(*params))
+        return str(fetch_yields(**params)) if isinstance(params, dict) else str(fetch_yields(*params))
     elif command == 'fetch-app-info':
-        return fetch_app_info(*params)
+        return fetch_app_info(**params) if isinstance(params, dict) else fetch_app_info(*params)
     elif command == 'fetch-scraped-sites':
-        return fetch_scraped_sites(*params)
+        return fetch_scraped_sites(**params) if isinstance(params, dict) else fetch_scraped_sites(*params)
     elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
-        return str(exec_aave_operation(*params, operation='supply'))
+        return str(exec_aave_operation(**params, operation='supply')) if isinstance(params, dict) else str(exec_aave_operation(*params, operation='supply'))
     elif command == aave.AaveBorrowContractWorkflow.WORKFLOW_TYPE:
-        return str(exec_aave_operation(*params, operation='borrow'))
+        return str(exec_aave_operation(**params, operation='borrow')) if isinstance(params, dict) else str(exec_aave_operation(*params, operation='borrow'))
     elif command == aave.AaveRepayContractWorkflow.WORKFLOW_TYPE:
-        return str(exec_aave_operation(*params, operation='repay'))
+        return str(exec_aave_operation(**params, operation='repay')) if isinstance(params, dict) else str(exec_aave_operation(*params, operation='repay'))
     elif command == aave.AaveWithdrawContractWorkflow.WORKFLOW_TYPE:
-        return str(exec_aave_operation(*params, operation='withdraw'))
+        return str(exec_aave_operation(**params, operation='withdraw')) if isinstance(params, dict) else str(exec_aave_operation(*params, operation='withdraw'))
     elif command == 'ens-from-address':
-        return str(ens_from_address(*params))
+        return str(ens_from_address(**params)) if isinstance(params, dict) else str(ens_from_address(*params))
     elif command == 'address-from-ens':
-        return str(address_from_ens(*params))
+        return str(address_from_ens(**params)) if isinstance(params, dict) else str(address_from_ens(*params))
     elif command == ens.ENSRegistrationContractWorkflow.WORKFLOW_TYPE:
-        return str(register_ens_domain(*params))
+        return str(register_ens_domain(**params)) if isinstance(params, dict) else str(register_ens_domain(*params))
     elif command == ens.ENSSetTextWorkflow.WORKFLOW_TYPE:
-        return str(set_ens_text(*params))
+        return str(set_ens_text(**params)) if isinstance(params, dict) else str(set_ens_text(*params))
     elif command == ens.ENSSetPrimaryNameWorkflow.WORKFLOW_TYPE:
-        return str(set_ens_primary_name(*params))
+        return str(set_ens_primary_name(**params)) if isinstance(params, dict) else str(set_ens_primary_name(*params))
     elif command == ens.ENSSetAvatarNFTWorkflow.WORKFLOW_TYPE:
-        return str(set_ens_avatar_nft(*params))
+        return str(set_ens_avatar_nft(**params)) if isinstance(params, dict) else str(set_ens_avatar_nft(*params))
     elif command.startswith('display-'):
         return m.group(0)
     else:
@@ -302,13 +305,13 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
 
 
 @error_wrap
-def fetch_balance(token: str, wallet_address: str) -> str:
-    if not wallet_address or wallet_address == 'None':
+def fetch_balance(token: str, address: str) -> str:
+    if not address or address == 'None':
         raise FetchError(f"Please specify the wallet address to check the token balance of.")
     contract_address = etherscan.get_contract_address(token)
     if not contract_address:
         raise FetchError(f"Could not look up contract address of {token}. Please try a different one.")
-    return etherscan.get_balance(contract_address, wallet_address)
+    return etherscan.get_balance(contract_address, address)
 
 
 @error_wrap
@@ -320,18 +323,18 @@ def fetch_my_balance(token: str) -> str:
 
 
 @error_wrap
-def fetch_eth_in(wallet_address: str) -> str:
-    return etherscan.get_all_eth_to_address(wallet_address)
+def fetch_eth_in(address: str) -> str:
+    return etherscan.get_all_eth_to_address(address)
 
 
 @error_wrap
-def fetch_eth_out(wallet_address: str) -> str:
-    return etherscan.get_all_eth_from_address(wallet_address)
+def fetch_eth_out(address: str) -> str:
+    return etherscan.get_all_eth_from_address(address)
 
 
 @error_wrap
-def fetch_gas(wallet_address: str) -> str:
-    return etherscan.get_all_gas_for_address(wallet_address)
+def fetch_gas(address: str) -> str:
+    return etherscan.get_all_gas_for_address(address)
 
 
 @error_wrap
@@ -439,10 +442,10 @@ class TableContainer(ContainerMixin):
 
 
 @error_wrap
-def fetch_nft_search(search_str: str) -> Generator:
+def fetch_nft_search(query: str) -> Generator:
     yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
     num = 0
-    for item in center.fetch_nft_search(search_str):
+    for item in center.fetch_nft_search(query):
         yield StreamingListContainer(operation="append", item=item)
         num += 1
     yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
@@ -450,11 +453,11 @@ def fetch_nft_search(search_str: str) -> Generator:
 
 @error_wrap
 def fetch_nft_search_collection_by_trait(
-        network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> Generator:
+        network: str, address: str, traitName: str, traitValue: str, for_sale_only: bool = False) -> Generator:
     yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
     num = 0
     for item in center.fetch_nft_search_collection_by_trait(
-            network, address, trait_name, trait_value, for_sale_only=for_sale_only):
+            network, address, traitName, traitValue, for_sale_only=for_sale_only):
         yield StreamingListContainer(operation="append", item=item)
         num += 1
     yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
@@ -488,24 +491,24 @@ def fetch_nft_collection_traits(network: str, address: str) -> str:
 
 
 @error_wrap
-def fetch_nft_collection_trait_values(network: str, address: str, trait: str) -> str:
-    ret = center.fetch_nft_collection_trait_values(network, address, trait)
+def fetch_nft_collection_trait_values(network: str, address: str, traitName: str) -> str:
+    ret = center.fetch_nft_collection_trait_values(network, address, traitName)
     return str(ret)
 
 
 @error_wrap
-def fetch_nft_asset(network: str, address: str, token_id: str) -> str:
-    return str(center.fetch_nft_asset(network, address, token_id))
+def fetch_nft_asset(network: str, address: str, tokenID: str) -> str:
+    return str(center.fetch_nft_asset(network, address, tokenID))
 
 
 @error_wrap
-def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> str:
-    return str(center.fetch_nft_asset_traits(network, address, token_id))
+def fetch_nft_asset_traits(network: str, address: str, tokenID: str) -> str:
+    return str(center.fetch_nft_asset_traits(network, address, tokenID))
 
 
 @error_wrap
-def fetch_nft_buy(network: str, address: str, token_id: str) -> str:
-    ret = opensea.fetch_nft_buy(network, address, token_id)
+def fetch_nft_buy(network: str, address: str, tokenID: str) -> str:
+    ret = opensea.fetch_nft_buy(network, address, tokenID)
     return ret
 
 
