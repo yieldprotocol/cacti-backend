@@ -442,10 +442,12 @@ class TableContainer(ContainerMixin):
 def fetch_nft_search(search_str: str) -> Generator:
     yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
     num = 0
-    for item in center.fetch_nft_search(search_str):
-        yield StreamingListContainer(operation="append", item=item)
-        num += 1
-    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
+    try:
+        for item in center.fetch_nft_search(search_str):
+            yield StreamingListContainer(operation="append", item=item)
+            num += 1
+    finally:
+        yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
@@ -453,11 +455,13 @@ def fetch_nft_search_collection_by_trait(
         network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> Generator:
     yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
     num = 0
-    for item in center.fetch_nft_search_collection_by_trait(
-            network, address, trait_name, trait_value, for_sale_only=for_sale_only):
-        yield StreamingListContainer(operation="append", item=item)
-        num += 1
-    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
+    try:
+        for item in center.fetch_nft_search_collection_by_trait(
+                network, address, trait_name, trait_value, for_sale_only=for_sale_only):
+            yield StreamingListContainer(operation="append", item=item)
+            num += 1
+    finally:
+        yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
@@ -475,10 +479,12 @@ def fetch_nft_collection_assets(network: str, address: str) -> str:
 def fetch_nft_collection_assets_for_sale(network: str, address: str) -> Generator:
     yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
     num = 0
-    for item in center.fetch_nft_collection_assets_for_sale(network, address):
-        yield StreamingListContainer(operation="append", item=item)
-        num += 1
-    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
+    try:
+        for item in center.fetch_nft_collection_assets_for_sale(network, address):
+            yield StreamingListContainer(operation="append", item=item)
+            num += 1
+    finally:
+        yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
