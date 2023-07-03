@@ -29,7 +29,9 @@ def widgets_yaml2doc(widgets_lst):
     docs = []
     for values in widgets_lst:
         doc = ""
-        widget_command = f"<|{values['_name_'].replace('_', '-')}(" + "{" + "},{".join(values['parameters']['required']) + "})|>"
+        widget_command_name = values['_name_'].replace('_', '-')
+        widget_command_params = ','.join(['{' + p + '}' for p in values['parameters']['required']])
+        widget_command = f"<|{widget_command_name}({widget_command_params})|>"
         doc += f"Widget magic command: {widget_command}\n"
         doc += f"Description of widget: {values['description']}\n"
         doc += f"Required parameters:\n"
