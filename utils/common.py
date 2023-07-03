@@ -44,6 +44,9 @@ def widgets_yaml2doc(widgets_lst):
 def widgets_yaml2formats(file_path):
     with open(file_path, 'r') as file:
         widgets_lst = yaml.safe_load(file)
+    for j in range(len(widgets_lst)):
+        widgets_lst[j]['parameters']['properties'] = sorted(widgets_lst[j]['parameters']['properties'].items(),\
+                                                            key=lambda pair: widgets_lst[j]['parameters']['required'].index(pair[0]))
     assert len(set([v['_name_'] for v in widgets_lst])) == len([v['_name_'] for v in widgets_lst]), "widget names aren't unique"
     return widgets_yaml2doc(widgets_lst), widgets_yaml2functions(widgets_lst)
 
