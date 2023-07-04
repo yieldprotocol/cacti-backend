@@ -498,7 +498,7 @@ def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
             user_message  = conv.messages[i]
             bot_message = conv.messages[i + 1]
             
-            if user_message.raw_payload == None: continue # for autoeval : the user_agent didn't produce valid output
+            if user_message.raw_payload == None: continue # autoeval : the user_agent didn't produce valid output
             assert user_message.actor == 'user', user_message
             assert bot_message.actor == 'bot', bot_message
 
@@ -577,6 +577,9 @@ def run(args):
         summary[f"{ci}/{chat_config['type']}/accuracy/widget_param"] = counter['widget_param_match'] / counter['total']
         summary[f"{ci}/{chat_config['type']}/latency"] = counter['first_token'] / counter['total']
         summary[f"{ci}/{chat_config['type']}/total"] = counter['total']
+        res_df = pd.DataFrame(pairs, columns=['user input', 'prediction', 'label'])
+        name = f"{chat_config['type']}-{chat_config['model_name']}-{chat_config['top_k']}.csv"
+        res_df.to_csv(f"autoeval-{name}", index=False) if args.auto else res_df.to_csv(name, index=False)
         res_df = pd.DataFrame(pairs, columns=['user input', 'prediction', 'label'])
         name = f"{chat_config['type']}-{chat_config['model_name']}-{chat_config['top_k']}.csv"
         res_df.to_csv(f"autoeval-{name}", index=False) if args.auto else res_df.to_csv(name, index=False)
