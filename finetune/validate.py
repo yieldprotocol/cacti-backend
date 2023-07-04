@@ -5,6 +5,7 @@ sys.path.insert(0, '../')
 
 import argparse
 import random
+import random
 import collections
 import copy
 import uuid
@@ -457,6 +458,22 @@ def get_validation_conversations() -> Iterable[Conversation]:
     yield Conversation(messages=list(get_ens_lookup_flow()))
     yield Conversation(messages=list(get_ens_registration_flow()))
     yield Conversation(messages=list(get_aave_flow()))
+def get_validation_conversations() -> Iterable[Conversation]:
+    yield Conversation(messages=list(get_nft_flow()))
+    yield Conversation(messages=list(get_wallet_balance_flow()))
+    yield Conversation(messages=list(get_app_info_flow()))
+    yield Conversation(messages=list(get_scraped_sites_flow()))
+    yield Conversation(messages=list(get_transfer_flow()))
+    yield Conversation(messages=list(get_price_flow()))
+    yield Conversation(messages=list(get_swap_flow()))
+    yield Conversation(messages=list(get_ens_lookup_flow()))
+    yield Conversation(messages=list(get_ens_registration_flow()))
+    yield Conversation(messages=list(get_aave_flow()))
+
+
+def get_auto_validation_conversations(widgets, system_message, user_agent) -> Iterable[Conversation]:
+    for widget in widgets:
+        yield Conversation(messages=list(get_auto_flow(widget, system_message, user_agent)))
 
 
 def get_auto_validation_conversations(widgets, system_message, user_agent) -> Iterable[Conversation]:
@@ -466,6 +483,7 @@ def get_auto_validation_conversations(widgets, system_message, user_agent) -> It
 
 def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
     iter = get_validation_conversations()
+    iter = get_validation_conversations()
     if auto:
         with open(f"../knowledge_base/widgets.txt", 'r') as f: widgets = f.read()
         system_message = SystemMessage(content=SYSTEM_MESSAGE_AUTOEVAL)
@@ -473,7 +491,13 @@ def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
         widgets = random.choices(widgets, k=args.num_widgets)
         user_agent = get_user_agent(args.model_name)
         iter = get_auto_validation_conversations(widgets, system_message, user_agent)
+        system_message = SystemMessage(content=SYSTEM_MESSAGE_AUTOEVAL)
+        widgets = widgets.split('---')
+        widgets = random.choices(widgets, k=args.num_widgets)
+        user_agent = get_user_agent(args.model_name)
+        iter = get_auto_validation_conversations(widgets, system_message, user_agent)
         
+    for conv in iter:
     for conv in iter:
         chat_history = ChatHistory.new(uuid.UUID('da2321e5-8bcf-45e8-bb29-deee71b379cb'))
         for i in range(0, len(conv.messages), 2):
@@ -487,6 +511,7 @@ def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
             bot_response = bot_message.payload  # processed version, for history
 
             # invoke the chat on user input, gather bot output
+            user_input_copy = user_input
             user_input_copy = user_input
             bot_output = ''
             function_output = ''
@@ -510,12 +535,17 @@ def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
                 #chat_history.add_interaction(bot_output, bot_response)
                 chat_history.add_user_message(bot_output)
                 if function_output.strip() != '':
+                #chat_history.add_interaction(bot_output, bot_response)
+                chat_history.add_user_message(bot_output)
+                if function_output.strip() != '':
                     # this is not ground truth, but whatever was generated
                     # TODO: have ground truth for this
                     chat_history.add_function_message(function_output)
                 chat_history.add_bot_message(bot_response)  # this is ground truth
                 user_input = bot_output
+                user_input = bot_output
 
+            yield (user_input_copy, bot_output, completion)
             yield (user_input_copy, bot_output, completion)
 
 
@@ -564,6 +594,9 @@ def run(args):
         res_df = pd.DataFrame(pairs, columns=['user input', 'prediction', 'label'])
         name = f"{chat_config['type']}-{chat_config['model_name']}-{chat_config['top_k']}.csv"
         res_df.to_csv(f"autoeval-{name}", index=False) if args.auto else res_df.to_csv(name, index=False)
+        res_df = pd.DataFrame(pairs, columns=['user input', 'prediction', 'label'])
+        name = f"{chat_config['type']}-{chat_config['model_name']}-{chat_config['top_k']}.csv"
+        res_df.to_csv(f"autoeval-{name}", index=False) if args.auto else res_df.to_csv(name, index=False)
     for k, v in sorted(summary.items()):
         print(f'{k}: {v: .2f}')
 
@@ -581,6 +614,10 @@ if __name__ == "__main__":
                         type=str,
                         default="gpt-4",
                         help='OpenAI model to be used for autoeval')
+    parser.add_argument('--num_widgets',
+                        type=int,
+                        default=10,
+                        help='as OpenAI has rate limit on querying gpt-4, so can autoeval k widgets at once')
     parser.add_argument('--num_widgets',
                         type=int,
                         default=10,
