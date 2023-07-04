@@ -1,22 +1,11 @@
-"run : `python validate.py --auto True`"
-
-import sys
-sys.path.insert(0, '../')
-
-import argparse
-import random
-import random
 import collections
 import copy
 import uuid
-import pandas as pd
-from typing import Any, Dict, Generator, List, Optional, Union, Literal, TypedDict, Callable, Iterable
+from typing import Iterable
 
 from langchain.llms import OpenAI
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-from langchain.schema import SystemMessage, HumanMessage
 
 from integrations.center import (
     NFTCollection, NFTAsset, NFTCollectionAssets, NFTAssetTraits, NFTAssetTraitValue,
@@ -29,20 +18,14 @@ import utils.timing as timing
 from tools.index_widget import (
     StreamingListContainer,
     _get_result_list_prefix,
-    WIDGET_START,
-    WIDGET_END,
 )
 
-from finetune.generate import (
+from .generate import (
     Conversation, Message, StreamingListContainer,
     stream_to_str,
     handle_empty_params,
 )
 
-SYSTEM_MESSAGE_AUTOEVAL = """You have to imitate a human tester who asks a chatbot queries related to web3. The tester wants the bot to fail, so his queries are a bit complicated and not clear.
-The queries are based on the given widget command as the bot invokes it in response to the query. 
-Use real tokens, addresses and other widget command's parameters. Try to use tokens which the bot might not have heard of.
-Ask one question at a time. Do not use widget command in the query."""
 
 chat_configs = [
     dict(
@@ -433,31 +416,6 @@ def get_aave_flow() -> Iterable[Message]:
     yield Message("bot", f"<|aave-withdraw({token},{amount})|>", "A workflow step was presented.")
 
 
-def get_user_agent(model_name="gpt-4", max_tokens=60, temperature=0.7):
-    llm = ChatOpenAI(model_name=model_name, 
-                     max_tokens=max_tokens, 
-                     temperature=temperature,)
-    return llm
-
-
-def get_auto_flow(widget : List, system_message : SystemMessage, user_agent : ChatOpenAI) -> Iterable[Message]:
-    messages = [system_message] + [HumanMessage(content=widget)]
-    user_input = user_agent(messages)
-    yield Message("user", user_input.content.strip())
-    yield Message("bot", widget.split(':')[1].split('\n')[0].strip())
-
-
-def get_validation_conversations() -> Iterable[Conversation]:
-    yield Conversation(messages=list(get_nft_flow()))
-    yield Conversation(messages=list(get_wallet_balance_flow()))
-    yield Conversation(messages=list(get_app_info_flow()))
-    yield Conversation(messages=list(get_scraped_sites_flow()))
-    yield Conversation(messages=list(get_transfer_flow()))
-    yield Conversation(messages=list(get_price_flow()))
-    yield Conversation(messages=list(get_swap_flow()))
-    yield Conversation(messages=list(get_ens_lookup_flow()))
-    yield Conversation(messages=list(get_ens_registration_flow()))
-    yield Conversation(messages=list(get_aave_flow()))
 def get_validation_conversations() -> Iterable[Conversation]:
     yield Conversation(messages=list(get_nft_flow()))
     yield Conversation(messages=list(get_wallet_balance_flow()))
@@ -471,34 +429,8 @@ def get_validation_conversations() -> Iterable[Conversation]:
     yield Conversation(messages=list(get_aave_flow()))
 
 
-def get_auto_validation_conversations(widgets, system_message, user_agent) -> Iterable[Conversation]:
-    for widget in widgets:
-        yield Conversation(messages=list(get_auto_flow(widget, system_message, user_agent)))
-
-
-def get_auto_validation_conversations(widgets, system_message, user_agent) -> Iterable[Conversation]:
-    for widget in widgets:
-        yield Conversation(messages=list(get_auto_flow(widget, system_message, user_agent)))
-
-
-def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
-    iter = get_validation_conversations()
-    iter = get_validation_conversations()
-    if auto:
-        with open(f"../knowledge_base/widgets.txt", 'r') as f: widgets = f.read()
-        system_message = SystemMessage(content=SYSTEM_MESSAGE_AUTOEVAL)
-        widgets = widgets.split('---')
-        widgets = random.choices(widgets, k=args.num_widgets)
-        user_agent = get_user_agent(args.model_name)
-        iter = get_auto_validation_conversations(widgets, system_message, user_agent)
-        system_message = SystemMessage(content=SYSTEM_MESSAGE_AUTOEVAL)
-        widgets = widgets.split('---')
-        widgets = random.choices(widgets, k=args.num_widgets)
-        user_agent = get_user_agent(args.model_name)
-        iter = get_auto_validation_conversations(widgets, system_message, user_agent)
-        
-    for conv in iter:
-    for conv in iter:
+def evaluate_chat(chat: chat.BaseChat):
+    for conv in get_validation_conversations():
         chat_history = ChatHistory.new(uuid.UUID('da2321e5-8bcf-45e8-bb29-deee71b379cb'))
         for i in range(0, len(conv.messages), 2):
             user_message  = conv.messages[i]
@@ -511,10 +443,8 @@ def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
             bot_response = bot_message.payload  # processed version, for history
 
             # invoke the chat on user input, gather bot output
-            user_input_copy = user_input
-            user_input_copy = user_input
-            bot_output = ''
-            function_output = ''
+            bot_output = None
+            function_output = None
             message_id = None
             def send_response(response, **kwargs):
                 nonlocal bot_output, function_output, message_id
@@ -526,27 +456,21 @@ def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
                     function_output = response.response
                 return message_id
 
-            while not bot_output.startswith(WIDGET_START) and not bot_output.endswith(WIDGET_END):
-                chat_history_copy = copy.deepcopy(chat_history)
-                chat.receive_input(chat_history_copy, user_input, send_response)
-                assert bot_output.strip() != ''
+            chat_history_copy = copy.deepcopy(chat_history)
+            chat.receive_input(chat_history_copy, user_input, send_response)
+            assert bot_output is not None
 
-                # prepare for next round, but use ground truth response instead
-                #chat_history.add_interaction(bot_output, bot_response)
-                chat_history.add_user_message(bot_output)
-                if function_output.strip() != '':
-                #chat_history.add_interaction(bot_output, bot_response)
-                chat_history.add_user_message(bot_output)
-                if function_output.strip() != '':
-                    # this is not ground truth, but whatever was generated
-                    # TODO: have ground truth for this
-                    chat_history.add_function_message(function_output)
-                chat_history.add_bot_message(bot_response)  # this is ground truth
-                user_input = bot_output
-                user_input = bot_output
+            yield (bot_output, completion)
 
-            yield (user_input_copy, bot_output, completion)
-            yield (user_input_copy, bot_output, completion)
+            # prepare for next round, but use ground truth response instead
+            #chat_history.add_interaction(user_input, bot_response)
+            chat_history.add_user_message(user_input)
+            if function_output is not None:
+                # this is not ground truth, but whatever was generated
+                # TODO: have ground truth for this
+                chat_history.add_function_message(function_output)
+            chat_history.add_bot_message(bot_response)  # this is ground truth
+
 
 
 def _get_widget_name(output):
@@ -560,68 +484,35 @@ def _strip_quotes(output):
     return output.replace('"', '').replace("'", "")
 
 
-def run(args):
+def run():
     summary = collections.Counter()
     for ci, chat_config in enumerate(chat_configs):
         chat = config.initialize(chat_config)
         counter = collections.Counter()
         pairs = []
-        for user_input, prediction, label in evaluate_chat(chat, args.auto):
-            print('user input =', user_input)
-            print('prediction =', prediction)
-            print('label =', label)
-            print('---')
+        for prediction, label in evaluate_chat(chat):
             prediction = prediction.strip()
             label = label.strip()
-            if not args.auto: # TODO get groundtruth params in autoeval
-                widget_param_match = _strip_quotes(prediction) == _strip_quotes(label)
-                if widget_param_match:
-                    counter['widget_param_match'] += 1
+            widget_param_match = _strip_quotes(prediction) == _strip_quotes(label)
             widget_match = _get_widget_name(prediction) == _get_widget_name(label)
+            if widget_param_match:
+                counter['widget_param_match'] += 1
             if widget_match:
                 counter['widget_match'] += 1
             counter['first_token'] += timing.get('first_visible_bot_token')
             counter['total'] += 1
-            pairs.append((user_input, prediction, label))
+            pairs.append((prediction, label))
         for k, v in sorted(counter.items()):
             print(f'{k}: {v}')
-        for u, p, l in pairs:
-            print(f'{u} :: {p} :: {l}')
+        for p, l in pairs:
+            print(f'{p} :: {l}')
         summary[f"{ci}/{chat_config['type']}/accuracy/widget"] = counter['widget_match'] / counter['total']
-        if not args.auto: summary[f"{ci}/{chat_config['type']}/accuracy/widget_param"] = counter['widget_param_match'] / counter['total']
+        summary[f"{ci}/{chat_config['type']}/accuracy/widget_param"] = counter['widget_param_match'] / counter['total']
         summary[f"{ci}/{chat_config['type']}/latency"] = counter['first_token'] / counter['total']
         summary[f"{ci}/{chat_config['type']}/total"] = counter['total']
-        res_df = pd.DataFrame(pairs, columns=['user input', 'prediction', 'label'])
-        name = f"{chat_config['type']}-{chat_config['model_name']}-{chat_config['top_k']}.csv"
-        res_df.to_csv(f"autoeval-{name}", index=False) if args.auto else res_df.to_csv(name, index=False)
-        res_df = pd.DataFrame(pairs, columns=['user input', 'prediction', 'label'])
-        name = f"{chat_config['type']}-{chat_config['model_name']}-{chat_config['top_k']}.csv"
-        res_df.to_csv(f"autoeval-{name}", index=False) if args.auto else res_df.to_csv(name, index=False)
     for k, v in sorted(summary.items()):
         print(f'{k}: {v: .2f}')
 
 
 if __name__ == "__main__":
-    # Create the parser
-    parser = argparse.ArgumentParser(description='parser to run the script')
-
-    # add arguments
-    parser.add_argument('--auto',
-                        type=eval,
-                        default=False,
-                        help='to trigger autoeval')
-    parser.add_argument('--model_name',
-                        type=str,
-                        default="gpt-4",
-                        help='OpenAI model to be used for autoeval')
-    parser.add_argument('--num_widgets',
-                        type=int,
-                        default=10,
-                        help='as OpenAI has rate limit on querying gpt-4, so can autoeval k widgets at once')
-    parser.add_argument('--num_widgets',
-                        type=int,
-                        default=10,
-                        help='as OpenAI has rate limit on querying gpt-4, so can autoeval k widgets at once')
-    args = parser.parse_args()
-
-    run(args)
+    run()

@@ -14,37 +14,49 @@ import context
 from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL
 
 
-def yaml2functions(file_path):
+def widgets_yaml2functions(widgets_lst):
     functions = []
-    with open(file_path, 'r') as file:
-        dict_yml = yaml.safe_load(file)
-    for _, value in dict_yml.items():
+    for value in widgets_lst:
         dict_ = {}
-        dict_['name'] = value['name']
+        dict_['name'] = value['_name_']
         dict_['description'] = value['description']
         dict_['parameters'] = value['parameters']
         functions.append(dict_)
     return functions
 
 
-def yaml2widgetsdoc(file_path):
-    doc = ""
-    with open(file_path, 'r') as file:
-        dict_yaml = yaml.safe_load(file)
-    for _, values in dict_yaml.items():
-        doc += f"Widget magic command: {values['widget_command']}\n"
+def widgets_yaml2doc(widgets_lst):
+    docs = []
+    for values in widgets_lst:
+        doc = ""
+        widget_command_name = values['_name_'].replace('_', '-')
+        widget_command_params = ','.join(['{' + p + '}' for p in values['parameters']['required']])
+        widget_command = f"<|{widget_command_name}({widget_command_params})|>"
+        doc += f"Widget magic command: {widget_command}\n"
         doc += f"Description of widget: {values['description']}\n"
         doc += f"Required parameters:\n"
         for param_name, prop in values['parameters']['properties'].items():
             doc += "-{" + param_name + "}" + f": {prop['description']}\n"
         if len(values["return_value_description"].strip()) > 0: 
             doc += f"Return value description:\n-{values['return_value_description']}\n"
-        doc += "---\n"
-    return doc.strip().strip('---').strip()
+        docs.append(doc)
+    return '---\n'.join(docs)
 
-yaml_file_path = r"C:\Users\HARSH\Documents\crypto-LLM-exps\cacti-backend\knowledge_base\widgets.yaml" #f"{os.getcwd()}/knowledge_base/functions.json"
-WIDGETS = yaml2widgetsdoc(yaml_file_path)
-FUNCTIONS = yaml2functions(yaml_file_path)
+
+def widgets_yaml2formats(file_path):
+    with open(file_path, 'r') as file:
+        widgets_lst = yaml.safe_load(file)
+    # reordering the params correctly
+    for j in range(len(widgets_lst)): 
+        widgets_lst[j]['parameters']['properties'] = dict(sorted(widgets_lst[j]['parameters']['properties'].items(),\
+                                                            key=lambda pair: widgets_lst[j]['parameters']['required'].index(pair[0])))
+    assert len(set([v['_name_'] for v in widgets_lst])) == len([v['_name_'] for v in widgets_lst]), "widget names aren't unique"
+    return widgets_yaml2doc(widgets_lst), widgets_yaml2functions(widgets_lst)
+
+
+yaml_file_path = f"{os.getcwd()}/knowledge_base/widgets.yaml"
+WIDGETS, FUNCTIONS = widgets_yaml2formats(yaml_file_path)
+
 
 def set_api_key():
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
