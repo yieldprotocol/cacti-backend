@@ -3,7 +3,7 @@ import json
 import web3
 import os
 from logging import basicConfig, INFO
-import sha3 # 'pip install pysha3'
+# import sha3 # 'pip install pysha3'
 from idna import encode, IDNAError
 
 import context

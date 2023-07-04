@@ -1,0 +1,11 @@
+user input,prediction,label
+Can you tell me how much of the Shiba Inu token (SHIB) I'm holding in my connected wallet?,<|fetch-my-balance(SHIB)|>,<|fetch-my-balance({token})|>
+Could you assist me in withdrawing my 2000 $MIST from the zksync L2 to mainnet L1?,"<|display-zksync-withdraw($MIST,2000)|>","<|display-zksync-withdraw({token},{amount})|>"
+Can you withdraw 5000 SNX tokens from zksync L2 to mainnet L1 for me?,"<|display-zksync-withdraw(SNX,5000)|>","<|display-zksync-withdraw({token},{amount})|>"
+Can you fetch the total amount of gas used by the wallet with the address 0x3D980E50508CFd41a13837A60149927a11c03731?,<|fetch-gas(0x3D980E50508CFd41a13837A60149927a11c03731)|>,<|fetch-gas({address})|>
+Can you help me with setting 'cryptowizard.eth' as the primary ENS for my connected wallet?,<|set-ens-primary-name(cryptowizard.eth)|>,<|set-ens-primary-name({domain})|>
+Can you tell me how many Golem (GLM) tokens are currently in the wallet with the address 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE?,"<|fetch-balance(GLM,0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE)|>","<|fetch-balance({token},{address})|>"
+Can you fetch yield information for a token called PolkaCover on the Ethereum blockchain? And limit the yield sources to five.,"<|fetch-yields(CVR,Ethereum,5)|>","<|fetch-yields({token},{network},{count})|>"
+"Can you help me bridge and deposit 2500 of this strange token, $SHIBA, from mainnet L1 to zksync L2?","<|display-zksync-deposit($SHIBA,2500)|>","<|display-zksync-deposit({token},{amount})|>"
+"What kind of NFT assets can be found on the Ethereum network, specifically from the contract address 0x06012c8cf97bead5deae237070f9587f8e7a266d, that have the ""generation"" trait with a value of 0?","<|fetch-nft-collection-assets-by-trait(Ethereum,0x06012c8cf97bead5deae237070f9587f8e7a266d,generation,0)|>","<|fetch-nft-collection-assets-by-trait({network},{address},{traitName},{traitValue})|>"
+Can you provide information on the most recent transaction involving the YAM token on the Ethereum blockchain?,"<|fetch-transactions(YAM,1)|>",<|fetch-scraped-sites({query})|>
