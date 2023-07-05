@@ -47,7 +47,7 @@ To produce a test sample please use the following format and think step by step:
 To parse your 'Test Sample', it should be in a specific format. Example : [("repay 100 DAI tokens to Aave", "<|aave-repay(DAI,100)|>"), ("withdraw 50 DAI tokens from zksync L2 to mainnet L1", "<|display-zksync-withdraw(DAI,50)|>")]
 Use real tokens, addresses and other widget command's parameters. Also, try to use tokens which the bot might not have heard of."""
 
-RE_COMMAND = re.compile(r"\[\(\"(.*)\"\)\]", re.DOTALL)
+RE_COMMAND_EVAL = re.compile(r'\[\(\"(.*)\"\)\]', re.DOTALL)
 
 chat_configs = [
     dict(
@@ -447,22 +447,21 @@ def get_user_agent(model_name="gpt-4", max_tokens=500, temperature=0.7):
 
 def sanitize_str(s : str):
     s = s.strip()
-    s = s.replace(' ', '')
+    s = s.replace(', ', ',')
     return s
 
 
 def get_auto_flow(widgets : str, system_message : SystemMessage, user_agent : ChatOpenAI) -> Iterable[Message]:
     messages = [system_message] + [HumanMessage(content=widgets)]
     try:
-        output = RE_COMMAND.search(user_agent(messages, stop=')|>")]').content + ')|>")]').group(0)
+        output = RE_COMMAND_EVAL.search(user_agent(messages, stop=')|>")]').content + ')|>")]').group(0)
         for (query, widget_command) in eval(output):
             widget_command = sanitize_str(widget_command)
             if widget_command.startswith(WIDGET_START) and widget_command.endswith(WIDGET_END):
                 yield Message("user", query.strip())
-                yield Message("bot", widget_command.strip())
-    except SyntaxError and AttributeError:
-        yield Message("user", None)
-        yield Message("bot", None)
+                yield Message("bot", widget_command)
+    except (SyntaxError, AttributeError):
+        pass
 
 
 def get_validation_conversations() -> Iterable[Conversation]:
@@ -480,8 +479,9 @@ def get_validation_conversations() -> Iterable[Conversation]:
 
 def get_auto_validation_conversations(widgets : List, system_message : SystemMessage, user_agent : ChatOpenAI) -> Iterable[Conversation]:
     for _ in range(5):
-        widgets = random.choices(widgets, k=args.num_widgets)
-        yield Conversation(messages=list(get_auto_flow('---\n'.join(widgets), system_message, user_agent)))
+        widgets = random.sample(widgets, k=args.num_widgets)
+        conversation_list = list(get_auto_flow('---\n'.join(widgets), system_message, user_agent))
+        if len(conversation_list)>0: yield Conversation(messages=conversation_list)
 
 
 def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
@@ -498,7 +498,6 @@ def evaluate_chat(chat: chat.BaseChat, auto : bool = False):
             user_message  = conv.messages[i]
             bot_message = conv.messages[i + 1]
             
-            if user_message.raw_payload == None: continue # for autoeval : the user_agent didn't produce valid output
             assert user_message.actor == 'user', user_message
             assert bot_message.actor == 'bot', bot_message
 
