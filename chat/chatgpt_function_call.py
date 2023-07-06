@@ -17,7 +17,8 @@ from langchain.schema import BaseMessage
 import context
 import utils
 import utils.timing as timing
-from utils.common import FUNCTIONS
+from utils.common import FUNCTIONS, modelname_to_contextsize
+from utils.constants import WIDGET_INFO_TOKEN_LIMIT
 import registry
 import streaming
 from .base import (
@@ -29,8 +30,6 @@ from ui_workflows import (
 from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operation
 from tools.index_widget import *
 
-model_token_limit = 8000 # for GPT-4-0613
-HISTORY_TOKEN_LIMIT = max(1800, model_token_limit - 4000)
 SYSTEM_MESSAGE_FOR_EVAL = "You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."
 SYSTEM_MESSAGE_DEFAULT = "You are an agent that is trained to execute functions based on a user request. Ask the user if any of the input parameter value is unknown."
 
@@ -43,6 +42,7 @@ class ChatGPTFunctionCallChat(BaseChat):
         self.top_k = top_k
         self.evaluate_widgets = evaluate_widgets  # this controls whether we want to execute widgets, set to false to get the raw command back
         self.system_message = SYSTEM_MESSAGE_DEFAULT if evaluate_widgets else SYSTEM_MESSAGE_FOR_EVAL
+        self.token_limit = max(1800, modelname_to_contextsize(model_name) - WIDGET_INFO_TOKEN_LIMIT)
 
     def receive_input(
             self,
@@ -55,7 +55,7 @@ class ChatGPTFunctionCallChat(BaseChat):
         userinput = userinput.strip()
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
 
-        history_messages = history.to_openai_messages(system_message=self.system_message, system_prefix=None, token_limit=HISTORY_TOKEN_LIMIT)  # omit system messages
+        history_messages = history.to_openai_messages(system_message=self.system_message, system_prefix=None, token_limit=self.token_limit)  # omit system messages
         timing.init()
 
         bot_chat_message_id = None
