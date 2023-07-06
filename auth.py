@@ -85,7 +85,7 @@ def api_login(request: Request, data: AcceptJSON) -> Optional[bool]:
         # verify eip4361 and signature, get wallet address
         message = siwe.SiweMessage(message=eip4361)
         message.verify(signature, nonce=nonce, domain=host)
-        assert message.statement == 'Sign me in to wc3 app', message.statement
+        assert message.statement == 'Sign me in to Cacti', message.statement
         assert message.address, message.address
         wallet_address = message.address
         print('authenticated wallet', wallet_address)
