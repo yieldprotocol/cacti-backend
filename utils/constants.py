@@ -16,6 +16,9 @@ TENDERLY_FORK_URL = f"{TENDERLY_FORK_BASE_URL}/{DEFAULT_MAINNET_FORK_ID}"
 
 TEST_TENDERLY_FORK_ID = os.getenv('TEST_TENDERLY_FORK_ID', "")
 
+# max num tokens for widgets info in model's input
+WIDGET_INFO_TOKEN_LIMIT = 4000
+
 # Widget Index
 WIDGET_INDEX_NAME = "WidgetV12"
 

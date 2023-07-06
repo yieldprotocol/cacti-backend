@@ -16,6 +16,8 @@ import context
 import utils
 import utils.timing as timing
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
+from utils.constants import WIDGET_INFO_TOKEN_LIMIT
+from utils.common import modelname_to_contextsize
 import registry
 import streaming
 from chat.container import ContainerMixin, dataclass_to_container_params
@@ -32,7 +34,6 @@ from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operat
 from tools.index_widget import *
 from finetune.dataset import (
     format_widgets_for_prompt,
-    HISTORY_TOKEN_LIMIT,
     TEMPLATE,
     STOP,
     NO_WIDGET_TOKEN,
@@ -46,7 +47,7 @@ MAX_TOKENS = 200
 
 @registry.register_class
 class FineTunedChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, fallback_chat: Optional[BaseChat] = None, model_name: Optional[str] = None, evaluate_widgets: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, fallback_chat: Optional[BaseChat] = None, model_name: Optional[str] = "text-davinci-003", evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.widget_prompt = PromptTemplate(
@@ -59,6 +60,7 @@ class FineTunedChat(BaseChat):
         self.fallback_chat = fallback_chat
         self.model_name = model_name or MODEL_NAME
         self.evaluate_widgets = evaluate_widgets
+        self.token_limit = max(1800, modelname_to_contextsize(model_name) - WIDGET_INFO_TOKEN_LIMIT)
 
     def receive_input(
             self,
@@ -69,7 +71,7 @@ class FineTunedChat(BaseChat):
             before_message_id: Optional[uuid.UUID] = None,
     ) -> None:
         userinput = userinput.strip()
-        history_string = history.to_string(system_prefix=None, token_limit=HISTORY_TOKEN_LIMIT, before_message_id=before_message_id)  # omit system messages
+        history_string = history.to_string(system_prefix=None, token_limit=self.token_limit, before_message_id=before_message_id)  # omit system messages
 
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
         timing.init()
