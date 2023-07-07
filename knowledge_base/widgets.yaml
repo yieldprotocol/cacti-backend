@@ -573,3 +573,25 @@
     - amount
     type: object
   return_value_description: ''
+- _name_: display_savings_dai_deposit
+  description: Used to deposit DAI into the DAI savings account.
+  parameters:
+    properties:
+      amount:
+        description: Amount of DAI to deposit.
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_savings_dai_withdraw
+  description: Used to withdraw DAI from the DAI savings account.
+  parameters:
+    properties:
+      amount:
+        description: Amount of DAI to withdraw.
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
