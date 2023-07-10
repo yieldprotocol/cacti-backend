@@ -87,9 +87,19 @@ async def api_logout(request: Request):
     return auth.api_logout(request)
 
 
-@app.post("/share")
-async def api_share(request: Request, data: auth.AcceptJSON):
-    return share.handle_share(request, data)
+@app.get("/api/share_settings/{chat_session_id}")
+async def api_share_settings(request: Request, chat_session_id: str) -> Dict:
+    return share.get_settings(request, chat_session_id)
+
+
+@app.put("/api/share_settings/{chat_session_id}")
+async def api_share_settings_update(request: Request, chat_session_id: str, data: auth.AcceptJSON) -> bool:
+    return share.update_settings(request, chat_session_id, data)
+
+
+@app.post("/api/clone_session/{chat_session_id}")
+async def api_clone_session(request: Request, chat_session_id: str, data: auth.AcceptJSON) -> Optional[str]:
+    return share.clone_session(request, chat_session_id, data)
 
 
 @app.get("/api/chats")
