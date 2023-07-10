@@ -51,7 +51,7 @@ def get_visible_chats(request: Request) -> Dict:
 
     # Return dictionary of list of sessions
     sessions = []
-    for chat_session in ChatSession.query.filter(ChatSession.user_id == user_id).all():
+    for chat_session in ChatSession.query.filter(ChatSession.user_id == user_id).order_by(ChatSession.created.desc()).all():
         sessions.append(dict(
             id=chat_session.id,
             created=chat_session.created,
