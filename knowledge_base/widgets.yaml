@@ -617,5 +617,6 @@
         type: string
     required:
       - token
+      - amount
     type: object
   return_value_description: ""
