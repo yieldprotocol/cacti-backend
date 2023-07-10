@@ -17,7 +17,8 @@ from langchain.schema import BaseMessage
 import context
 import utils
 import utils.timing as timing
-from utils.common import FUNCTIONS
+from utils.common import FUNCTIONS, modelname_to_contextsize
+from utils.constants import WIDGET_INFO_TOKEN_LIMIT
 import registry
 import streaming
 from .base import (
@@ -41,6 +42,7 @@ class ChatGPTFunctionCallChat(BaseChat):
         self.top_k = top_k
         self.evaluate_widgets = evaluate_widgets  # this controls whether we want to execute widgets, set to false to get the raw command back
         self.system_message = SYSTEM_MESSAGE_DEFAULT if evaluate_widgets else SYSTEM_MESSAGE_FOR_EVAL
+        self.token_limit = max(1800, modelname_to_contextsize(model_name) - WIDGET_INFO_TOKEN_LIMIT)
 
     def receive_input(
             self,
@@ -53,7 +55,7 @@ class ChatGPTFunctionCallChat(BaseChat):
         userinput = userinput.strip()
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
 
-        history_messages = history.to_openai_messages(system_message=self.system_message, system_prefix=None)  # omit system messages
+        history_messages = history.to_openai_messages(system_message=self.system_message, system_prefix=None, token_limit=self.token_limit)  # omit system messages
         timing.init()
 
         bot_chat_message_id = None
@@ -167,6 +169,8 @@ class ChatGPTFunctionCallChat(BaseChat):
                 # when there is a function call, the callback is not called, so we process it
                 # here and call it ourselves with the widget str
                 function_call = ai_message.additional_kwargs['function_call']
+                if function_call['name'].startswith('functions.'):
+                    function_call['name'] = function_call['name'][len('functions.'):]
                 function_message_id = send(Response(response=json.dumps(function_call), actor='function'), before_message_id=before_message_id)
                 bot_chat_message_id = None
                 command = '-'.join(function_call['name'].split('_'))

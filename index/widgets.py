@@ -5,6 +5,7 @@ import traceback
 from langchain.docstore.document import Document
 from .weaviate import get_client
 from utils import get_widget_index_name
+from utils.common import WIDGETS
 
 
 INDEX_NAME = get_widget_index_name()
@@ -61,9 +62,7 @@ def backfill(delete_first=True):
     create_schema(delete_first=delete_first)
 
     from langchain.vectorstores import Weaviate
-    with open('./knowledge_base/widgets.txt') as f:
-        web3functions = f.read()
-    documents = web3functions.split("---")
+    documents = WIDGETS.split("---")
     metadatas = [{} for _ in documents]
 
     client = get_client()
