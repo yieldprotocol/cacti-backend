@@ -43,6 +43,9 @@ def get_wallet_address() -> Optional[str]:
     global _request_context
     return _request_context.wallet_address
 
+def get_wallet_chain_id() -> Optional[str]:
+    global _request_context
+    return _request_context.wallet_chain_id
 
 def get_user_chat_message_id() -> Optional[str]:
     global _request_context

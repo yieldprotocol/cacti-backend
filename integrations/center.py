@@ -5,6 +5,9 @@ from urllib.parse import urlencode
 import requests
 
 import utils
+import context
+
+from utils import ETH_MAINNET_CHAIN_ID
 import utils.timing as timing
 from chat.container import ContainerMixin, dataclass_to_container_params
 
@@ -19,7 +22,10 @@ NETWORKS = [
     "ethereum-mainnet",
     #"polygon-mainnet",
 ]
+
 API_URL = "https://api.center.dev/v1"
+API_V2_URL = "https://api.center.dev/v2"
+
 MAX_RESULTS = 12
 PAGE_LIMIT = 12
 
@@ -162,6 +168,31 @@ class NFTCollectionAssets(ContainerMixin):
         )
         return dataclass_to_container_params(self)
 
+@dataclass
+class NFTAssetList(ContainerMixin):
+    assets: List[NFTAsset]
+
+    def container_name(self) -> str:
+        return 'display-nft-asset-list-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            assets=[asset.struct() for asset in self.assets],
+        )
+
+@dataclass
+class NFTCollectionAssets(ContainerMixin):
+    collection: NFTCollection
+    assets: List[NFTAsset]
+
+    def container_name(self) -> str:
+        return 'display-nft-collection-assets-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            collection=self.collection.struct(),
+            assets=[asset.struct() for asset in self.assets],
+        )
 
 def fetch_nft_search(search_str: str) -> Generator[Union[NFTCollection, NFTAsset], None, None]:
     q = urlencode(dict(
@@ -515,3 +546,47 @@ def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAsse
         asset=asset,
         values=values,
     )
+
+def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) ->  Generator[NFTAsset, None, None]:
+    """Currently only fetches the latest 25 NFTs as per block number."""
+    # TODO: Add pagination once we have a UI component such as a Carousel to support it.
+    inferred_network = None
+    if not network:
+        inferred_network = "ethereum-mainnet"
+    else:
+        if 'ethereum' in network.lower():
+            inferred_network = "ethereum-mainnet"
+        else:
+            return "Network not supported"
+        
+    print("network", inferred_network, "address_or_domain", address_or_domain)
+
+    # TODO: What to do if it's a forked network?
+
+    timing.log('fetch_started')
+
+    limit = 25
+    offset = 0
+    sortBy = '-blockNumber'
+    assets = []
+    q = urlencode(dict(
+        sortBy=sortBy,
+        limit=limit,
+        offset=offset,
+    ))
+    url = f"{API_V2_URL}/{inferred_network}/{address_or_domain}/nfts-owned?{q}"
+    response = requests.get(url, headers=HEADERS)
+    response.raise_for_status()
+    timing.log('fetch_done')
+    obj = response.json()
+    for item in obj['items']:
+        nft_address = item['address']
+        nft_token_id = item['tokenID']
+        nft_asset = fetch_nft_asset(inferred_network, nft_address, nft_token_id) 
+
+
+        assets.append(nft_asset)
+    timing.log('results_done')
+
+    result = NFTAssetList(assets=assets)
+    return result
