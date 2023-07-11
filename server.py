@@ -128,15 +128,15 @@ def _ensure_authenticated(client_state, send_response):
 
 def _ensure_can_view_chat_session(session_id, client_state, send_response):
     """Returns true if we are allowed to view the chat session."""
+    # user_id here could be None if logged out
     user_id = client_state.user_id
-    assert user_id, 'expecting user id to be known here'
 
     chat_session = ChatSession.query.filter(ChatSession.id == session_id).one_or_none()
     if not chat_session:
         # non-existent session, treat as if no permissions
         pass
 
-    elif str(chat_session.user_id) == str(user_id) or chat_session.privacy_type == PrivacyType.public:
+    elif user_id is not None and str(chat_session.user_id) == str(user_id) or chat_session.privacy_type == PrivacyType.public:
         # allow to view your own sessions, or those shared publicly
         # TODO: add case where session is shared with specific user ids / wallet addresses
         return True
@@ -183,9 +183,6 @@ def _ensure_can_edit_chat_session(session_id, client_state, send_response):
 
 @db_utils.close_db_session()
 def message_received(client_state, send_response, message):
-    if not _ensure_authenticated(client_state, send_response):
-        return
-
     obj = json.loads(message)
     assert isinstance(obj, dict), obj
     actor = obj['actor']
@@ -248,6 +245,10 @@ def message_received(client_state, send_response, message):
                 'beforeMessageId': before_message_id,
             })
             send_response(msg)
+        return
+
+    # Only allow chatting if authenticated
+    if not _ensure_authenticated(client_state, send_response):
         return
 
     # first message received - first create a new session history instance

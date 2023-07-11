@@ -12,19 +12,13 @@ import auth
 
 @db_utils.close_db_session()
 def get_settings(request: Request, chat_session_id: str) -> Dict:
-    # Currently these return the chats you own, but in future, could expand
-    # to chats that are shared with you or that you recently visited
-
-    user_id = auth.fetch_authenticated_user_id(request)
-    if not user_id:
-        return {}
-
-    # for now, just support privacy setting
+    # Get visibility settings for a chat session
     chat_session = ChatSession.query.get(chat_session_id)
     if not chat_session:
         return {}
 
-    if str(chat_session.user_id) != user_id:
+    user_id = auth.fetch_authenticated_user_id(request)
+    if not user_id and chat_session.privacy_type != PrivacyType.public:
         return {}
 
     ret = {}
@@ -32,6 +26,10 @@ def get_settings(request: Request, chat_session_id: str) -> Dict:
         ret['visibility'] = 'public'
     elif chat_session.privacy_type == PrivacyType.private:
         ret['visibility'] = 'private'
+
+    # data about whether you have permissions to edit
+    can_edit = user_id is not None and str(chat_session.user_id) == user_id
+    ret['canEdit'] = can_edit
 
     return ret
 
@@ -65,6 +63,7 @@ def update_settings(request: Request, chat_session_id: str, data: auth.AcceptJSO
 
 @db_utils.close_db_session()
 def clone_session(request: Request, source_session_id: str, data: auth.AcceptJSON) -> Optional[str]:
+    # Clone an existing session into a new session
     user_id = auth.fetch_authenticated_user_id(request)
     if not user_id:
         return None
