@@ -635,3 +635,26 @@
       - amount
     type: object
   return_value_description: ""
+- _name_: display_yield_protocol_borrow
+  description: use the yield protocol to borrow a token using a different token as collateral
+  parameters:
+    properties:
+      borrowToken:
+        description: the token to borrow
+        type: string
+      borrowAmount:
+        description: amount of token to borrow
+        type: string
+      collateralToken:
+        description: the token to use as collateral
+        type: string
+      collateralAmount:
+        description: amount of collateral token to use
+        type: string
+    required:
+      - borrowToken
+      - borrowAmount
+      - collateralToken
+      - collateralAmount
+    type: object
+  return_value_description: ""
