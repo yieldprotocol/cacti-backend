@@ -595,3 +595,18 @@
     - amount
     type: object
   return_value_description: ''
+- _name_: display_deposit_vault
+  description: Used to deposit a token into a vault
+  parameters:
+    properties:
+      amount:
+        description: Amount of token to deposit.
+        type: string
+      vault:
+        description: Vault to deposit the token in.
+        type: string
+    required:
+    - amount
+    - vault
+    type: object
+  return_value_description: ''
