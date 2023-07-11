@@ -558,14 +558,11 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
             inferred_network = "ethereum-mainnet"
         else:
             return "Network not supported"
-        
-    print("network", inferred_network, "address_or_domain", address_or_domain)
-
     # TODO: What to do if it's a forked network?
 
     timing.log('fetch_started')
 
-    limit = 25
+    limit = PAGE_LIMIT
     offset = 0
     sortBy = '-blockNumber'
     assets = []
@@ -575,17 +572,23 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
         offset=offset,
     ))
     url = f"{API_V2_URL}/{inferred_network}/{address_or_domain}/nfts-owned?{q}"
-    response = requests.get(url, headers=HEADERS)
-    response.raise_for_status()
+
+    try:
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        print(err)
+        return "Invalid address or domain"
+    
     timing.log('fetch_done')
+
     obj = response.json()
     for item in obj['items']:
         nft_address = item['address']
         nft_token_id = item['tokenID']
         nft_asset = fetch_nft_asset(inferred_network, nft_address, nft_token_id) 
-
-
         assets.append(nft_asset)
+        
     timing.log('results_done')
 
     result = NFTAssetList(assets=assets)
