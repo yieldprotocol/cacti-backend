@@ -141,6 +141,9 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     elif command == 'display-yield-protocol-lend':
         params = json.loads(params)
         lines.append(f"yield protocol lend action for token: {params['token']}, amount: {params['amount']}.")
+    elif command == 'display-yield-protocol-lend-close':
+        params = json.loads(params)
+        lines.append(f"yield protocol lend close action for token: {params['token']}, amount: {params['amount']}.")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
