@@ -620,3 +620,18 @@
       - amount
     type: object
   return_value_description: ""
+- _name_: display_yield_protocol_lend_close
+  description: use the yield protocol to close a lend position
+  parameters:
+    properties:
+      token:
+        description: the token to close
+        type: string
+      amount:
+        description: amount of token to close
+        type: string
+    required:
+      - token
+      - amount
+    type: object
+  return_value_description: ""
