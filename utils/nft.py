@@ -55,6 +55,3 @@ def dev_fetch_nfts_from_contract_by_owner(address_or_domain: str, chain_id: int)
             continue
 
     return results
-
-    
-    
