@@ -7,7 +7,7 @@ import requests
 import env
 import utils
 
-from utils import ETH_MAINNET_CHAIN_ID, nft
+from utils import ETH_MAINNET_CHAIN_ID, nft, FetchError, ExecError
 import utils.timing as timing
 from chat.container import ContainerMixin, dataclass_to_container_params
 
@@ -533,7 +533,7 @@ def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAsse
         values=values,
     )
 
-def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) ->  Generator[NFTAsset, None, None]:
+def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) -> List[NFTAsset]:
     """Currently only fetches the latest 25 NFTs as per block number."""
     # TODO: Add pagination once we have a UI component such as a Carousel to support it.
     normalized_network = None
@@ -543,9 +543,8 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
         if 'ethereum' in network.lower():
             normalized_network = "ethereum-mainnet"
         else:
-            return "Network not supported"
-    # TODO: What to do if it's a forked network?
-
+            raise ExecError("Network not supported")
+        
     timing.log('fetch_started')
 
     limit = PAGE_LIMIT
@@ -564,10 +563,8 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
         print(err)
-        return "Invalid address or domain"
+        raise FetchError("Invalid address or domain")
     
-    timing.log('fetch_done')
-
     obj = response.json()
     for item in obj['items']:
         nft_address = item['address']
