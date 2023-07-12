@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Dict, Optional, Set
+from typing import Any, Dict, Optional, Set
 
 from fastapi import FastAPI, Request, Response, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +16,7 @@ from app import share
 app = FastAPI()
 
 origins = env.env_config['server']['origins']
+cookie_name = 'session' if env.is_local() else '__Secure-session'
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,11 +27,38 @@ app.add_middleware(
 )
 app.add_middleware(
     SessionMiddleware,
+    session_cookie=cookie_name,
     secret_key=env.env_config['server']['secret_key'],
-    max_age=None,
+    max_age=30 * 24 * 60 * 60,  # 30 days, match NextAuth
     same_site='lax' if env.is_local() else 'none',
     https_only=not env.is_local(),
 )
+
+
+@app.middleware("http")
+async def handle_unset_session_cookie(request: Request, call_next: Any):
+    # This custom middleware will unset the session cookie if it is not
+    # a route associated with authentication. This will not clear an
+    # existing session cookie, but merely ensures the response does
+    # not call set-cookie for the session cookie if it is not relevant.
+    # As reported in https://github.com/encode/starlette/issues/828 and
+    # https://github.com/encode/starlette/issues/2019, Starlette will
+    # (re)set the session cookie every time to extend the session.
+    # However, when we first login, we might issue a GET request (e.g.
+    # for /api/chats) while the /login POST request is still in-flight,
+    # leading to our backend session cookie being clobbered due to
+    # the race between these 2 requests (GET request finishes later but
+    # does not have the session cookie updated with login data).
+    should_unset_cookie = request['path'] not in ('/nonce', '/login', '/logout')
+    response = await call_next(request)
+    updated_headers = []
+    if should_unset_cookie:
+        for key, value in response.raw_headers:
+            if key == b'set-cookie' and value.startswith(f'{cookie_name}='.encode()):
+                continue
+            updated_headers.append((key, value))
+        response.raw_headers = updated_headers
+    return response
 
 
 websockets: Set[WebSocket] = set()
