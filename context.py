@@ -51,7 +51,7 @@ def get_user_chat_message_id() -> Optional[str]:
     global _request_context
     return _request_context.user_chat_message_id
 
-
+# TODO: Refactor - rename function to 'get_web3'
 def get_web3_provider():
     """
     Return the appropriate web3 provider depending on Chain ID or Fork ID.

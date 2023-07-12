@@ -4,10 +4,10 @@ from typing import Any, Dict, Generator, List, Optional, Union
 from urllib.parse import urlencode
 import requests
 
+import env
 import utils
-import context
 
-from utils import ETH_MAINNET_CHAIN_ID
+from utils import ETH_MAINNET_CHAIN_ID, nft
 import utils.timing as timing
 from chat.container import ContainerMixin, dataclass_to_container_params
 
@@ -550,12 +550,12 @@ def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAsse
 def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) ->  Generator[NFTAsset, None, None]:
     """Currently only fetches the latest 25 NFTs as per block number."""
     # TODO: Add pagination once we have a UI component such as a Carousel to support it.
-    inferred_network = None
+    normalized_network = None
     if not network:
-        inferred_network = "ethereum-mainnet"
+        normalized_network = "ethereum-mainnet"
     else:
         if 'ethereum' in network.lower():
-            inferred_network = "ethereum-mainnet"
+            normalized_network = "ethereum-mainnet"
         else:
             return "Network not supported"
     # TODO: What to do if it's a forked network?
@@ -571,7 +571,7 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
         limit=limit,
         offset=offset,
     ))
-    url = f"{API_V2_URL}/{inferred_network}/{address_or_domain}/nfts-owned?{q}"
+    url = f"{API_V2_URL}/{normalized_network}/{address_or_domain}/nfts-owned?{q}"
 
     try:
         response = requests.get(url, headers=HEADERS)
@@ -586,9 +586,17 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
     for item in obj['items']:
         nft_address = item['address']
         nft_token_id = item['tokenID']
-        nft_asset = fetch_nft_asset(inferred_network, nft_address, nft_token_id) 
+        nft_asset = fetch_nft_asset(normalized_network, nft_address, nft_token_id) 
         assets.append(nft_asset)
-        
+
+    # In dev, tester's wallet would only have NFTs on the fork so fallback to fetching from contract on the fork
+    # But only fallback if the results from Center are empty to allow for normal display of assets for non-tester addresses.
+    if not env.is_prod() and len(assets) == 0:
+        dev_results_from_contract = nft.dev_fetch_nfts_from_contract_by_owner(address_or_domain, ETH_MAINNET_CHAIN_ID)
+        for r in dev_results_from_contract:
+            nft_asset = fetch_nft_asset(normalized_network, r['contract_address'], r['token_id'])
+            assets.append(nft_asset)
+
     timing.log('results_done')
 
     result = NFTAssetList(assets=assets)
