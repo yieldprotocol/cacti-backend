@@ -534,8 +534,6 @@ def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAsse
     )
 
 def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) -> List[NFTAsset]:
-    """Currently only fetches the latest 25 NFTs as per block number."""
-    # TODO: Add pagination once we have a UI component such as a Carousel to support it.
     normalized_network = None
     if not network:
         normalized_network = "ethereum-mainnet"
@@ -546,6 +544,8 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
             raise ExecError("Network not supported")
         
     timing.log('fetch_started')
+
+    # TODO: Add pagination once we have a UI component such as a Carousel to support it.
 
     limit = PAGE_LIMIT
     offset = 0

@@ -527,7 +527,7 @@ def fetch_nfts_owned_by_user(network: str = None) -> str:
         if chain_id == ETH_MAINNET_CHAIN_ID:
             parsed_network = "ethereum-mainnet"
         else:
-            return "Unsupported network"
+            raise ExecError("Unsupported network")
     else:
         parsed_network = network
     return str(center.fetch_nfts_owned_by_address_or_domain(parsed_network, wallet_address))
