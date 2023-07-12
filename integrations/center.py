@@ -180,20 +180,6 @@ class NFTAssetList(ContainerMixin):
             assets=[asset.struct() for asset in self.assets],
         )
 
-@dataclass
-class NFTCollectionAssets(ContainerMixin):
-    collection: NFTCollection
-    assets: List[NFTAsset]
-
-    def container_name(self) -> str:
-        return 'display-nft-collection-assets-container'
-
-    def container_params(self) -> Dict:
-        return dict(
-            collection=self.collection.struct(),
-            assets=[asset.struct() for asset in self.assets],
-        )
-
 def fetch_nft_search(search_str: str) -> Generator[Union[NFTCollection, NFTAsset], None, None]:
     q = urlencode(dict(
         query=search_str,
