@@ -578,7 +578,7 @@
   parameters:
     properties:
       network:
-        description: Network to fetch NFTs on. Use an empty string if the input parameter value is unknown.
+        description: Network to fetch NFTs on. Use an empty string if the input parameter value is unknown but do not ask user to input empty string.
         type: string
       addressOrDomain:
         description: Wallet address or ENS domain
@@ -593,7 +593,7 @@
   parameters:
     properties:
       network:
-        description: Network to fetch NFTs on. Use an empty string if the input parameter value is unknown.
+        description: Network to fetch NFTs on. Use an empty string if the input parameter value is unknown but do not ask user to input empty string.
         type: string
     required:
       - network
