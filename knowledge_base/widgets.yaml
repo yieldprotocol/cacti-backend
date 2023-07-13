@@ -573,3 +573,30 @@
     - amount
     type: object
   return_value_description: ''
+- _name_: fetch_nfts_owned_by_address_or_domain
+  description: Used to fetch NFTs owned by a wallet address or ENS domain on a particular network
+  parameters:
+    properties:
+      network:
+        description: Network to fetch NFTs on. Use an empty string if the input parameter value is unknown but do not ask user to input empty string.
+        type: string
+      addressOrDomain:
+        description: Wallet address or ENS domain
+        type: string
+    required:
+      - network
+      - addressOrDomain
+    type: object
+  return_value_description: List of NFT Assets
+- _name_: fetch_nfts_owned_by_user
+  description: Used to fetch NFTs owned by the current user
+  parameters:
+    properties:
+      network:
+        description: Network to fetch NFTs on. Use an empty string if the input parameter value is unknown but do not ask user to input empty string.
+        type: string
+    required:
+      - network
+    type: object
+  return_value_description: List of NFT Assets
+  
