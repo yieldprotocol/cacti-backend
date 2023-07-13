@@ -658,3 +658,14 @@
       - collateralAmount
     type: object
   return_value_description: ""
+- _name_: display_yield_protocol_borrow_close
+  description: use the yield protocol to close a vault (borrow position) made up of debt and collateral
+  parameters:
+    properties:
+      borrowToken:
+        description: the token that was borrowed
+        type: string
+    required:
+      - borrowToken
+    type: object
+  return_value_description: ""
