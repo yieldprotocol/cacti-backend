@@ -107,8 +107,17 @@ async def api_chats(request: Request) -> Dict:
     return share.get_visible_chats(request)
 
 
-@app.websocket("/chat")
+@app.websocket("/chat/")
 async def websocket_chat(websocket: WebSocket):
+    await _websocket_chat(websocket, chat_session_id=None)
+
+
+@app.websocket("/chat/{chat_session_id}")
+async def websocket_chat_session_id(websocket: WebSocket, chat_session_id: str):
+    await _websocket_chat(websocket, chat_session_id=chat_session_id)
+
+
+async def _websocket_chat(websocket: WebSocket, chat_session_id: Optional[str] = None):
     await websocket.accept()
 
     websockets.add(websocket)
