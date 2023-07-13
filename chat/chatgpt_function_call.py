@@ -31,7 +31,7 @@ from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operat
 from tools.index_widget import *
 
 SYSTEM_MESSAGE_FOR_EVAL = "You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."
-SYSTEM_MESSAGE_DEFAULT = "You are an agent that is trained to execute functions based on a user request. Ask the user if any of the input parameter value is unknown."
+SYSTEM_MESSAGE_DEFAULT = "You are an agent that is trained to execute functions based on a user request. If you found a suitable function but not all the input parameters are known, ask for them."
 
 @registry.register_class
 class ChatGPTFunctionCallChat(BaseChat):
