@@ -257,7 +257,13 @@ def message_received(client_state, send_response, message):
 
     # first message received - first create a new session history instance
     if history is None:
+        # generate uuid, commit to database immediately so user's chat list can fetch this
         session_id = uuid.uuid4()
+        chat_session = ChatSession(id=session_id, user_id=client_state.user_id)
+        db_session.add(chat_session)
+        db_session.commit()
+
+        # set up session history instance
         history = chat.ChatHistory.new(session_id)
         assert client_state.chat_history is None
         client_state.chat_history = history
@@ -278,10 +284,7 @@ def message_received(client_state, send_response, message):
     history.wallet_address = client_state.wallet_address
 
     chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
-    if not chat_session:
-        chat_session = ChatSession(id=history.session_id, user_id=client_state.user_id)
-        db_session.add(chat_session)
-        db_session.flush()
+    assert chat_session is not None, 'expected to already have session in db at this point'
 
     if not _ensure_can_edit_chat_session(history.session_id, client_state, send_response):
         return
