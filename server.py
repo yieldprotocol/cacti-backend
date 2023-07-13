@@ -200,8 +200,12 @@ def message_received(client_state, send_response, message):
     system_config_id = client_state.system_config_id or default_system_config_id
     system = _get_system(system_config_id)
 
+    if typ == 'clear':
+        client_state.chat_history = None
+        return
+
     # resume an existing chat history session, given a session id
-    if typ == 'init':
+    elif typ == 'init':
         assert history is None, f'received a session resume request for existing session {history.session_id}'
 
         session_id = uuid.UUID(payload['sessionId'])
