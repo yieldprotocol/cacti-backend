@@ -38,6 +38,10 @@ def read_widgets_from_index():
     return all_content
 
 def check_widgets_for_textual_translation(widgets, is_from_index):
+    if (is_from_index and len(widgets) == 0):
+        # If no widgets, possibly a new index version was created but not populated yet
+        return
+    
     for w in widgets:
         matches = RE_WIDGET_COMMAND.findall(w)
         widget_command = matches[0]
