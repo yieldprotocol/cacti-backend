@@ -28,7 +28,8 @@ def read_widgets_from_index():
     while True:
         results = get_batch_with_offset(weviate_get_client(), index_name, CLASS_PROPERTIES, BATCH_SIZE, offset)
 
-        if len(results["data"]["Get"][index_name]) == 0:
+        if 'Cannot query field' in results['errors'][0]['message']:
+            # Index doesn't exist as it's possibly a new index version that is yet to be created
             break
 
         for r in results["data"]["Get"][index_name]:
@@ -39,6 +40,7 @@ def read_widgets_from_index():
 
 def check_widgets_for_textual_translation(widgets, is_from_index):
     for w in widgets:
+        #print(w)
         matches = RE_WIDGET_COMMAND.findall(w)
         widget_command = matches[0]
         if 'display-' in widget_command:
