@@ -1,6 +1,6 @@
 <div align="center">
   <h1 align="center">🌵🌵🌵 Cacti 🌵🌵🌵 </h1>
-  <h2 align="center"> <b>Cacti Backend</b>b> - <a href="https://github.com/yieldprotocol/cacti-frontend">Cacti Frontend</a></h2>
+  <h2 align="center"> <b>Cacti Backend</b> - <a href="https://github.com/yieldprotocol/cacti-frontend">Cacti Frontend</a></h2>
   <p align="center">
     Natural language interactions with web3.
     <br />
@@ -15,7 +15,7 @@
 
 <br />
 
-![A screenshot of Cacti.](/public/screenshot.jpg)
+![A screenshot of Cacti.](/screenshot.jpg)
 
 ## About
 
