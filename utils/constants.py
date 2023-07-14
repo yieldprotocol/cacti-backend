@@ -22,7 +22,7 @@ ETH_MAINNET_CHAIN_ID = 1
 WIDGET_INFO_TOKEN_LIMIT = 4000
 
 # Widget Index
-WIDGET_INDEX_NAME = "WidgetV12"
+WIDGET_INDEX_NAME = "WidgetV13"
 
 def get_widget_index_name():
     if env.is_local():
