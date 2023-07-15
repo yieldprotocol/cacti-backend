@@ -212,6 +212,16 @@ def message_received(client_state, send_response, message):
         resume_from_message_id = payload.get('resumeFromMessageId')
         before_message_id = payload.get('insertBeforeMessageId')
 
+        # send a message to clear frontend message list
+        msg = json.dumps({
+            'messageId': '',
+            'actor': 'system',
+            'type': 'clear',
+            'payload': '',
+            'feedback': 'n/a',
+        })
+        send_response(msg)
+
         if not _ensure_can_view_chat_session(session_id, client_state, send_response):
             return
 
