@@ -39,7 +39,7 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
 
 
 def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
-    command = command.lower().replace('display-', '')
+    command = command.replace('display-', '')
     lines = []
     if command == 'transfer':
         items = params.split(",")
