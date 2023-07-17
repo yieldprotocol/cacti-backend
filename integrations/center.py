@@ -4,7 +4,10 @@ from typing import Any, Dict, Generator, List, Optional, Union
 from urllib.parse import urlencode
 import requests
 
+import env
 import utils
+
+from utils import ETH_MAINNET_CHAIN_ID, nft, FetchError, ExecError
 import utils.timing as timing
 from chat.container import ContainerMixin, dataclass_to_container_params
 
@@ -19,7 +22,10 @@ NETWORKS = [
     "ethereum-mainnet",
     #"polygon-mainnet",
 ]
+
 API_URL = "https://api.center.dev/v1"
+API_V2_URL = "https://api.center.dev/v2"
+
 MAX_RESULTS = 12
 PAGE_LIMIT = 12
 
@@ -162,6 +168,17 @@ class NFTCollectionAssets(ContainerMixin):
         )
         return dataclass_to_container_params(self)
 
+@dataclass
+class NFTAssetList(ContainerMixin):
+    assets: List[NFTAsset]
+
+    def container_name(self) -> str:
+        return 'display-nft-asset-list-container'
+
+    def container_params(self) -> Dict:
+        return dict(
+            assets=[asset.struct() for asset in self.assets],
+        )
 
 def fetch_nft_search(search_str: str) -> Generator[Union[NFTCollection, NFTAsset], None, None]:
     q = urlencode(dict(
@@ -515,3 +532,55 @@ def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAsse
         asset=asset,
         values=values,
     )
+
+def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) -> List[NFTAsset]:
+    normalized_network = None
+    if not network:
+        normalized_network = "ethereum-mainnet"
+    else:
+        if 'ethereum' in network.lower():
+            normalized_network = "ethereum-mainnet"
+        else:
+            raise ExecError("Network not supported")
+        
+    timing.log('fetch_started')
+
+    # TODO: Add pagination once we have a UI component such as a Carousel to support it.
+
+    limit = PAGE_LIMIT
+    offset = 0
+    sortBy = '-blockNumber'
+    assets = []
+    q = urlencode(dict(
+        sortBy=sortBy,
+        limit=limit,
+        offset=offset,
+    ))
+    url = f"{API_V2_URL}/{normalized_network}/{address_or_domain}/nfts-owned?{q}"
+
+    try:
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        print(err)
+        raise FetchError("Invalid address or domain")
+    
+    obj = response.json()
+    for item in obj['items']:
+        nft_address = item['address']
+        nft_token_id = item['tokenID']
+        nft_asset = fetch_nft_asset(normalized_network, nft_address, nft_token_id) 
+        assets.append(nft_asset)
+
+    # In dev, tester's wallet would only have NFTs on the fork so fallback to fetching from contract on the fork
+    # But only fallback if the results from Center are empty to allow for normal display of assets for non-tester addresses.
+    if not env.is_prod() and len(assets) == 0:
+        dev_results_from_contract = nft.dev_fetch_nfts_from_contract_by_owner(address_or_domain, ETH_MAINNET_CHAIN_ID)
+        for r in dev_results_from_contract:
+            nft_asset = fetch_nft_asset(normalized_network, r['contract_address'], r['token_id'])
+            assets.append(nft_asset)
+
+    timing.log('results_done')
+
+    result = NFTAssetList(assets=assets)
+    return result
