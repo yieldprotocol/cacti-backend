@@ -31,7 +31,7 @@ from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operat
 from tools.index_widget import *
 
 SYSTEM_MESSAGE_FOR_EVAL = "You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."
-SYSTEM_MESSAGE_DEFAULT = "You are an agent that is trained to execute functions based on a user request. Ask the user if any of the input parameter value is unknown."
+SYSTEM_MESSAGE_DEFAULT = "You are an agent that is trained to execute functions based on a user request. If you found a suitable function but not all the input parameters are known, ask for them."
 
 @registry.register_class
 class ChatGPTFunctionCallChat(BaseChat):
@@ -171,7 +171,11 @@ class ChatGPTFunctionCallChat(BaseChat):
                 function_call = ai_message.additional_kwargs['function_call']
                 if function_call['name'].startswith('functions.'):
                     function_call['name'] = function_call['name'][len('functions.'):]
-                function_message_id = send(Response(response=json.dumps(function_call), actor='function'), before_message_id=before_message_id)
+                function_message_id = send(Response(
+                    response=json.dumps(function_call),
+                    still_thinking=True,
+                    actor='function',
+                ), before_message_id=before_message_id)
                 bot_chat_message_id = None
                 command = '-'.join(function_call['name'].split('_'))
                 params = ','.join(json.loads(function_call['arguments']).values())

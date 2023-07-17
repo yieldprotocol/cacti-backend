@@ -128,15 +128,15 @@ def _ensure_authenticated(client_state, send_response):
 
 def _ensure_can_view_chat_session(session_id, client_state, send_response):
     """Returns true if we are allowed to view the chat session."""
+    # user_id here could be None if logged out
     user_id = client_state.user_id
-    assert user_id, 'expecting user id to be known here'
 
     chat_session = ChatSession.query.filter(ChatSession.id == session_id).one_or_none()
     if not chat_session:
         # non-existent session, treat as if no permissions
         pass
 
-    elif str(chat_session.user_id) == str(user_id) or chat_session.privacy_type == PrivacyType.public:
+    elif user_id is not None and str(chat_session.user_id) == str(user_id) or chat_session.privacy_type == PrivacyType.public:
         # allow to view your own sessions, or those shared publicly
         # TODO: add case where session is shared with specific user ids / wallet addresses
         return True
@@ -183,9 +183,6 @@ def _ensure_can_edit_chat_session(session_id, client_state, send_response):
 
 @db_utils.close_db_session()
 def message_received(client_state, send_response, message):
-    if not _ensure_authenticated(client_state, send_response):
-        return
-
     obj = json.loads(message)
     assert isinstance(obj, dict), obj
     actor = obj['actor']
@@ -203,13 +200,27 @@ def message_received(client_state, send_response, message):
     system_config_id = client_state.system_config_id or default_system_config_id
     system = _get_system(system_config_id)
 
+    if typ == 'clear':
+        client_state.chat_history = None
+        return
+
     # resume an existing chat history session, given a session id
-    if typ == 'init':
+    elif typ == 'init':
         assert history is None, f'received a session resume request for existing session {history.session_id}'
 
         session_id = uuid.UUID(payload['sessionId'])
         resume_from_message_id = payload.get('resumeFromMessageId')
         before_message_id = payload.get('insertBeforeMessageId')
+
+        # send a message to clear frontend message list
+        msg = json.dumps({
+            'messageId': '',
+            'actor': 'system',
+            'type': 'clear',
+            'payload': '',
+            'feedback': 'n/a',
+        })
+        send_response(msg)
 
         if not _ensure_can_view_chat_session(session_id, client_state, send_response):
             return
@@ -250,9 +261,19 @@ def message_received(client_state, send_response, message):
             send_response(msg)
         return
 
+    # Only allow chatting if authenticated
+    if not _ensure_authenticated(client_state, send_response):
+        return
+
     # first message received - first create a new session history instance
     if history is None:
+        # generate uuid, commit to database immediately so user's chat list can fetch this
         session_id = uuid.uuid4()
+        chat_session = ChatSession(id=session_id, user_id=client_state.user_id)
+        db_session.add(chat_session)
+        db_session.commit()
+
+        # set up session history instance
         history = chat.ChatHistory.new(session_id)
         assert client_state.chat_history is None
         client_state.chat_history = history
@@ -273,10 +294,7 @@ def message_received(client_state, send_response, message):
     history.wallet_address = client_state.wallet_address
 
     chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
-    if not chat_session:
-        chat_session = ChatSession(id=history.session_id, user_id=client_state.user_id)
-        db_session.add(chat_session)
-        db_session.flush()
+    assert chat_session is not None, 'expected to already have session in db at this point'
 
     if not _ensure_can_edit_chat_session(history.session_id, client_state, send_response):
         return

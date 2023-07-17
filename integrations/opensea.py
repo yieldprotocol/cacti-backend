@@ -152,7 +152,7 @@ def fetch_asset_listing_prices_with_retries(address: str, token_id: str) -> Opti
 
     return retry_on_exceptions_with_backoff(
         _get_listing_prices,
-        [ErrorToRetry(requests.exceptions.HTTPError)],
+        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
     )
 
 
@@ -169,5 +169,12 @@ def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, str]:
 
     return retry_on_exceptions_with_backoff(
         _get_listing_prices,
-        [ErrorToRetry(requests.exceptions.HTTPError)],
+        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
     )
+
+
+def _should_retry_exception(exception):
+    if exception.response.status_code in (400, 401, 402, 403, 404, 405, 406):
+        # forbidden, unauthorized, invalid requests
+        return False
+    return True
