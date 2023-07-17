@@ -593,3 +593,23 @@
     required:
     - amount
     type: object
+- _name_: deposit_eth_reth
+  description: This widget is only used when the user wants to deposit ETH into the rocket pool to get rETH
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to deposit into the rETH.
+        type: string
+    required:
+    - amount
+    type: object
+- _name_: withdraw_eth_reth
+  description: This widget is only used when the user wants to withdraw ETH from rETH
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to withdraw from the rETH.
+        type: string
+    required:
+    - amount
+    type: object
