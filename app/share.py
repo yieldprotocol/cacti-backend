@@ -27,6 +27,9 @@ def get_settings(request: Request, chat_session_id: str) -> Dict:
     elif chat_session.privacy_type == PrivacyType.private:
         ret['visibility'] = 'private'
 
+    if chat_session.name:
+        ret['name'] = chat_session.name
+
     # data about whether you have permissions to edit
     can_edit = user_id is not None and str(chat_session.user_id) == user_id
     ret['canEdit'] = can_edit
@@ -53,8 +56,10 @@ def update_settings(request: Request, chat_session_id: str, data: auth.AcceptJSO
         chat_session.privacy_type = PrivacyType.public
     elif visibility == "private":
         chat_session.privacy_type = PrivacyType.private
-    else:
-        return False
+
+    name = data.get("name")
+    if name:
+        chat_session.name = name
 
     db_session.add(chat_session)
     db_session.commit()
@@ -116,6 +121,7 @@ def get_visible_chats(request: Request) -> Dict:
         sessions.append(dict(
             id=chat_session.id,
             created=chat_session.created,
+            name=chat_session.name,
         ))
     return dict(
         sessions=sessions,
