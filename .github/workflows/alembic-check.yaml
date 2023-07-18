@@ -1,12 +1,10 @@
-# This workflow will check if we are missing any Alembic migrations.
+# This workflow will apply Alembic migrations and check if we are missing any.
 # If it fails, check out alembic/README.md for how to generate a migration.
 
 name: Alembic migration check
 
 on:
   push:
-    branches: [ master, dev ]
-  pull_request:
     branches: [ master, dev ]
 
 jobs:
@@ -47,4 +45,5 @@ jobs:
     - name: Run check
       run: |
         cd backend
+        ./db_schema_sync.sh
         alembic check
