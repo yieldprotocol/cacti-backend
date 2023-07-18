@@ -11,13 +11,25 @@ Note that the `ENV_TAG` variable is used to identify which database's schema to 
 
 Alternatively, you can manually craft a migration file. Alembic has limitations around auto-generation, especially around sqlalchemy_utils functionality, which may require deep customization (e.g. see `render_item` in `env.py`).
 
+## Test migrations locally
 
-## Run migration to update schema
+Update `env/local.yaml` to run the database container. Make sure you change the dev database url to point localhost. Then start running it with `docker-compose up`.
 
-Update the database schema with
+Bring your local schema up-to-date with `ENV_TAG=local ./db_schema_sync.sh`, and test your new schema changes.
+
+## Create PR with your proposed changes
+
+Once the PR is approved, you may merge the PR into dev. Merging will trigger a GitHub Actions workflow that will apply the
+migration to the dev database. (Likewise, when merged with master, the prod database will be updated).
+
+## Manual migration
+
+In general, you should not need to run these manually, as they are handled by GitHub Actions when `dev` and `master` branches are updated. But if necessary, here are the steps:
+
+For dev:
 `ENV_TAG=dev ./db_schema_sync.sh`
 
-This will run all migrations from the database's current Alembic version up until the most recent one. If things are working as intended after the schema change, bring the prod instance up to parity:
+For prod:
 `ENV_TAG=prod ./db_schema_sync.sh`
 
 

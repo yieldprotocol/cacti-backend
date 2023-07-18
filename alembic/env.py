@@ -7,6 +7,7 @@ import sqlalchemy_utils
 
 from alembic import context
 
+import env
 import utils.storage
 
 # this is the Alembic Config object, which provides
@@ -33,6 +34,9 @@ target_metadata = database.models.Base.metadata
 # set database based on environment
 def _set_db_url():
     db_url = utils.storage.CHATDB_URL
+    if env.is_local():
+        # this is to avoid accidentally updating dev when the local config uses the dev db
+        assert 'localhost' in db_url or '127.0.0.1' in db_url, f'expecting localhost in db_url when using ENV_TAG=local with alembic, check env/local.yaml'
     config.set_main_option('sqlalchemy.url', db_url)
 
 _set_db_url()
