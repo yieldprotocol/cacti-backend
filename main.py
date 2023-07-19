@@ -97,14 +97,34 @@ async def api_share_settings_update(request: Request, chat_session_id: str, data
     return share.update_settings(request, chat_session_id, data)
 
 
-@app.post("/api/clone_session/{chat_session_id}")
-async def api_clone_session(request: Request, chat_session_id: str, data: auth.AcceptJSON) -> Optional[str]:
-    return share.clone_session(request, chat_session_id, data)
+@app.post("/api/create_share/{chat_session_id}")
+async def api_create_share(request: Request, chat_session_id: str, data: auth.AcceptJSON) -> Optional[str]:
+    return share.create_share(request, chat_session_id, data)
+
+
+@app.post("/api/import_share/{shared_session_id}")
+async def api_import_share(request: Request, shared_session_id: str, data: auth.AcceptJSON) -> Optional[str]:
+    return share.import_share(request, shared_session_id, data)
+
+
+@app.get("/api/view_share/{shared_session_id}")
+async def api_view_share(request: Request, shared_session_id: str) -> Dict:
+    return share.view_share(request, shared_session_id)
+
+
+@app.put("/api/update_share/{shared_session_id}")
+async def api_update_share(request: Request, shared_session_id: str, data: auth.AcceptJSON) -> bool:
+    return share.update_share(request, shared_session_id, data)
 
 
 @app.get("/api/chats")
 async def api_chats(request: Request) -> Dict:
     return share.get_visible_chats(request)
+
+
+@app.get("/api/shares")
+async def api_shares(request: Request) -> Dict:
+    return share.get_visible_shares(request)
 
 
 @app.websocket("/chat")

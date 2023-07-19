@@ -84,6 +84,8 @@ class ChatSession(Base, Timestamp):  # type: ignore
     user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=True)
     name = Column(String, nullable=True)
 
+    source_shared_session_id = Column(UUID(as_uuid=True), nullable=True)
+
     Index('chat_session_user', user_id)
 
 
@@ -104,8 +106,44 @@ class ChatMessage(Base, Timestamp):  # type: ignore
 
     system_config_id = Column(Integer, ForeignKey('system_config.id'), nullable=False)
 
+    source_shared_message_id = Column(UUID(as_uuid=True), nullable=True)
+
 
 Index('chat_message_by_sequence_number', ChatMessage.chat_session_id, ChatMessage.sequence_number, ChatMessage.created)
+
+
+class SharedSession(Base, Timestamp):  # type: ignore
+    __tablename__ = 'shared_session'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=True)
+    name = Column(String, nullable=True)
+
+    source_chat_session_id = Column(UUID(as_uuid=True), ForeignKey('chat_session.id'), nullable=False)
+
+    Index('shared_session_user', user_id)
+
+
+class SharedMessage(Base, Timestamp):  # type: ignore
+    __tablename__ = 'shared_message'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    actor = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    payload = Column(String, nullable=False)
+    sequence_number = Column(Integer, nullable=False, default=0)
+
+    shared_session_id = Column(UUID(as_uuid=True), ForeignKey('shared_session.id'), nullable=False)
+    shared_session = relationship(
+        SharedSession,
+        backref=backref('shared_messages',
+                        uselist=True,
+                        cascade='delete,all'))
+
+    system_config_id = Column(Integer, ForeignKey('system_config.id'), nullable=False)
+
+    source_chat_message_id = Column(UUID(as_uuid=True), ForeignKey('chat_message.id'), nullable=False)
+
+
+Index('shared_message_by_sequence_number', SharedMessage.shared_session_id, SharedMessage.sequence_number, SharedMessage.created)
 
 
 class ChatMessageFeedback(Base, Timestamp):  # type: ignore
