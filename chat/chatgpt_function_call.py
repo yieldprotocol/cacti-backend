@@ -55,7 +55,8 @@ class ChatGPTFunctionCallChat(BaseChat):
         userinput = userinput.strip()
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
 
-        history_messages = history.to_openai_messages(system_message=self.system_message, system_prefix=None, token_limit=self.token_limit)  # omit system messages
+        history_messages = history.to_openai_messages(system_message=self.system_message, system_prefix=None, token_limit=self.token_limit, before_message_id=before_message_id)  # omit system messages
+
         timing.init()
 
         bot_chat_message_id = None
