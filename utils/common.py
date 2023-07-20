@@ -100,7 +100,9 @@ def widgets_yaml2formats(file_path):
 
 
 yaml_file_path = f"{os.getcwd()}/knowledge_base/widgets.yaml"
+eval_yaml_file_path = f"{os.getcwd()}/knowledge_base/eval_widgets.yaml"
 WIDGETS, FUNCTIONS = widgets_yaml2formats(yaml_file_path)
+EVAL_WIDGETS, _ = widgets_yaml2formats(eval_yaml_file_path)
 
 
 def set_api_key():
