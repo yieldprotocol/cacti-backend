@@ -22,7 +22,7 @@ from chat.base import ChatHistory, ChatMessage
 import chat
 import config
 import utils.timing as timing
-from utils.common import EVAL_WIDGETS
+from utils.common import WIDGETS, filter_widgets
 from tools.index_widget import (
     StreamingListContainer,
     _get_result_list_prefix,
@@ -55,6 +55,9 @@ Example :
                     ("swap1.5", "<|display-uniswap(1.5,ETH,USDC)|>", "swap of 1.5 ETH with USDC done")]"""
 
 RE_COMMAND_EVAL = re.compile(r'\[\(\"(.*)\"\)\]', re.DOTALL)
+
+with open('finetune/eval_widgets.txt', 'r') as f: widget_names = [line.strip() for line in f.readlines()]
+EVAL_WIDGETS = filter_widgets(widget_names, WIDGETS)
 
 
 def get_nft_flow() -> Iterable[Message]:
@@ -475,15 +478,15 @@ def get_validation_conversations(variation: ValidationVariation = ValidationVari
 
 def get_auto_validation_conversations(widgets : List, user_agent : ChatOpenAI) -> Iterable[Conversation]:
     random.shuffle(widgets)
-    for i in range(args.num_widgets, len(widgets), args.num_widgets):
-        widgets_ = widgets[i - args.num_widgets: i] 
+    for i in range(0, len(widgets), args.num_widgets):
+        widgets_ = widgets[i: i + args.num_widgets]
         conversation_list = list(get_auto_flow('---\n'.join(widgets_), user_agent))
         if len(conversation_list)>0: yield Conversation(messages=conversation_list)
 
 
 def get_validation_conversations_from_file(test_df: pd.DataFrame) -> Iterable[Conversation]:
-    for i in range(args.num_widgets, len(test_df), args.num_widgets):
-        conversation_list = list(get_flow_from_file(test_df[i - args.num_widgets: i]))
+    for i in range(0, len(test_df), args.num_widgets):
+        conversation_list = list(get_flow_from_file(test_df[i: i + args.num_widgets]))
         yield Conversation(messages=conversation_list)
 
 
@@ -554,7 +557,7 @@ def _strip_quotes(output):
     return output.replace('"', '').replace("'", "")
 
 
-def run(args):
+def run(chat_configs, args):
     summary = collections.Counter()
     for ci, chat_config in enumerate(chat_configs):
         chat = config.initialize(chat_config)
@@ -624,5 +627,5 @@ if __name__ == "__main__":
                         default=5,
                         help='for autoeval - # of widgets to choose from')
     args = parser.parse_args()
-
-    run(args)
+    
+    run(chat_configs, args)

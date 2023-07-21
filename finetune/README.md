@@ -25,7 +25,7 @@ To run the hardcoded evaluation, use the following command:
 This method employs an AI agent (GPT-4) to frame the input-output pairs for evaluating the Cacti chat system. From creating the test samples to performing the valuation, this pipeline is fully automated.
 
 ### Specifying Widget Commands
-If you prefer to conduct the evaluation on a specific set of widget commands, pls specify them in the `knowledge_base/eval_widgets.yaml` file. 
+If you prefer to conduct the evaluation on a specific set of widget commands, pls specify them in the `finetune/eval_widgets.txt` file. 
 
 ### Running Automated Evaluation
 Run the automated evaluation using the following command:

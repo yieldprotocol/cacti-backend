@@ -99,10 +99,17 @@ def widgets_yaml2formats(file_path):
     return widgets_yaml2doc(widgets_lst), widgets_yaml2functions(widgets_lst)
 
 
+def filter_widgets(widget_names, WIDGETS):
+    filtered_widgets = []
+    for widget_doc in WIDGETS.split('---\n'):
+        widget_name = widget_doc.split('(')[0].split('<|')[1].replace('-', '_').strip()
+        if widget_name in widget_names:
+            filtered_widgets.append(widget_doc)
+    return '---\n'.join(filtered_widgets)
+
+
 yaml_file_path = f"{os.getcwd()}/knowledge_base/widgets.yaml"
-eval_yaml_file_path = f"{os.getcwd()}/knowledge_base/eval_widgets.yaml"
 WIDGETS, FUNCTIONS = widgets_yaml2formats(yaml_file_path)
-EVAL_WIDGETS, _ = widgets_yaml2formats(eval_yaml_file_path)
 
 
 def set_api_key():
