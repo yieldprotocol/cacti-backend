@@ -110,6 +110,8 @@ def fetch_all_listings(slug: str) -> List[NFTListing]:
     limit = PAGE_LIMIT
     next_cursor = None
     ret = []
+    # Arbitary limit based on hueristics related to observed number of NFTs listed for blue-chip collections. 
+    MAX_RESULTS = 300
     while len(ret) < MAX_RESULTS:
         q = urlencode(dict(
             limit=limit,
@@ -165,7 +167,7 @@ def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, str]:
         for listing in listings:
             if listing.token_id not in ret or ret[listing.token_id].price_value > listing.price_value:
                 ret[listing.token_id] = listing
-        return {token_id: listing.price_str for token_id, listing in ret.items()}
+        return {token_id: dict(price_str=listing.price_str, price_value=listing.price_value) for token_id, listing in ret.items()}
 
     return retry_on_exceptions_with_backoff(
         _get_listing_prices,

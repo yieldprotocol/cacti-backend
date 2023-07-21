@@ -360,8 +360,9 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timin
     collection = fetch_nft_collection(network, address)
     if collection.network == "ethereum-mainnet":
         token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
-        token_ids = list(token_prices.keys())
-        token_ids.sort(key=lambda token_id: int(token_id))
+        token_price_list = [{**{'token_id': k}, **v} for k, v in token_prices.items()]
+        token_price_list.sort(key=lambda x: x['price_value'])
+        token_ids = [token_price_list['token_id'] for token_price_list in token_price_list]
     else:
         #assert 0, f'unsupported network: {collection.network}'
         # for now, we fall back to showing some results
@@ -387,7 +388,8 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timin
                 continue
             token_id = item['tokenId']
             if token_prices is not None:
-                price = token_prices.get(token_id, 'unlisted')
+                price_dict = token_prices.get(token_id)
+                price = price_dict['price_str'] if price_dict else 'unlisted'
             else:
                 price = None
             asset = NFTAsset(
