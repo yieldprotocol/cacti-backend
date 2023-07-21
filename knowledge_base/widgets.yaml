@@ -599,4 +599,18 @@
       - network
     type: object
   return_value_description: List of NFT Assets
-  
+- _name_: display_stake_sfrxeth
+  description: 'Exchange ETH for sfrxETH using the frxETHMinter contract'
+  parameters:
+    properties:
+      receiver:
+        description: Address to receive the sfrxETH
+        type: string
+      value:
+        description: Amount of ETH to exchange for sfrxETH
+        type: string
+    required:
+    - receiver
+    - value
+    type: object
+  return_value_description: ''
