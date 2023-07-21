@@ -110,9 +110,9 @@ def fetch_all_listings(slug: str) -> List[NFTListing]:
     limit = PAGE_LIMIT
     next_cursor = None
     ret = []
-    # Arbitary limit based on hueristics related to observed number of NFTs listed for blue-chip collections. 
-    MAX_RESULTS = 300
-    while len(ret) < MAX_RESULTS:
+    # Arbitary limit to optimize for latency, based on hueristics related to observed number of NFTs listed for blue-chip collections. 
+    max_results = 300
+    while len(ret) < max_results:
         q = urlencode(dict(
             limit=limit,
             **(dict(next=next_cursor) if next_cursor else {})

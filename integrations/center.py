@@ -360,7 +360,7 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timin
     collection = fetch_nft_collection(network, address)
     if collection.network == "ethereum-mainnet":
         token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
-        token_price_list = [{**{'token_id': k}, **v} for k, v in token_prices.items()]
+        token_price_list = [{'token_id': k, **v} for k, v in token_prices.items()]
         token_price_list.sort(key=lambda x: x['price_value'])
         token_ids = [token_price_list['token_id'] for token_price_list in token_price_list]
     else:
