@@ -389,7 +389,7 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timin
             token_id = item['tokenId']
             if token_prices is not None:
                 price_dict = token_prices.get(token_id)
-                price = price_dict['price_str'] if price_dict else 'unlisted'
+                price = price_dict['price_str']
             else:
                 price = None
             asset = NFTAsset(
