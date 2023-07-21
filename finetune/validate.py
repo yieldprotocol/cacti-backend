@@ -22,7 +22,7 @@ from chat.base import ChatHistory, ChatMessage
 import chat
 import config
 import utils.timing as timing
-from utils.common import WIDGETS, filter_widgets
+from utils.common import widget_subset
 from tools.index_widget import (
     StreamingListContainer,
     _get_result_list_prefix,
@@ -57,7 +57,7 @@ Example :
 RE_COMMAND_EVAL = re.compile(r'\[\(\"(.*)\"\)\]', re.DOTALL)
 
 with open('finetune/eval_widgets.txt', 'r') as f: widget_names = [line.strip() for line in f.readlines()]
-EVAL_WIDGETS = filter_widgets(widget_names, WIDGETS)
+EVAL_WIDGETS = widget_subset(widget_names)
 
 
 def get_nft_flow() -> Iterable[Message]:
@@ -477,9 +477,10 @@ def get_validation_conversations(variation: ValidationVariation = ValidationVari
 
 
 def get_auto_validation_conversations(widgets : List, user_agent : ChatOpenAI) -> Iterable[Conversation]:
-    random.shuffle(widgets)
-    for i in range(0, len(widgets), args.num_widgets):
-        widgets_ = widgets[i: i + args.num_widgets]
+    widgets_copy = widgets[:]
+    random.shuffle(widgets_copy)
+    for i in range(0, len(widgets_copy), args.num_widgets):
+        widgets_ = widgets_copy[i: i + args.num_widgets]
         conversation_list = list(get_auto_flow('---\n'.join(widgets_), user_agent))
         if len(conversation_list)>0: yield Conversation(messages=conversation_list)
 
@@ -502,9 +503,10 @@ def evaluate_chat(chat: chat.BaseChat, eval_type : int = 1):
         test_df = pd.read_csv(args.test_file)
         iter = get_validation_conversations_from_file(test_df)
 
-    chat_history = ChatHistory.new(uuid.UUID('da2321e5-8bcf-45e8-bb29-deee71b379cb'))
+    chat_history = None
     for conv in iter:
-        if eval_type == 1: chat_history = ChatHistory.new(uuid.UUID('da2321e5-8bcf-45e8-bb29-deee71b379cb')) # long history for eval_type 2, 3
+        if chat_history is None or eval_type == 1:
+            chat_history = ChatHistory.new(uuid.UUID('da2321e5-8bcf-45e8-bb29-deee71b379cb')) # long history for eval_type 2, 3
         for i in range(0, len(conv.messages), 2):
             user_message  = conv.messages[i]
             bot_message = conv.messages[i + 1]
