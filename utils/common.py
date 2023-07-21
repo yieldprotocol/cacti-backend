@@ -103,6 +103,15 @@ yaml_file_path = f"{os.getcwd()}/knowledge_base/widgets.yaml"
 WIDGETS, FUNCTIONS = widgets_yaml2formats(yaml_file_path)
 
 
+def widget_subset(widget_names):
+    filtered_widgets = []
+    for widget_doc in WIDGETS.split('---\n'):
+        widget_name = widget_doc.split('(')[0].split('<|')[1].replace('-', '_').strip()
+        if widget_name in widget_names:
+            filtered_widgets.append(widget_doc)
+    return '---\n'.join(filtered_widgets)
+
+
 def set_api_key():
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
     OpenAI.api_key = OPENAI_API_KEY
