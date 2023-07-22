@@ -6,7 +6,7 @@ import sqlalchemy  # type: ignore
 from sqlalchemy import (  # type: ignore
     create_engine, func,
     Column, Index, Integer, String, JSON, Boolean,
-    ForeignKey,
+    ForeignKey, DateTime,
 )
 from sqlalchemy.orm import (  # type: ignore
     scoped_session, sessionmaker, relationship,
@@ -83,10 +83,11 @@ class ChatSession(Base, Timestamp):  # type: ignore
     privacy_type = Column(ChoiceType(PrivacyType, impl=Integer()), server_default=str(int(PrivacyType.private)), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=True)
     name = Column(String, nullable=True)
+    deleted = Column(DateTime, nullable=True)
 
     source_shared_session_id = Column(UUID(as_uuid=True), nullable=True)
 
-    Index('chat_session_user', user_id)
+    Index('chat_session_user', user_id, deleted)
 
 
 class ChatMessage(Base, Timestamp):  # type: ignore
@@ -117,10 +118,11 @@ class SharedSession(Base, Timestamp):  # type: ignore
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=True)
     name = Column(String, nullable=True)
+    deleted = Column(DateTime, nullable=True)
 
     source_chat_session_id = Column(UUID(as_uuid=True), ForeignKey('chat_session.id'), nullable=False)
 
-    Index('shared_session_user', user_id)
+    Index('shared_session_user', user_id, deleted)
 
 
 class SharedMessage(Base, Timestamp):  # type: ignore
