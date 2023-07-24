@@ -1,4 +1,5 @@
 from typing import Dict, Optional
+from datetime import datetime
 import uuid
 
 from fastapi import Request
@@ -70,6 +71,29 @@ def update_settings(request: Request, chat_session_id: str, data: auth.AcceptJSO
     name = data.get("name")
     if name:
         chat_session.name = name
+
+    db_session.add(chat_session)
+    db_session.commit()
+    return True
+
+
+@db_utils.close_db_session()
+@auth.authenticate_user_id()
+def delete_chat(request: Request, chat_session_id: str, user_id: Optional[str] = None) -> bool:
+    if not user_id:
+        return False
+
+    chat_session = ChatSession.query.get(chat_session_id)
+    if not chat_session:
+        return False
+
+    if chat_session.deleted is not None:
+        return False
+
+    if str(chat_session.user_id) != user_id:
+        return False
+
+    chat_session.deleted = datetime.utcnow()
 
     db_session.add(chat_session)
     db_session.commit()

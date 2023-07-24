@@ -1,4 +1,5 @@
 from typing import Dict, Optional
+from datetime import datetime
 import uuid
 
 from fastapi import Request
@@ -112,6 +113,29 @@ def update_share(request: Request, shared_session_id: str, data: auth.AcceptJSON
     name = data.get("name")
     if name:
         shared_session.name = name
+
+    db_session.add(shared_session)
+    db_session.commit()
+    return True
+
+
+@db_utils.close_db_session()
+@auth.authenticate_user_id()
+def delete_share(request: Request, shared_session_id: str, user_id: Optional[str] = None) -> bool:
+    if not user_id:
+        return False
+
+    shared_session = SharedSession.query.get(shared_session_id)
+    if not shared_session:
+        return False
+
+    if shared_session.deleted is not None:
+        return False
+
+    if str(shared_session.user_id) != user_id:
+        return False
+
+    shared_session.deleted = datetime.utcnow()
 
     db_session.add(shared_session)
     db_session.commit()
