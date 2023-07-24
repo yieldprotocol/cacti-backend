@@ -22,7 +22,7 @@ from chat.base import ChatHistory, ChatMessage
 import chat
 import config
 import utils.timing as timing
-from utils.common import widget_subset
+from utils.common import widget_subset, get_user_info
 from tools.index_widget import (
     StreamingListContainer,
     _get_result_list_prefix,
@@ -41,6 +41,10 @@ WIDGET COMMANDS:
 {widgets}
 
 
+Below are the user's personal informations you can use as input parameters of the widget commands. 
+User Info:
+{user_info}
+
 NOTE: If you found a suitable function but not all the input parameters are known, ask for them.
 
 To produce a test sample use the following format to think step by step.
@@ -53,6 +57,7 @@ Example :
                     ("convert etherum to usd coin", "", "How much ETH do you wanna swap with USDC?"), 
                     ("balance of ETH", "<fetch-my-balance|(ETH)|>", 8)
                     ("swap1.5", "<|display-uniswap(1.5,ETH,USDC)|>", "swap of 1.5 ETH with USDC done")]"""
+SYSTEM_MESSAGE_AUTOEVAL = SYSTEM_MESSAGE_AUTOEVAL.replace("{user_info}", get_user_info(eval=True))
 
 RE_COMMAND_EVAL = re.compile(r'\[\(\"(.*)\"\)\]', re.DOTALL)
 

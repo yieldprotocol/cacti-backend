@@ -187,12 +187,20 @@ def ensure_wallet_connected(fn):
     return wrapped_fn
 
 
+@error_wrap
+def get_real_user_info(user_info):
+    user_info["Wallet Address"] = context.get_wallet_address()
+    user_info["ENS Domain"] = ns.name(user_info["Wallet Address"])
+    chain_id = context.get_wallet_chain_id()
+    if chain_id == ETH_MAINNET_CHAIN_ID:
+        user_info["Network"] = "ethereum-mainnet"
+    else:
+        raise ExecError("Unsupported network")
+    return user_info
+
 DUMMY_WALLET_ADDRESS = "0x4eD15A17A9CDF3hc7D6E829428267CaD67d95F8F"
 DUMMY_ENS_DOMAIN = "cacti1729.eth"
 DUMMY_NETWORK = "ethereum-mainnet"
-
-@error_wrap
-@ensure_wallet_connected
 def get_user_info(eval : bool = False) -> str:
     USER_INFO = ""
     user_info = {
@@ -205,12 +213,6 @@ def get_user_info(eval : bool = False) -> str:
         user_info["ENS Domain"] = DUMMY_ENS_DOMAIN
         user_info["Network"] = DUMMY_NETWORK
     else:
-        user_info["Wallet Address"] = context.get_wallet_address()
-        user_info["ENS Domain"] = ns.name(user_info["Wallet Address"])
-        chain_id = context.get_wallet_chain_id()
-        if chain_id == ETH_MAINNET_CHAIN_ID:
-            user_info["Network"] = "ethereum-mainnet"
-        else:
-            raise ExecError("Unsupported network")
+        user_info = get_real_user_info(user_info)
     for k, v in user_info.items(): USER_INFO += f"User {k} = {v}\n" 
     return USER_INFO.strip()
