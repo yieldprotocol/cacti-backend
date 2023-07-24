@@ -12,13 +12,13 @@ import auth
 
 
 @db_utils.close_db_session()
-def create_share(request: Request, data: auth.AcceptJSON) -> Optional[str]:
+@auth.authenticate_user_id()
+def create_share(request: Request, data: auth.AcceptJSON, user_id: Optional[str] = None) -> Optional[str]:
+    # Share an existing session as a new shared session
     source_session_id = data.get('chatSessionId')
     if not source_session_id:
         return None
 
-    # Share an existing session as a new shared session
-    user_id = auth.fetch_authenticated_user_id(request)
     if not user_id:
         return None
 
@@ -94,8 +94,8 @@ def view_share(request: Request, shared_session_id: str) -> Dict:
 
 
 @db_utils.close_db_session()
-def update_share(request: Request, shared_session_id: str, data: auth.AcceptJSON) -> bool:
-    user_id = auth.fetch_authenticated_user_id(request)
+@auth.authenticate_user_id()
+def update_share(request: Request, shared_session_id: str, data: auth.AcceptJSON, user_id: Optional[str] = None) -> bool:
     if not user_id:
         return False
 
@@ -119,10 +119,9 @@ def update_share(request: Request, shared_session_id: str, data: auth.AcceptJSON
 
 
 @db_utils.close_db_session()
-def list_shares(request: Request) -> Dict:
+@auth.authenticate_user_id()
+def list_shares(request: Request, user_id: Optional[str] = None) -> Dict:
     # Currently these return your shared links
-
-    user_id = auth.fetch_authenticated_user_id(request)
     if not user_id:
         return {}
 

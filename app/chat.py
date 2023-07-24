@@ -12,14 +12,14 @@ import auth
 
 
 @db_utils.close_db_session()
-def get_settings(request: Request, chat_session_id: str) -> Dict:
+@auth.authenticate_user_id()
+def get_settings(request: Request, chat_session_id: str, user_id: Optional[str] = None) -> Dict:
     # Get visibility settings for a chat session
     ret = {}
     chat_session = ChatSession.query.get(chat_session_id)
     if not chat_session:
         return ret
 
-    user_id = auth.fetch_authenticated_user_id(request)
     if not user_id and chat_session.privacy_type != PrivacyType.public:
         return ret
 
@@ -45,9 +45,9 @@ def get_settings(request: Request, chat_session_id: str) -> Dict:
 
 
 @db_utils.close_db_session()
-def update_settings(request: Request, chat_session_id: str, data: auth.AcceptJSON) -> bool:
+@auth.authenticate_user_id()
+def update_settings(request: Request, chat_session_id: str, data: auth.AcceptJSON, user_id: Optional[str] = None) -> bool:
     # for now, just support toggling privacy, if you own it
-    user_id = auth.fetch_authenticated_user_id(request)
     if not user_id:
         return False
 
@@ -77,11 +77,11 @@ def update_settings(request: Request, chat_session_id: str, data: auth.AcceptJSO
 
 
 @db_utils.close_db_session()
-def list_chats(request: Request) -> Dict:
+@auth.authenticate_user_id()
+def list_chats(request: Request, user_id: Optional[str] = None) -> Dict:
     # Currently these return the chats you own, but in future, could expand
     # to chats that are shared with you or that you recently visited
 
-    user_id = auth.fetch_authenticated_user_id(request)
     if not user_id:
         return {}
 
@@ -101,13 +101,13 @@ def list_chats(request: Request) -> Dict:
 
 
 @db_utils.close_db_session()
-def import_chat_from_share(request: Request, data: auth.AcceptJSON) -> Optional[str]:
+@auth.authenticate_user_id()
+def import_chat_from_share(request: Request, data: auth.AcceptJSON, user_id: Optional[str] = None) -> Optional[str]:
+    # Import a shared session into a new regular chat session
     shared_session_id = data.get("sharedSessionId")
     if not shared_session_id:
         return None
 
-    # Import a shared session into a new regular chat session
-    user_id = auth.fetch_authenticated_user_id(request)
     if not user_id:
         return None
 
