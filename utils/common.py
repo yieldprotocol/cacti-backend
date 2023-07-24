@@ -11,7 +11,7 @@ import functools
 import traceback
 import context
 
-from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL
+from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL, ETH_MAINNET_CHAIN_ID
 
 
 def modelname_to_contextsize(modelname: str) -> int:
@@ -185,3 +185,32 @@ def ensure_wallet_connected(fn):
             raise ConnectedWalletRequired()
         return fn(*args, **kwargs)
     return wrapped_fn
+
+
+DUMMY_WALLET_ADDRESS = "0x4eD15A17A9CDF3hc7D6E829428267CaD67d95F8F"
+DUMMY_ENS_DOMAIN = "cacti1729.eth"
+DUMMY_NETWORK = "ethereum-mainnet"
+
+@error_wrap
+@ensure_wallet_connected
+def get_user_info(eval : bool = False) -> str:
+    USER_INFO = ""
+    user_info = {
+        "Wallet Address": None,
+        "ENS Domain": None,
+        "Network": None,
+    }
+    if eval:
+        user_info["Wallet Address"] = DUMMY_WALLET_ADDRESS
+        user_info["ENS Domain"] = DUMMY_ENS_DOMAIN
+        user_info["Network"] = DUMMY_NETWORK
+    else:
+        user_info["Wallet Address"] = context.get_wallet_address()
+        user_info["ENS Domain"] = ns.name(user_info["Wallet Address"])
+        chain_id = context.get_wallet_chain_id()
+        if chain_id == ETH_MAINNET_CHAIN_ID:
+            user_info["Network"] = "ethereum-mainnet"
+        else:
+            raise ExecError("Unsupported network")
+    for k, v in user_info.items(): USER_INFO += f"User {k} = {v}\n" 
+    return USER_INFO.strip()
