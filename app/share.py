@@ -3,6 +3,7 @@ from datetime import datetime
 import uuid
 
 from fastapi import Request
+from sqlalchemy import insert
 
 from database import utils as db_utils
 from database.models import (
@@ -46,10 +47,11 @@ def create_share(request: Request, data: auth.AcceptJSON, user_id: Optional[str]
     db_session.flush()
 
     # copy over messages
+    shared_messages = []
     for source_message in ChatMessage.query.filter(
             ChatMessage.chat_session_id == source_session_id
     ).order_by(ChatMessage.sequence_number, ChatMessage.created).all():
-        shared_message = SharedMessage(
+        shared_message = dict(
             actor=source_message.actor,
             type=source_message.type,
             payload=source_message.payload,
@@ -58,8 +60,8 @@ def create_share(request: Request, data: auth.AcceptJSON, user_id: Optional[str]
             system_config_id=source_message.system_config_id,
             source_chat_message_id=source_message.id,
         )
-        db_session.add(shared_message)
-        db_session.flush()
+        shared_messages.append(shared_message)
+    db_session.execute(insert(SharedMessage), shared_messages)
     db_session.commit()
 
     return str(shared_session_id)
