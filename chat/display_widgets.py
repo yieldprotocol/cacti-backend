@@ -39,7 +39,7 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
 
 
 def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
-    command = command.lower().replace('display-', '')
+    command = command.replace('display-', '')
     lines = []
     if command == 'transfer':
         items = params.split(",")
@@ -144,6 +144,9 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     elif command == 'arbitrum-withdraw-eth':
         params = json.load(params)
         lines.append(f"Arbitrum bridge withdraw action for ETH amount: {params['amount']}.")
+    elif command == 'stake-sfrxeth':
+        params = json.load(params)
+        lines.append(f"sfrxETH deposit action for address: {params['receiver']}, amount: {params['value']}.")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")

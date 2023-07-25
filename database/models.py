@@ -82,6 +82,7 @@ class ChatSession(Base, Timestamp):  # type: ignore
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     privacy_type = Column(ChoiceType(PrivacyType, impl=Integer()), server_default=str(int(PrivacyType.private)), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=True)
+    name = Column(String, nullable=True)
 
     Index('chat_session_user', user_id)
 
