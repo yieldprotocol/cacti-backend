@@ -25,7 +25,10 @@ class Yield(ContainerMixin):
 def fetch_tvl(protocol) -> str:
     url = f"https://api.llama.fi/tvl/{protocol}"
     response = requests.get(url)
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError:
+        return "No TVL data available for this protocol"
     obj = response.json()
     return obj
 
