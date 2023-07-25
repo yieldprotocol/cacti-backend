@@ -624,4 +624,4 @@
     required:
     - protocol
     type: object
-  return_value_description: ''
+  return_value_description: The TVl of the protocol

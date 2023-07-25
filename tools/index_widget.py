@@ -243,6 +243,8 @@ def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
+    elif command == 'fetch-tvl':
+        return str(fetch_tvl(*params))
     elif command == 'fetch-app-info':
         return fetch_app_info(*params)
     elif command == 'fetch-scraped-sites':
