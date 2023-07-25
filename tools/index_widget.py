@@ -537,6 +537,9 @@ def fetch_nft_buy(network: str, address: str, token_id: str) -> str:
     ret = opensea.fetch_nft_buy(network, address, token_id)
     return ret
 
+@error_wrap
+def fetch_tvl(protocol: str) -> str:
+    return defillama.fetch_tvl(protocol)
 
 @error_wrap
 def fetch_yields(token, network, count) -> str:

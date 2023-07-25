@@ -22,6 +22,13 @@ class Yield(ContainerMixin):
     def container_params(self) -> Dict:
         return dataclass_to_container_params(self)
 
+def fetch_tvl(protocol) -> str:
+    url = f"{DEFILLAMA_API_URL}/tvl/{protocol}"
+    response = requests.get(url)
+    response.raise_for_status()
+    obj = response.json()
+    tvl = obj["data"]
+    return tvl
 
 def fetch_yields(token, network, count) -> List[Yield]:
     # Convert the inferred canonical chain name to what DefiLlama uses for result filtering
