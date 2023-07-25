@@ -33,7 +33,7 @@ from tools.index_widget import *
 SYSTEM_MESSAGE_DEFAULT = \
 """You are an agent that is trained to execute functions based on a user request. If you found a suitable function but not all the input parameters are known, ask for them.
 
-Below are the user personal informations, which you can use as input parameters of the functions. 
+Here is the user personal information, which you can use as input parameters of the functions. 
 # USER INFO:
 {user_info}"""
 
