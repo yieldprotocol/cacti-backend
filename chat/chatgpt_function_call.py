@@ -31,11 +31,11 @@ from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operat
 from tools.index_widget import *
 
 SYSTEM_MESSAGE_DEFAULT = \
-"""You are an agent that is trained to execute functions based on a user request. Below are the user's personal informations you can use as input parameters of the functions. 
-User Info:
-{user_info}
+"""You are an agent that is trained to execute functions based on a user request. If you found a suitable function but not all the input parameters are known, ask for them.
 
-If you found a suitable function but not all the input parameters are known, ask for them."""
+Below are the user personal informations, which you can use as input parameters of the functions. 
+# USER INFO:
+{user_info}"""
 
 @registry.register_class
 class ChatGPTFunctionCallChat(BaseChat):

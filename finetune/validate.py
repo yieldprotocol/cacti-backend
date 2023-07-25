@@ -41,8 +41,8 @@ WIDGET COMMANDS:
 {widgets}
 
 
-Below are the user's personal informations you can use as input parameters of the widget commands. 
-User Info:
+Below are the user personal informations, which you can use as input parameters of the widget commands. 
+# USER INFO:
 {user_info}
 
 NOTE: If you found a suitable function but not all the input parameters are known, ask for them.

@@ -11,7 +11,7 @@ import functools
 import traceback
 import context
 
-from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL, ETH_MAINNET_CHAIN_ID
+from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL, CHAIN_ID_TO_NETWORK_NAME
 
 
 def modelname_to_contextsize(modelname: str) -> int:
@@ -192,10 +192,7 @@ def get_real_user_info(user_info):
     user_info["Wallet Address"] = context.get_wallet_address()
     user_info["ENS Domain"] = ns.name(user_info["Wallet Address"])
     chain_id = context.get_wallet_chain_id()
-    if chain_id == ETH_MAINNET_CHAIN_ID:
-        user_info["Network"] = "ethereum-mainnet"
-    else:
-        raise ExecError("Unsupported network")
+    if chain_id in CHAIN_ID_TO_NETWORK_NAME.keys(): user_info["Network"] = CHAIN_ID_TO_NETWORK_NAME[chain_id]
     return user_info
 
 DUMMY_WALLET_ADDRESS = "0x4eD15A17A9CDF3hc7D6E829428267CaD67d95F8F"
