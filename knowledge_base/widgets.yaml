@@ -482,6 +482,28 @@
     - amount
     type: object
   return_value_description: ''
+- _name_: display_arbitrum_deposit_eth
+  description: Used to bridge and deposit eth from mainnet L1 to arbitrum L2.
+  parameters:
+    properties:
+      amount:
+        description: quantity to deposit
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_arbitrum_withdraw_eth
+  description: Used to withdraw eth from arbitrum L2 to mainnet L1
+  parameters:
+    properties:
+      amount:
+        description: quantity to deposit
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
 - _name_: fetch_my_balance
   description: Get the balance of a token in the user's connected wallet
   parameters:
