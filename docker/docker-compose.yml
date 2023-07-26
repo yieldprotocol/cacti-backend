@@ -10,10 +10,10 @@ services:
     ports:
       - 5433:5432
     volumes:
-    - /mnt/data/chat-db:/var/lib/postgresql/data
+    - cacti_pg_data:/var/lib/postgresql/data
   weaviate:
     volumes:
-    - /mnt/data/weaviate:/var/lib/weaviate
+    - cacti_weaviate_data:/var/lib/weaviate
     command:
     - --host
     - 0.0.0.0
@@ -32,4 +32,7 @@ services:
       DEFAULT_VECTORIZER_MODULE: 'text2vec-openai'
       ENABLE_MODULES: 'text2vec-openai'
       CLUSTER_HOSTNAME: 'node1'
-...
+      
+volumes:
+  cacti_pg_data:
+  cacti_weaviate_data:

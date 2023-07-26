@@ -1,33 +1,21 @@
 # Local environment
 
 chatdb:
-  # if you are not doing any db schema changes, using the dev db is ok
-  host: 34.139.225.26
+  host: 127.0.0.1
   port: 5432
-  # if you are making big changes (schema, refactors, etc), run postgres
-  # locally in docker (see docker/docker-compose.yml) and update the
-  # env config to use the local postgres instead
-  #host: 127.0.0.1
-  #port: 5433
   user: chatdb
   password: lVIu2U0lBctiYBScboAJ
-
-# GCP SQL instance: scrapedb
 scrapedb:
-  host: 34.23.168.19
-  port: 5432
-  user: chatdb
-  password: lVIu2U0lBctiYBScboAJ
+  host: 
+  port: 
+  user: 
+  password:
 
-# GCP VM: weaviate-dev
 weaviate:
   protocol: http
-  host: 35.211.169.16
+  host: 127.0.0.1
   port: 8080
-  user: chatweb3
-  password: q0jficzXOA69T5FWgAeT
 
-# FastAPI server
 server:
   host: localhost:3000
   origins:

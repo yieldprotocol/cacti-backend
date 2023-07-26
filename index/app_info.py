@@ -27,8 +27,10 @@ def delete_schema() -> None:
 
 def create_schema(delete_first: bool = False) -> None:
     client = get_client()
-    if delete_first:
-        delete_schema()
+    
+    # TODO: if schema exists delete
+    delete_schema()
+    
     client.schema.get()
     schema = {
         "classes": [
@@ -82,7 +84,7 @@ def create_schema(delete_first: bool = False) -> None:
 def backfill():
     # TODO: right now we don't have stable document IDs unlike sites.
     # Always drop and recreate first.
-    create_schema(delete_first=True)
+    create_schema(delete_first=False)
 
     from langchain.vectorstores import Weaviate
     with open('./knowledge_base/app_info.txt') as f:
