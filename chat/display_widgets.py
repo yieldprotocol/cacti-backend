@@ -143,7 +143,7 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         lines.append(f"Arbitrum bridge deposit action for ETH amount: {params['amount']}.")
     elif command == 'arbitrum-withdraw-eth':
         params = json.load(params)
-        lines.append(f"Arbitrum bridge withdraw action for ETH amount: {params['amount']}.")
+        lines.append(f"Arbitrum bridge withdraw action for address: {params['destination']}, amount: {params['value']}.")    
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
