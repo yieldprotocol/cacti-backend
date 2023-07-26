@@ -8,7 +8,7 @@ import sqlalchemy_utils
 
 from alembic import context
 
-import utils.storage
+import utils
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -33,7 +33,7 @@ target_metadata = database.models.Base.metadata
 
 # set database based on environment
 def _set_db_url():
-    db_url = utils.storage.CHATDB_URL
+    db_url = utils.CHATDB_URL
     config.set_main_option('sqlalchemy.url', db_url)
 
 _set_db_url()

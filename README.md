@@ -6,6 +6,7 @@ with them.
 
 To run the backend locally:
 ```
+# TODO change to .env and get credentials for the different services
 cp env/local.example.yaml env/local.yaml
 python3 -m venv ../venv
 source ../venv/bin/activate

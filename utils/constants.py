@@ -2,6 +2,18 @@ import os
 import env
 import getpass
 
+### Server ###
+SERVER_HOST=os.environ['SERVER_HOST']
+SERVER_ORIGINS=os.environ['SERVER_ORIGINS']
+SERVER_SECRET_KEY=os.environ['SERVER_SECRET_KEY']
+
+### Storage ###
+WEAVIATE_URL = os.environ['WEAVIATE_URL']
+CHATDB_URL = os.environ['CHATDB_URL']
+# Scrape DB is optional
+SCRAPEDB_URL = os.environ.get('SCRAPEDB_URL', None)
+
+
 HUGGINGFACE_API_KEY = "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"
 HUGGINGFACE_INFERENCE_ENDPOINT = "https://xczbh8zf5amwxdlc.us-east-1.aws.endpoints.huggingface.cloud" # may vary
 OPENAI_API_KEY = "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"
