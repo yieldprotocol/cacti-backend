@@ -11,7 +11,8 @@ import functools
 import traceback
 import context
 
-from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL
+from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL, CHAIN_ID_TO_NETWORK_NAME
+from .evaluation import get_dummy_user_info
 
 
 def modelname_to_contextsize(modelname: str) -> int:
@@ -185,3 +186,29 @@ def ensure_wallet_connected(fn):
             raise ConnectedWalletRequired()
         return fn(*args, **kwargs)
     return wrapped_fn
+
+
+@error_wrap
+def get_real_user_info(user_info: dict) -> dict:
+    user_info["Wallet Address"] = context.get_wallet_address()
+    user_info["ENS Domain"] = ns.name(user_info["Wallet Address"])
+    chain_id = context.get_wallet_chain_id()
+    if chain_id in CHAIN_ID_TO_NETWORK_NAME: user_info["Network"] = CHAIN_ID_TO_NETWORK_NAME[chain_id]
+    return user_info
+
+DUMMY_WALLET_ADDRESS = "0x4eD15A17A9CDF3hc7D6E829428267CaD67d95F8F"
+DUMMY_ENS_DOMAIN = "cacti1729.eth"
+DUMMY_NETWORK = "ethereum-mainnet"
+def get_user_info(eval : bool = False) -> str:
+    USER_INFO = ""
+    user_info = {
+        "Wallet Address": None,
+        "ENS Domain": None,
+        "Network": None,
+    }
+    if eval:
+        user_info = get_dummy_user_info(user_info)
+    else:
+        user_info = get_real_user_info(user_info)
+    for k, v in user_info.items(): USER_INFO += f"User {k} = {v}\n" 
+    return USER_INFO.strip()

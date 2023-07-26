@@ -18,11 +18,13 @@ TEST_TENDERLY_FORK_ID = os.getenv('TEST_TENDERLY_FORK_ID', "")
 
 ETH_MAINNET_CHAIN_ID = 1
 
+CHAIN_ID_TO_NETWORK_NAME = {ETH_MAINNET_CHAIN_ID: "ethereum-mainnet"}
+
 # max num tokens for widgets info in model's input
 WIDGET_INFO_TOKEN_LIMIT = 4000
 
 # Widget Index
-WIDGET_INDEX_NAME = "WidgetV13"
+WIDGET_INDEX_NAME = "WidgetV14"
 
 def get_widget_index_name():
     if env.is_local():
