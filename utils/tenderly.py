@@ -1,8 +1,8 @@
 import requests
 
-from utils import TENDERLY_API_KEY
+from utils import TENDERLY_API_KEY, TENDERLY_PROJECT_API_BASE_URL
 
-TENDERLY_PROJECT_URL = "https://api.tenderly.co/api/v1/account/Yield/project/chatweb3/fork"
+TENDERLY_PROJECT_URL = f"{TENDERLY_PROJECT_API_BASE_URL}/fork"
 
 def create_fork():
     if not TENDERLY_API_KEY:

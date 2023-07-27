@@ -1,7 +1,7 @@
 from web3 import Web3
 import env
 
-from .constants import TENDERLY_FORK_BASE_URL, TENDERLY_FORK_URL, DEFAULT_MAINNET_FORK_ID
+from .constants import TENDERLY_FORK_BASE_URL, TENDERLY_FORK_URL, TENDERLY_DEFAULT_MAINNET_FORK_ID
 
 CHAIN_ID_TO_PROD_RPC_URL = {
     1: "https://mainnet.infura.io/v3/YOUR_INFURA_API_KEY_GOES_HERE"  # TODO: this is for mainnet to be updated when we go live
@@ -12,7 +12,7 @@ CHAIN_ID_TO_TEST_RPC_URL = {
 }
 
 CHAIN_ID_TO_TEST_DEFAULT_FORK_ID = {
-    1: DEFAULT_MAINNET_FORK_ID
+    1: TENDERLY_DEFAULT_MAINNET_FORK_ID
 }
 
 def get_web3_from_chain_id(chain_id: str) -> Web3:
