@@ -3,7 +3,7 @@ This documentation provides information on how to evaluate the Cacti chat system
 
 \
 **Note**: 
-- Before starting the evaluation, you must provide the system *chat config* you want to evaluate. Pls specify your desired chat config [here](https://github.com/yieldprotocol/cacti-backend/blob/a495d32d1263d0950d8c3271f21b6768bf546c5a/finetune/validate.py#L605).
+- Before starting the evaluation, you must provide the system *chat config* you want to evaluate. Pls specify your desired chat config [here](https://github.com/yieldprotocol/cacti-backend/blob/dev/eval/validate.py#L605).
 - As the eval gets completed the input-output pairs with the chat prediction will be saved in a CSV file. 
 
 \
@@ -13,7 +13,7 @@ There are 3 techniques used for evaluation:
 This technique uses hardcoded input-output pairs covering all existing widget commands the system supports.
 
 ### Adding New Widget Commands
-If you wish to evaluate new widget commands added to the chat knowledge base, you'll need to hardcode the test samples (input-output pairs) as demonstrated in this [flow](https://github.com/yieldprotocol/cacti-backend/blob/a495d32d1263d0950d8c3271f21b6768bf546c5a/finetune/validate.py#L213).
+If you wish to evaluate new widget commands added to the chat knowledge base, you'll need to hardcode the test samples (input-output pairs) as demonstrated in this [flow](https://github.com/yieldprotocol/cacti-backend/blob/dev/eval/validate.py#L213).
 
 ### Running Hardcoded Evaluation
 To run the hardcoded evaluation, use the following command:
