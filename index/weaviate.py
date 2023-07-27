@@ -11,10 +11,12 @@ import registry
 # set an arbitrary uuid for namespace, for consistent uuids for objects
 NAMESPACE_UUID = uuid.UUID('64265e01-0339-4063-8aa3-bcd562b55aea')
 
+auth_config = weaviate.AuthApiKey(api_key=utils.WEAVIATE_API_KEY)
 
 def get_client() -> weaviate.Client:
     client = weaviate.Client(
         url=utils.WEAVIATE_URL,
+        auth_client_secret=auth_config,
         additional_headers={"X-OpenAI-Api-Key": utils.OPENAI_API_KEY},
     )
     return client

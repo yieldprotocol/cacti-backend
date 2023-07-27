@@ -11,7 +11,10 @@ SERVER_SECRET_KEY=os.environ['SERVER_SECRET_KEY']
 ### Storage ###
 
 WEAVIATE_URL = os.environ['WEAVIATE_URL']
+WEAVIATE_API_KEY = os.environ['WEAVIATE_API_KEY']
+
 CHATDB_URL = os.environ['CHATDB_URL']
+
 # Scrape DB is optional
 SCRAPEDB_URL = os.environ.get('SCRAPEDB_URL', None)
 
