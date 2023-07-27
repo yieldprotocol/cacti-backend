@@ -19,6 +19,14 @@ KEY_TO_PREFIX = {
     FOLLOW_UPS_KEY: 'Suggested follow ups: ',
 }
 
+def check_if_schema_exists() -> bool:
+    client = get_client()
+    schema = client.schema.get()
+    classes = schema['classes']
+    existing_index_names = [c['class'] for c in classes]
+    
+    return INDEX_NAME in existing_index_names
+
 
 def delete_schema() -> None:
     client = get_client()
@@ -27,9 +35,8 @@ def delete_schema() -> None:
 
 def create_schema(delete_first: bool = False) -> None:
     client = get_client()
-    
-    # TODO: if schema exists delete
-    delete_schema()
+    if delete_first:
+        delete_schema()
     
     client.schema.get()
     schema = {
@@ -84,7 +91,12 @@ def create_schema(delete_first: bool = False) -> None:
 def backfill():
     # TODO: right now we don't have stable document IDs unlike sites.
     # Always drop and recreate first.
-    create_schema(delete_first=False)
+    if check_if_schema_exists():
+        print("Existing schema found, dropping and recreating...")
+        create_schema(delete_first=True)
+    else:
+        print("No existing schema found, creating new schema...")
+        create_schema()
 
     from langchain.vectorstores import Weaviate
     with open('./knowledge_base/app_info.txt') as f:
