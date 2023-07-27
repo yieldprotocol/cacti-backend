@@ -23,17 +23,18 @@ import chat
 import config
 import utils.timing as timing
 from utils.common import widget_subset, get_user_info
+from utils.evaluation import (
+    Conversation, Message,
+    stream_to_str,
+    handle_empty_params,
+)
 from tools.index_widget import (
     StreamingListContainer,
     _get_result_list_prefix,
     WIDGET_START,
     WIDGET_END,
 )
-from .generate import (
-    Conversation, Message, StreamingListContainer,
-    stream_to_str,
-    handle_empty_params,
-)
+
 
 SYSTEM_MESSAGE_AUTOEVAL = """You have to imitate a human tester who tests a chatbot designed specifically to answer web3 related queries. Based on the input query, the bot invokes one of the widget commands defined by the bot developer.
 
@@ -61,7 +62,7 @@ SYSTEM_MESSAGE_AUTOEVAL = SYSTEM_MESSAGE_AUTOEVAL.replace("{user_info}", get_use
 
 RE_COMMAND_EVAL = re.compile(r'\[\(\"(.*)\"\)\]', re.DOTALL)
 
-with open('finetune/eval_widgets.txt', 'r') as f: widget_names = [line.strip() for line in f.readlines()]
+with open('eval/eval_widgets.txt', 'r') as f: widget_names = [line.strip() for line in f.readlines()]
 EVAL_WIDGETS = widget_subset(widget_names)
 
 
