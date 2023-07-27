@@ -3,7 +3,8 @@ from datetime import datetime
 import uuid
 
 from fastapi import Request
-from sqlalchemy import insert
+from sqlalchemy import insert, func
+from sqlalchemy.orm import aliased
 
 from database import utils as db_utils
 from database.models import (
@@ -36,8 +37,22 @@ def get_settings(request: Request, chat_session_id: str, user_id: Optional[str] 
     elif chat_session.privacy_type == PrivacyType.private:
         ret['visibility'] = 'private'
 
+    name = None
     if chat_session.name:
-        ret['name'] = chat_session.name
+        name = chat_session.name
+    else:
+        # get first user message payload
+        chat_message = ChatMessage.query.filter(
+            ChatMessage.chat_session_id == chat_session.id,
+            ChatMessage.actor == 'user'
+        ).order_by(
+            ChatMessage.sequence_number
+        ).first()
+        if chat_message:
+            name = chat_message.payload
+
+    if name:
+        ret['name'] = name
 
     # data about whether you have permissions to edit
     can_edit = user_id is not None and str(chat_session.user_id) == user_id
@@ -111,14 +126,36 @@ def list_chats(request: Request, user_id: Optional[str] = None) -> Dict:
         return {}
 
     # Return dictionary of list of sessions
+    # Also fetch the first message if it exists, to use in place of a null name
+    ChatMessageAlias = aliased(ChatMessage)
+    subquery = db_session.query(
+        ChatMessage.chat_session_id, func.min(ChatMessage.sequence_number).label("min_sequence_number")
+    ).filter(
+        ChatMessage.actor == 'user'
+    ).group_by(
+        ChatMessage.chat_session_id
+    ).subquery()
+    query = db_session.query(
+        ChatSession.id, ChatSession.created, ChatSession.name, ChatMessageAlias.payload
+    ).filter(
+        ChatSession.user_id == user_id, ChatSession.deleted == None
+    ).outerjoin(
+        subquery,
+        ChatSession.id == subquery.c.chat_session_id
+    ).outerjoin(
+        ChatMessageAlias,
+        (ChatMessageAlias.chat_session_id == subquery.c.chat_session_id) &
+        (ChatMessageAlias.sequence_number == subquery.c.min_sequence_number)
+    ).order_by(
+        ChatSession.created.desc()
+    )
+
     sessions = []
-    for chat_session in ChatSession.query.filter(
-            ChatSession.user_id == user_id, ChatSession.deleted == None
-    ).order_by(ChatSession.created.desc()).all():
+    for result in query.all():
         sessions.append(dict(
-            id=chat_session.id,
-            created=chat_session.created,
-            name=chat_session.name,
+            id=result.id,
+            created=result.created,
+            name=result.name or result.payload,
         ))
     return dict(
         sessions=sessions,
