@@ -31,10 +31,11 @@ services:
       DEFAULT_VECTORIZER_MODULE: 'text2vec-openai'
       ENABLE_MODULES: 'text2vec-openai'
       CLUSTER_HOSTNAME: 'node1'
+
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'false'
       AUTHENTICATION_APIKEY_ENABLED: 'true'
-      AUTHENTICATION_APIKEY_ALLOWED_KEYS: 'example-secret-key-123'
       AUTHENTICATION_APIKEY_USERS: 'cacti-app'
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: 'example-secret-key-123'
       
 volumes:
   cacti_pg_data:
