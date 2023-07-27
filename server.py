@@ -273,7 +273,11 @@ def message_received(client_state, send_response, message):
     if history is None:
         # generate uuid, commit to database immediately so user's chat list can fetch this
         session_id = uuid.uuid4()
-        chat_session = ChatSession(id=session_id, user_id=client_state.user_id)
+        chat_session = ChatSession(
+            id=session_id,
+            user_id=client_state.user_id,
+            name=payload,
+        )
         db_session.add(chat_session)
         db_session.commit()
 
