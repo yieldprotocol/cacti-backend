@@ -4,31 +4,19 @@ To develop locally, you need to run the frontend and backend, because
 the dev and production deployments do not allow local URLs to interact
 with them.
 
-To run the backend locally:
-```
-# TODO change to .env and get credentials for the different services
-cp env/local.example.yaml env/local.yaml
-python3 -m venv ../venv
-source ../venv/bin/activate
-pip install -r requirements.txt
-
-# TODO: add run docker compose for postgres db and weaviate vector db
-
-python -m scripts.check_update_widget_index
-
-ENV_TAG=local ./start.sh
-```
-
-This connects to the dev database by default. If you are planning to make
-database changes, consider running a local instance of the postgres database,
-and modifying env/local.yaml to connect to that database instead. Same if
-you are modifying weaviate schema.
-```
-cd docker
-docker-compose up
-# ensure schema is created/up-to-date
-ENV_TAG=local ./db_schema_sync.sh
-```
+## To run the backend locally:
+* Install [Docker](https://docs.docker.com/engine/install/)
+* Install Python 3.10 or higher
+* Run the docker containers - `docker compose -f ./docker/docker-compose.yml up -d`
+* Copy env file - `cp ./env/.env.example ./env/.env`
+* Set your own credentials for the services defined in the `./env/.env` file
+* Setup Python virtualenv - `python3 -m venv ../venv`
+* Activate virtualenv - `source ../venv/bin/activate`
+* Install dependencies - `pip install -r requirements.txt`
+* Populate vector index with widgets - `ENV_TAG=local; python -m scripts.check_update_widget_index`
+* Populate vector index with app info - `ENV_TAG=local; python -c "from index import app_info; app_info.backfill()"`
+* Run DB migrations - `ENV_TAG=local; ./db_schema_sync.sh`
+* Run server - `ENV_TAG=local; ./start.sh`
 
 ## Steps to add new widget command
 - Update `widgets.yaml` with the widget command details
