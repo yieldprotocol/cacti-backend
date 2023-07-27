@@ -12,13 +12,14 @@
         description: Symbol of the token being transferred.
         type: string
     required:
-    - token
-    - amount
-    - address
+      - token
+      - amount
+      - address
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: fetch_nft_buy_asset
-  description: Buy an NFT asset of a collection on the OpenSea marketplace, given
+  description:
+    Buy an NFT asset of a collection on the OpenSea marketplace, given
     its network, address, and token ID. Don't use this if we don't have the collection
     network and address and token ID of the asset we want to purchase.
   parameters:
@@ -33,30 +34,33 @@
         description: Token ID of the asset.
         type: string
     required:
-    - network
-    - address
-    - tokenID
+      - network
+      - address
+      - tokenID
     type: object
   return_value_description: a transaction dialog for purchase of the NFT
 - _name_: fetch_nft_search
-  description: Search for NFT collections given a query phrase, a description, or
+  description:
+    Search for NFT collections given a query phrase, a description, or
     a name
   parameters:
     properties:
       query:
-        description: String of keywords to describe the kind of NFT collections to
+        description:
+          String of keywords to describe the kind of NFT collections to
           find.
         type: string
     required:
-    - query
+      - query
     type: object
   return_value_description: a list of text describing NFT collections that were found
 - _name_: fetch_nft_collection_assets_by_trait
-  description: 'List assets with a particular trait name and value from a specific
-    NFT collection given its network and address. Don''t use this if we don''t have
+  description:
+    "List assets with a particular trait name and value from a specific
+    NFT collection given its network and address. Don't use this if we don't have
     the collection network and address.
 
-    Required parameters:'
+    Required parameters:"
   parameters:
     properties:
       address:
@@ -72,15 +76,17 @@
         description: Value of trait.
         type: string
     required:
-    - network
-    - address
-    - traitName
-    - traitValue
+      - network
+      - address
+      - traitName
+      - traitValue
     type: object
-  return_value_description: a list of text describing NFT assets that match the trait
+  return_value_description:
+    a list of text describing NFT assets that match the trait
     value
 - _name_: fetch_nft_collection_assets_for_sale_by_trait
-  description: List assets available for purchase with a particular trait name and
+  description:
+    List assets available for purchase with a particular trait name and
     value from a specific NFT collection given its network and address. Don't use
     this if we don't have the collection network and address.
   parameters:
@@ -98,15 +104,17 @@
         description: Value of trait.
         type: string
     required:
-    - network
-    - address
-    - traitName
-    - traitValue
+      - network
+      - address
+      - traitName
+      - traitValue
     type: object
-  return_value_description: a list of text describing NFT assets for sale/available
+  return_value_description:
+    a list of text describing NFT assets for sale/available
     for purchase that match the trait value
 - _name_: fetch_nft_collection_info
-  description: Retrieve data and assets of an NFT collection given its network and
+  description:
+    Retrieve data and assets of an NFT collection given its network and
     address.
   parameters:
     properties:
@@ -117,12 +125,13 @@
         description: network of the NFT collection.
         type: string
     required:
-    - network
-    - address
+      - network
+      - address
     type: object
   return_value_description: text with data and some assets of the NFT collection
 - _name_: fetch_nft_collection_assets_for_sale
-  description: Retrieve assets available for purchase of an NFT collection given its
+  description:
+    Retrieve assets available for purchase of an NFT collection given its
     network and address.
   parameters:
     properties:
@@ -133,10 +142,11 @@
         description: network of the NFT collection.
         type: string
     required:
-    - network
-    - address
+      - network
+      - address
     type: object
-  return_value_description: text with assets of the NFT collection that are for sale/available
+  return_value_description:
+    text with assets of the NFT collection that are for sale/available
     for purchase
 - _name_: fetch_nft_collection_traits
   description: Retrieve traits of an NFT collection given its network and address.
@@ -149,12 +159,13 @@
         description: Network of the NFT collection.
         type: string
     required:
-    - network
-    - address
+      - network
+      - address
     type: object
   return_value_description: a list of text describing traits of the NFT collection
 - _name_: fetch_nft_collection_trait_values
-  description: Retrieve trait values of a trait of an NFT collection given its network
+  description:
+    Retrieve trait values of a trait of an NFT collection given its network
     and address.
   parameters:
     properties:
@@ -168,14 +179,16 @@
         description: Name of trait to fetch values of.
         type: string
     required:
-    - network
-    - address
-    - traitName
+      - network
+      - address
+      - traitName
     type: object
-  return_value_description: a list of text describing values of the trait of the NFT
+  return_value_description:
+    a list of text describing values of the trait of the NFT
     collection
 - _name_: fetch_nft_asset_traits
-  description: Retrieve data and traits of an NFT asset in a collection given its
+  description:
+    Retrieve data and traits of an NFT asset in a collection given its
     network, address, and token ID.
   parameters:
     properties:
@@ -189,14 +202,16 @@
         description: Token ID of the asset.
         type: string
     required:
-    - network
-    - address
-    - tokenID
+      - network
+      - address
+      - tokenID
     type: object
-  return_value_description: text with data and list of trait names and values of the
+  return_value_description:
+    text with data and list of trait names and values of the
     NFT asset
 - _name_: fetch_yields
-  description: Get the yields for crypto assets. The user may not specify all parameters
+  description:
+    Get the yields for crypto assets. The user may not specify all parameters
     so do not guess any parameter.
   parameters:
     properties:
@@ -204,23 +219,26 @@
         description: Number of yield sources. Use '*' when parameter not available.
         type: string
       network:
-        description: Blockchain to get the yield for. Normalize the network name to
+        description:
+          Blockchain to get the yield for. Normalize the network name to
           its popular representation in the ecosystem. Use '*' when parameter not
           available or the user wants all networks.
         type: string
       token:
-        description: Token to get the yield for. Normalize the token name to its popular
+        description:
+          Token to get the yield for. Normalize the token name to its popular
           symbol representation in the ecoystem. Use '*' when parameter not available
           or the user wants all tokens.
         type: string
     required:
-    - token
-    - network
-    - count
+      - token
+      - network
+      - count
     type: object
   return_value_description: JSON object with yield information
 - _name_: fetch_price
-  description: Get the price of a token. Note, when the quoteToken isn't explicitly
+  description:
+    Get the price of a token. Note, when the quoteToken isn't explicitly
     specified assume it to be USD
   parameters:
     properties:
@@ -231,8 +249,8 @@
         description: Token to use as units for price.
         type: string
     required:
-    - basetoken
-    - quotetoken
+      - basetoken
+      - quotetoken
     type: object
   return_value_description: price of a base token in units of a quote token.
 - _name_: ens_from_address
@@ -243,7 +261,7 @@
         description: Address of the account or wallet.
         type: string
     required:
-    - address
+      - address
     type: object
   return_value_description: a humanreadable string with ENS domain
 - _name_: address_from_ens
@@ -254,7 +272,7 @@
         description: Domain name of the account or wallet.
         type: string
     required:
-    - domain
+      - domain
     type: object
   return_value_description: a humanreadable string with wallet address
 - _name_: register_ens_domain
@@ -265,11 +283,12 @@
         description: Domain name to register.
         type: string
     required:
-    - domain
+      - domain
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: set_ens_text
-  description: Set the text record for an ENS domain that ends with *.eth in a key
+  description:
+    Set the text record for an ENS domain that ends with *.eth in a key
     value pair format.
   parameters:
     properties:
@@ -283,11 +302,11 @@
         description: Value of the text record.
         type: string
     required:
-    - domain
-    - key
-    - value
+      - domain
+      - key
+      - value
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: set_ens_primary_name
   description: Set a primary ENS name for their connected wallet account.
   parameters:
@@ -296,11 +315,12 @@
         description: Domain name to use as primary ENS name.
         type: string
     required:
-    - domain
+      - domain
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: set_ens_avatar_nft
-  description: Set an nft as their ENS domain's avatar. Do not guess any parameter,
+  description:
+    Set an nft as their ENS domain's avatar. Do not guess any parameter,
     if any parameter is missing, set the default value as 'None'.
   parameters:
     properties:
@@ -314,11 +334,11 @@
         description: Token ID of the NFT.
         type: string
     required:
-    - domain
-    - nftContractAddress
-    - nftId
+      - domain
+      - nftContractAddress
+      - nftId
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: aave_supply
   description: Deposit or supply tokens into Aave project
   parameters:
@@ -330,10 +350,10 @@
         description: Token to supply.
         type: string
     required:
-    - token
-    - amount
+      - token
+      - amount
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: aave_borrow
   description: Borrow tokens from Aave project
   parameters:
@@ -345,10 +365,10 @@
         description: Token to borrow.
         type: string
     required:
-    - token
-    - amount
+      - token
+      - amount
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: aave_repay
   description: Repay back borrowed tokens from Aave project
   parameters:
@@ -360,10 +380,10 @@
         description: Token to repay.
         type: string
     required:
-    - token
-    - amount
+      - token
+      - amount
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: aave_withdraw
   description: Withdraw deposited tokens from Aave project
   parameters:
@@ -375,12 +395,13 @@
         description: Token to withdraw.
         type: string
     required:
-    - token
-    - amount
+      - token
+      - amount
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: fetch_balance
-  description: Get the balance of a token in an account or wallet. Don't use this
+  description:
+    Get the balance of a token in an account or wallet. Don't use this
     if we don't have the address.
   parameters:
     properties:
@@ -391,13 +412,15 @@
         description: Token to get the balance of.
         type: string
     required:
-    - token
-    - address
+      - token
+      - address
     type: object
-  return_value_description: balance of a token in an account or wallet, in decimal
+  return_value_description:
+    balance of a token in an account or wallet, in decimal
     units
 - _name_: display_yield_farm
-  description: Used for the Compound project to allow the user to yield farm by putting
+  description:
+    Used for the Compound project to allow the user to yield farm by putting
     tokens or depositing tokens of a certain amount into the Compound project.
   parameters:
     properties:
@@ -405,7 +428,8 @@
         description: Amount of token to deposit in the project.
         type: string
       network:
-        description: Network or blockchain of the project. Default to Ethereum if
+        description:
+          Network or blockchain of the project. Default to Ethereum if
           not specified.
         type: string
       project:
@@ -415,14 +439,15 @@
         description: Token to deposit in the project.
         type: string
     required:
-    - project
-    - network
-    - token
-    - amount
+      - project
+      - network
+      - token
+      - amount
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: fetch_app_info
-  description: Used when we need to handle common questions and answers about the
+  description:
+    Used when we need to handle common questions and answers about the
     chat assistant app, what it can do, how to interact with it, at a high-level.
     Only useful for questions about the chat app experience. It does not know specific
     information about the web3 ecosystem, of tokens or NFTs or contracts, or access
@@ -430,26 +455,30 @@
   parameters:
     properties:
       query:
-        description: a standalone query with all relevant contextual details pertaining
+        description:
+          a standalone query with all relevant contextual details pertaining
           to the chat web application.
         type: string
     required:
-    - query
+      - query
     type: object
-  return_value_description: an answer to the question, with suggested followup questions
+  return_value_description:
+    an answer to the question, with suggested followup questions
     if available
 - _name_: fetch_scraped_sites
-  description: Answer questions using general content scraped from web3 sites. It
+  description:
+    Answer questions using general content scraped from web3 sites. It
     does not know about this app or about widget magic commands for invoking transactions
     or fetching data about specific things like NFTs or balances.
   parameters:
     properties:
       query:
-        description: a standalone question representing information to be retrieved
+        description:
+          a standalone question representing information to be retrieved
           from the index.
         type: string
     required:
-    - query
+      - query
     type: object
   return_value_description: a summarized answer with source citations
 - _name_: display_zksync_deposit
@@ -463,10 +492,10 @@
         description: token to deposit
         type: string
     required:
-    - token
-    - amount
+      - token
+      - amount
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: display_zksync_withdraw
   description: Used to withdraw tokens from zksync L2 to mainnet L1
   parameters:
@@ -478,36 +507,10 @@
         description: token to deposit
         type: string
     required:
-    - token
-    - amount
+      - token
+      - amount
     type: object
-  return_value_description: ''
-- _name_: display_arbitrum_deposit_eth
-  description: Used to bridge and deposit ETH from mainnet L1 to arbitrum L2.
-  parameters:
-    properties:
-      value:
-        description: quantity to deposit
-        type: string
-    required:
-    - value
-    type: object
-  return_value_description: ''
-- _name_: display_arbitrum_withdraw_eth
-  description: Used to withdraw ETH from arbitrum L2 to mainnet L1
-  parameters:
-    properties:
-      destination:
-        description: Destination address on L1 for withdrawn ETH
-        type: string
-      value:
-        description: quantity to withdraw
-        type: string
-    required:
-    - destination
-    - value
-    type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: fetch_my_balance
   description: Get the balance of a token in the user's connected wallet
   parameters:
@@ -516,7 +519,7 @@
         description: Token to get the balance of.
         type: string
     required:
-    - token
+      - token
     type: object
   return_value_description: balance of a token in connected wallet, in decimal units
 - _name_: fetch_transactions
@@ -530,8 +533,8 @@
         description: How many latest transactions the user wants to get.
         type: string
     required:
-    - address
-    - last_n
+      - address
+      - last_n
     type: object
   return_value_description: the transaction details
 - _name_: fetch_gas
@@ -542,7 +545,7 @@
         description: Address of the account or wallet to check the gas of.
         type: string
     required:
-    - address
+      - address
     type: object
   return_value_description: the gas amount used
 - _name_: fetch_eth_in
@@ -553,7 +556,7 @@
         description: Address of the account or wallet to check the inflow ETH.
         type: string
     required:
-    - address
+      - address
     type: object
   return_value_description: the inflow ETH amount
 - _name_: fetch_eth_out
@@ -564,11 +567,12 @@
         description: Address of the account or wallet to check the outflow ETH.
         type: string
     required:
-    - address
+      - address
     type: object
   return_value_description: the outflow ETH amount
 - _name_: display_uniswap
-  description: 'use the Uniswap decentralized application for trading one token for
+  description:
+    'use the Uniswap decentralized application for trading one token for
     another. To create a Uniswap transaction, you need either:
 
     1.) A token to sell, a token to buy, the transaction keyword "SELLAMOUNT", and
@@ -579,7 +583,8 @@
   parameters:
     properties:
       amount:
-        description: Amount of token described by transaction keyword that we are
+        description:
+          Amount of token described by transaction keyword that we are
           trying to buy or sell.
         type: string
       tokenToBuy:
@@ -589,16 +594,17 @@
         description: Token to sell in the swap transaction.
         type: string
       transactionKeyword:
-        description: Either SELLAMOUNT if amount refers to token to sell or BUYAMOUNT
+        description:
+          Either SELLAMOUNT if amount refers to token to sell or BUYAMOUNT
           if amount refers to token to buy.
         type: string
     required:
-    - tokenToSell
-    - tokenToBuy
-    - transactionKeyword
-    - amount
+      - tokenToSell
+      - tokenToBuy
+      - transactionKeyword
+      - amount
     type: object
-  return_value_description: ''
+  return_value_description: ""
 - _name_: fetch_nfts_owned_by_address_or_domain
   description: Used to fetch NFTs owned by a wallet address or ENS domain on a particular network
   parameters:
@@ -626,7 +632,7 @@
     type: object
   return_value_description: List of NFT Assets
 - _name_: display_stake_sfrxeth
-  description: 'Exchange ETH for sfrxETH using the frxETHMinter contract'
+  description: "Exchange ETH for sfrxETH using the frxETHMinter contract"
   parameters:
     properties:
       receiver:
@@ -636,7 +642,33 @@
         description: Amount of ETH to exchange for sfrxETH
         type: string
     required:
-    - receiver
-    - value
+      - receiver
+      - value
     type: object
-  return_value_description: ''
+  return_value_description: ""
+- _name_: display_arbitrum_deposit_eth
+  description: Used to bridge and deposit ETH from mainnet L1 to arbitrum L2.
+  parameters:
+    properties:
+      value:
+        description: quantity to deposit
+        type: string
+    required:
+      - value
+    type: object
+  return_value_description: ""
+- _name_: display_arbitrum_withdraw_eth
+  description: Used to withdraw ETH from arbitrum L2 to mainnet L1
+  parameters:
+    properties:
+      destination:
+        description: Destination address on L1 for withdrawn ETH
+        type: string
+      value:
+        description: quantity to withdraw
+        type: string
+    required:
+      - destination
+      - value
+    type: object
+  return_value_description: ""
