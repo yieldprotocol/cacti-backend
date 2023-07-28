@@ -16,7 +16,7 @@ auth_config = weaviate.AuthApiKey(api_key=utils.WEAVIATE_API_KEY)
 def get_client() -> weaviate.Client:
     client = weaviate.Client(
         url=utils.WEAVIATE_URL,
-        auth_client_secret=auth_config,
+        auth_client_secret=auth_config if utils.WEAVIATE_API_KEY else None,
         additional_headers={"X-OpenAI-Api-Key": utils.OPENAI_API_KEY},
     )
     return client
