@@ -19,6 +19,8 @@ DEFAULT_ENV_TAG = 'local'
 def is_prod():
     return os.environ.get('ENV_TAG', DEFAULT_ENV_TAG) == 'prod'
 
+def is_dev():
+    return os.environ.get('ENV_TAG', DEFAULT_ENV_TAG) == 'dev'
 
 def is_local():
     return os.environ.get('ENV_TAG', DEFAULT_ENV_TAG) == 'local'

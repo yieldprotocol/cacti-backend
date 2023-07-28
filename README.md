@@ -13,10 +13,14 @@ with them.
 * Setup Python virtualenv - `python3 -m venv ../venv`
 * Activate virtualenv - `source ../venv/bin/activate`
 * Install dependencies - `pip install -r requirements.txt`
-* Populate vector index with widgets - `ENV_TAG=local; python -m scripts.check_update_widget_index`
-* Populate vector index with app info - `ENV_TAG=local; python -c "from index import app_info; app_info.backfill()"`
-* Run DB migrations - `ENV_TAG=local; ./db_schema_sync.sh`
-* Run server - `ENV_TAG=local; ./start.sh`
+* Populate vector index with widgets - `python -m scripts.check_update_widget_index`
+* Populate vector index with app info - `python -c "from index import app_info; app_info.backfill()"`
+* Run DB migrations - `./db_schema_sync.sh`
+* Run server - `./start.sh`
+
+## To add a new env var/secret:
+* Update `./env/.env.example` and `./env/.env` files
+* Update `cloudbuild.yaml` file for GCP deployment
 
 ## Steps to add new widget command
 - Update `widgets.yaml` with the widget command details
