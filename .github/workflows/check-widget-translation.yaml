@@ -42,6 +42,7 @@ jobs:
           echo "SERVER_HOST=" >> "$GITHUB_ENV"
           echo "SERVER_ORIGINS=" >> "$GITHUB_ENV"
           echo "SERVER_SECRET_KEY=" >> "$GITHUB_ENV"
+          
           if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' ]]; then
             echo "ENV_TAG=prod" >> "$GITHUB_ENV"
           else
