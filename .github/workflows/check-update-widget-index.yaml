@@ -8,6 +8,7 @@ on:
 
 jobs:
   main:
+    name: Check and update widget index
     runs-on: ${{ matrix.os }}
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 15

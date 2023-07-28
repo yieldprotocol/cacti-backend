@@ -11,6 +11,7 @@ on:
 
 jobs:
   main:
+    name: Check widget translation
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -42,6 +43,7 @@ jobs:
             echo "ENV_TAG=prod" >> "$GITHUB_ENV"
           else
             echo "ENV_TAG=dev" >> "$GITHUB_ENV"
+            echo "SERVER_HOST=${{ vars.DEV_SERVER_HOST }}"
           fi
 
       - name: Check widget translation
