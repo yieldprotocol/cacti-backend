@@ -43,9 +43,9 @@ jobs:
             echo "ENV_TAG=prod" >> "$GITHUB_ENV"
           else
             echo "ENV_TAG=dev" >> "$GITHUB_ENV"
-            echo "SERVER_HOST=${{ vars.DEV_SERVER_HOST }}" >> "$GITHUB_ENV"
-            echo "SERVER_ORIGINS=${{ vars.DEV_SERVER_ORIGINS }}" >> "$GITHUB_ENV"
-            echo "SERVER_SECRET_KEY=${{ secrets.DEV_SERVER_SECRET_KEY }}" >> "$GITHUB_ENV"
+            echo "SERVER_HOST=" >> "$GITHUB_ENV"
+            echo "SERVER_ORIGINS=" >> "$GITHUB_ENV"
+            echo "SERVER_SECRET_KEY=" >> "$GITHUB_ENV"
           fi
 
       - name: Check widget translation
