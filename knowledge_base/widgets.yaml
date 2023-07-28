@@ -646,29 +646,33 @@
       - value
     type: object
   return_value_description: ""
-- _name_: display_arbitrum_deposit_eth
-  description: Used to bridge and deposit ETH from mainnet L1 to arbitrum L2.
+- _name_: display_arbitrum_deposit
+  description: Used to bridge/deposit ETH or token from mainnet L1 to arbitrum L2.
   parameters:
     properties:
-      value:
-        description: quantity to deposit
+      token:
+        description: token to deposit/bridge
+        type: string
+      amount:
+        description: amount to deposit
         type: string
     required:
-      - value
+      - token
+      - amount
     type: object
   return_value_description: ""
-- _name_: display_arbitrum_withdraw_eth
+- _name_: display_arbitrum_withdraw
   description: Used to withdraw ETH from arbitrum L2 to mainnet L1
   parameters:
     properties:
-      destination:
-        description: Destination address on L1 for withdrawn ETH
+      token:
+        description: token to withdraw
         type: string
-      value:
-        description: quantity to withdraw
+      amount:
+        description: amount to withdraw
         type: string
     required:
-      - destination
-      - value
+      - token
+      - amount
     type: object
   return_value_description: ""
