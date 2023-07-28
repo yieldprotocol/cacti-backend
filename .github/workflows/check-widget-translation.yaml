@@ -46,6 +46,9 @@ jobs:
             echo "SERVER_HOST=" >> "$GITHUB_ENV"
             echo "SERVER_ORIGINS=" >> "$GITHUB_ENV"
             echo "SERVER_SECRET_KEY=" >> "$GITHUB_ENV"
+            echo "WEAVIATE_URL=${{ secrets.DEV_WEAVIATE_URL }}" >> "$GITHUB_ENV"
+            echo "WEAVIATE_API_KEY=${{ secrets.DEV_WEAVIATE_API_KEY }}" >> "$GITHUB_ENV"
+            echo "CHATDB_URL=${{ secrets.DEV_CHATDB_URL }}" >> "$GITHUB_ENV"
           fi
 
       - name: Check widget translation

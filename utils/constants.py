@@ -36,7 +36,7 @@ TEST_TENDERLY_FORK_ID = os.getenv('TEST_TENDERLY_FORK_ID', None)
 HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY', None)
 HUGGINGFACE_INFERENCE_ENDPOINT = "https://xczbh8zf5amwxdlc.us-east-1.aws.endpoints.huggingface.cloud" # may vary
 
-OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', None)
 
 OPENSEA_API_KEY = os.getenv('OPENSEA_API_KEY', None)
 CENTER_API_KEY = os.getenv('CENTER_API_KEY', None)
