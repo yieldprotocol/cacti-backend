@@ -32,7 +32,6 @@ jobs:
       with:
         instance_name: 'cacti-bastion-server'
         zone: 'us-east1-b'
-        ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
         command: 'echo Hello world'
 
     # Example of using the output
