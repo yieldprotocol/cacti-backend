@@ -28,13 +28,13 @@ jobs:
         path: backend
 
     - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
+      uses: 'google-github-actions/auth@v1.1.1'
       with:
         workload_identity_provider: projects/75058950745/locations/global/workloadIdentityPools/github-pools/providers/github-provider
         service_account: github-ci-cacti-backend@chatweb3-380221.iam.gserviceaccount.com
 
     - id: 'compute-ssh'
-      uses: 'google-github-actions/ssh-compute@v0'
+      uses: 'google-github-actions/ssh-compute@v0.1.5'
       with:
         instance_name: 'cacti-bastion-server'
         zone: 'us-east1-b'
