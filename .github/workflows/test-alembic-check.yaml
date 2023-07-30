@@ -28,10 +28,20 @@ jobs:
         path: backend
 
     - id: 'auth'
-      uses: 'google-github-actions/auth@v1.1.1'
+      uses: 'google-github-actions/auth@v1'
       with:
         workload_identity_provider: projects/75058950745/locations/global/workloadIdentityPools/github-pools/providers/github-provider
         service_account: github-ci-cacti-backend@chatweb3-380221.iam.gserviceaccount.com
+
+    - id: 'compute-ssh'
+      uses: 'google-github-actions/ssh-compute@v0'
+      with:
+        instance_name: 'cacti-bastion-server'
+        zone: 'us-east1-b'
+        ssh_keys_dir: "/tmp"
+        ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
+        flags: "--ssh-flag='-fN -L 5432:10.112.240.3:5432' --troubleshoot"
+        command: "'echo hello'"
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -59,14 +69,7 @@ jobs:
           echo "CHATDB_URL=${{ secrets.DEV_CHATDB_URL }}" >> "$GITHUB_ENV"
         fi
     - name: Run check
-      uses: 'google-github-actions/ssh-compute@v0.1.5'
-      with:
-        instance_name: 'cacti-bastion-server'
-        zone: 'us-east1-b'
-        ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
-        flags: "--ssh-flag='-fN -L 5432:10.112.240.3:5432' --troubleshoot"
-        command: "'echo hello'"
-        gcloud_version: '435.0.1'
       run: |
+        gcloud compute ssh cacti-bastion-server --zone us-east1-b --ssh-key-file /tmp/google_compute_engine --quiet --tunnel-through-iap --ssh-flag '-fN -L 5432:10.112.240.3:5432' --troubleshoot
         cd backend
         alembic check
