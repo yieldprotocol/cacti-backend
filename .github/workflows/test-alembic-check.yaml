@@ -39,7 +39,7 @@ jobs:
         instance_name: 'cacti-bastion-server'
         zone: 'us-east1-b'
         ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
-        flags: '--ssh-flag="-v -L 5432:10.112.240.3:5432"'
+        flags: '--ssh-flag="-v -L 80:%INSTANCE%:80"'
         command: 'echo hello'
 
     - name: Set up Python ${{ matrix.python-version }}
