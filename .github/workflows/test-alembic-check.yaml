@@ -39,7 +39,7 @@ jobs:
         instance_name: 'cacti-bastion-server'
         zone: 'us-east1-b'
         ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
-        flags: "--ssh-flag='-fN -L 80:%INSTANCE%:80' --troubleshoot"
+        flags: "--ssh-flag='-fN -L 5432:10.112.240.3:5432' --troubleshoot"
         command: "'echo hello'"
         gcloud_version: '435.0.1'
 
