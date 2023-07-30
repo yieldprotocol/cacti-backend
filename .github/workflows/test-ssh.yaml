@@ -1,3 +1,9 @@
+name: Test SSH
+
+on:
+  pull_request:
+    branches: [master, dev]
+
 jobs:
   job_id:
     permissions:
