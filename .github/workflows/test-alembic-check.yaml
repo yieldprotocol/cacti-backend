@@ -41,6 +41,8 @@ jobs:
         ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
         flags: "--ssh-flag='-fN -L 80:%INSTANCE%:80'"
         command: "'echo hello'"
+        gcloud_version: '435.0.1'
+        ssh_args: '--troubleshoot'
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
