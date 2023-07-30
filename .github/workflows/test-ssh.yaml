@@ -1,42 +1,42 @@
-name: Test SSH
+# name: Test SSH
 
-on:
-  pull_request:
-    branches: [master, dev]
+# on:
+#   pull_request:
+#     branches: [master, dev]
 
-jobs:
-  job_id:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.10"]
-    permissions:
-      contents: 'read'
-      id-token: 'write'
+# jobs:
+#   job_id:
+#     runs-on: ${{ matrix.os }}
+#     timeout-minutes: 15
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         os: [ubuntu-latest]
+#         python-version: ["3.10"]
+#     permissions:
+#       contents: 'read'
+#       id-token: 'write'
 
 
-    steps:
-    - uses: 'actions/checkout@v2'
+#     steps:
+#     - uses: 'actions/checkout@v2'
 
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
-      with:
-        workload_identity_provider: projects/75058950745/locations/global/workloadIdentityPools/github-pools/providers/github-provider
-        service_account: github-ci-cacti-backend@chatweb3-380221.iam.gserviceaccount.com
+#     - id: 'auth'
+#       uses: 'google-github-actions/auth@v0'
+#       with:
+#         workload_identity_provider: projects/75058950745/locations/global/workloadIdentityPools/github-pools/providers/github-provider
+#         service_account: github-ci-cacti-backend@chatweb3-380221.iam.gserviceaccount.com
 
-    - id: 'compute-ssh'
-      uses: 'google-github-actions/ssh-compute@v0'
-      with:
-        instance_name: 'cacti-bastion-server'
-        zone: 'us-east1-b'
-        ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
-        command: 'echo Hello world'
+#     - id: 'compute-ssh'
+#       uses: 'google-github-actions/ssh-compute@v0'
+#       with:
+#         instance_name: 'cacti-bastion-server'
+#         zone: 'us-east1-b'
+#         ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
+#         command: 'echo Hello world'
 
-    # Example of using the output
-    - id: 'test'
-      run: |-
-        echo '${{ steps.compute-ssh.outputs.stdout }}'
-        echo '${{ steps.compute-ssh.outputs.stderr }}'
+#     # Example of using the output
+#     - id: 'test'
+#       run: |-
+#         echo '${{ steps.compute-ssh.outputs.stdout }}'
+#         echo '${{ steps.compute-ssh.outputs.stderr }}'
