@@ -573,6 +573,17 @@
     - amount
     type: object
   return_value_description: ''
+- _name_: display_wrap_eth
+  description: Wrap ETH into WETH
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to wrap.
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
 - _name_: fetch_nfts_owned_by_address_or_domain
   description: Used to fetch NFTs owned by a wallet address or ENS domain on a particular network
   parameters:
