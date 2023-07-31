@@ -5,7 +5,7 @@ the dev and production deployments do not allow local URLs to interact
 with them.
 
 ## To run the backend locally:
-* Install [Docker](https://docs.docker.com/engine/install/)
+* Install [Docker](https://docs.docker.com/get-docker/)
 * Install Python 3.10 or higher
 * Run the docker containers - `docker compose -f ./docker/docker-compose.yml up -d`
 * Copy env file - `cp ./env/.env.example ./env/.env`
