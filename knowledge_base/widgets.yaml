@@ -573,7 +573,7 @@
     - amount
     type: object
   return_value_description: ''
-- _name_: wrap_eth
+- _name_: display_wrap_eth
   description: Wrap ETH into WETH
   parameters:
     properties:
