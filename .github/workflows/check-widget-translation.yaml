@@ -22,7 +22,7 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-      
+
     steps:
       - name: Checkout backend
         uses: actions/checkout@v2
@@ -66,9 +66,11 @@ jobs:
           if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' ]]; then
             echo "ENV_TAG=prod" >> "$GITHUB_ENV"
             echo "WEAVIATE_API_KEY=${{ secrets.PROD_WEAVIATE_API_KEY }}" >> "$GITHUB_ENV"
+            echo "CHATDB_URL=${{ secrets.PROD_CHATDB_URL }}" >> "$GITHUB_ENV"
           else
             echo "ENV_TAG=dev" >> "$GITHUB_ENV"
             echo "WEAVIATE_API_KEY=${{ secrets.DEV_WEAVIATE_API_KEY }}" >> "$GITHUB_ENV"
+            echo "CHATDB_URL=${{ secrets.DEV_CHATDB_URL }}" >> "$GITHUB_ENV"
           fi
 
       - name: Check widget translation
