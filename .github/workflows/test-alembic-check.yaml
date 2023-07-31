@@ -38,7 +38,7 @@ jobs:
       with:
         instance_name: 'cacti-bastion-server'
         zone: 'us-east1-b'
-        ssh_keys_dir: "/tmp"
+        ssh_keys_dir: "/tmp/gcp"
         ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
         flags: "--ssh-flag='-fN -L 5432:10.112.240.3:5432' --troubleshoot"
         command: "'echo hello'"
@@ -70,6 +70,6 @@ jobs:
         fi
     - name: Run check
       run: |
-        gcloud compute ssh cacti-bastion-server --zone us-east1-b --ssh-key-file /tmp/google_compute_engine --quiet --tunnel-through-iap --ssh-flag '-fN -L 5432:10.112.240.3:5432' --troubleshoot
+        gcloud compute ssh cacti-bastion-server --zone us-east1-b --ssh-key-file /tmp/gcp/google_compute_engine --quiet --tunnel-through-iap --ssh-flag '-vvv -fN -L 5432:10.112.240.3:5432'
         cd backend
         alembic check
