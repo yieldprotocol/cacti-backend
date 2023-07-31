@@ -69,7 +69,6 @@ jobs:
             echo "CHATDB_URL=${{ secrets.PROD_CHATDB_URL }}" >> "$GITHUB_ENV"
           else
             echo "ENV_TAG=dev" >> "$GITHUB_ENV"
-            echo "WEAVIATE_API_KEY=${{ secrets.DEV_WEAVIATE_API_KEY }}" >> "$GITHUB_ENV"
             echo "CHATDB_URL=${{ secrets.DEV_CHATDB_URL }}" >> "$GITHUB_ENV"
           fi
 
