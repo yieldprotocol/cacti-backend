@@ -40,7 +40,7 @@ jobs:
         zone: 'us-east1-b'
         ssh_keys_dir: "/tmp/gcp"
         ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
-        command: "'echo no-op'"
+        command: "'echo noop'"
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
