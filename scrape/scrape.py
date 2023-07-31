@@ -4,8 +4,6 @@ import os
 import requests
 from urllib.parse import urlparse
 
-import qcore
-
 
 from .models import (
     db_session,
@@ -69,14 +67,19 @@ def _scrape_url(url: str) -> Dict:
     return output
 
 
-@qcore.retry(Exception, max_tries=10)
-def _request(payload):
-    r = requests.post(SCRAPE_API_URL, headers={
-        'Cache-Control': 'no-cache',
-        'Content-Type': 'application/json',
-    }, data=payload)
-    r.raise_for_status()
-    return r
+def _request(payload, max_tries=10):
+    for attempt in range(max_tries):
+        try:
+            r = requests.post(SCRAPE_API_URL, headers={
+                'Cache-Control': 'no-cache',
+                'Content-Type': 'application/json',
+            }, data=payload)
+            r.raise_for_status()
+            return r
+        except:
+            if attempt < max_tries - 1:
+                continue
+            raise
 
 
 def has_scrape_error(output: Any) -> bool:

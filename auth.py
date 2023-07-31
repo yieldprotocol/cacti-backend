@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
+import functools
 import json
 import time
 import traceback
@@ -168,3 +169,21 @@ def _clear_session(request: Request) -> None:
     request.session.pop("nonce_timestamp", None)
     request.session.pop("wallet_address", None)
     request.session.pop("user_id", None)
+
+
+def authenticate_user_id() -> Callable:
+    """Decorator that passes in the currently authenticated user id, if any, as a kwarg to function."""
+    def decorator(fn: Callable) -> Callable:
+        @functools.wraps(fn)
+        def wrapped_fn(*args: Any, **kwargs: Any) -> Any:
+            # find request object
+            request = None
+            for arg in args:
+                if isinstance(arg, Request):
+                    request = arg
+                    break
+            assert request is not None, f'expecting Request object to be passed into function: {fn.__name__}'
+            user_id = fetch_authenticated_user_id(request)
+            return fn(*args, user_id=user_id, **kwargs)
+        return wrapped_fn
+    return decorator
