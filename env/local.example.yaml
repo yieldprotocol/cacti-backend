@@ -2,7 +2,7 @@
 
 chatdb:
   # if you are not doing any db schema changes, using the dev db is ok
-  host: 34.139.225.26
+  host: 34.139.110.133
   port: 5432
   # if you are making big changes (schema, refactors, etc), run postgres
   # locally in docker (see docker/docker-compose.yml) and update the
