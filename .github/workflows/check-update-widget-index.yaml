@@ -82,12 +82,12 @@ jobs:
             echo "ENV_TAG=prod" >> "$GITHUB_ENV"
             echo "WEAVIATE_API_KEY=${{ secrets.PROD_WEAVIATE_API_KEY }}" >> "$GITHUB_ENV"
             echo "CHATDB_URL=${{ secrets.PROD_CHATDB_URL }}" >> "$GITHUB_ENV"
-            echo "OPENAI_API_KEY=${{ secrets.PROD_OPENAI_API_KEY }}"
+            echo "OPENAI_API_KEY=${{ secrets.PROD_OPENAI_API_KEY }}" >> "$GITHUB_ENV"
           else
             echo "ENV_TAG=dev" >> "$GITHUB_ENV"
             echo "WEAVIATE_API_KEY=${{ secrets.DEV_WEAVIATE_API_KEY }}" >> "$GITHUB_ENV"
             echo "CHATDB_URL=${{ secrets.DEV_CHATDB_URL }}" >> "$GITHUB_ENV"
-            echo "OPENAI_API_KEY=${{ secrets.DEV_OPENAI_API_KEY }}"
+            echo "OPENAI_API_KEY=${{ secrets.DEV_OPENAI_API_KEY }}" >> "$GITHUB_ENV"
           fi
 
       - name: Check and update widget index
