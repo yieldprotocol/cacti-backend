@@ -9,7 +9,8 @@ import json
 # the display- widgets that the frontend receives and with potential json inputs,
 # instead of fetch- commands that are potentially nested.
 
-RE_WIDGET = re.compile(r"\<\|(?P<command>display-[\w\-]*)\((?P<params>[^\n]*)\)\|>")
+RE_WIDGET = re.compile(
+    r"\<\|(?P<command>display-[\w\-]*)\((?P<params>[^\n]*)\)\|>")
 
 
 def parse_widgets_into_text(text: str) -> str:
@@ -39,17 +40,19 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
 
 
 def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
-    command = command.lower().replace('display-', '')
+    command = command.replace('display-', '')
     lines = []
     if command == 'transfer':
         items = params.split(",")
         lines.append(f"A transfer of {items[1]} {items[0]} to {items[2]}")
     elif command == 'uniswap':
         items = params.split(",")
-        lines.append(f"A swap of {items[0]} to {items[1]} with transaction keyword {items[2]} and amount {items[3]}")
+        lines.append(
+            f"A swap of {items[0]} to {items[1]} with transaction keyword {items[2]} and amount {items[3]}")
     elif command == 'buy-nft':
         items = params.split(",")
-        lines.append(f"A widget to purchase token {items[1]} of contract address {items[0]}")
+        lines.append(
+            f"A widget to purchase token {items[1]} of contract address {items[0]}")
     elif command == 'list-container':
         params = json.loads(params)
         items = params['items']
@@ -64,7 +67,7 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         operation = params['operation']
         if operation == 'create':
             prefix = params.get('prefix')
-            prefix =  f' ({prefix})' if prefix else ''
+            prefix = f' ({prefix})' if prefix else ''
             lines.append(f'A list of items{prefix}:')
         elif operation == 'update':
             prefix = params.get('prefix') or ''
@@ -76,7 +79,8 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
                 lines.append(line)
         elif operation == 'append':
             item = params['item']
-            lines.append(f"-Item: {_widgetize(item['name'], json.dumps(item['params']), depth=depth)}")
+            lines.append(
+                f"-Item: {_widgetize(item['name'], json.dumps(item['params']), depth=depth)}")
     elif command == 'nft-collection-container':
         params = json.loads(params)
         lines.extend([
@@ -87,10 +91,12 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         collection = params['collection']
         assets = params['assets']
         lines.extend([
-            _widgetize(collection['name'], json.dumps(collection['params']), depth=depth + 1),
+            _widgetize(collection['name'], json.dumps(
+                collection['params']), depth=depth + 1),
             "Here are some of the assets in the collection:",
         ] + [
-            _widgetize(asset['name'], json.dumps(asset['params']), depth=depth + 1)
+            _widgetize(asset['name'], json.dumps(
+                asset['params']), depth=depth + 1)
             for asset in assets
         ])
     elif command == 'nft-collection-traits-container':
@@ -114,10 +120,12 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         asset = params['asset']
         values = params['values']
         lines.extend([
-            _widgetize(asset['name'], json.dumps(asset['params']), depth=depth + 1),
+            _widgetize(asset['name'], json.dumps(
+                asset['params']), depth=depth + 1),
             "This NFT asset has the following trait names and values:",
         ] + [
-            _widgetize(value['name'], json.dumps(value['params']), depth=depth + 1)
+            _widgetize(value['name'], json.dumps(
+                value['params']), depth=depth + 1)
             for value in values
         ])
     elif command == 'nft-asset-trait-value-container':
@@ -125,31 +133,44 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         lines.append(f"{params['trait']}: {params['value']}")
     elif command == 'tx-payload-for-sending-container':
         params = json.loads(params)
-        lines.append(f"A transaction was presented for sending: {params['description']}.")
+        lines.append(
+            f"A transaction was presented for sending: {params['description']}.")
     elif command == 'multistep-payload-container':
         params = json.loads(params)
-        lines.append(f"A workflow step was presented: {params['description']}.")
+        lines.append(
+            f"A workflow step was presented: {params['description']}.")
     elif command == 'yield-farm':
         params = json.loads(params)
-        lines.append(f"Yield farm action for network: {params['network']}, project: {params['project']}, token: {params['token']}, amount: {params['amount']}.")
+        lines.append(
+            f"Yield farm action for network: {params['network']}, project: {params['project']}, token: {params['token']}, amount: {params['amount']}.")
     elif command == 'zksync-deposit':
         params = json.loads(params)
-        lines.append(f"ZkSync bridge deposit action for token: {params['token']}, amount: {params['amount']}.")
+        lines.append(
+            f"ZkSync bridge deposit action for token: {params['token']}, amount: {params['amount']}.")
     elif command == 'zksync-withdraw':
         params = json.loads(params)
-        lines.append(f"ZkSync bridge withdraw action for token: {params['token']}, amount: {params['amount']}.")
+        lines.append(
+            f"ZkSync bridge withdraw action for token: {params['token']}, amount: {params['amount']}.")
+    elif command == 'stake-sfrxeth':
+        params = json.load(params)
+        lines.append(
+            f"sfrxETH deposit action for address: {params['receiver']}, amount: {params['value']}.")
     elif command == 'display-yield-protocol-lend':
         params = json.loads(params)
-        lines.append(f"yield protocol lend action for token: {params['token']}, amount: {params['amount']}.")
+        lines.append(
+            f"yield protocol lend action for token: {params['token']}, amount: {params['amount']}.")
     elif command == 'display-yield-protocol-lend-close':
         params = json.loads(params)
-        lines.append(f"yield protocol lend close action for token: {params['token']}, amount: {params['amount']}.")
+        lines.append(
+            f"yield protocol lend close action for token: {params['token']}, amount: {params['amount']}.")
     elif command == 'display-yield-protocol-borrow':
         params = json.loads(params)
-        lines.append(f"yield protocol borrow action for borrow token: {params['borrowToken']}, borrow amount: {params['borrowAmount']}, collateral token: {params['collateralToken']}, collateral amount: {params['collateralAmount']}.")
+        lines.append(
+            f"yield protocol borrow action for borrow token: {params['borrowToken']}, borrow amount: {params['borrowAmount']}, collateral token: {params['collateralToken']}, collateral amount: {params['collateralAmount']}.")
     elif command == 'display-yield-protocol-borrow-close':
         params = json.loads(params)
-        lines.append(f"yield protocol borrow close action: {params['borrowToken']}")
+        lines.append(
+            f"yield protocol borrow close action: {params['borrowToken']}")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
