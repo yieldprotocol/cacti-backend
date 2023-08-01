@@ -614,7 +614,7 @@
     - value
     type: object
   return_value_description: ''
-  - _name_: display_yield_protocol_lend
+- _name_: display_yield_protocol_lend
   description: use the yield protocol to lend tokens at a fixed rate
   parameters:
     properties:
