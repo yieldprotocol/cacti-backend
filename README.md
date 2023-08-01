@@ -6,9 +6,10 @@ with them.
 
 ## To run the backend locally:
 * Install [Docker](https://docs.docker.com/get-docker/)
-* Install Python 3.10 or higher
+* Requires Python 3.10 (DO NOT use higher versions as 'pysha3' dependency has issues with them)
 * Run the docker containers - `docker compose -f ./docker/docker-compose.yml up -d`
-* Copy env file - `cp ./env/.env.example ./env/.env`
+* Run `docker ps` and check the status on both Postgres DB and Weaviate Vector DB to make sure they are running
+* Copy and setup `.env` file in `./env` dir - `cp ./env/.env.example ./env/.env`
 * Set your own credentials for the services defined in the `./env/.env` file
 * Setup Python virtualenv - `python3 -m venv ../venv`
 * Activate virtualenv - `source ../venv/bin/activate`
