@@ -24,11 +24,7 @@ class Yield(ContainerMixin):
 
 
 def fetch_yields(token, network, count) -> List[Yield]:
-    # Convert the inferred canonical chain name to what DefiLlama uses for result filtering
-    if network.lower() == "binance":
-        network = "BSC"
-    elif network.lower() == "mainnet":
-        network = "Ethereum"
+    normalized_network_name = _network_name_normalizer(network)
 
     # If no inferred count, default to 5
     if count == "*":
@@ -39,7 +35,7 @@ def fetch_yields(token, network, count) -> List[Yield]:
     response.raise_for_status()
     obj = response.json()
     yields = obj["data"]
-    filtered_yields = list(filter(lambda yield_obj: _filter_yield_list(token, network, yield_obj), yields))
+    filtered_yields = list(filter(lambda yield_obj: _filter_yield_list(token, normalized_network_name, yield_obj), yields))
     # Sorting on TVL to select the top N blue-chip projects
     filtered_yields.sort(key=lambda yield_obj: yield_obj["tvlUsd"], reverse=True)
     selected_yields = filtered_yields[:int(count)]
@@ -49,9 +45,9 @@ def fetch_yields(token, network, count) -> List[Yield]:
             yield_obj["symbol"],
             yield_obj["chain"],
             yield_obj["project"],
-            yield_obj["apy"],
-            yield_obj["apyMean30d"],
-            yield_obj["tvlUsd"])
+            "{:.2f}%".format(yield_obj["apy"]),
+            "{:.2f}%".format(yield_obj["apyMean30d"]),
+            "${:,}".format(yield_obj["tvlUsd"]))
         for yield_obj in selected_yields]
 
 
@@ -75,3 +71,14 @@ def _filter_yield_list(input_token, input_network, yield_obj) -> bool:
         return normalized_network == input_network
 
     return normalized_symbol == input_token and normalized_network == input_network
+
+
+def _network_name_normalizer(network: str) -> str:
+    # Convert the inferred network name to what DefiLlama uses for filtering
+    if "binance" in network.lower():
+        return "BSC"
+    
+    if "ethereum" in network.lower():
+        return "Ethereum"
+    
+    return network
