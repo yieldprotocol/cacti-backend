@@ -822,9 +822,9 @@
   return_value_description: ''
 - _name_: display_yield_protocol_lend
   description: The Yield Protocol is a fixed rate borrowing and lending application. when lending,
-  the user transfers an asset to the Yield Protocol, and the Yield Protocol gives the user a token
-  representing the lending position. Yield Protocol pays an interest rate to the user while lending.
-  Use this widget to open a lend position on the yield protocol.
+    the user transfers an asset to the Yield Protocol, and the Yield Protocol gives the user a token
+    representing the lending position. Yield Protocol pays an interest rate to the user while lending.
+    Use this widget to open a lend position on the yield protocol.
   tags:
   - defi
   - yield
@@ -845,9 +845,9 @@
   return_value_description: ""
 - _name_: display_yield_protocol_lend_close
   description: The Yield Protocol is a fixed rate borrowing and lending application. when lending,
-  the user transfers an asset to the Yield Protocol, and the Yield Protocol gives the user a token
-  representing the lending position. Yield Protocol pays an interest rate to the user while lending.
-  Use this widget to close a lend position on the yield protocol.
+    the user transfers an asset to the Yield Protocol, and the Yield Protocol gives the user a token
+    representing the lending position. Yield Protocol pays an interest rate to the user while lending.
+    Use this widget to close a lend position on the yield protocol.
   tags:
   - defi
   - yield
@@ -868,9 +868,9 @@
   return_value_description: ""
 - _name_: display_yield_protocol_borrow
   description: The Yield Protocol is a fixed rate borrowing and lending application. when borrowing,
-  the user transfers collateral to the Yield Protocol, and the Yield Protocol lends the user a token.
-  The user pays an interest rate on the borrowed token. You can use this widget on yield protocol 
-  to borrow a token using a different token as collateral.
+    the user transfers collateral to the Yield Protocol, and the Yield Protocol lends the user a token.
+    The user pays an interest rate on the borrowed token. You can use this widget on yield protocol 
+    to borrow a token using a different token as collateral.
   tags:
   - defi
   - yield
@@ -899,10 +899,10 @@
   return_value_description: ""
 - _name_: display_yield_protocol_borrow_close
   description: The Yield Protocol is a fixed rate borrowing and lending application. when borrowing,
-  the user transfers collateral to the Yield Protocol, and the Yield Protocol lends the user a token.
-  The user pays an interest rate on the borrowed token. You can use this widget on yield protocol to
-  close a vault (borrow position) made up of debt and collateral. The user will then receive the
-  collateral back.
+    the user transfers collateral to the Yield Protocol, and the Yield Protocol lends the user a token.
+    The user pays an interest rate on the borrowed token. You can use this widget on yield protocol to
+    close a vault (borrow position) made up of debt and collateral. The user will then receive the
+    collateral back.
   tags:
   - defi
   - yield
