@@ -31,7 +31,7 @@ from ui_workflows.multistep_handler import register_ens_domain, exec_aave_operat
 from tools.index_widget import *
 
 SYSTEM_MESSAGE_DEFAULT = \
-"""You are an agent that is trained to execute functions based on a user request. If you found a suitable function but not all the input parameters are known, ask for them.
+"""You are an agent that is trained to execute functions based on a user request. If you found a suitable function but not all the input parameters are known, ask for them. Otherwise just proceed with calling the function without reconfirming.
 
 Here is the user personal information, which you can use as input parameters of the functions. 
 # USER INFO:
@@ -186,7 +186,7 @@ class ChatGPTFunctionCallChat(BaseChat):
                 ), before_message_id=before_message_id)
                 bot_chat_message_id = None
                 command = '-'.join(function_call['name'].split('_'))
-                params = ','.join(json.loads(function_call['arguments']).values())
+                params = function_call['arguments']
                 widget_str = f"{WIDGET_START}{command}({params}){WIDGET_END}"
                 injection_handler(widget_str)
 
