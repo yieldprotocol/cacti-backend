@@ -9,7 +9,7 @@ import json
 # the display- widgets that the frontend receives and with potential json inputs,
 # instead of fetch- commands that are potentially nested.
 
-RE_WIDGET = re.compile(r"\<\|(?P<command>display-[\w\-]*)\((?P<params>[^\n]*)\)\|>")
+RE_WIDGET = re.compile(r"\<\|(?P<command>display-[\w\-]*)\((?P<params>.*?)\)\|>", re.DOTALL)
 
 
 def parse_widgets_into_text(text: str) -> str:
@@ -42,14 +42,14 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     command = command.replace('display-', '')
     lines = []
     if command == 'transfer':
-        items = params.split(",")
-        lines.append(f"A transfer of {items[1]} {items[0]} to {items[2]}")
+        params = json.loads(params)
+        lines.append(f"A transfer of {params['amount']} {params['token']} to {params['address']}")
     elif command == 'uniswap':
-        items = params.split(",")
-        lines.append(f"A swap of {items[0]} to {items[1]} with transaction keyword {items[2]} and amount {items[3]}")
+        params = json.loads(params)
+        lines.append(f"A swap of {params['tokenToSell']} to {params['tokenToBuy']} with transaction keyword {params['transactionKeyword']} and amount {params['amount']}")
     elif command == 'buy-nft':
-        items = params.split(",")
-        lines.append(f"A widget to purchase token {items[1]} of contract address {items[0]}")
+        params = json.loads(params)
+        lines.append(f"A widget to purchase token {params['tokenID']} of contract address {params['address']}")
     elif command == 'list-container':
         params = json.loads(params)
         items = params['items']
