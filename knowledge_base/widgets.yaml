@@ -409,9 +409,9 @@
   return_value_description: ''
 - _name_: aave_supply
   description: Aave is a variable rate borrowing and lending application. When lending,
-  the user transfers an asset to Aave, and Aave lends the user a token representing the
-  lending position. Aave pays the user an interest rate for as long as the lending position is open.
-  Use this widget to open a lend or supply position on Aave. This is also know as a deposit.
+    the user transfers an asset to Aave, and Aave lends the user a token representing the
+    lending position. Aave pays the user an interest rate for as long as the lending position is open.
+    Use this widget to open a lend or supply position on Aave. This is also known as a deposit.
   tags:
   - defi
   - aave
@@ -431,9 +431,9 @@
   return_value_description: ''
 - _name_: aave_borrow
   description: Aave is a variable rate borrowing and lending application. When borrowing,
-  the user transfers collateral to Aave, and Aave lends the user the desired token.
-  The user pays Aave an interest rate for as long as the borrowing position is open.
-  Use this widget to open a borrowing position on Aave.
+    the user transfers collateral to Aave, and Aave lends the user the desired token.
+    The user pays Aave an interest rate for as long as the borrowing position is open.
+    Use this widget to open a borrowing position on Aave.
   tags:
   - defi
   - aave
@@ -453,10 +453,10 @@
   return_value_description: ''
 - _name_: aave_repay
   description: Aave is a variable rate borrowing and lending application. When borrowing,
-  the user transfers collateral to Aave, and Aave lends the user the desired token. To
-  repay its debt, the user transfers the borrowed token to Aave, and can then withdraw
-  the collateral supplied before.
-  Use this widget to close or repay a borrowing position on Aave.
+    the user transfers collateral to Aave, and Aave lends the user the desired token. To
+    repay its debt, the user transfers the borrowed token to Aave, and can then withdraw
+    the collateral supplied before.
+    Use this widget to close or repay a borrowing position on Aave.
   tags:
   - defi
   - aave
@@ -476,9 +476,9 @@
   return_value_description: ''
 - _name_: aave_withdraw
   description: Aave is a variable rate borrowing and lending application. When lending,
-  the user transfers an asset to Aave, and Aave lends the user a token representing the
-  lending position. Aave pays the user an interest rate for as long as the lending position is open.
-  Use this widget to close a lend or supply position on Aave. This is also know as a withdrawal.
+    the user transfers an asset to Aave, and Aave lends the user a token representing the
+    lending position. Aave pays the user an interest rate for as long as the lending position is open.
+    Use this widget to close a lend or supply position on Aave. This is also know as a withdrawal.
   tags:
   - defi
   - aave
@@ -519,9 +519,9 @@
     units
 - _name_: display_yield_farm
   description: Compound is a variable rate borrowing and lending application. When lending,
-  the user transfers an asset to Compound, and Compound lends the user a token representing the
-  lending position. Compound pays the user an interest rate for as long as the lending position is open.
-  Use this widget to open a lend or supply position on Compound.
+    the user transfers an asset to Compound, and Compound lends the user a token representing the
+    lending position. Compound pays the user an interest rate for as long as the lending position is open.
+    Use this widget to open a lend or supply position on Compound.
   tags:
   - defi
   - compound
