@@ -565,6 +565,23 @@ def _strip_quotes(output):
     return output.replace('"', '').replace("'", "")
 
 
+def _get_params_value(output):
+    # Remove leading and trailing special characters
+    output = output.strip('<|>').split('(')[1].strip(')').replace('"', '')
+
+    # Split on comma, then colon to get key-value pairs
+    parts = output.strip('{}').split(',')
+    
+    if ':' in parts[0]:
+        params_value = []
+        for part in parts:
+            _, value = part.strip().split(':')
+            params_value.append(value.strip())
+        return ','.join(sorted(params_value))
+    else:
+        return ','.join(sorted(parts))
+
+
 def run(chat_configs, args):
     summary = collections.Counter()
     for ci, chat_config in enumerate(chat_configs):
@@ -577,7 +594,7 @@ def run(chat_configs, args):
             print('prediction =', prediction)
             print('label =', label, '\n---')
             if label.startswith(WIDGET_START) and label.endswith(WIDGET_END): # when a widget is output
-                widget_param_match = _strip_quotes(prediction) == _strip_quotes(label)
+                widget_param_match = _get_params_value(prediction) == _get_params_value(label)
                 widget_match = _get_widget_name(prediction) == _get_widget_name(label)
                 if widget_param_match:
                     counter['widget_param_match'] += 1

@@ -82,13 +82,19 @@ def widgets_yaml2doc(widgets_lst):
     for values in widgets_lst:
         doc = ""
         widget_command_name = values['_name_'].replace('_', '-')
-        widget_command_params = ','.join(['{' + p + '}' for p in values['parameters']['required']])
+        widget_command_params = ','.join(['{' + p + '}' for p in values['parameters']['properties'].keys()])
         widget_command = f"<|{widget_command_name}({widget_command_params})|>"
+        req_params_name = values['parameters']['required'] if values['parameters']['required'] else []
         doc += f"Widget magic command: {widget_command}\n"
         doc += f"Description of widget: {values['description']}\n"
         doc += f"Required parameters:\n"
+        optional_params_doc = f"Optional parameters:\n"
         for param_name, prop in values['parameters']['properties'].items():
-            doc += "-{" + param_name + "}" + f": {prop['description']}\n"
+            if param_name in req_params_name:
+                doc += "-{" + param_name + "}" + f": {prop['description']}\n"
+            else:
+                optional_params_doc += "-{" + param_name + "}" + f": {prop['description']}\n"
+        doc += optional_params_doc
         if len(values["return_value_description"].strip()) > 0: 
             doc += f"Return value description:\n-{values['return_value_description']}\n"
         docs.append(doc)
@@ -98,10 +104,6 @@ def widgets_yaml2doc(widgets_lst):
 def widgets_yaml2formats(file_path):
     with open(file_path, 'r') as file:
         widgets_lst = yaml.safe_load(file)
-    # reordering the params correctly
-    for j in range(len(widgets_lst)): 
-        widgets_lst[j]['parameters']['properties'] = dict(sorted(widgets_lst[j]['parameters']['properties'].items(),\
-                                                            key=lambda pair: widgets_lst[j]['parameters']['required'].index(pair[0])))
     assert len(set([v['_name_'] for v in widgets_lst])) == len([v['_name_'] for v in widgets_lst]), "widget names aren't unique"
     return widgets_yaml2doc(widgets_lst), widgets_yaml2functions(widgets_lst)
 

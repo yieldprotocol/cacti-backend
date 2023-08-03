@@ -214,9 +214,6 @@
           or the user wants all tokens.
         type: string
     required:
-    - token
-    - network
-    - count
     type: object
   return_value_description: JSON object with yield information
 - _name_: fetch_price
@@ -232,7 +229,6 @@
         type: string
     required:
     - basetoken
-    - quotetoken
     type: object
   return_value_description: price of a base token in units of a quote token.
 - _name_: ens_from_address

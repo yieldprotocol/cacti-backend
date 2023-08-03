@@ -544,7 +544,7 @@ def fetch_nft_buy(network: str, address: str, tokenID: str) -> str:
 
 
 @error_wrap
-def fetch_yields(token, network, count) -> str:
+def fetch_yields(token: str = "*", network: str = "*", count: int = 5) -> str:
     yields = defillama.fetch_yields(token, network, count)
 
     headers = [
