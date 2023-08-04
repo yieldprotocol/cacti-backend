@@ -4,6 +4,9 @@ To develop locally, you need to run the frontend and backend, because
 the dev and production deployments do not allow local URLs to interact
 with them.
 
+## Usage Guide
+The usage guide for the Cacti chatbot is available [here](./usage_guide.md)
+
 ## To run the backend locally:
 * Install [Docker](https://docs.docker.com/get-docker/)
 * Requires Python 3.10 (DO NOT use higher versions as 'pysha3' dependency has issues with them)
