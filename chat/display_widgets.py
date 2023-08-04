@@ -155,10 +155,10 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         lines.append(f"yield protocol borrow close action: {params['borrowToken']}")
     elif command == 'display-savings-dai-deposit':
         params = json.loads(params)
-        lines.append(f"DAI deposit action for address: {params['receiver']}, amount: {params['value']}.")
+        lines.append(f"DAI deposit action for amount: {params['amount']}.")
     elif command == 'display-savings-dai-withdraw':
         params = json.loads(params)
-        lines.append(f"DAI withdraw action for address: {params['receiver']}, amount: {params['value']}.")
+        lines.append(f"DAI withdraw action for amount: {params['amount']}.")
     elif command == 'display-deposit-vault':
         params = json.loads(params)
         lines.append(f"Deposit vault action for token: {params['token']}, amount: {params['amount']}.")
