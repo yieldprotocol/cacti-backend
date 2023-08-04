@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv(dotenv_path="../env/.env")
+
 import zmq
 from playwright.sync_api import sync_playwright
 from web3 import Web3
@@ -22,11 +25,13 @@ from playwright.async_api import async_playwright
 import zmq.asyncio
 
 import concurrent.futures
+
 executor = concurrent.futures.ThreadPoolExecutor()
 thread = None
 loop = asyncio.get_event_loop()
 
 TENDERLY_FORK_BASE_URL = "https://rpc.tenderly.co/fork"
+TENDERLY_DASHBOARD_PRJOECT_BASE_URL = os.environ['TENDERLY_DASHBOARD_PRJOECT_BASE_URL']
 
 thread_event = threading.Event()
 wallet_chain_id = 1 
@@ -176,7 +181,7 @@ def tenderly_simulate_tx(wallet_address, tx):
 
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
-    tenderly_link = f"https://dashboard.tenderly.co/Yield/chatweb3/fork/{fork_id}/simulation/{tenderly_simulation_id}"
+    tenderly_link = f"{TENDERLY_DASHBOARD_PRJOECT_BASE_URL}/fork/{fork_id}/simulation/{tenderly_simulation_id}"
 
     if receipt['status'] == 0:
         file_logger.info(f"Tx failed, tx_hash: {tx_hash}, tenderly_link: {tenderly_link}")

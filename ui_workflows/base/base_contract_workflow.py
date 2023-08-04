@@ -7,7 +7,7 @@ from web3 import Web3, exceptions
 
 import context
 import env
-from utils import TENDERLY_API_KEY
+from utils import TENDERLY_API_KEY, TENDERLY_PROJECT_API_BASE_URL
 from .common import get_latest_simulation_id_on_fork
 
 class BaseContractWorkflow(ABC):
@@ -37,9 +37,9 @@ class BaseContractWorkflow(ABC):
     
     def _simulate_tx_for_error_check(self, tx: Dict) -> Optional[str]:
         if env.is_prod():
-            tenderly_simulate_api_url = f"https://api.tenderly.co/api/v1/account/Yield/project/chatweb3/simulate"
+            tenderly_simulate_api_url = f"{TENDERLY_PROJECT_API_BASE_URL}/simulate"
         else:
-            tenderly_simulate_api_url = f"https://api.tenderly.co/api/v1/account/Yield/project/chatweb3/fork/{context.get_web3_fork_id()}/simulate"
+            tenderly_simulate_api_url = f"{TENDERLY_PROJECT_API_BASE_URL}/fork/{context.get_web3_fork_id()}/simulate"
         
         payload = {
             "save": False, 

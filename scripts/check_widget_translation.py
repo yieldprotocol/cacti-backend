@@ -28,6 +28,10 @@ def read_widgets_from_index():
     while True:
         results = get_batch_with_offset(weviate_get_client(), index_name, CLASS_PROPERTIES, BATCH_SIZE, offset)
 
+        if 'errors' in results and 'Cannot query field' in results['errors'][0]['message']:
+            # Index doesn't exist as it's possibly a new index version that is yet to be created
+            break
+
         if len(results["data"]["Get"][index_name]) == 0:
             break
 

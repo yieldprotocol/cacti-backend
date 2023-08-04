@@ -15,7 +15,7 @@ import ui_workflows
 import config
 import context
 import utils
-from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
+from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError, ETH_MAINNET_CHAIN_ID
 import utils.timing as timing
 from utils.coingecko.coingecko_coin_currency import coin_list, currency_list, coingecko_api_url_prefix
 import registry
@@ -227,6 +227,10 @@ def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
         return str(fetch_nft_asset_traits(*params))
     elif command == 'fetch-nft-buy-asset':
         return str(fetch_nft_buy(*params))
+    elif command == 'fetch-nfts-owned-by-address-or-domain':
+        return str(fetch_nfts_owned_by_address_or_domain(*params))
+    elif command == 'fetch-nfts-owned-by-user':
+        return str(fetch_nfts_owned_by_user(*params))
     elif command == 'fetch-balance':
         return str(fetch_balance(*params))
     elif command == 'fetch-my-balance':
@@ -508,6 +512,25 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> str:
 def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> str:
     return str(center.fetch_nft_asset_traits(network, address, token_id))
 
+
+@error_wrap
+def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) -> str:
+    return str(center.fetch_nfts_owned_by_address_or_domain(network, address_or_domain))
+
+
+@error_wrap
+def fetch_nfts_owned_by_user(network: str = None) -> str:
+    wallet_address = context.get_wallet_address()
+    parsed_network = None
+    if not network:
+        chain_id = context.get_wallet_chain_id()
+        if chain_id == ETH_MAINNET_CHAIN_ID:
+            parsed_network = "ethereum-mainnet"
+        else:
+            raise ExecError("Unsupported network")
+    else:
+        parsed_network = network
+    return str(center.fetch_nfts_owned_by_address_or_domain(parsed_network, wallet_address))
 
 @error_wrap
 def fetch_nft_buy(network: str, address: str, token_id: str) -> str:

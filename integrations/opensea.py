@@ -110,7 +110,9 @@ def fetch_all_listings(slug: str) -> List[NFTListing]:
     limit = PAGE_LIMIT
     next_cursor = None
     ret = []
-    while len(ret) < MAX_RESULTS:
+    # Arbitary limit to optimize for latency, based on hueristics related to observed number of NFTs listed for blue-chip collections. 
+    max_results = 300
+    while len(ret) < max_results:
         q = urlencode(dict(
             limit=limit,
             **(dict(next=next_cursor) if next_cursor else {})
@@ -152,7 +154,7 @@ def fetch_asset_listing_prices_with_retries(address: str, token_id: str) -> Opti
 
     return retry_on_exceptions_with_backoff(
         _get_listing_prices,
-        [ErrorToRetry(requests.exceptions.HTTPError)],
+        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
     )
 
 
@@ -165,9 +167,16 @@ def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, str]:
         for listing in listings:
             if listing.token_id not in ret or ret[listing.token_id].price_value > listing.price_value:
                 ret[listing.token_id] = listing
-        return {token_id: listing.price_str for token_id, listing in ret.items()}
+        return {token_id: dict(price_str=listing.price_str, price_value=listing.price_value) for token_id, listing in ret.items()}
 
     return retry_on_exceptions_with_backoff(
         _get_listing_prices,
-        [ErrorToRetry(requests.exceptions.HTTPError)],
+        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
     )
+
+
+def _should_retry_exception(exception):
+    if exception.response.status_code in (400, 401, 402, 403, 404, 405, 406):
+        # forbidden, unauthorized, invalid requests
+        return False
+    return True

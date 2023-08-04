@@ -13,6 +13,11 @@ from integrations.center import (
     NFTCollectionTraits, NFTCollectionTrait, NFTCollectionTraitValue,
 )
 from chat.base import ChatHistory, ChatMessage
+from utils.evaluation import (
+    Conversation, Message,
+    stream_to_str,
+    handle_empty_params,
+)
 
 from .dataset import (
     HISTORY_TOKEN_LIMIT,
@@ -21,44 +26,7 @@ from .dataset import (
 )
 
 
-EMPTY_PARAMS_ALLOWED = True
 NUM_DATAPOINTS = 1000
-
-
-@dataclass
-class Message:
-    actor: str
-    raw_payload: str
-    eval_payload: Optional[str] = None
-
-    @property
-    def payload(self):
-        if self.actor == 'user':
-            payload = self.raw_payload
-            # add capitalization perturbation for initial char
-            if rf() < 0.5:
-                return payload[:1].upper() + payload[1:]
-            else:
-                return payload
-        return self.eval_payload if self.eval_payload is not None else self.raw_payload
-
-
-
-def handle_empty_params(message):
-    if EMPTY_PARAMS_ALLOWED:
-        return message
-    else:
-        # omit the empty params payload and use the eval (text) version
-        return Message(message.actor, message.eval_payload)
-
-
-def stream_to_str(stream: List) -> str:
-    return "\n".join(map(str, stream))
-
-
-@dataclass
-class Conversation:
-    messages: List[Message]
 
 
 def rf():  # random float
