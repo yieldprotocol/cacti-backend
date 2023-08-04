@@ -1,3 +1,4 @@
+import env
 import asyncio
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Set
@@ -8,14 +9,17 @@ from starlette.middleware.sessions import SessionMiddleware
 
 import server
 import chat
-import env
 import auth
-from app import share
+
+from  utils import SERVER_ORIGINS, SERVER_SECRET_KEY
+from app import chat as app_chat
+from app import share as app_share
 
 
 app = FastAPI()
 
-origins = env.env_config['server']['origins']
+origins = SERVER_ORIGINS.split(',')
+
 cookie_name = 'session' if env.is_local() else '__Secure-session'
 
 app.add_middleware(
@@ -28,7 +32,7 @@ app.add_middleware(
 app.add_middleware(
     SessionMiddleware,
     session_cookie=cookie_name,
-    secret_key=env.env_config['server']['secret_key'],
+    secret_key=SERVER_SECRET_KEY,
     max_age=30 * 24 * 60 * 60,  # 30 days, match NextAuth
     same_site='lax' if env.is_local() else 'none',
     https_only=not env.is_local(),
@@ -87,24 +91,56 @@ async def api_logout(request: Request):
     return auth.api_logout(request)
 
 
-@app.get("/api/share_settings/{chat_session_id}")
-async def api_share_settings(request: Request, chat_session_id: str) -> Dict:
-    return share.get_settings(request, chat_session_id)
-
-
-@app.put("/api/share_settings/{chat_session_id}")
-async def api_share_settings_update(request: Request, chat_session_id: str, data: auth.AcceptJSON) -> bool:
-    return share.update_settings(request, chat_session_id, data)
-
-
-@app.post("/api/clone_session/{chat_session_id}")
-async def api_clone_session(request: Request, chat_session_id: str, data: auth.AcceptJSON) -> Optional[str]:
-    return share.clone_session(request, chat_session_id, data)
-
-
 @app.get("/api/chats")
-async def api_chats(request: Request) -> Dict:
-    return share.get_visible_chats(request)
+async def api_chats_list(request: Request) -> Dict:
+    return app_chat.list_chats(request)
+
+
+@app.post("/api/chats")
+async def api_chat_import(request: Request, data: auth.AcceptJSON) -> Optional[str]:
+    return app_chat.import_chat_from_share(request, data)
+
+
+@app.get("/api/chats/{chat_session_id}")
+async def api_chat_get(request: Request, chat_session_id: str) -> Dict:
+    # TODO: for now these only deal with chat settings, not messages of chat
+    return app_chat.get_settings(request, chat_session_id)
+
+
+@app.put("/api/chats/{chat_session_id}")
+async def api_chat_put(request: Request, chat_session_id: str, data: auth.AcceptJSON) -> bool:
+    # TODO: for now these only deal with chat settings, not messages of chat
+    return app_chat.update_settings(request, chat_session_id, data)
+
+
+@app.delete("/api/chats/{chat_session_id}")
+async def api_chat_delete(request: Request, chat_session_id: str) -> bool:
+    return app_chat.delete_chat(request, chat_session_id)
+
+
+@app.get("/api/shares")
+async def api_shares_list(request: Request) -> Dict:
+    return app_share.list_shares(request)
+
+
+@app.post("/api/shares")
+async def api_share_create(request: Request, data: auth.AcceptJSON) -> Optional[str]:
+    return app_share.create_share(request, data)
+
+
+@app.get("/api/shares/{shared_session_id}")
+async def api_share_get(request: Request, shared_session_id: str) -> Dict:
+    return app_share.view_share(request, shared_session_id)
+
+
+@app.put("/api/shares/{shared_session_id}")
+async def api_share_put(request: Request, shared_session_id: str, data: auth.AcceptJSON) -> bool:
+    return app_share.update_share(request, shared_session_id, data)
+
+
+@app.delete("/api/shares/{shared_session_id}")
+async def api_share_delete(request: Request, shared_session_id: str) -> bool:
+    return app_share.delete_share(request, shared_session_id)
 
 
 @app.websocket("/chat")
