@@ -152,7 +152,19 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         lines.append(f"yield protocol borrow action for borrow token: {params['borrowToken']}, borrow amount: {params['borrowAmount']}, collateral token: {params['collateralToken']}, collateral amount: {params['collateralAmount']}.")
     elif command == 'yield-protocol-borrow-close':
         params = json.loads(params)
-        lines.append(f"yield protocol borrow close action: {params['borrowToken']}") 
+        lines.append(f"yield protocol borrow close action: {params['borrowToken']}")
+    elif command == 'display-savings-dai-deposit':
+        params = json.loads(params)
+        lines.append(f"DAI deposit action for address: {params['receiver']}, amount: {params['value']}.")
+    elif command == 'display-savings-dai-withdraw':
+        params = json.loads(params)
+        lines.append(f"DAI withdraw action for address: {params['receiver']}, amount: {params['value']}.")
+    elif command == 'display-deposit-vault':
+        params = json.loads(params)
+        lines.append(f"Deposit vault action for token: {params['token']}, amount: {params['amount']}.")
+    elif command == 'display-withdraw-vault':
+        params = json.loads(params)
+        lines.append(f"Withdraw vault action for token: {params['token']}, amount: {params['amount']}.")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
