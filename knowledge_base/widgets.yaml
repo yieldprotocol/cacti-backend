@@ -1,5 +1,10 @@
 - _name_: display_transfer
-  description: Transfer a token from a user's wallet to another address
+  description: Tokens in Ethereum represent assets. They can be used to represent
+    fiat currencies, cryptocurrencies, or other assets. They can be traded in DEXs
+    or in centralized exchanges. They can also be transferred between users or wallets.
+    Use this widget to transfer a token from a user's wallet to another address
+  tags:
+  - wallet
   parameters:
     properties:
       address:
@@ -18,9 +23,13 @@
     type: object
   return_value_description: ''
 - _name_: fetch_nft_buy_asset
-  description: Buy an NFT asset of a collection on the OpenSea marketplace, given
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to buy an NFT asset of a collection on the OpenSea marketplace, given
     its network, address, and token ID. Don't use this if we don't have the collection
     network and address and token ID of the asset we want to purchase.
+  tags:
+  - nft
   parameters:
     properties:
       address:
@@ -39,8 +48,12 @@
     type: object
   return_value_description: a transaction dialog for purchase of the NFT
 - _name_: fetch_nft_search
-  description: Search for NFT collections given a query phrase, a description, or
-    a name
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to search for NFT collections given a query phrase, a description, or
+    a name.
+  tags:
+  - nft
   parameters:
     properties:
       query:
@@ -52,11 +65,13 @@
     type: object
   return_value_description: a list of text describing NFT collections that were found
 - _name_: fetch_nft_collection_assets_by_trait
-  description: 'List assets with a particular trait name and value from a specific
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to list assets with a particular trait name and value from a specific
     NFT collection given its network and address. Don''t use this if we don''t have
     the collection network and address.
-
-    Required parameters:'
+  tags:
+  - nft
   parameters:
     properties:
       address:
@@ -80,9 +95,13 @@
   return_value_description: a list of text describing NFT assets that match the trait
     value
 - _name_: fetch_nft_collection_assets_for_sale_by_trait
-  description: List assets available for purchase with a particular trait name and
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to list assets available for purchase with a particular trait name and
     value from a specific NFT collection given its network and address. Don't use
     this if we don't have the collection network and address.
+  tags:
+  - nft
   parameters:
     properties:
       address:
@@ -106,8 +125,12 @@
   return_value_description: a list of text describing NFT assets for sale/available
     for purchase that match the trait value
 - _name_: fetch_nft_collection_info
-  description: Retrieve data and assets of an NFT collection given its network and
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to retrieve data and assets of an NFT collection given its network and
     address.
+  tags:
+  - nft
   parameters:
     properties:
       address:
@@ -122,8 +145,12 @@
     type: object
   return_value_description: text with data and some assets of the NFT collection
 - _name_: fetch_nft_collection_assets_for_sale
-  description: Retrieve assets available for purchase of an NFT collection given its
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to retrieve assets available for purchase of an NFT collection given its
     network and address.
+  tags:
+  - nft
   parameters:
     properties:
       address:
@@ -139,7 +166,11 @@
   return_value_description: text with assets of the NFT collection that are for sale/available
     for purchase
 - _name_: fetch_nft_collection_traits
-  description: Retrieve traits of an NFT collection given its network and address.
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to retrieve traits of an NFT collection given its network and address.
+  tags:
+  - nft
   parameters:
     properties:
       address:
@@ -154,8 +185,12 @@
     type: object
   return_value_description: a list of text describing traits of the NFT collection
 - _name_: fetch_nft_collection_trait_values
-  description: Retrieve trait values of a trait of an NFT collection given its network
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to retrieve trait values of a trait of an NFT collection given its network
     and address.
+  tags:
+  - nft
   parameters:
     properties:
       address:
@@ -175,8 +210,12 @@
   return_value_description: a list of text describing values of the trait of the NFT
     collection
 - _name_: fetch_nft_asset_traits
-  description: Retrieve data and traits of an NFT asset in a collection given its
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to retrieve data and traits of an NFT asset in a collection given its
     network, address, and token ID.
+  tags:
+  - nft
   parameters:
     properties:
       address:
@@ -196,8 +235,16 @@
   return_value_description: text with data and list of trait names and values of the
     NFT asset
 - _name_: fetch_yields
-  description: Get the yields for crypto assets. The user may not specify all parameters
-    so do not guess any parameter.
+  description: Tokens in Ethereum represent assets. They can be used to represent
+    fiat currencies, cryptocurrencies, or other assets. They can be traded in DEXs
+    or in centralized exchanges. They can also be transferred between users or wallets.
+    Tokens often represent a lending position on a lending platform, for which the user
+    receives a yield. Use this widget to get the yields for crypto assets. The user
+    may not specify all parameters so do not guess any parameter.
+  tags:
+  - analytics
+  - defi
+  - yield
   parameters:
     properties:
       count:
@@ -220,8 +267,15 @@
     type: object
   return_value_description: JSON object with yield information
 - _name_: fetch_price
-  description: Get the price of a token. Note, when the quoteToken isn't explicitly
-    specified assume it to be USD
+  description: Tokens in Ethereum represent assets. They can be used to represent
+    fiat currencies, cryptocurrencies, or other assets. They can be traded in DEXs
+    or in centralized exchanges. They can also be transferred between users or wallets.
+    Use this widget to get the price of a token. Note, when the quoteToken isn't
+    explicitly specified assume it to be USD.
+  tags:
+  - analytics
+  - defi
+  - price
   parameters:
     properties:
       basetoken:
@@ -236,7 +290,13 @@
     type: object
   return_value_description: price of a base token in units of a quote token.
 - _name_: ens_from_address
-  description: Get the ENS domain name (*.eth) for a wallet address.
+  description: ENS is a decentralized naming system for wallet addresses. It allows
+    users to set a human-readable name for their wallet address. Use this widget to
+    get the ENS domain name (*.eth) for a wallet address.
+  tags:
+  - wallet
+  - address
+  - ens
   parameters:
     properties:
       address:
@@ -247,7 +307,13 @@
     type: object
   return_value_description: a humanreadable string with ENS domain
 - _name_: address_from_ens
-  description: Get the wallet address for an ENS domain name (*.eth).
+  description: ENS is a decentralized naming system for wallet addresses. It allows
+    users to set a human-readable name for their wallet address. Use this widget to
+    get the wallet address for an ENS domain name (*.eth).
+  tags:
+  - wallet
+  - address
+  - ens
   parameters:
     properties:
       domain:
@@ -258,7 +324,12 @@
     type: object
   return_value_description: a humanreadable string with wallet address
 - _name_: register_ens_domain
-  description: Register an ENS domain that ends with *.eth
+  description: ENS is a decentralized naming system for wallet addresses. It allows
+    users to set a human-readable name for their wallet address. Use this widget to
+    register an ENS domain that ends with *.eth
+  tags:
+  - ens
+  - register
   parameters:
     properties:
       domain:
@@ -269,8 +340,13 @@
     type: object
   return_value_description: ''
 - _name_: set_ens_text
-  description: Set the text record for an ENS domain that ends with *.eth in a key
+  description: ENS is a decentralized naming system for wallet addresses. It allows
+    users to set a human-readable name for their wallet address. Use this widget to
+    set the text record for an ENS domain that ends with *.eth in a key
     value pair format.
+  tags:
+  - ens
+  - update
   parameters:
     properties:
       domain:
@@ -289,7 +365,12 @@
     type: object
   return_value_description: ''
 - _name_: set_ens_primary_name
-  description: Set a primary ENS name for their connected wallet account.
+  description: ENS is a decentralized naming system for wallet addresses. It allows
+    users to set a human-readable name for their wallet address. Use this widget to
+    set a primary ENS name for their connected wallet account.
+  tags:
+  - ens
+  - update
   parameters:
     properties:
       domain:
@@ -300,8 +381,15 @@
     type: object
   return_value_description: ''
 - _name_: set_ens_avatar_nft
-  description: Set an nft as their ENS domain's avatar. Do not guess any parameter,
-    if any parameter is missing, set the default value as 'None'.
+  description: ENS is a decentralized naming system for wallet addresses. It allows
+    users to set a human-readable name for their wallet address. Users can also set
+    an NFT as their ENS domain's avatar. Use this widget to set an nft as their ENS
+    domain's avatar. Do not guess any parameter, if any parameter is missing, set the
+    default value as 'None'.
+  tags:
+  - ens
+  - update
+  - nft
   parameters:
     properties:
       domain:
@@ -320,7 +408,14 @@
     type: object
   return_value_description: ''
 - _name_: aave_supply
-  description: Deposit or supply tokens into Aave project
+  description: Aave is a variable rate borrowing and lending application. When lending,
+    the user transfers an asset to Aave, and Aave lends the user a token representing the
+    lending position. Aave pays the user an interest rate for as long as the lending position is open.
+    Use this widget to open a lend or supply position on Aave. This is also known as a deposit.
+  tags:
+  - defi
+  - aave
+  - lend
   parameters:
     properties:
       amount:
@@ -335,7 +430,14 @@
     type: object
   return_value_description: ''
 - _name_: aave_borrow
-  description: Borrow tokens from Aave project
+  description: Aave is a variable rate borrowing and lending application. When borrowing,
+    the user transfers collateral to Aave, and Aave lends the user the desired token.
+    The user pays Aave an interest rate for as long as the borrowing position is open.
+    Use this widget to open a borrowing position on Aave.
+  tags:
+  - defi
+  - aave
+  - borrow
   parameters:
     properties:
       amount:
@@ -350,7 +452,15 @@
     type: object
   return_value_description: ''
 - _name_: aave_repay
-  description: Repay back borrowed tokens from Aave project
+  description: Aave is a variable rate borrowing and lending application. When borrowing,
+    the user transfers collateral to Aave, and Aave lends the user the desired token. To
+    repay its debt, the user transfers the borrowed token to Aave, and can then withdraw
+    the collateral supplied before.
+    Use this widget to close or repay a borrowing position on Aave.
+  tags:
+  - defi
+  - aave
+  - borrow
   parameters:
     properties:
       amount:
@@ -365,7 +475,14 @@
     type: object
   return_value_description: ''
 - _name_: aave_withdraw
-  description: Withdraw deposited tokens from Aave project
+  description: Aave is a variable rate borrowing and lending application. When lending,
+    the user transfers an asset to Aave, and Aave lends the user a token representing the
+    lending position. Aave pays the user an interest rate for as long as the lending position is open.
+    Use this widget to close a lend or supply position on Aave. This is also know as a withdrawal.
+  tags:
+  - defi
+  - aave
+  - lend
   parameters:
     properties:
       amount:
@@ -382,6 +499,10 @@
 - _name_: fetch_balance
   description: Get the balance of a token in an account or wallet. Don't use this
     if we don't have the address.
+  tags:
+  - wallet
+  - address
+  - balance
   parameters:
     properties:
       address:
@@ -397,8 +518,14 @@
   return_value_description: balance of a token in an account or wallet, in decimal
     units
 - _name_: display_yield_farm
-  description: Used for the Compound project to allow the user to yield farm by putting
-    tokens or depositing tokens of a certain amount into the Compound project.
+  description: Compound is a variable rate borrowing and lending application. When lending,
+    the user transfers an asset to Compound, and Compound lends the user a token representing the
+    lending position. Compound pays the user an interest rate for as long as the lending position is open.
+    Use this widget to open a lend or supply position on Compound.
+  tags:
+  - defi
+  - compound
+  - lend
   parameters:
     properties:
       amount:
@@ -427,6 +554,10 @@
     Only useful for questions about the chat app experience. It does not know specific
     information about the web3 ecosystem, of tokens or NFTs or contracts, or access
     to live data and APIs.
+  tags:
+  - info
+  - self
+  - about
   parameters:
     properties:
       query:
@@ -442,6 +573,9 @@
   description: Answer questions using general content scraped from web3 sites. It
     does not know about this app or about widget magic commands for invoking transactions
     or fetching data about specific things like NFTs or balances.
+  tags:
+  - info
+  - about
   parameters:
     properties:
       query:
@@ -453,7 +587,13 @@
     type: object
   return_value_description: a summarized answer with source citations
 - _name_: display_zksync_deposit
-  description: Used to bridge and deposit tokens from mainnet L1 to zksync L2.
+  description: L2 networks on Ethereum provide lower gas costs and faster transactions.
+    However, users need to deposit tokens into L2 networks before they can use them.
+    Use this widget to bridge and deposit tokens from mainnet L1 to zksync L2.
+  tags:
+  - defi
+  - zksync
+  - bridge
   parameters:
     properties:
       amount:
@@ -468,7 +608,13 @@
     type: object
   return_value_description: ''
 - _name_: display_zksync_withdraw
-  description: Used to withdraw tokens from zksync L2 to mainnet L1
+  description: L2 networks on Ethereum provide lower gas costs and faster transactions.
+    However, users need to deposit tokens into L2 networks before they can use them.
+    Use this widget to withdraw tokens from zksync L2 to mainnet L1.
+  tags:
+  - defi
+  - zksync
+  - bridge
   parameters:
     properties:
       amount:
@@ -483,7 +629,13 @@
     type: object
   return_value_description: ''
 - _name_: fetch_my_balance
-  description: Get the balance of a token in the user's connected wallet
+  description: Analytics on addresses or wallets are useful for understanding the
+    position of wallets or contracts as well as their flows of funds. Analytics can
+    often be used to identify financial opportunities.
+    Use this widget to get the balance of a token in the user's connected wallet
+  tags:
+  - wallet
+  - balance 
   parameters:
     properties:
       token:
@@ -494,7 +646,13 @@
     type: object
   return_value_description: balance of a token in connected wallet, in decimal units
 - _name_: fetch_transactions
-  description: Get the transaction details in an account or wallet
+  description: Analytics on addresses or wallets are useful for understanding the
+    position of wallets or contracts as well as their flows of funds. Analytics can
+    often be used to identify financial opportunities.
+    Use this widget to get the transaction details in an account or wallet
+  tags:
+  - wallet
+  - transactions
   parameters:
     properties:
       address:
@@ -509,7 +667,14 @@
     type: object
   return_value_description: the transaction details
 - _name_: fetch_gas
-  description: Get all gas used for transactions in an account or wallet
+  description: Analytics on addresses or wallets are useful for understanding the
+    position of wallets or contracts as well as their flows of funds. Analytics can
+    often be used to identify financial opportunities.
+    Use this widget to get all gas used for transactions in an account or wallet
+  tags:
+  - wallet
+  - transactions
+  - gas
   parameters:
     properties:
       address:
@@ -520,7 +685,14 @@
     type: object
   return_value_description: the gas amount used
 - _name_: fetch_eth_in
-  description: Get all ETH inflow into an account or wallet
+  description: Analytics on addresses or wallets are useful for understanding the
+    position of wallets or contracts as well as their flows of funds. Analytics can
+    often be used to identify financial opportunities.
+    Use this widget to get all ETH inflow into an account or wallet
+  tags:
+  - wallet
+  - transactions
+  - eth
   parameters:
     properties:
       address:
@@ -531,7 +703,15 @@
     type: object
   return_value_description: the inflow ETH amount
 - _name_: fetch_eth_out
-  description: Get all ETH outflow from an account or wallet
+  description: Analytics on addresses or wallets are useful for understanding the
+    position of wallets or contracts as well as their flows of funds. Analytics can
+    often be used to identify financial opportunities.
+    Use this widget to get all ETH outflow from an account or wallet.
+  tags:
+  - analytics
+  - wallet
+  - transactions
+  - eth
   parameters:
     properties:
       address:
@@ -542,14 +722,22 @@
     type: object
   return_value_description: the outflow ETH amount
 - _name_: display_uniswap
-  description: 'use the Uniswap decentralized application for trading one token for
-    another. To create a Uniswap transaction, you need either:
+  description: DEXs or Decentralized Exchanges are platforms that allow users to
+    trade tokens with each other. Uniswap is a DEX that allows users to trade tokens
+    with each other without an order book. Instead, Uniswap uses liquidity pools to
+    facilitate trades. Use this widget to trade tokens on Uniswap. To create a Uniswap
+    transaction, you need either
 
     1.) A token to sell, a token to buy, the transaction keyword "SELLAMOUNT", and
     an amount to sell, OR
 
     2.) A token to sell, a token to buy, the transaction keyword "BUYAMOUNT", and
-    an amount to buy.'
+    an amount to buy.
+  tags:
+  - defi
+  - uniswap
+  - swap
+  - trade
   parameters:
     properties:
       amount:
@@ -574,7 +762,13 @@
     type: object
   return_value_description: ''
 - _name_: fetch_nfts_owned_by_address_or_domain
-  description: Used to fetch NFTs owned by a wallet address or ENS domain on a particular network
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to fetch NFTs owned by a wallet address or ENS domain on a particular network
+  tags:
+  - nft
+  - wallet
+  - address
   parameters:
     properties:
       network:
@@ -589,7 +783,12 @@
     type: object
   return_value_description: List of NFT Assets
 - _name_: fetch_nfts_owned_by_user
-  description: Used to fetch NFTs owned by the current user
+  description: NFTs are non-fungible tokens. They are unique and can be used to represent
+    ownership of digital assets. Usually, they include some sort of image or other media and can be traded.
+    Use this widget to fetch NFTs owned by the current user
+  tags:
+  - nft
+  - wallet
   parameters:
     properties:
       network:
@@ -600,7 +799,14 @@
     type: object
   return_value_description: List of NFT Assets
 - _name_: display_stake_sfrxeth
-  description: 'Exchange ETH for sfrxETH using the frxETHMinter contract'
+  description: Staking ETH is a way to earn yield on ETH. The user deposits ETH into
+    a staking contract and receives more ETH than they deposited when the position is withdrawn.
+    Use this widget to stake ETH on FRAX and receive sfrxETH.
+  tags:
+  - defi
+  - stake
+  - frax
+  - sfrxeth
   parameters:
     properties:
       receiver:
@@ -615,7 +821,15 @@
     type: object
   return_value_description: ''
 - _name_: display_yield_protocol_lend
-  description: use the yield protocol to lend tokens at a fixed rate
+  description: The Yield Protocol is a fixed rate borrowing and lending application. when lending,
+    the user transfers an asset to the Yield Protocol, and the Yield Protocol gives the user a token
+    representing the lending position. Yield Protocol pays an interest rate to the user while lending.
+    Use this widget to open a lend position on the yield protocol.
+  tags:
+  - defi
+  - yield
+  - fixed
+  - lend
   parameters:
     properties:
       token:
@@ -630,7 +844,15 @@
     type: object
   return_value_description: ""
 - _name_: display_yield_protocol_lend_close
-  description: use the yield protocol to close a lend position
+  description: The Yield Protocol is a fixed rate borrowing and lending application. when lending,
+    the user transfers an asset to the Yield Protocol, and the Yield Protocol gives the user a token
+    representing the lending position. Yield Protocol pays an interest rate to the user while lending.
+    Use this widget to close a lend position on the yield protocol.
+  tags:
+  - defi
+  - yield
+  - fixed
+  - lend
   parameters:
     properties:
       token:
@@ -645,7 +867,15 @@
     type: object
   return_value_description: ""
 - _name_: display_yield_protocol_borrow
-  description: use the yield protocol to borrow a token using a different token as collateral
+  description: The Yield Protocol is a fixed rate borrowing and lending application. when borrowing,
+    the user transfers collateral to the Yield Protocol, and the Yield Protocol lends the user a token.
+    The user pays an interest rate on the borrowed token. You can use this widget on yield protocol 
+    to borrow a token using a different token as collateral.
+  tags:
+  - defi
+  - yield
+  - fixed
+  - borrow
   parameters:
     properties:
       borrowToken:
@@ -668,7 +898,16 @@
     type: object
   return_value_description: ""
 - _name_: display_yield_protocol_borrow_close
-  description: use the yield protocol to close a vault (borrow position) made up of debt and collateral
+  description: The Yield Protocol is a fixed rate borrowing and lending application. when borrowing,
+    the user transfers collateral to the Yield Protocol, and the Yield Protocol lends the user a token.
+    The user pays an interest rate on the borrowed token. You can use this widget on yield protocol to
+    close a vault (borrow position) made up of debt and collateral. The user will then receive the
+    collateral back.
+  tags:
+  - defi
+  - yield
+  - fixed
+  - borrow
   parameters:
     properties:
       borrowToken:
