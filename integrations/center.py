@@ -263,6 +263,8 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
         response.raise_for_status()
         timing.log('search_done')
         obj = response.json()
+        if not obj['items']:
+            break
         for item in obj['items']:
             token_id = item['tokenId']
             if token_prices is not None:
