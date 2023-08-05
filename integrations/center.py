@@ -29,6 +29,8 @@ API_V2_URL = "https://api.center.dev/v2"
 MAX_RESULTS = 12
 PAGE_LIMIT = 12
 
+MAX_RESULTS_FOR_TRAITS = 100
+PAGE_LIMIT_FOR_TRAITS = 100
 
 @dataclass
 class NFTCollection(ContainerMixin):
@@ -416,10 +418,10 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timin
 
 def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTraits:
     collection = fetch_nft_collection(network, address)
-    limit = PAGE_LIMIT
+    limit = PAGE_LIMIT_FOR_TRAITS
     offset = 0
     traits = []
-    while len(traits) < MAX_RESULTS:
+    while len(traits) < MAX_RESULTS_FOR_TRAITS:
         q = urlencode(dict(
             limit=limit,
             offset=offset,
@@ -455,10 +457,10 @@ def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTrai
 
 def fetch_nft_collection_trait_values(network: str, address: str, trait: str) -> NFTCollectionTraitValues:
     collection = fetch_nft_collection(network, address)
-    limit = PAGE_LIMIT
+    limit = PAGE_LIMIT_FOR_TRAITS
     offset = 0
     values = []
-    while len(values) < MAX_RESULTS:
+    while len(values) < MAX_RESULTS_FOR_TRAITS:
         q = urlencode(dict(
             limit=limit,
             offset=offset,
