@@ -87,7 +87,8 @@ class ChatSession(Base, Timestamp):  # type: ignore
 
     source_shared_session_id = Column(UUID(as_uuid=True), nullable=True)
 
-    Index('chat_session_user', user_id, deleted)
+
+Index('chat_session_by_user_deleted_created', ChatSession.user_id, ChatSession.deleted, ChatSession.created)
 
 
 class ChatMessage(Base, Timestamp):  # type: ignore
@@ -122,7 +123,8 @@ class SharedSession(Base, Timestamp):  # type: ignore
 
     source_chat_session_id = Column(UUID(as_uuid=True), ForeignKey('chat_session.id'), nullable=False)
 
-    Index('shared_session_user', user_id, deleted)
+
+Index('shared_session_by_user_deleted_created', SharedSession.user_id, SharedSession.deleted, SharedSession.created)
 
 
 class SharedMessage(Base, Timestamp):  # type: ignore

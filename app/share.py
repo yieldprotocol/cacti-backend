@@ -80,6 +80,10 @@ def view_share(request: Request, shared_session_id: str) -> Dict:
 
     if shared_session.name:
         ret['name'] = shared_session.name
+
+    ret['created'] = shared_session.created
+    ret['updated'] = shared_session.updated
+
     messages = []
     for shared_message in SharedMessage.query.filter(
             SharedMessage.shared_session_id == shared_session_id
