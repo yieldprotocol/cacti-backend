@@ -131,6 +131,7 @@ ns = ENS.from_web3(w3)
 
 def estimate_gas(tx):
     if USE_CLIENT_TO_ESTIMATE_GAS:
+        # Return None (null) to delegate gas estimation to the client
         return None
     return hex(context.get_web3_provider().eth.estimate_gas(tx))
 
