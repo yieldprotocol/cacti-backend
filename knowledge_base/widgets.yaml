@@ -599,4 +599,82 @@
       - network
     type: object
   return_value_description: List of NFT Assets
-  
+- _name_: display_stake_sfrxeth
+  description: 'Exchange ETH for sfrxETH using the frxETHMinter contract'
+  parameters:
+    properties:
+      receiver:
+        description: Address to receive the sfrxETH
+        type: string
+      value:
+        description: Amount of ETH to exchange for sfrxETH
+        type: string
+    required:
+    - receiver
+    - value
+    type: object
+  return_value_description: ''
+- _name_: display_yield_protocol_lend
+  description: use the yield protocol to lend tokens at a fixed rate
+  parameters:
+    properties:
+      token:
+        description: the token to lend
+        type: string
+      amount:
+        description: amount of token to lend
+        type: string
+    required:
+      - token
+      - amount
+    type: object
+  return_value_description: ""
+- _name_: display_yield_protocol_lend_close
+  description: use the yield protocol to close a lend position
+  parameters:
+    properties:
+      token:
+        description: the token to close
+        type: string
+      amount:
+        description: amount of token to close
+        type: string
+    required:
+      - token
+      - amount
+    type: object
+  return_value_description: ""
+- _name_: display_yield_protocol_borrow
+  description: use the yield protocol to borrow a token using a different token as collateral
+  parameters:
+    properties:
+      borrowToken:
+        description: the token to borrow
+        type: string
+      borrowAmount:
+        description: amount of token to borrow
+        type: string
+      collateralToken:
+        description: the token to use as collateral
+        type: string
+      collateralAmount:
+        description: amount of collateral token to use
+        type: string
+    required:
+      - borrowToken
+      - borrowAmount
+      - collateralToken
+      - collateralAmount
+    type: object
+  return_value_description: ""
+- _name_: display_yield_protocol_borrow_close
+  description: use the yield protocol to close a vault (borrow position) made up of debt and collateral
+  parameters:
+    properties:
+      borrowToken:
+        description: the token that was borrowed
+        type: string
+    required:
+      - borrowToken
+    type: object
+  return_value_description: ""
