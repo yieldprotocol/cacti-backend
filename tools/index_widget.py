@@ -341,13 +341,10 @@ def fetch_gas(wallet_address: str) -> str:
 @error_wrap
 def fetch_app_info(query: str) -> Callable:
     def fn(token_handler):
-        app_info_index = config.initialize(config.app_info_index)
         tool = dict(
-            type="tools.index_app_info.IndexAppInfoTool",
+            name="AppUsageGuideTool",
+            type="tools.app_usage_guide.AppUsageGuideTool",
             _streaming=True,
-            name="AppInfoIndexAnswer",
-            index=app_info_index,
-            top_k=3,
         )
         tool = streaming.get_streaming_tools([tool], token_handler)[0]
         tool._run(query)
