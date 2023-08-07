@@ -8,6 +8,9 @@ SERVER_HOST=os.environ['SERVER_HOST']
 SERVER_ORIGINS=os.environ['SERVER_ORIGINS']
 SERVER_SECRET_KEY=os.environ['SERVER_SECRET_KEY']
 
+# Let FE/Wallet handle gas estimation as it would be more up-to-date, default is true
+USE_CLIENT_TO_ESTIMATE_GAS = os.environ.get('USE_FRONTEND_TO_ESTIMATE_GAS', 'true').lower() == 'true'
+
 ### Storage ###
 
 WEAVIATE_URL = os.environ['WEAVIATE_URL']

@@ -11,7 +11,7 @@ import functools
 import traceback
 import context
 
-from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL, CHAIN_ID_TO_NETWORK_NAME
+from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL, CHAIN_ID_TO_NETWORK_NAME, USE_CLIENT_TO_ESTIMATE_GAS
 from .evaluation import get_dummy_user_info
 
 DEFAULT_USER_INFO = {
@@ -130,6 +130,8 @@ ns = ENS.from_web3(w3)
 
 
 def estimate_gas(tx):
+    if USE_CLIENT_TO_ESTIMATE_GAS:
+        return None
     return hex(context.get_web3_provider().eth.estimate_gas(tx))
 
 def get_token_len(s: str) -> int:
