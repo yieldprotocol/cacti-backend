@@ -27,7 +27,6 @@ fetch_scraped_sites
 display_zksync_deposit
 display_zksync_withdraw
 fetch_my_balance
-fetch_transactions
 fetch_gas
 fetch_eth_in
 fetch_eth_out
