@@ -271,7 +271,8 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
                 if for_sale_only and token_id not in token_prices:
                     # filter to only for-sale assets
                     continue
-                price = token_prices.get(token_id, 'unlisted')
+                price_dict = token_prices.get(token_id)
+                price = price_dict['price_str'] if price_dict else 'unlisted'
             else:
                 price = None
             asset = NFTAsset(
@@ -333,7 +334,8 @@ def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAsse
                 continue
             token_id = item['tokenId']
             if token_prices is not None:
-                price = token_prices.get(token_id, 'unlisted')
+                price_dict = token_prices.get(token_id)
+                price = price_dict['price_str'] if price_dict else 'unlisted'
             else:
                 price = None
             asset = NFTAsset(
