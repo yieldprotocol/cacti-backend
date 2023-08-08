@@ -241,11 +241,15 @@ def _is_valid_asset(asset: NFTAsset) -> bool:
 def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> Generator[NFTAsset, None, None]:
     timing.log('search_begin')
     if network == "ethereum-mainnet":
+        normalized_trait_name = trait_name.title()
+        normalized_trait_value = trait_value.title()
         token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
     else:
+        normalized_trait_name = trait_name
+        normalized_trait_value = trait_value
         token_prices = None
 
-    payload = {"query": {trait_name: [trait_value]}}
+    payload = {"query": {normalized_trait_name: [normalized_trait_value]}}
     headers = {
         "content-type": "application/json",
         **HEADERS
@@ -271,7 +275,8 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
                 if for_sale_only and token_id not in token_prices:
                     # filter to only for-sale assets
                     continue
-                price = token_prices.get(token_id, 'unlisted')
+                price_dict = token_prices.get(token_id)
+                price = price_dict['price_str'] if price_dict else 'unlisted'
             else:
                 price = None
             asset = NFTAsset(
@@ -333,7 +338,8 @@ def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAsse
                 continue
             token_id = item['tokenId']
             if token_prices is not None:
-                price = token_prices.get(token_id, 'unlisted')
+                price_dict = token_prices.get(token_id)
+                price = price_dict['price_str'] if price_dict else 'unlisted'
             else:
                 price = None
             asset = NFTAsset(
@@ -511,9 +517,10 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
 
 def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAssetTraits:
     if network == "ethereum-mainnet":
-        token_price = opensea.fetch_asset_listing_prices_with_retries(address, token_id) or 'unlisted'
+        price_dict = opensea.fetch_asset_listing_prices_with_retries(address, token_id)
+        price = price_dict['price_str'] if price_dict else 'unlisted'
     else:
-        token_price = None
+        price = None
     url = f"{API_URL}/{network}/{address}/{token_id}"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
@@ -525,7 +532,7 @@ def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAsse
         collection_name=obj['collectionName'],
         name=obj['name'],
         preview_image_url=obj['mediumPreviewImageUrl'],
-        price=token_price,
+        price=price
     )
     values = []
     for attrib in obj.get('metadata', {}).get('attributes', []):
