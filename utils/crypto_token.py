@@ -62,6 +62,13 @@ def get_token_balance(web3_provider: Web3, chain_id: int, token: str, wallet_add
         return _mainnet_token_balance(web3_provider, token, wallet_address)
     else:
         raise Exception(f"Chain ID {chain_id} not supported by system")
+    
+def format_token_balance(chain_id: int, token: str, amount: int) -> str:
+    if chain_id == 1:
+        decimals = _mainnet_get_token_profile(token)["decimals"]
+        return str(amount / 10 ** decimals)
+    else:
+        raise Exception(f"Chain ID {chain_id} not supported by system")
 
 def has_sufficient_erc20_allowance(web3_provider: Web3, chain_id: int, token: str, wallet_address: str, spender_address: str, amount: str) -> bool:
     if chain_id == 1:
