@@ -53,7 +53,7 @@ ALCHEMY_API_KEY =  os.getenv('ALCHEMY_API_KEY', None)
 WIDGET_INFO_TOKEN_LIMIT = 4000
 
 # Widget Index
-WIDGET_INDEX_NAME = "WidgetV17"
+WIDGET_INDEX_NAME = "WidgetV18"
 
 def get_widget_index_name():
     if env.is_local():

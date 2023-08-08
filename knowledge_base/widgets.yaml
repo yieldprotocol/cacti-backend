@@ -494,21 +494,6 @@
     - token
     type: object
   return_value_description: balance of a token in connected wallet, in decimal units
-- _name_: fetch_transactions
-  description: Get the transaction details in an account or wallet
-  parameters:
-    properties:
-      address:
-        description: Address of the account or wallet to check the transactions of.
-        type: string
-      last_n:
-        description: How many latest transactions the user wants to get.
-        type: string
-    required:
-    - address
-    - last_n
-    type: object
-  return_value_description: the transaction details
 - _name_: fetch_gas
   description: Get all gas used for transactions in an account or wallet
   parameters:
