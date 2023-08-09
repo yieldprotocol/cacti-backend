@@ -152,7 +152,13 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         lines.append(f"yield protocol borrow action for borrow token: {params['borrowToken']}, borrow amount: {params['borrowAmount']}, collateral token: {params['collateralToken']}, collateral amount: {params['collateralAmount']}.")
     elif command == 'yield-protocol-borrow-close':
         params = json.loads(params)
-        lines.append(f"yield protocol borrow close action: {params['borrowToken']}") 
+        lines.append(f"yield protocol borrow close action: {params['borrowToken']}")
+    elif command == "deposit-eth-lido":
+        params = json.loads(params)
+        lines.append(f"deposit eth to lido action for amount: {params['amount']}.")
+    elif command == "withdraw-eth-lido":
+        params = json.loads(params)
+        lines.append(f"withdraw eth from lido action for amount: {params['amount']}.")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
