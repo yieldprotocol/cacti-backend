@@ -64,7 +64,7 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         operation = params['operation']
         if operation == 'create':
             prefix = params.get('prefix')
-            prefix =  f' ({prefix})' if prefix else ''
+            prefix = f' ({prefix})' if prefix else ''
             lines.append(f'A list of items{prefix}:')
         elif operation == 'update':
             prefix = params.get('prefix') or ''
@@ -138,6 +138,12 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     elif command == 'zksync-withdraw':
         params = json.loads(params)
         lines.append(f"ZkSync bridge withdraw action for token: {params['token']}, amount: {params['amount']}.")
+    elif command == 'arbitrum-deposit':
+        params = json.load(params)
+        lines.append(f"Arbitrum bridge deposit action for token {params['token']} amount: {params['amount']}.")
+    elif command == 'arbitrum-withdraw':
+        params = json.load(params)
+        lines.append(f"Arbitrum bridge withdraw action for token: {params['token']}, amount: {params['amount']}.")
     elif command == 'stake-sfrxeth':
         params = json.load(params)
         lines.append(f"sfrxETH deposit action for address: {params['receiver']}, amount: {params['value']}.")
