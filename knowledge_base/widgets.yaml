@@ -611,8 +611,8 @@
         description: Amount of ETH to exchange for sfrxETH
         type: string
     required:
-      - receiver
-      - value
+    - receiver
+    - value
     type: object
   return_value_description: ''
 - _name_: display_arbitrum_deposit
@@ -626,8 +626,8 @@
         description: amount to deposit
         type: string
     required:
-      - token
-      - amount
+    - token
+    - amount
     type: object
   return_value_description: ''
 - _name_: display_arbitrum_withdraw
@@ -641,7 +641,7 @@
         description: amount to withdraw
         type: string
     required:
-      - token
-      - amount
+    - token
+    - amount
     type: object
   return_value_description: ''
