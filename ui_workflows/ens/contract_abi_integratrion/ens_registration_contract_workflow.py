@@ -13,6 +13,10 @@ from database.models import (
 from ..common import is_domain_registered, get_ens_registrar_controller_contract, ENS_PUBLIC_RESOLVER_ADDRESS
 
 ONE_MINUTE_REQUIRED_WAIT = 60
+
+# Add a Buffer time to ENS 1min wait time to account for any clock drift between systems
+BUFFER_TIME_SECS = 10
+
 ONE_YEAR_DURATION = 365 * 24 * 60 * 60
 
 class ENSRegistrationContractWorkflow(BaseMultiStepContractWorkflow):
@@ -22,8 +26,8 @@ class ENSRegistrationContractWorkflow(BaseMultiStepContractWorkflow):
         self.domain = workflow_params['domain']
         self.name_label = self.domain.split('.')[0]
 
-        step1 = RunnableStep("request_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.domain} registration request. After confirming transaction, ENS will take ~1min to process next step", self.step_1_request_registration)
-        step2 = RunnableStep("confirm_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.domain} confirm registration", self.step_2_confirm_registration)
+        step1 = RunnableStep("request_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.domain} registration request for 1 year. After confirming transaction, ENS will take ~1min to process next step", self.step_1_request_registration)
+        step2 = RunnableStep("confirm_registration", WorkflowStepUserActionType.tx, f"ENS domain {self.domain} confirm registration for 1 year", self.step_2_confirm_registration)
 
         steps = [step1, step2]
 
@@ -79,7 +83,7 @@ class ENSRegistrationContractWorkflow(BaseMultiStepContractWorkflow):
         secret = self.prev_step.step_state['secret']
 
         # Wait for 1 min as per ENS docs - https://docs.ens.domains/contract-api-reference/.eth-permanent-registrar/controller
-        time.sleep(ONE_MINUTE_REQUIRED_WAIT)
+        time.sleep(ONE_MINUTE_REQUIRED_WAIT + BUFFER_TIME_SECS)
 
         rent_price = get_ens_registrar_controller_contract().functions.rentPrice(self.name_label, ONE_YEAR_DURATION).call({})
 
