@@ -52,12 +52,12 @@
     type: object
   return_value_description: a list of text describing NFT collections that were found
 - _name_: fetch_nft_collection_assets_by_trait
-  description:
-    "List assets with a particular trait name and value from a specific
+  description: List assets with a particular trait name and value from a specific
     NFT collection given its network and address. Don't use this if we don't have
-    the collection network and address.
-
-    Required parameters:"
+    the collection network and address. Don't use this without first fetching the
+    valid list of trait names or trait values with the fetch_nft_collection_traits
+    or fetch_nft_collection_trait_values functions so we know the proper casing as
+    this search is case-sensitive.
   parameters:
     properties:
       address:
@@ -67,10 +67,10 @@
         description: Network of the NFT collection.
         type: string
       traitName:
-        description: Name of trait.
+        description: Name of trait (case-sensitive).
         type: string
       traitValue:
-        description: Value of trait.
+        description: Value of trait (case-sensitive).
         type: string
     required:
     - network
@@ -494,21 +494,6 @@
     - token
     type: object
   return_value_description: balance of a token in connected wallet, in decimal units
-- _name_: fetch_transactions
-  description: Get the transaction details in an account or wallet
-  parameters:
-    properties:
-      address:
-        description: Address of the account or wallet to check the transactions of.
-        type: string
-      last_n:
-        description: How many latest transactions the user wants to get.
-        type: string
-    required:
-    - address
-    - last_n
-    type: object
-  return_value_description: the transaction details
 - _name_: fetch_gas
   description: Get all gas used for transactions in an account or wallet
   parameters:
@@ -645,3 +630,67 @@
     - amount
     type: object
   return_value_description: ''
+- _name_: display_yield_protocol_lend
+  description: use the yield protocol to lend tokens at a fixed rate
+  parameters:
+    properties:
+      token:
+        description: the token to lend
+        type: string
+      amount:
+        description: amount of token to lend
+        type: string
+    required:
+      - token
+      - amount
+    type: object
+  return_value_description: ""
+- _name_: display_yield_protocol_lend_close
+  description: use the yield protocol to close a lend position
+  parameters:
+    properties:
+      token:
+        description: the token to close
+        type: string
+      amount:
+        description: amount of token to close
+        type: string
+    required:
+      - token
+      - amount
+    type: object
+  return_value_description: ""
+- _name_: display_yield_protocol_borrow
+  description: use the yield protocol to borrow a token using a different token as collateral
+  parameters:
+    properties:
+      borrowToken:
+        description: the token to borrow
+        type: string
+      borrowAmount:
+        description: amount of token to borrow
+        type: string
+      collateralToken:
+        description: the token to use as collateral
+        type: string
+      collateralAmount:
+        description: amount of collateral token to use
+        type: string
+    required:
+      - borrowToken
+      - borrowAmount
+      - collateralToken
+      - collateralAmount
+    type: object
+  return_value_description: ""
+- _name_: display_yield_protocol_borrow_close
+  description: use the yield protocol to close a vault (borrow position) made up of debt and collateral
+  parameters:
+    properties:
+      borrowToken:
+        description: the token that was borrowed
+        type: string
+    required:
+      - borrowToken
+    type: object
+  return_value_description: ""

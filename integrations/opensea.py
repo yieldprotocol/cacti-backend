@@ -144,12 +144,12 @@ def fetch_all_listings(slug: str) -> List[NFTListing]:
     return ret
 
 
-def fetch_asset_listing_prices_with_retries(address: str, token_id: str) -> Optional[str]:
+def fetch_asset_listing_prices_with_retries(address: str, token_id: str) -> Optional[Dict[str, Union[str, int]]]:
 
     def _get_listing_prices():
         listings = fetch_listings(address, token_id)
         for listing in listings:
-            return listing.price_str
+            return dict(price_str=listing.price_str, price_value=listing.price_value)
         return None
 
     return retry_on_exceptions_with_backoff(
@@ -158,7 +158,7 @@ def fetch_asset_listing_prices_with_retries(address: str, token_id: str) -> Opti
     )
 
 
-def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, str]:
+def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, Dict[str, Union[str, int]]]:
 
     def _get_listing_prices():
         contract = fetch_contract(address)

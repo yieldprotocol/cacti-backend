@@ -1,13 +1,14 @@
-from typing import Any, Callable, Dict, List, Optional, Union
 import functools
 import json
 import time
 import traceback
 
+from typing import Any, Callable, Dict, List, Optional, Union
+
 from fastapi import Request, WebSocket
 import siwe
 
-import env
+from utils import SERVER_HOST
 from database import utils as db_utils
 from database.models import (
     db_session, User, Wallet, UserWallet,
@@ -18,7 +19,7 @@ from database.models import (
 
 NONCE_EXPIRY_SECS = 60 * 60  # one hour
 AcceptJSON = Union[List, Dict, Any]  # a type that allows FastAPI to accept JSON objects
-host = env.env_config['server']['host']
+host = SERVER_HOST
 
 
 def api_nonce(request: Request) -> str:

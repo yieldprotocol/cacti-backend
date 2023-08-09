@@ -1,3 +1,4 @@
+import env
 import asyncio
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Set
@@ -8,15 +9,17 @@ from starlette.middleware.sessions import SessionMiddleware
 
 import server
 import chat
-import env
 import auth
+
+from  utils import SERVER_ORIGINS, SERVER_SECRET_KEY
 from app import chat as app_chat
 from app import share as app_share
 
 
 app = FastAPI()
 
-origins = env.env_config['server']['origins']
+origins = SERVER_ORIGINS.split(',')
+
 cookie_name = 'session' if env.is_local() else '__Secure-session'
 
 app.add_middleware(
@@ -29,7 +32,7 @@ app.add_middleware(
 app.add_middleware(
     SessionMiddleware,
     session_cookie=cookie_name,
-    secret_key=env.env_config['server']['secret_key'],
+    secret_key=SERVER_SECRET_KEY,
     max_age=30 * 24 * 60 * 60,  # 30 days, match NextAuth
     same_site='lax' if env.is_local() else 'none',
     https_only=not env.is_local(),

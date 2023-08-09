@@ -15,7 +15,7 @@ import ui_workflows
 import config
 import context
 import utils
-from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError, ETH_MAINNET_CHAIN_ID
+from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError, ETH_MAINNET_CHAIN_ID, get_token_balance, format_token_balance
 import utils.timing as timing
 from utils.coingecko.coingecko_coin_currency import coin_list, currency_list, coingecko_api_url_prefix
 import registry
@@ -309,10 +309,10 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
 def fetch_balance(token: str, wallet_address: str) -> str:
     if not wallet_address or wallet_address == 'None':
         raise FetchError(f"Please specify the wallet address to check the token balance of.")
-    contract_address = etherscan.get_contract_address(token)
-    if not contract_address:
-        raise FetchError(f"Could not look up contract address of {token}. Please try a different one.")
-    return etherscan.get_balance(contract_address, wallet_address)
+    web3 = context.get_web3_provider()
+    chain_id = context.get_wallet_chain_id()
+    balance = get_token_balance(web3, chain_id, token, wallet_address)
+    return format_token_balance(chain_id, token, balance)
 
 
 @error_wrap
@@ -341,13 +341,10 @@ def fetch_gas(wallet_address: str) -> str:
 @error_wrap
 def fetch_app_info(query: str) -> Callable:
     def fn(token_handler):
-        app_info_index = config.initialize(config.app_info_index)
         tool = dict(
-            type="tools.index_app_info.IndexAppInfoTool",
+            name="AppUsageGuideTool",
+            type="tools.app_usage_guide.AppUsageGuideTool",
             _streaming=True,
-            name="AppInfoIndexAnswer",
-            index=app_info_index,
-            top_k=3,
         )
         tool = streaming.get_streaming_tools([tool], token_handler)[0]
         tool._run(query)
