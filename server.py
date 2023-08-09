@@ -212,15 +212,19 @@ def message_received(client_state, send_response, message):
         resume_from_message_id = payload.get('resumeFromMessageId')
         before_message_id = payload.get('insertBeforeMessageId')
 
-        # send a message to clear frontend message list
-        msg = json.dumps({
-            'messageId': '',
-            'actor': 'system',
-            'type': 'clear',
-            'payload': '',
-            'feedback': 'n/a',
-        })
-        send_response(msg)
+        # send a message to clear frontend message list, if we expect a fresh session.
+        # this is sometimes needed if we switch sessions quickly on frontend before an
+        # earlier session has fully loaded, and we end up with messages from a different
+        # session still loading in.
+        if resume_from_message_id is None:
+            msg = json.dumps({
+                'messageId': '',
+                'actor': 'system',
+                'type': 'clear',
+                'payload': '',
+                'feedback': 'n/a',
+            })
+            send_response(msg)
 
         if not _ensure_can_view_chat_session(session_id, client_state, send_response):
             return
@@ -269,7 +273,11 @@ def message_received(client_state, send_response, message):
     if history is None:
         # generate uuid, commit to database immediately so user's chat list can fetch this
         session_id = uuid.uuid4()
-        chat_session = ChatSession(id=session_id, user_id=client_state.user_id)
+        chat_session = ChatSession(
+            id=session_id,
+            user_id=client_state.user_id,
+            name=payload,
+        )
         db_session.add(chat_session)
         db_session.commit()
 

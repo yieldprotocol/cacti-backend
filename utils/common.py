@@ -11,7 +11,14 @@ import functools
 import traceback
 import context
 
-from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL
+from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL, CHAIN_ID_TO_NETWORK_NAME, USE_CLIENT_TO_ESTIMATE_GAS
+from .evaluation import get_dummy_user_info
+
+DEFAULT_USER_INFO = {
+    "Wallet Address": None,
+    "ENS Domain": None,
+    "Network": None,
+}
 
 
 def modelname_to_contextsize(modelname: str) -> int:
@@ -103,6 +110,15 @@ yaml_file_path = f"{os.getcwd()}/knowledge_base/widgets.yaml"
 WIDGETS, FUNCTIONS = widgets_yaml2formats(yaml_file_path)
 
 
+def widget_subset(widget_names):
+    filtered_widgets = []
+    for widget_doc in WIDGETS.split('---\n'):
+        widget_name = widget_doc.split('(')[0].split('<|')[1].replace('-', '_').strip()
+        if widget_name in widget_names:
+            filtered_widgets.append(widget_doc)
+    return '---\n'.join(filtered_widgets)
+
+
 def set_api_key():
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
     OpenAI.api_key = OPENAI_API_KEY
@@ -114,6 +130,9 @@ ns = ENS.from_web3(w3)
 
 
 def estimate_gas(tx):
+    if USE_CLIENT_TO_ESTIMATE_GAS:
+        # Return None (null) to delegate gas estimation to the client
+        return None
     return hex(context.get_web3_provider().eth.estimate_gas(tx))
 
 def get_token_len(s: str) -> int:
@@ -176,3 +195,29 @@ def ensure_wallet_connected(fn):
             raise ConnectedWalletRequired()
         return fn(*args, **kwargs)
     return wrapped_fn
+
+
+def get_real_user_info(user_info: dict) -> dict:
+    try:
+        user_info["Wallet Address"] = context.get_wallet_address()
+        user_info["ENS Domain"] = ns.name(user_info["Wallet Address"])
+        chain_id = context.get_wallet_chain_id()
+        if chain_id in CHAIN_ID_TO_NETWORK_NAME: user_info["Network"] = CHAIN_ID_TO_NETWORK_NAME[chain_id]
+        return user_info
+    except Exception as e:
+        traceback.print_exc()
+        return DEFAULT_USER_INFO
+
+DUMMY_WALLET_ADDRESS = "0x4eD15A17A9CDF3hc7D6E829428267CaD67d95F8F"
+DUMMY_ENS_DOMAIN = "cacti1729.eth"
+DUMMY_NETWORK = "ethereum-mainnet"
+
+def get_user_info(eval : bool = False) -> str:
+    user_info = DEFAULT_USER_INFO
+    user_info_str = ""
+    if eval:
+        user_info = get_dummy_user_info(user_info)
+    else:
+        user_info = get_real_user_info(user_info)
+    for k, v in user_info.items(): user_info_str += f"User {k} = {v}\n" 
+    return user_info_str.strip()

@@ -1,70 +1,26 @@
 from typing import Dict, Optional
+from datetime import datetime
 import uuid
 
 from fastapi import Request
+from sqlalchemy import insert
 
 from database import utils as db_utils
 from database.models import (
     db_session, ChatSession, ChatMessage, PrivacyType,
+    SharedSession, SharedMessage,
 )
 import auth
 
 
 @db_utils.close_db_session()
-def get_settings(request: Request, chat_session_id: str) -> Dict:
-    # Get visibility settings for a chat session
-    chat_session = ChatSession.query.get(chat_session_id)
-    if not chat_session:
-        return {}
+@auth.authenticate_user_id()
+def create_share(request: Request, data: auth.AcceptJSON, user_id: Optional[str] = None) -> Optional[str]:
+    # Share an existing session as a new shared session
+    source_session_id = data.get('chatSessionId')
+    if not source_session_id:
+        return None
 
-    user_id = auth.fetch_authenticated_user_id(request)
-    if not user_id and chat_session.privacy_type != PrivacyType.public:
-        return {}
-
-    ret = {}
-    if chat_session.privacy_type == PrivacyType.public:
-        ret['visibility'] = 'public'
-    elif chat_session.privacy_type == PrivacyType.private:
-        ret['visibility'] = 'private'
-
-    # data about whether you have permissions to edit
-    can_edit = user_id is not None and str(chat_session.user_id) == user_id
-    ret['canEdit'] = can_edit
-
-    return ret
-
-
-@db_utils.close_db_session()
-def update_settings(request: Request, chat_session_id: str, data: auth.AcceptJSON) -> bool:
-    # for now, just support toggling privacy, if you own it
-    user_id = auth.fetch_authenticated_user_id(request)
-    if not user_id:
-        return False
-
-    chat_session = ChatSession.query.get(chat_session_id)
-    if not chat_session:
-        return False
-
-    if str(chat_session.user_id) != user_id:
-        return False
-
-    visibility = data.get("visibility")
-    if visibility == "public":
-        chat_session.privacy_type = PrivacyType.public
-    elif visibility == "private":
-        chat_session.privacy_type = PrivacyType.private
-    else:
-        return False
-
-    db_session.add(chat_session)
-    db_session.commit()
-    return True
-
-
-@db_utils.close_db_session()
-def clone_session(request: Request, source_session_id: str, data: auth.AcceptJSON) -> Optional[str]:
-    # Clone an existing session into a new session
-    user_id = auth.fetch_authenticated_user_id(request)
     if not user_id:
         return None
 
@@ -72,51 +28,143 @@ def clone_session(request: Request, source_session_id: str, data: auth.AcceptJSO
     if not source_session:
         return None
 
-    # only allow cloning if you can view the session
+    if source_session.deleted is not None:
+        return None
+
+    # only allow sharing if you can view the session
     if str(source_session.user_id) != user_id and source_session.privacy_type != PrivacyType.public:
         return None
 
-    # create new session
-    target_session_id = uuid.uuid4()
-    target_session = ChatSession(id=target_session_id, user_id=user_id)
-    db_session.add(target_session)
+    # create new shared session
+    shared_session_id = uuid.uuid4()
+    shared_session = SharedSession(
+        id=shared_session_id,
+        user_id=user_id,
+        name=source_session.name,
+        source_chat_session_id=source_session.id,
+    )
+    db_session.add(shared_session)
     db_session.flush()
 
     # copy over messages
+    shared_messages = []
     for source_message in ChatMessage.query.filter(
             ChatMessage.chat_session_id == source_session_id
     ).order_by(ChatMessage.sequence_number, ChatMessage.created).all():
-        target_message = ChatMessage(
+        shared_message = dict(
             actor=source_message.actor,
             type=source_message.type,
             payload=source_message.payload,
             sequence_number=source_message.sequence_number,
-            chat_session_id=target_session_id,
+            shared_session_id=shared_session_id,
             system_config_id=source_message.system_config_id,
+            source_chat_message_id=source_message.id,
         )
-        db_session.add(target_message)
-        db_session.flush()
+        shared_messages.append(shared_message)
+    db_session.execute(insert(SharedMessage), shared_messages)
     db_session.commit()
 
-    return str(target_session_id)
+    return str(shared_session_id)
 
 
 @db_utils.close_db_session()
-def get_visible_chats(request: Request) -> Dict:
-    # Currently these return the chats you own, but in future, could expand
-    # to chats that are shared with you or that you recently visited
+def view_share(request: Request, shared_session_id: str) -> Dict:
+    # view a shared session by its id
+    ret = {}
+    shared_session = SharedSession.query.get(shared_session_id)
+    if not shared_session:
+        return ret
 
-    user_id = auth.fetch_authenticated_user_id(request)
+    if shared_session.deleted is not None:
+        return ret
+
+    if shared_session.name:
+        ret['name'] = shared_session.name
+
+    ret['created'] = shared_session.created
+    ret['updated'] = shared_session.updated
+
+    messages = []
+    for shared_message in SharedMessage.query.filter(
+            SharedMessage.shared_session_id == shared_session_id
+    ).order_by(SharedMessage.sequence_number, SharedMessage.created).all():
+        messages.append({
+            'messageId': shared_message.id,
+            'actor': shared_message.actor,
+            'type': shared_message.type,
+            'payload': shared_message.payload,
+            'feedback': 'n/a',
+        })
+    ret['messages'] = messages
+
+    return ret
+
+
+@db_utils.close_db_session()
+@auth.authenticate_user_id()
+def update_share(request: Request, shared_session_id: str, data: auth.AcceptJSON, user_id: Optional[str] = None) -> bool:
+    if not user_id:
+        return False
+
+    shared_session = SharedSession.query.get(shared_session_id)
+    if not shared_session:
+        return False
+
+    if shared_session.deleted is not None:
+        return False
+
+    if str(shared_session.user_id) != user_id:
+        return False
+
+    name = data.get("name")
+    if name:
+        shared_session.name = name
+
+    db_session.add(shared_session)
+    db_session.commit()
+    return True
+
+
+@db_utils.close_db_session()
+@auth.authenticate_user_id()
+def delete_share(request: Request, shared_session_id: str, user_id: Optional[str] = None) -> bool:
+    if not user_id:
+        return False
+
+    shared_session = SharedSession.query.get(shared_session_id)
+    if not shared_session:
+        return False
+
+    if shared_session.deleted is not None:
+        return False
+
+    if str(shared_session.user_id) != user_id:
+        return False
+
+    shared_session.deleted = datetime.utcnow()
+
+    db_session.add(shared_session)
+    db_session.commit()
+    return True
+
+
+@db_utils.close_db_session()
+@auth.authenticate_user_id()
+def list_shares(request: Request, user_id: Optional[str] = None) -> Dict:
+    # Currently these return your shared links
     if not user_id:
         return {}
 
-    # Return dictionary of list of sessions
-    sessions = []
-    for chat_session in ChatSession.query.filter(ChatSession.user_id == user_id).order_by(ChatSession.created.desc()).all():
-        sessions.append(dict(
-            id=chat_session.id,
-            created=chat_session.created,
+    # Return dictionary of list of shared sessions
+    shares = []
+    for shared_session in SharedSession.query.filter(
+            SharedSession.user_id == user_id, SharedSession.deleted == None
+    ).order_by(SharedSession.created.desc()).all():
+        shares.append(dict(
+            id=shared_session.id,
+            created=shared_session.created,
+            name=shared_session.name,
         ))
     return dict(
-        sessions=sessions,
+        shares=shares,
     )
