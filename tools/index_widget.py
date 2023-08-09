@@ -243,6 +243,8 @@ def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
         return str(fetch_gas(*params))
     elif command == 'fetch-yields':
         return str(fetch_yields(*params))
+    elif command == 'fetch-tvl':
+        return str(fetch_tvl(*params))
     elif command == 'fetch-app-info':
         return fetch_app_info(*params)
     elif command == 'fetch-scraped-sites':
@@ -534,6 +536,9 @@ def fetch_nft_buy(network: str, address: str, token_id: str) -> str:
     ret = opensea.fetch_nft_buy(network, address, token_id)
     return ret
 
+@error_wrap
+def fetch_tvl(protocol: str) -> str:
+    return defillama.fetch_tvl(protocol)
 
 @error_wrap
 def fetch_yields(token, network, count) -> str:

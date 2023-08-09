@@ -600,6 +600,17 @@
     - value
     type: object
   return_value_description: ''
+- _name_: fetch_tvl
+  description: Get the tvl for crypto protocol.
+  parameters:
+    properties:
+      protocol:
+        description: Name of the protocol
+        type: string
+    required:
+    - protocol
+    type: object
+  return_value_description: The TVl of the protocol
 - _name_: display_yield_protocol_lend
   description: use the yield protocol to lend tokens at a fixed rate
   parameters:

@@ -22,6 +22,15 @@ class Yield(ContainerMixin):
     def container_params(self) -> Dict:
         return dataclass_to_container_params(self)
 
+def fetch_tvl(protocol) -> str:
+    url = f"https://api.llama.fi/tvl/{protocol}"
+    response = requests.get(url)
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError:
+        return "No TVL data available for this protocol"
+    obj = response.json()
+    return obj
 
 def fetch_yields(token, network, count) -> List[Yield]:
     normalized_network_name = _network_name_normalizer(network)
