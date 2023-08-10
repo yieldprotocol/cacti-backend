@@ -728,4 +728,8 @@
   return_value_description: ""
 - _name_: display_yield_protocol_positions
   description: show the user's yield protocol positions
-  return_value_description: ""
+  parameters:
+    properties:
+    required:
+    type:
+   return_value_description: ""
