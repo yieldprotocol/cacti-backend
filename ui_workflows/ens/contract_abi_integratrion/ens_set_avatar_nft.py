@@ -18,11 +18,13 @@ class ENSSetAvatarNFTWorkflow(BaseSingleStepContractWorkflow):
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict) -> None:
         self.domain = workflow_params['domain']
-        self.nftContractAddress = workflow_params['nftContractAddress']
-        self.nftId = workflow_params['nftId']
-        self.collectionName = workflow_params['collectionName'] or "NFT"
+        self.nft_contract_address = workflow_params['nftContractAddress']
+        self.nft_id = workflow_params['nftId']
+        self.collection_name = workflow_params['collectionName']
 
-        user_description = f"Set {self.collectionName} #{self.nftId} as avatar for ENS {self.domain}"
+        collection_name_text = self.collection_name or 'NFT'
+
+        user_description = f"Set {collection_name_text} #{self.nft_id} as avatar for ENS {self.domain}"
 
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, user_description, self.WORKFLOW_TYPE, workflow_params)
 
@@ -30,10 +32,10 @@ class ENSSetAvatarNFTWorkflow(BaseSingleStepContractWorkflow):
         if not self.domain:
             raise WorkflowValidationError("Unable to interpret an ENS domain in current chat for setting avatar, please specify an ENS domain")
 
-        if not self.nftContractAddress:
+        if not self.nft_contract_address:
             raise WorkflowValidationError("Unable to interpret an NFT collection in current chat for setting avatar, ask for a collection first and try again")
 
-        if not self.nftId:
+        if not self.nft_id:
             raise WorkflowValidationError("Unable to interpret an NFT ID in current chat for setting avatar, please specify an NFT ID")
         
         ens_update_common_pre_workflow_validation(self.web3_provider, self.domain, self.wallet_address)
@@ -42,7 +44,7 @@ class ENSSetAvatarNFTWorkflow(BaseSingleStepContractWorkflow):
         params = {
             "domain": self.domain,
             "key": "avatar",
-            "value": f"eip155:1/erc721:{self.nftContractAddress}/{self.nftId}"
+            "value": f"eip155:1/erc721:{self.nft_contract_address}/{self.nft_id}"
         }
 
         result = ENSSetTextWorkflow(self.wallet_chain_id, self.wallet_address, self.chat_message_id, params).run()
