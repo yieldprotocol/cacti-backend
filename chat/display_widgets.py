@@ -59,6 +59,15 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
             f"-Item {idx}.{_widgetize(item['name'], json.dumps(item['params']), depth=depth)}"
             for idx, item in enumerate(items, start=1)
         ])
+    elif command == 'nft-asset-list-container':
+        params = json.loads(params)
+        nfts = params['assets']
+        lines.extend([
+            f"A list with {len(nfts)} NFTs:",
+        ] + [
+            f"-Item {idx}.{_widgetize(nft['name'], json.dumps(nft['params']), depth=depth)}"
+            for idx, nft in enumerate(nfts, start=1)
+        ])
     elif command == 'streaming-list-container':
         params = json.loads(params)
         operation = params['operation']

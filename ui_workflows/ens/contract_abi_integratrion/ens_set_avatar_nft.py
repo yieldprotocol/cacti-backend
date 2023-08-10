@@ -20,8 +20,9 @@ class ENSSetAvatarNFTWorkflow(BaseSingleStepContractWorkflow):
         self.domain = workflow_params['domain']
         self.nftContractAddress = workflow_params['nftContractAddress']
         self.nftId = workflow_params['nftId']
+        self.collectionName = workflow_params['collectionName'] or "NFT"
 
-        user_description = f"Set avatar for ENS {self.domain}"
+        user_description = f"Set {self.collectionName} #{self.nftId} as avatar for ENS {self.domain}"
 
         super().__init__(wallet_chain_id, wallet_address, chat_message_id, user_description, self.WORKFLOW_TYPE, workflow_params)
 

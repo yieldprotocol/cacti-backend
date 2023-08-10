@@ -638,7 +638,7 @@ def set_ens_primary_name(domain: str) ->TxPayloadForSending:
 
 @error_wrap
 @ensure_wallet_connected
-def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPayloadForSending:
+def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str, collectionName: str) ->TxPayloadForSending:
     wallet_chain_id = 1 # TODO: get from context
     wallet_address = context.get_wallet_address()
     user_chat_message_id = context.get_user_chat_message_id()
@@ -647,6 +647,7 @@ def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPay
         'domain': domain,
         'nftContractAddress': nftContractAddress,
         'nftId': nftId,
+        'collectionName': collectionName
     }
 
     result = ens.ENSSetAvatarNFTWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()
