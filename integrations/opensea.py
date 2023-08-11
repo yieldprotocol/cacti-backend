@@ -72,40 +72,33 @@ def fetch_listings(address: str, token_id: str) -> List[NFTListing]:
     """Fetch cheapest listing for an asset."""
     chain = "ethereum"
     limit = 1
-    next_cursor = None
     ret = []
-    while len(ret) < MAX_RESULTS:
-        q = urlencode(dict(
-            limit=limit,
-            asset_contract_address=address,
-            token_ids=token_id,
-            order_by='eth_price',
-            order_direction='asc',
-            **(dict(next=next_cursor) if next_cursor else {})
-        ))
-        url = f"{API_V2_URL}/orders/{chain}/seaport/listings?{q}"
-        response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
-        obj = response.json()
-        for item in obj['orders']:
-            offer = item["protocol_data"]["parameters"]["offer"][0]
-            price_value = int(item["current_price"])
-            currency = "eth"
-            price_str = f"{utils.w3.from_wei(price_value, 'ether')} {currency}"
-            listing = NFTListing(
-                chain=chain,
-                address=address,
-                token_id=token_id,
-                price_str=price_str,
-                price_value=price_value,
-                order_hash=item["order_hash"],
-                protocol_address=item["protocol_address"],
-                expiration_time=item["expiration_time"]
-            )
-            ret.append(listing)
-        next_cursor = obj.get("next")
-        if not next_cursor:
-            break
+    q = urlencode(dict(
+        limit=limit,
+        asset_contract_address=address,
+        token_ids=token_id,
+        order_by='eth_price',
+        order_direction='asc'
+    ))
+    url = f"{API_V2_URL}/orders/{chain}/seaport/listings?{q}"
+    response = requests.get(url, headers=HEADERS)
+    response.raise_for_status()
+    obj = response.json()
+    for item in obj['orders']:
+        price_value = int(item["current_price"])
+        currency = "eth"
+        price_str = f"{utils.w3.from_wei(price_value, 'ether')} {currency}"
+        listing = NFTListing(
+            chain=chain,
+            address=address,
+            token_id=token_id,
+            price_str=price_str,
+            price_value=price_value,
+            order_hash=item["order_hash"],
+            protocol_address=item["protocol_address"],
+            expiration_time=item["expiration_time"]
+        )
+        ret.append(listing)
     return ret
 
 
