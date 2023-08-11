@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, Generator, List, Optional, Union
 import traceback
@@ -128,6 +129,22 @@ class NFTAsset(ContainerMixin):
     def container_params(self) -> Dict:
         return dataclass_to_container_params(self)
 
+@dataclass
+class NFTAssetFulfillment(ContainerMixin):
+    is_for_sale: bool
+    asset: NFTAsset
+    order_parameters: Optional[Dict[str, Any]] = None
+    order_signature: Optional[str] = None
+    order_value: Optional[int] = None
+
+    def container_name(self) -> str:
+        return 'display-nft-asset-fulfillment-container'
+
+    def container_params(self) -> Dict:
+        ret = dataclass_to_container_params(self)
+        print(ret)
+        ret['asset'] = self.asset.struct()
+        return ret
 
 @dataclass
 class NFTAssetTraitValue(ContainerMixin):
@@ -541,11 +558,7 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
 
 
 def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAssetTraits:
-    if network == "ethereum-mainnet":
-        price_dict = opensea.fetch_asset_listing_prices_with_retries(address, token_id)
-        price = price_dict['price_str'] if price_dict else 'unlisted'
-    else:
-        price = None
+    price = _fetch_nft_asset_price_str(network, address, token_id)
     url = f"{API_URL}/{network}/{address}/{token_id}"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
@@ -622,3 +635,43 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
 
     result = NFTAssetList(assets=assets)
     return result
+
+def fetch_nft_buy(network: str, wallet_address: str, nft_address: str, token_id: str) -> NFTAssetFulfillment:
+    nft_asset = fetch_nft_asset(network, nft_address, token_id)
+    listing = opensea.fetch_asset_listing_with_retries(nft_address, token_id)
+    if listing is None:
+        return NFTAssetFulfillment(
+            is_for_sale=False,
+            asset=nft_asset
+        )
+    
+    nft_asset.price = listing.price_str
+
+    current_time_sec = int(time.time())
+    is_listing_expired = listing.expiration_time < current_time_sec
+
+    if is_listing_expired:
+        return NFTAssetFulfillment(
+            is_for_sale=False,
+            asset=nft_asset
+        )
+
+    fullfilment_data = opensea.fetch_fulfillment_data_with_retries(network, listing.order_hash, wallet_address, listing.protocol_address)
+
+    return NFTAssetFulfillment(
+        is_for_sale=True,
+        asset=nft_asset,
+        order_parameters=fullfilment_data.parameters,
+        order_signature=fullfilment_data.signature,
+        order_value=fullfilment_data.value_amount
+    )
+
+
+
+def _fetch_nft_asset_price_str(network: str, address: str, token_id: str) -> str:
+    if network == "ethereum-mainnet":
+        price_dict = opensea.fetch_asset_listing_prices_with_retries(address, token_id)
+        price = price_dict['price_str'] if price_dict else 'unlisted'
+    else:
+        price = None
+    return price

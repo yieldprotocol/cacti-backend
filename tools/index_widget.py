@@ -531,8 +531,9 @@ def fetch_nfts_owned_by_user(network: str = None) -> str:
 
 @error_wrap
 def fetch_nft_buy(network: str, address: str, token_id: str) -> str:
-    ret = opensea.fetch_nft_buy(network, address, token_id)
-    return ret
+    wallet_address = context.get_wallet_address()
+    nft_fulfillment_container = center.fetch_nft_buy(network, wallet_address, address, token_id)
+    return str(nft_fulfillment_container)
 
 
 @error_wrap
