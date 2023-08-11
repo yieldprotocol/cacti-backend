@@ -79,47 +79,40 @@ def fetch_listings(address: str, token_id: str) -> List[NFTListing]:
     """Fetch cheapest listing for an asset."""
     chain = "ethereum"
     limit = 1
-    next_cursor = None
     ret = []
-    while len(ret) < MAX_RESULTS:
-        q = urlencode(dict(
-            limit=limit,
-            asset_contract_address=address,
-            token_ids=token_id,
-            order_by='eth_price',
-            order_direction='asc',
-            **(dict(next=next_cursor) if next_cursor else {})
-        ))
-        url = f"{API_V2_URL}/orders/{chain}/seaport/listings?{q}"
+    q = urlencode(dict(
+        limit=limit,
+        asset_contract_address=address,
+        token_ids=token_id,
+        order_by='eth_price',
+        order_direction='asc'
+    ))
+    url = f"{API_V2_URL}/orders/{chain}/seaport/listings?{q}"
 
-        def _exec_request():
-            response = requests.get(url, headers=HEADERS)
-            response.raise_for_status()
-            return response.json()
+    def _exec_request():
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+        return response.json()
 
-        obj = retry_on_exceptions_with_backoff(
-            _exec_request,
-            [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
+    obj = retry_on_exceptions_with_backoff(
+        _exec_request,
+        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
+    )
+    for item in obj['orders']:
+        price_value = int(item["current_price"])
+        currency = "eth"
+        price_str = f"{utils.w3.from_wei(price_value, 'ether')} {currency}"
+        listing = NFTListing(
+            chain=chain,
+            address=address,
+            token_id=token_id,
+            price_str=price_str,
+            price_value=price_value,
+            order_hash=item["order_hash"],
+            protocol_address=item["protocol_address"],
+            expiration_time=item["expiration_time"]
         )
-        for item in obj['orders']:
-            offer = item["protocol_data"]["parameters"]["offer"][0]
-            price_value = int(item["current_price"])
-            currency = "eth"
-            price_str = f"{utils.w3.from_wei(price_value, 'ether')} {currency}"
-            listing = NFTListing(
-                chain=chain,
-                address=address,
-                token_id=token_id,
-                price_str=price_str,
-                price_value=price_value,
-                order_hash=item["order_hash"],
-                protocol_address=item["protocol_address"],
-                expiration_time=item["expiration_time"]
-            )
-            ret.append(listing)
-        next_cursor = obj.get("next")
-        if not next_cursor:
-            break
+        ret.append(listing)
     return ret
 
 
@@ -184,17 +177,9 @@ def fetch_asset_listing_prices_with_retries(address: str, token_id: str) -> Opti
         return dict(price_str=listing.price_str, price_value=listing.price_value)
     return None
 
-
 def fetch_asset_listing_with_retries(address: str, token_id: str) -> Optional[NFTListing]:
-    
-        def _get_listing():
-            listings = fetch_listings(address, token_id)
-            return listings[0] if len(listings) > 0 else None
-    
-        return retry_on_exceptions_with_backoff(
-            _get_listing,
-            [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
-        )
+    listings = fetch_listings(address, token_id)
+    return listings[0] if len(listings) > 0 else None
 
 def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, Dict[str, Union[str, int]]]:
     listings = fetch_all_listings(address)
@@ -205,15 +190,6 @@ def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, Dict[s
     return {token_id: dict(price_str=listing.price_str, price_value=listing.price_value) for token_id, listing in ret.items()}
 
 def fetch_fulfillment_data_with_retries(network: str, order_hash: str, fulfiller_address: str, protocol_address: str) -> NFTFulfillmentData:
-    def _get_fulfillment_data():
-        return _fetch_fulfillment_data(network, order_hash, fulfiller_address, protocol_address)
-
-    return retry_on_exceptions_with_backoff(
-        _get_fulfillment_data,
-        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
-    )
-
-def _fetch_fulfillment_data(network: str, order_hash: str, fulfiller_address: str, protocol_address: str) -> NFTFulfillmentData:
     normalized_network = NETWORKS_MAP.get(network, network)
     url = f"{API_V2_URL}/listings/fulfillment_data"
     data = {
@@ -226,14 +202,22 @@ def _fetch_fulfillment_data(network: str, order_hash: str, fulfiller_address: st
             "address": fulfiller_address,
         },
     }
-    response = requests.post(url, headers=HEADERS, json=data)
-    response.raise_for_status()
-    fulfillment_data = response.json()
+
+    def _exec_request():
+        response = requests.post(url, headers=HEADERS, json=data)
+        response.raise_for_status()
+        return response.json()
+
+    fulfillment_data = retry_on_exceptions_with_backoff(
+        _exec_request,
+        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
+    )
     return NFTFulfillmentData(
         parameters=fulfillment_data["fulfillment_data"]["orders"][0]["parameters"],
         signature=fulfillment_data["fulfillment_data"]["orders"][0]["signature"],
         value_amount=fulfillment_data["fulfillment_data"]["transaction"]["value"],
     )
+
 
 def _should_retry_exception(exception):
     if exception.response.status_code in (400, 401, 402, 403, 404, 405, 406):
