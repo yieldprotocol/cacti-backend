@@ -3,6 +3,7 @@
 from typing import List
 import re
 import json
+import traceback
 
 
 # this differs from tool/index_widget.py's RE_COMMAND because it matches
@@ -35,6 +36,7 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
     try:
         return _widgetize_inner(command, params, depth)
     except Exception:
+        traceback.print_exc()
         return f"An error occurred evaluating command: {command}({params})"
 
 
@@ -49,7 +51,8 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         lines.append(f"A swap of {items[0]} to {items[1]} with transaction keyword {items[2]} and amount {items[3]}")
     elif command == 'nft-asset-fulfillment-container':
         params = json.loads(params)
-        lines.append(f"A widget to purchase NFT of collection name {params['asset']['collectionName']}, NFT address {params['asset']['address']}, NFT ID {params['asset']['tokenId']}")
+        asset = params['asset']['params']
+        lines.append(f"A widget to purchase NFT for collection name {asset['collectionName']}, NFT address {asset['address']}, NFT ID {asset['tokenId']}")
     elif command == 'list-container':
         params = json.loads(params)
         items = params['items']
