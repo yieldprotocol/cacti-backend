@@ -47,9 +47,9 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     elif command == 'uniswap':
         items = params.split(",")
         lines.append(f"A swap of {items[0]} to {items[1]} with transaction keyword {items[2]} and amount {items[3]}")
-    elif command == 'buy-nft':
-        items = params.split(",")
-        lines.append(f"A widget to purchase token {items[1]} of contract address {items[0]}")
+    elif command == 'nft-asset-fulfillment-container':
+        params = json.loads(params)
+        lines.append(f"A widget to purchase NFT of collection name {params['asset']['collectionName']}, NFT address {params['asset']['address']}, NFT ID {params['asset']['tokenId']}")
     elif command == 'list-container':
         params = json.loads(params)
         items = params['items']

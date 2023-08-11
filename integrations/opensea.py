@@ -23,13 +23,6 @@ API_V2_URL = "https://api.opensea.io/v2"
 MAX_RESULTS = 100
 PAGE_LIMIT = 100
 
-
-def fetch_nft_buy(network: str, address: str, token_id: str) -> str:
-    network = NETWORKS_MAP.get(network, network)
-    # TODO: for now, we just omit network altogether since frontend only works with ethereum
-    return f"<|display-buy-nft({address},{token_id})|>"
-
-
 # this represents an NFT collection
 @dataclass
 class NFTContract:
@@ -48,6 +41,15 @@ class NFTListing:
     token_id: str
     price_str: str
     price_value: int
+    order_hash: Optional[str] = None
+    protocol_address: Optional[str] = None
+    expiration_time: Optional[int] = None
+
+@dataclass
+class NFTFulfillmentData:
+    parameters: Dict[str, Any]
+    signature: str
+    value_amount: int
 
 
 def fetch_contract(address: str) -> NFTContract:
@@ -96,6 +98,9 @@ def fetch_listings(address: str, token_id: str) -> List[NFTListing]:
                 token_id=token_id,
                 price_str=price_str,
                 price_value=price_value,
+                order_hash=item["order_hash"],
+                protocol_address=item["protocol_address"],
+                expiration_time=item["expiration_time"]
             )
             ret.append(listing)
         next_cursor = obj.get("next")
@@ -135,7 +140,7 @@ def fetch_all_listings(slug: str) -> List[NFTListing]:
                 address=offer["token"],
                 token_id=offer["identifierOrCriteria"],
                 price_str=price_str,
-                price_value=price_value,
+                price_value=price_value
             )
             ret.append(listing)
         next_cursor = obj.get("next")
@@ -158,6 +163,17 @@ def fetch_asset_listing_prices_with_retries(address: str, token_id: str) -> Opti
     )
 
 
+def fetch_asset_listing_with_retries(address: str, token_id: str) -> Optional[NFTListing]:
+    
+        def _get_listing():
+            listings = fetch_listings(address, token_id)
+            return listings[0] if len(listings) > 0 else None
+    
+        return retry_on_exceptions_with_backoff(
+            _get_listing,
+            [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
+        )
+
 def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, Dict[str, Union[str, int]]]:
 
     def _get_listing_prices():
@@ -174,6 +190,36 @@ def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, Dict[s
         [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
     )
 
+def fetch_fulfillment_data_with_retries(network: str, order_hash: str, fulfiller_address: str, protocol_address: str) -> NFTFulfillmentData:
+    def _get_fulfillment_data():
+        return _fetch_fulfillment_data(network, order_hash, fulfiller_address, protocol_address)
+
+    return retry_on_exceptions_with_backoff(
+        _get_fulfillment_data,
+        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
+    )
+
+def _fetch_fulfillment_data(network: str, order_hash: str, fulfiller_address: str, protocol_address: str) -> NFTFulfillmentData:
+    normalized_network = NETWORKS_MAP.get(network, network)
+    url = f"{API_V2_URL}/listings/fulfillment_data"
+    data = {
+        "listing": {
+            "hash": order_hash,
+            "chain": normalized_network,
+            "protocol_address": protocol_address,
+        },
+        "fulfiller": {
+            "address": fulfiller_address,
+        },
+    }
+    response = requests.post(url, headers=HEADERS, json=data)
+    response.raise_for_status()
+    fulfillment_data = response.json()
+    return NFTFulfillmentData(
+        parameters=fulfillment_data["fulfillment_data"]["orders"][0]["parameters"],
+        signature=fulfillment_data["fulfillment_data"]["orders"][0]["signature"],
+        value_amount=fulfillment_data["fulfillment_data"]["transaction"]["value"],
+    )
 
 def _should_retry_exception(exception):
     if exception.response.status_code in (400, 401, 402, 403, 404, 405, 406):
