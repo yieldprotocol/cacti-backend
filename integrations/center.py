@@ -644,7 +644,7 @@ def fetch_nft_buy(network: str, wallet_address: str, nft_address: str, token_id:
 
 
 
-def _fetch_nft_asset_price_str(network: str, address: str, token_id: str) -> str:
+def _fetch_nft_asset_price_str(network: str, address: str, token_id: str) -> Optional[str]:
     if network == "ethereum-mainnet":
         price_dict = opensea.fetch_asset_listing_prices_with_retries(address, token_id)
         price = price_dict['price_str'] if price_dict else 'unlisted'
