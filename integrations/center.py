@@ -120,6 +120,7 @@ class NFTAsset(ContainerMixin):
     collection_name: str
     name: str
     preview_image_url: str
+    description: str = ''
     price: Optional[str] = None
 
     def container_name(self) -> str:
@@ -528,6 +529,7 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
         collection_name=obj['collectionName'],
         name=obj['name'],
         preview_image_url=obj['mediumPreviewImageUrl'],
+        description=obj['metadata']['description'],
     )
 
 
