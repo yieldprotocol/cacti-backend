@@ -13,7 +13,7 @@ class AaveWithdrawContractWorkflow(BaseMultiStepContractWorkflow):
     WORKFLOW_TYPE = 'aave-withdraw'
 
     def __init__(self, wallet_chain_id: int, wallet_address: str, chat_message_id: str, workflow_params: Dict, multistep_workflow: Optional[MultiStepWorkflow] = None, curr_step_client_payload: Optional[WorkflowStepClientPayload] = None) -> None:
-        self.token = workflow_params["token"]
+        self.token = workflow_params["token"].upper()
         self.amount = workflow_params["amount"]
 
         if self.token == "ETH":
