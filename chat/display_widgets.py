@@ -142,35 +142,35 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         params = json.loads(params)
         lines.append(f"A workflow step was presented: {params['description']}.")
     elif command == 'yield-farm':
-        params = json.loads(params)
-        lines.append(f"Yield farm action for network: {params['network']}, project: {params['project']}, token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"Yield farm action for network: {items[1]}, project: {items[0]}, token: {items[2]}, amount: {items[3]}.")
     elif command == 'zksync-deposit':
-        params = json.loads(params)
-        lines.append(f"ZkSync bridge deposit action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"ZkSync bridge deposit action for token: {items[0]}, amount: {items[1]}.")
     elif command == 'zksync-withdraw':
-        params = json.loads(params)
-        lines.append(f"ZkSync bridge withdraw action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"ZkSync bridge withdraw action for token: {items[0]}, amount: {items[1]}.")
     elif command == 'arbitrum-deposit':
-        params = json.load(params)
-        lines.append(f"Arbitrum bridge deposit action for token {params['token']} amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"Arbitrum bridge deposit action for token {items[0]} amount: {items[1]}.")
     elif command == 'arbitrum-withdraw':
-        params = json.load(params)
-        lines.append(f"Arbitrum bridge withdraw action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"Arbitrum bridge withdraw action for token: {items[0]}, amount: {items[1]}.")
     elif command == 'stake-sfrxeth':
-        params = json.load(params)
-        lines.append(f"sfrxETH deposit action for address: {params['receiver']}, amount: {params['value']}.")
+        items = params.split(",")
+        lines.append(f"sfrxETH deposit action for address: {items[0]}, amount: {items[1]}.")
     elif command == 'yield-protocol-lend':
-        params = json.loads(params)
-        lines.append(f"yield protocol lend action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"yield protocol lend action for token: {items[0]}, amount: {items[1]}.")
     elif command == 'yield-protocol-lend-close':
-        params = json.loads(params)
-        lines.append(f"yield protocol lend close action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"yield protocol lend close action for token: {items[0]}, amount: {items[1]}.")
     elif command == 'yield-protocol-borrow':
-        params = json.loads(params)
-        lines.append(f"yield protocol borrow action for borrow token: {params['borrowToken']}, borrow amount: {params['borrowAmount']}, collateral token: {params['collateralToken']}, collateral amount: {params['collateralAmount']}.")
+        items = params.split(",")
+        lines.append(f"yield protocol borrow action for borrow token: {items[0]}, borrow amount: {items[1]}, collateral token: {items[2]}, collateral amount: {items[3]}.")
     elif command == 'yield-protocol-borrow-close':
-        params = json.loads(params)
-        lines.append(f"yield protocol borrow close action: {params['borrowToken']}") 
+        items = params.split(",")
+        lines.append(f"yield protocol borrow close action: {items[0]}") 
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
