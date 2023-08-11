@@ -142,7 +142,6 @@ class NFTAssetFulfillment(ContainerMixin):
 
     def container_params(self) -> Dict:
         ret = dataclass_to_container_params(self)
-        print(ret)
         ret['asset'] = self.asset.struct()
         return ret
 
