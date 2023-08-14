@@ -86,7 +86,7 @@ def fetch_listings(address: str, token_id: str) -> List[NFTListing]:
     obj = response.json()
     for item in obj['orders']:
         price_value = int(item["current_price"])
-        currency = "eth"
+        currency = "ETH"
         price_str = f"{utils.w3.from_wei(price_value, 'ether')} {currency}"
         listing = NFTListing(
             chain=chain,
