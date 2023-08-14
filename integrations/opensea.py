@@ -104,15 +104,20 @@ def fetch_listings(address: str, token_id: str) -> List[NFTListing]:
     return ret
 
 
-def fetch_all_listings(slug: str) -> List[NFTListing]:
+def fetch_all_listings(address: str) -> List[NFTListing]:
     """Fetch all listings for a collection."""
     # NOTE: a given token ID might have more than one listing
+    contract = fetch_contract(address)
+    slug = contract.slug
     limit = PAGE_LIMIT
     next_cursor = None
     ret = []
-    # Arbitary limit to optimize for latency, based on hueristics related to observed number of NFTs listed for blue-chip collections. 
+    # Arbitary limit to optimize for latency, based on hueristics related to observed number of NFTs listed for blue-chip collections.
     max_results = 300
-    while len(ret) < max_results:
+    max_queries = 5
+    queries = 0
+    while len(ret) < max_results and queries < max_queries:
+        queries += 1
         q = urlencode(dict(
             limit=limit,
             **(dict(next=next_cursor) if next_cursor else {})
@@ -123,6 +128,9 @@ def fetch_all_listings(slug: str) -> List[NFTListing]:
         obj = response.json()
         for item in obj['listings']:
             offer = item["protocol_data"]["parameters"]["offer"][0]
+            item_address = offer["token"]
+            if item_address != address:
+                continue
             current_price = item["price"]["current"]
             currency = current_price["currency"]
             price_value = int(current_price['value'])
@@ -132,7 +140,7 @@ def fetch_all_listings(slug: str) -> List[NFTListing]:
                 price_str = f"{price_value / 10 ** current_price['decimals']} {currency}"
             listing = NFTListing(
                 chain=item["chain"],
-                address=offer["token"],
+                address=item_address,
                 token_id=offer["identifierOrCriteria"],
                 price_str=price_str,
                 price_value=price_value,
@@ -161,8 +169,7 @@ def fetch_asset_listing_prices_with_retries(address: str, token_id: str) -> Opti
 def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, Dict[str, Union[str, int]]]:
 
     def _get_listing_prices():
-        contract = fetch_contract(address)
-        listings = fetch_all_listings(contract.slug)
+        listings = fetch_all_listings(address)
         ret = {}
         for listing in listings:
             if listing.token_id not in ret or ret[listing.token_id].price_value > listing.price_value:
