@@ -135,7 +135,8 @@ class NFTAssetFulfillment(ContainerMixin):
     asset: NFTAsset
     order_parameters: Optional[Dict[str, Any]] = None
     order_signature: Optional[str] = None
-    order_value: Optional[int] = None
+    order_value: Optional[str] = None
+    protocol_address: Optional[str] = None
 
     def container_name(self) -> str:
         return 'display-nft-asset-fulfillment-container'
@@ -639,7 +640,8 @@ def fetch_nft_buy(network: str, wallet_address: str, nft_address: str, token_id:
         asset=nft_asset,
         order_parameters=fullfilment_data.parameters,
         order_signature=fullfilment_data.signature,
-        order_value=fullfilment_data.value_amount
+        order_value=str(fullfilment_data.value_amount),
+        protocol_address=listing.protocol_address
     )
 
 
