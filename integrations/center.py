@@ -1,6 +1,7 @@
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Generator, List, Optional, Union
+import traceback
 
 from urllib.parse import urlencode
 import requests
@@ -210,7 +211,11 @@ def fetch_nft_search(search_str: str) -> Generator[Union[NFTCollection, NFTAsset
         url = f"{API_URL}/{network}/search?{q}"
         timing.log('search_begin')
         response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         timing.log('search_done')
         obj = response.json()
         for r in obj['results']:
@@ -282,7 +287,11 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
         ))
         url = f"{API_URL}/{network}/{address}/assets/searchByTraits?{q}"
         response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         timing.log('search_done')
         obj = response.json()
         if not obj['items']:
@@ -349,7 +358,11 @@ def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAsse
         ]}
         url = f"{API_URL}/{network}/assets"
         response = requests.post(url, headers=HEADERS, json=payload)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         obj = response.json()
         for item in obj:
             if not item:
@@ -407,7 +420,11 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timin
         ]}
         url = f"{API_URL}/{network}/assets"
         response = requests.post(url, headers=HEADERS, json=payload)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         if not _skip_timing:
             timing.log('search_done')
         obj = response.json()
@@ -454,7 +471,11 @@ def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTrai
         ))
         url = f"{API_URL}/{network}/{address}/traits?{q}"
         response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         obj = response.json()
         for item in obj['items']:
             total = 0
@@ -493,7 +514,11 @@ def fetch_nft_collection_trait_values(network: str, address: str, trait: str) ->
         ))
         url = f"{API_URL}/{network}/{address}/traits/{trait}?{q}"
         response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         obj = response.json()
         total = 0
         for item in obj['items']:
