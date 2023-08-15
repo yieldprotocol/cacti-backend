@@ -165,7 +165,7 @@ def error_wrap(fn):
             return str(e)
         except Exception as e:
             traceback.print_exc()
-            return f'Got exception evaluating {fn.__name__}(args={args}, kwargs={kwargs}): {e}'
+            return "An error occurred. Please try again."
 
     @functools.wraps(fn)
     def wrapped_generator_fn(*args, **kwargs):
