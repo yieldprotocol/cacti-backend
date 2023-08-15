@@ -3,6 +3,7 @@ from typing import Iterable, List, Optional, Union
 import enum
 import random
 import uuid
+import json
 
 from tools.index_widget import (
     StreamingListContainer,
@@ -333,7 +334,29 @@ def generate_nft_asset_flow(asset: NFTAsset, already_referenced: bool):
             "purchase this asset",
         ] if already_referenced else []))
         yield Message("user", message)
-        yield Message("bot", f"<|fetch-nft-buy-asset({asset.network},{asset.address},{asset.token_id})|>", f"<|display-buy-nft({asset.address},{asset.token_id})|>")
+
+        nft_fulfillment_payload = dict(
+            isForSale=False,
+            orderParameters=dict(
+                offerer='sample-offerer',
+                param1='sample-param1'
+            ),
+            orderSignature="sample-signature",
+            asset=dict(
+                name="display-nft-asset-container",
+                params=dict(
+                    network="ethereum-mainnet",
+                    address=asset.address,
+                    tokenId=asset.token_id,
+                    collectionName=asset.collection_name,
+                    name=asset.name,
+                    previewImageUrl=asset.preview_image_url,
+                    price=asset.price,
+                )
+            )
+        )
+
+        yield Message("bot", f"<|fetch-nft-buy-asset({asset.network},{asset.address},{asset.token_id})|>", f"<|display-nft-asset-fulfillment-container({json.dumps(nft_fulfillment_payload)})|>")
 
 
 def generate_wallet_balance_flow(token=None) -> Iterable[Message]:
