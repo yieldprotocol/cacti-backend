@@ -53,9 +53,16 @@ class NFTListing:
 def fetch_contract(address: str) -> NFTContract:
     """Fetch data about a contract (collection)."""
     url = f"{API_V1_URL}/asset_contract/{address}"
-    response = requests.get(url, headers=HEADERS)
-    response.raise_for_status()
-    obj = response.json()
+
+    def _exec_request():
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+        return response.json()
+
+    obj = retry_on_exceptions_with_backoff(
+        _exec_request,
+        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
+    )
     collection = obj["collection"]
     return NFTContract(
         chain=obj["chain_identifier"],
@@ -82,9 +89,16 @@ def fetch_listings(address: str, token_id: str) -> List[NFTListing]:
             **(dict(next=next_cursor) if next_cursor else {})
         ))
         url = f"{API_V2_URL}/orders/{chain}/seaport/listings?{q}"
-        response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
-        obj = response.json()
+
+        def _exec_request():
+            response = requests.get(url, headers=HEADERS)
+            response.raise_for_status()
+            return response.json()
+
+        obj = retry_on_exceptions_with_backoff(
+            _exec_request,
+            [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
+        )
         for item in obj['orders']:
             offer = item["protocol_data"]["parameters"]["offer"][0]
             price_value = int(item["current_price"])
@@ -123,9 +137,16 @@ def fetch_all_listings(address: str) -> List[NFTListing]:
             **(dict(next=next_cursor) if next_cursor else {})
         ))
         url = f"{API_V2_URL}/listings/collection/{slug}/all?{q}"
-        response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
-        obj = response.json()
+
+        def _exec_request():
+            response = requests.get(url, headers=HEADERS)
+            response.raise_for_status()
+            return response.json()
+
+        obj = retry_on_exceptions_with_backoff(
+            _exec_request,
+            [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
+        )
         for item in obj['listings']:
             offer = item["protocol_data"]["parameters"]["offer"][0]
             item_address = offer["token"]
@@ -153,33 +174,19 @@ def fetch_all_listings(address: str) -> List[NFTListing]:
 
 
 def fetch_asset_listing_prices_with_retries(address: str, token_id: str) -> Optional[Dict[str, Union[str, int]]]:
-
-    def _get_listing_prices():
-        listings = fetch_listings(address, token_id)
-        for listing in listings:
-            return dict(price_str=listing.price_str, price_value=listing.price_value)
-        return None
-
-    return retry_on_exceptions_with_backoff(
-        _get_listing_prices,
-        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
-    )
+    listings = fetch_listings(address, token_id)
+    for listing in listings:
+        return dict(price_str=listing.price_str, price_value=listing.price_value)
+    return None
 
 
 def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, Dict[str, Union[str, int]]]:
-
-    def _get_listing_prices():
-        listings = fetch_all_listings(address)
-        ret = {}
-        for listing in listings:
-            if listing.token_id not in ret or ret[listing.token_id].price_value > listing.price_value:
-                ret[listing.token_id] = listing
-        return {token_id: dict(price_str=listing.price_str, price_value=listing.price_value) for token_id, listing in ret.items()}
-
-    return retry_on_exceptions_with_backoff(
-        _get_listing_prices,
-        [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
-    )
+    listings = fetch_all_listings(address)
+    ret = {}
+    for listing in listings:
+        if listing.token_id not in ret or ret[listing.token_id].price_value > listing.price_value:
+            ret[listing.token_id] = listing
+    return {token_id: dict(price_str=listing.price_str, price_value=listing.price_value) for token_id, listing in ret.items()}
 
 
 def _should_retry_exception(exception):
