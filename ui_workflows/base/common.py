@@ -8,7 +8,7 @@ from web3 import Web3
 
 import requests
 import context
-from utils import TENDERLY_API_KEY
+from utils import TENDERLY_API_KEY, TENDERLY_PROJECT_API_BASE_URL, TENDERLY_DASHBOARD_PROJECT_BASE_URL
 from database.models import db_session, ChatMessage, ChatSession, SystemConfig
 from database.models import (MultiStepWorkflow)
 
@@ -101,13 +101,13 @@ def tenderly_simulate_tx_on_fork(wallet_address: str, tx: Dict) -> str:
 
     tenderly_simulation_id = get_latest_simulation_id_on_fork(fork_rpc_url)
 
-    tenderly_dashboard_link = f"https://dashboard.tenderly.co/Yield/chatweb3/fork/{fork_id}/simulation/{tenderly_simulation_id}"
+    tenderly_dashboard_link = f"{TENDERLY_DASHBOARD_PROJECT_BASE_URL}/fork/{fork_id}/simulation/{tenderly_simulation_id}"
 
     print("Tenderly simulation dashboard link:", tenderly_dashboard_link)
 
     # Tx Error handling
     if receipt['status'] == 0:
-        tenderly_simulation_api = f"https://api.tenderly.co/api/v1/account/Yield/project/chatweb3/fork/{fork_id}/simulation/{tenderly_simulation_id}"
+        tenderly_simulation_api = f"{TENDERLY_PROJECT_API_BASE_URL}/fork/{fork_id}/simulation/{tenderly_simulation_id}"
         res = requests.get(tenderly_simulation_api, headers={'X-Access-Key': TENDERLY_API_KEY})
         error_message = 'n/a'
         if res.status_code == 200:

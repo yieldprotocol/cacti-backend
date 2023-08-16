@@ -3,6 +3,7 @@ from typing import Iterable, List, Optional, Union
 import enum
 import random
 import uuid
+import json
 
 from tools.index_widget import (
     StreamingListContainer,
@@ -13,6 +14,11 @@ from integrations.center import (
     NFTCollectionTraits, NFTCollectionTrait, NFTCollectionTraitValue,
 )
 from chat.base import ChatHistory, ChatMessage
+from utils.evaluation import (
+    Conversation, Message,
+    stream_to_str,
+    handle_empty_params,
+)
 
 from .dataset import (
     HISTORY_TOKEN_LIMIT,
@@ -21,44 +27,7 @@ from .dataset import (
 )
 
 
-EMPTY_PARAMS_ALLOWED = True
 NUM_DATAPOINTS = 1000
-
-
-@dataclass
-class Message:
-    actor: str
-    raw_payload: str
-    eval_payload: Optional[str] = None
-
-    @property
-    def payload(self):
-        if self.actor == 'user':
-            payload = self.raw_payload
-            # add capitalization perturbation for initial char
-            if rf() < 0.5:
-                return payload[:1].upper() + payload[1:]
-            else:
-                return payload
-        return self.eval_payload if self.eval_payload is not None else self.raw_payload
-
-
-
-def handle_empty_params(message):
-    if EMPTY_PARAMS_ALLOWED:
-        return message
-    else:
-        # omit the empty params payload and use the eval (text) version
-        return Message(message.actor, message.eval_payload)
-
-
-def stream_to_str(stream: List) -> str:
-    return "\n".join(map(str, stream))
-
-
-@dataclass
-class Conversation:
-    messages: List[Message]
 
 
 def rf():  # random float
@@ -365,7 +334,29 @@ def generate_nft_asset_flow(asset: NFTAsset, already_referenced: bool):
             "purchase this asset",
         ] if already_referenced else []))
         yield Message("user", message)
-        yield Message("bot", f"<|fetch-nft-buy-asset({asset.network},{asset.address},{asset.token_id})|>", f"<|display-buy-nft({asset.address},{asset.token_id})|>")
+
+        nft_fulfillment_payload = dict(
+            isForSale=False,
+            orderParameters=dict(
+                offerer='sample-offerer',
+                param1='sample-param1'
+            ),
+            orderSignature="sample-signature",
+            asset=dict(
+                name="display-nft-asset-container",
+                params=dict(
+                    network="ethereum-mainnet",
+                    address=asset.address,
+                    tokenId=asset.token_id,
+                    collectionName=asset.collection_name,
+                    name=asset.name,
+                    previewImageUrl=asset.preview_image_url,
+                    price=asset.price,
+                )
+            )
+        )
+
+        yield Message("bot", f"<|fetch-nft-buy-asset({asset.network},{asset.address},{asset.token_id})|>", f"<|display-nft-asset-fulfillment-container({json.dumps(nft_fulfillment_payload)})|>")
 
 
 def generate_wallet_balance_flow(token=None) -> Iterable[Message]:

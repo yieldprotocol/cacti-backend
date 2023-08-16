@@ -10,10 +10,10 @@ services:
     ports:
       - 5433:5432
     volumes:
-    - /mnt/data/chat-db:/var/lib/postgresql/data
+    - cacti_pg_data:/var/lib/postgresql/data
   weaviate:
     volumes:
-    - /mnt/data/weaviate:/var/lib/weaviate
+    - cacti_weaviate_data:/var/lib/weaviate
     command:
     - --host
     - 0.0.0.0
@@ -21,15 +21,22 @@ services:
     - '8080'
     - --scheme
     - http
-    image: semitechnologies/weaviate:1.17.1
+    image: semitechnologies/weaviate:1.20.3
     ports:
     - 8080:8080
     restart: on-failure:0
     environment:
       QUERY_DEFAULTS_LIMIT: 25
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
       DEFAULT_VECTORIZER_MODULE: 'text2vec-openai'
       ENABLE_MODULES: 'text2vec-openai'
       CLUSTER_HOSTNAME: 'node1'
-...
+
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'false'
+      AUTHENTICATION_APIKEY_ENABLED: 'true'
+      AUTHENTICATION_APIKEY_USERS: 'cacti-app'
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: 'example-secret-key-123'
+      
+volumes:
+  cacti_pg_data:
+  cacti_weaviate_data:
