@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
-from urllib.parse import urlencode
 import requests
+from web3 import Web3
+
+from urllib.parse import urlencode
 from gpt_index.utils import ErrorToRetry, retry_on_exceptions_with_backoff
 
 import utils
@@ -101,7 +103,7 @@ def fetch_listings(address: str, token_id: str) -> List[NFTListing]:
     for item in obj['orders']:
         price_value = int(item["current_price"])
         currency = "ETH"
-        price_str = f"{utils.w3.from_wei(price_value, 'ether')} {currency}"
+        price_str = f"{Web3.from_wei(price_value, 'ether')} {currency}"
         listing = NFTListing(
             chain=chain,
             address=address,
@@ -154,7 +156,7 @@ def fetch_all_listings(address: str) -> List[NFTListing]:
             currency = current_price["currency"]
             price_value = int(current_price['value'])
             if currency == "eth":
-                price_str = f"{utils.w3.from_wei(price_value, 'ether')} {currency}"
+                price_str = f"{Web3.from_wei(price_value, 'ether')} {currency}"
             else:
                 price_str = f"{price_value / 10 ** current_price['decimals']} {currency}"
             listing = NFTListing(
