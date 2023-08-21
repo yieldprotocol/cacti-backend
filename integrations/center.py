@@ -241,9 +241,10 @@ def _is_valid_collection(collection: NFTCollection) -> bool:
     if not collection_traits.traits:
         return False
     # should have listed and valid assets
-    assets_for_sale = list(fetch_nft_collection_assets_for_sale(collection.network, collection.address, _skip_timing=True))
-    if not assets_for_sale:
-        return False
+    if collection.network == "ethereum-mainnet":
+        token_prices = opensea.fetch_contract_listing_prices_with_retries(collection.address)
+        if not token_prices:
+            return False
     return True
 
 
@@ -393,11 +394,8 @@ def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAsse
     )
 
 
-def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timing: bool = False) -> Generator[NFTAsset, None, None]:
-    # we set _skip_timing=True if we are using this as an internal helper, to avoid cluttering
-    # logs with irrelevant events
-    if not _skip_timing:
-        timing.log('search_begin')
+def fetch_nft_collection_assets_for_sale(network: str, address: str) -> Generator[NFTAsset, None, None]:
+    timing.log('search_begin')
     collection = fetch_nft_collection(network, address)
     if collection.network == "ethereum-mainnet":
         token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
@@ -425,8 +423,7 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timin
         except Exception:
             traceback.print_exc()
             break
-        if not _skip_timing:
-            timing.log('search_done')
+        timing.log('search_done')
         obj = response.json()
         for item in obj:
             if not item:
@@ -449,14 +446,12 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timin
             if not _is_valid_asset(asset):
                 continue
             yield asset
-            if not _skip_timing:
-                timing.log('first_result_done')
+            timing.log('first_result_done')
             count += 1
             if count >= MAX_RESULTS:
                 break
         offset += limit
-    if not _skip_timing:
-        timing.log('%d_results_done' % count)
+    timing.log('%d_results_done' % count)
 
 
 def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTraits:
@@ -595,7 +590,7 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
             normalized_network = "ethereum-mainnet"
         else:
             raise ExecError("Network not supported")
-        
+
     timing.log('fetch_started')
 
     # TODO: Add pagination once we have a UI component such as a Carousel to support it.
@@ -617,12 +612,12 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
     except requests.exceptions.HTTPError as err:
         print(err)
         raise FetchError("Invalid address or domain")
-    
+
     obj = response.json()
     for item in obj['items']:
         nft_address = item['address']
         nft_token_id = item['tokenID']
-        nft_asset = fetch_nft_asset(normalized_network, nft_address, nft_token_id) 
+        nft_asset = fetch_nft_asset(normalized_network, nft_address, nft_token_id)
         assets.append(nft_asset)
 
     # In dev, tester's wallet would only have NFTs on the fork so fallback to fetching from contract on the fork
@@ -646,7 +641,7 @@ def fetch_nft_buy(network: str, wallet_address: str, nft_address: str, token_id:
             is_for_sale=False,
             asset=nft_asset
         )
-    
+
     nft_asset.price = listing.price_str
 
     current_time_sec = int(time.time())
