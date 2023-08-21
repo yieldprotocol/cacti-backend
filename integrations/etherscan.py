@@ -1,6 +1,6 @@
 import requests
 
-from utils import ETHERSCAN_API_KEY, w3
+from utils import ETHERSCAN_API_KEY
 
 
 def get_ABI(contract_address):
