@@ -10,6 +10,7 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
+from ens import ENS
 
 import ui_workflows
 import config
@@ -559,7 +560,9 @@ def fetch_yields(token, network, count) -> str:
 
 def ens_from_address(address) -> str:
     try:
-        domain = utils.ns.name(address)
+        web3 = context.get_web3_provider()
+        ns = ENS.from_web3(web3)
+        domain = ns.name(address)
         if domain is None:
             return f"No ENS domain for {address}"
         else:
@@ -573,7 +576,9 @@ def ens_from_address(address) -> str:
 
 def address_from_ens(domain) -> str:
     try:
-        address = utils.ns.address(domain)
+        web3 = context.get_web3_provider()
+        ns = ENS.from_web3(web3)
+        address = ns.address(domain)
         if address is None:
             return f"No address for {domain}"
         else:
