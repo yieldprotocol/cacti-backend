@@ -127,7 +127,7 @@ def _is_web3_call(request: str):
             pass # Can be inferred as non-Web3 call
     return False
 
-async def _async_forward_rpc_node_reqs(route):
+async def _async_forward_rpc_node_reqs_old(route):
     request = route.request
     data = json.loads(request.post_data)
     response = requests.post(tenderly_fork_url, json=data, headers=request.headers)
@@ -136,6 +136,28 @@ async def _async_forward_rpc_node_reqs(route):
         headers=dict(response.headers),
         body=response.content
     )
+
+async def _async_forward_rpc_node_reqs(route):
+    request = route.request
+    data = json.loads(request.post_data)
+    response = requests.post(tenderly_fork_url, json=data, headers=request.headers)
+
+    # Check if status code is 400
+    if response.status_code == 400:
+        # Write the request data to a file with the current time in the filename
+        filename = f"error_{time.strftime('%Y%m%d_%H%M%S')}.txt"
+        with open(filename, 'w') as file:
+            file.write(json.dumps(data, indent=4))
+
+        # Do not forward the request
+        print(f"Error: failed to forward request. Data saved in {filename}")
+        await route.continue_()
+    else:
+        await route.fulfill(
+            status=response.status_code,
+            headers=dict(response.headers),
+            body=response.content
+        )
 
 async def _intercept_rpc_node_reqs(route):
     if route.request.post_data and _is_web3_call(route.request):
