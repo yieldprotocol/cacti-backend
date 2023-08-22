@@ -5,6 +5,7 @@ import traceback
 
 from urllib.parse import urlencode
 import requests
+import web3
 
 import env
 import utils
@@ -31,6 +32,8 @@ API_V2_URL = "https://api.center.dev/v2"
 MAX_RESULTS = 12
 PAGE_LIMIT = 12
 
+MAX_RESULTS_FOR_SEARCH = 12
+
 MAX_RESULTS_FOR_TRAITS = 100
 PAGE_LIMIT_FOR_TRAITS = 100
 
@@ -39,7 +42,7 @@ class NFTCollection(ContainerMixin):
     network: str
     address: str
     name: str
-    num_assets: int
+    num_assets: Optional[int]
     preview_image_url: str
 
     def container_name(self) -> str:
@@ -202,13 +205,16 @@ class NFTAssetList(ContainerMixin):
         )
 
 def fetch_nft_search(search_str: str) -> Generator[Union[NFTCollection, NFTAsset], None, None]:
+    limit = MAX_RESULTS_FOR_SEARCH
+    offset = 0
     q = urlencode(dict(
         query=search_str,
-        type='collection',  # too noisy otherwise
+        limit=limit,
+        offset=offset,
     ))
     count = 0
     for network in NETWORKS:
-        url = f"{API_URL}/{network}/search?{q}"
+        url = f"{API_V2_URL}/{network}/search?{q}"
         timing.log('search_begin')
         response = requests.get(url, headers=HEADERS)
         try:
@@ -218,17 +224,24 @@ def fetch_nft_search(search_str: str) -> Generator[Union[NFTCollection, NFTAsset
             break
         timing.log('search_done')
         obj = response.json()
-        for r in obj['results']:
-            if not r.get('previewImageUrl'):
+        for item in obj['items']:
+            if 'collection' not in item:
                 continue
-            count += 1
-            network = r['id'].split('/')[0]
-            if r['type'].lower() == 'collection':
-                result = fetch_nft_collection(network, r['address'])
-                if not _is_valid_collection(result):
-                    continue
-            else:
-                result = fetch_nft_asset(network, r['address'], r['tokenId'])
+            collection = item['collection']
+            if 'featuredImageURL' not in collection or not collection['featuredImageURL']:
+                continue
+            count += 1  # increment pre-filtered count, to determine filtering cost to speed
+            # v2 endpoint might return a non-checksum address, convert it for compatibility with elsewhere
+            address = web3.utils.address.to_checksum_address(collection['address'])
+            result = NFTCollection(
+                network=network,
+                address=address,
+                name=collection['name'],
+                num_assets=collection['totalSupply'],
+                preview_image_url=collection['featuredImageURL'],
+            )
+            if not _is_valid_collection(result):
+                continue
             yield result
             timing.log('first_result_done')
     timing.log('%d_results_done' % count)
@@ -236,10 +249,6 @@ def fetch_nft_search(search_str: str) -> Generator[Union[NFTCollection, NFTAsset
 
 def _is_valid_collection(collection: NFTCollection) -> bool:
     """Check if this NFT collection is a valid search result."""
-    # there should be traits
-    collection_traits = fetch_nft_collection_traits(collection.network, collection.address)
-    if not collection_traits.traits:
-        return False
     # should have listed and valid assets
     if collection.network == "ethereum-mainnet":
         token_prices = opensea.fetch_contract_listing_prices_with_retries(collection.address)
@@ -328,16 +337,25 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
 
 
 def fetch_nft_collection(network: str, address: str) -> NFTCollection:
-    url = f"{API_URL}/{network}/{address}"
+    url = f"{API_V2_URL}/{network}/{address}/nft/metadata"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
     obj = response.json()
+    num_assets = obj['totalSupply']
+    if num_assets == 0:  # seems to return 0 incorrectly
+        # use the asset endpoint with dummy token
+        token_id = 1
+        url = f"{API_V2_URL}/{network}/{address}/nft/{token_id}/metadata"
+        response = requests.get(url, headers=HEADERS)
+        if response.status_code == 200:
+            token_obj = response.json()
+            num_assets = token_obj['collection']['totalSupply']
     return NFTCollection(
         network=network,
         address=address,
         name=obj['name'],
-        num_assets=obj['numAssets'],
-        preview_image_url=obj['smallPreviewImageUrl'],
+        num_assets=num_assets,
+        preview_image_url=obj['featuredImageURL'],
     )
 
 
