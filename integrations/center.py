@@ -251,7 +251,7 @@ def _is_valid_collection(collection: NFTCollection) -> bool:
     """Check if this NFT collection is a valid search result."""
     # should have listed and valid assets
     if collection.network == "ethereum-mainnet":
-        token_prices = opensea.fetch_contract_listing_prices_with_retries(collection.address)
+        token_prices = opensea.fetch_contract_listing_prices_with_retries(collection.address, max_results=1)
         if not token_prices:
             return False
     return True
