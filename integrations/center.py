@@ -126,6 +126,7 @@ class NFTAsset(ContainerMixin):
     preview_image_url: str
     description: str = ''
     price: Optional[str] = None
+    attributes: Optional[ List ] = None
 
     def container_name(self) -> str:
         return 'display-nft-asset-container'
@@ -400,6 +401,7 @@ def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAsse
                 name=item['name'],
                 preview_image_url=item['mediumPreviewImageUrl'],
                 price=price,
+                
             )
             if not _is_valid_asset(asset):
                 continue
@@ -557,7 +559,7 @@ def fetch_nft_collection_trait_values(network: str, address: str, trait: str) ->
 
 
 def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
-    url = f"{API_URL}/{network}/{address}/{token_id}"
+    url = f"{API_V2_URL}/{network}/{address}/nft/{token_id}/metadata"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
     obj = response.json()
@@ -565,10 +567,11 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
         network=network,
         address=address,
         token_id=token_id,
-        collection_name=obj['collectionName'],
-        name=obj['name'],
-        preview_image_url=obj['mediumPreviewImageUrl'],
+        collection_name=obj['collection']['name'],
+        name=obj['metadata']['name'],
+        preview_image_url=obj['metadata']['image'],
         description=obj['metadata']['description'],
+        attributes=obj['metadata']['attributes'],
     )
 
 
