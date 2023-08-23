@@ -698,3 +698,14 @@
       - borrowToken
     type: object
   return_value_description: ""
+- _name_: display_friend_tech_leaderboard
+  description: show the friend tech leaderboard
+  parameters:
+    properties:
+      user_wallet_address:
+        description: TODO fix this as this is an unused property; this is the current user's wallet address
+        type: string
+    required:
+      - user_wallet_address
+    type: object
+  return_value_description: ""
