@@ -709,3 +709,18 @@
       - user_wallet_address
     type: object
   return_value_description: ""
+- _name_: display_friend_tech_buy_keys
+  description: buy friend tech keys for a specific user
+  parameters:
+    properties:
+      username:
+        description: the username of keys to buy
+        type: string
+      amount:
+        description: number of keys to buy
+        type: string
+    required:
+      - username
+      - amount
+    type: object
+  return_value_description: ""

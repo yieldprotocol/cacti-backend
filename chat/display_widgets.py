@@ -174,6 +174,9 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     elif command == 'friend-tech-leaderboard':
         items = params.split(",")
         lines.append(f"friend.tech leaderboard") 
+    elif command == 'friend-tech-buy-keys':
+        items = params.split(",")
+        lines.append(f"friend.tech buying user keys for username: {items[0]}, with amount: {items[1]}.")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
