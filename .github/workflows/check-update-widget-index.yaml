@@ -27,6 +27,13 @@ jobs:
         with:
           path: backend
 
+      - name: Extract branch name
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: Show branch name
+        run: echo "Branch name is ${{ steps.extract_branch.outputs.branch }}"
+
       - id: 'auth'
         uses: 'google-github-actions/auth@v1'
         with:
@@ -58,25 +65,9 @@ jobs:
           echo "SERVER_HOST=" >> "$GITHUB_ENV"
           echo "SERVER_ORIGINS=" >> "$GITHUB_ENV"
           echo "SERVER_SECRET_KEY=" >> "$GITHUB_ENV"
-          
-          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' ]]; then
-            echo "ENV_TAG=prod" >> "$GITHUB_ENV"
-          else
-            echo "ENV_TAG=dev" >> "$GITHUB_ENV"
-            echo "WEAVIATE_URL=${{ secrets.DEV_WEAVIATE_URL }}" >> "$GITHUB_ENV"
-            echo "WEAVIATE_API_KEY=" >> "$GITHUB_ENV"
-            echo "CHATDB_URL=${{ secrets.DEV_CHATDB_URL }}" >> "$GITHUB_ENV"
-          fi
-
-      - name: Set environment for branch
-        run: |
-          echo "SERVER_HOST=" >> "$GITHUB_ENV"
-          echo "SERVER_ORIGINS=" >> "$GITHUB_ENV"
-          echo "SERVER_SECRET_KEY=" >> "$GITHUB_ENV"
-          echo "CHATDB_URL=" >> "$GITHUB_ENV"
           echo "WEAVIATE_URL=${{ secrets.WEAVIATE_URL }}" >> "$GITHUB_ENV"
 
-          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' ]]; then
+          if [[ ${{ steps.extract_branch.outputs.branch }} == 'master' ]]; then
             echo "ENV_TAG=prod" >> "$GITHUB_ENV"
             echo "WEAVIATE_API_KEY=${{ secrets.PROD_WEAVIATE_API_KEY }}" >> "$GITHUB_ENV"
             echo "CHATDB_URL=${{ secrets.PROD_CHATDB_URL }}" >> "$GITHUB_ENV"
@@ -91,10 +82,10 @@ jobs:
       - name: Check and update widget index
         run: |
           GCP_SSH_CMD="gcloud compute ssh cacti-bastion-server --zone us-east1-b --ssh-key-file /tmp/gcp/google_compute_engine --quiet --tunnel-through-iap --ssh-flag"
-          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' ]]; then
-            $GCP_SSH_CMD '-vvv -fN -L 8080:${{ secrets.PROD_WEAVIATE_INTERNAL_IP }}'
+          if [[ ${{ steps.extract_branch.outputs.branch }} == 'master' ]]; then
+            $GCP_SSH_CMD '-fN -L 8080:${{ secrets.PROD_WEAVIATE_INTERNAL_IP }}'
           else
-            $GCP_SSH_CMD '-vvv -fN -L 8080:${{ secrets.DEV_WEAVIATE_INTERNAL_IP }}'
+            $GCP_SSH_CMD '-fN -L 8080:${{ secrets.DEV_WEAVIATE_INTERNAL_IP }}'
           fi
           
           cd backend

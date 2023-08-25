@@ -118,18 +118,18 @@ def fetch_listings(address: str, token_id: str) -> List[NFTListing]:
     return ret
 
 
-def fetch_all_listings(address: str) -> List[NFTListing]:
+def fetch_all_listings(address: str, max_results: Optional[int] = None) -> List[NFTListing]:
     """Fetch all listings for a collection."""
     # NOTE: a given token ID might have more than one listing
     contract = fetch_contract(address)
     slug = contract.slug
-    limit = PAGE_LIMIT
     next_cursor = None
     ret = []
     # Arbitary limit to optimize for latency, based on hueristics related to observed number of NFTs listed for blue-chip collections.
-    max_results = 300
-    max_queries = 5
+    max_results = 300 if max_results is None else max_results
+    max_queries = 3
     queries = 0
+    limit = min(PAGE_LIMIT, max_results)
     while len(ret) < max_results and queries < max_queries:
         queries += 1
         q = urlencode(dict(
@@ -170,7 +170,7 @@ def fetch_all_listings(address: str) -> List[NFTListing]:
         next_cursor = obj.get("next")
         if not next_cursor:
             break
-    return ret
+    return ret[:max_results]
 
 
 def fetch_asset_listing_prices_with_retries(address: str, token_id: str) -> Optional[Dict[str, Union[str, int]]]:
@@ -183,8 +183,8 @@ def fetch_asset_listing_with_retries(address: str, token_id: str) -> Optional[NF
     listings = fetch_listings(address, token_id)
     return listings[0] if len(listings) > 0 else None
 
-def fetch_contract_listing_prices_with_retries(address: str) -> Dict[str, Dict[str, Union[str, int]]]:
-    listings = fetch_all_listings(address)
+def fetch_contract_listing_prices_with_retries(address: str, max_results: Optional[int] = None) -> Dict[str, Dict[str, Union[str, int]]]:
+    listings = fetch_all_listings(address, max_results=max_results)
     ret = {}
     for listing in listings:
         if listing.token_id not in ret or ret[listing.token_id].price_value > listing.price_value:
