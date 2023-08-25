@@ -31,6 +31,9 @@ jobs:
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
         id: extract_branch
 
+      - name: Show branch name
+        run: echo "Branch name is ${{ steps.extract_branch.outputs.branch }}"
+
       - id: 'auth'
         uses: 'google-github-actions/auth@v1'
         with:
