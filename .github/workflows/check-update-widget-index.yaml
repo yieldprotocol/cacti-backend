@@ -1,9 +1,7 @@
 name: Check and update widget index
 
 on:
-  workflow_run:
-    workflows: [Check widget translation]
-    types: [completed]
+  push:
     branches: [master, dev]
 
 jobs:
