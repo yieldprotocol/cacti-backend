@@ -702,9 +702,10 @@
   description: replay a transaction with the same parameters
   parameters:
     properties:
-      placeholder:
-        description: just a placeholder
+      user_wallet_address:
+        description: just a placeholder; this is the user's wallet address
         type: string
     required:
+      - user_wallet_address
     type: object
   return_value_description: ""
