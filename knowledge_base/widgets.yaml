@@ -702,10 +702,10 @@
   description: replay a transaction with the same parameters
   parameters:
     properties:
-      user_wallet_address:
-        description: just a placeholder; this is the user's wallet address
+      txHash:
+        description: the transaction with tx hash to replay
         type: string
     required:
-      - user_wallet_address
+      - txHash
     type: object
   return_value_description: ""
