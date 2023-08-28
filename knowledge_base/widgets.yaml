@@ -698,3 +698,13 @@
       - borrowToken
     type: object
   return_value_description: ""
+- _name_: display_tx_replay
+  description: replay a transaction with the same parameters
+  parameters:
+    properties:
+      placeholder:
+        description: just a placeholder
+        type: string
+    required:
+    type: object
+  return_value_description: ""
