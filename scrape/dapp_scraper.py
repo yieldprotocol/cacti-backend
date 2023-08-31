@@ -52,7 +52,7 @@ def get_ipfs_links_from_url(url: str) -> List[str]:
     return cleaned_ipfs_urls
 
 
-def scrape_ipfs_links(url: str = 'https://thedapplist.com/curate?status=All&q=') -> str:
+def scrape_ipfs_links(url: str) -> str:
 
     payload = json.dumps({
         "url": url,
