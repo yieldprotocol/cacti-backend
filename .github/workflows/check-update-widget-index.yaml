@@ -1,16 +1,13 @@
 name: Check and update widget index
 
 on:
-  workflow_run:
-    workflows: [Check widget translation]
-    types: [completed]
+  push:
     branches: [master, dev]
 
 jobs:
   main:
     name: Check and update widget index
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
