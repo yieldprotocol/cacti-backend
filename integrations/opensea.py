@@ -31,8 +31,6 @@ class NFTContract:
     chain: str
     address: str
     slug: str
-    name: str
-    image_url: str
 
 
 # this is a listing of an NFT asset
@@ -56,7 +54,7 @@ class NFTFulfillmentData:
 
 def fetch_contract(address: str) -> NFTContract:
     """Fetch data about a contract (collection)."""
-    url = f"{API_V1_URL}/asset_contract/{address}"
+    url = f"{API_V2_URL}/chain/ethereum/contract/{address}/nfts"
 
     def _exec_request():
         response = requests.get(url, headers=HEADERS)
@@ -67,15 +65,11 @@ def fetch_contract(address: str) -> NFTContract:
         _exec_request,
         [ErrorToRetry(requests.exceptions.HTTPError, _should_retry_exception)],
     )
-    collection = obj["collection"]
     return NFTContract(
-        chain=obj["chain_identifier"],
+        chain='ethereum',
         address=address,
-        slug=collection["slug"],
-        name=collection["name"],
-        image_url=collection["image_url"],
+        slug=obj["nfts"][0]["collection"],
     )
-
 
 def fetch_listings(address: str, token_id: str) -> List[NFTListing]:
     """Fetch cheapest listing for an asset."""
