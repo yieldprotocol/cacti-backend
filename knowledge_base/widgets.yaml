@@ -634,6 +634,36 @@
     - amount
     type: object
   return_value_description: ''
+- _name_: display_base_deposit
+  description: Used to bridge/deposit ETH or token from mainnet L1 to Base L2
+  parameters:
+    properties:
+      token:
+        description: token to deposit/bridge
+        type: string
+      amount:
+        description: amount to deposit
+        type: string
+    required:
+    - token
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_base_withdraw
+  description: Used to withdraw ETH from Base L2 to mainnet L1
+  parameters:
+    properties:
+      token:
+        description: token to withdraw
+        type: string
+      amount:
+        description: amount to withdraw
+        type: string
+    required:
+    - token
+    - amount
+    type: object
+  return_value_description: ''
 - _name_: display_yield_protocol_lend
   description: use the yield protocol to lend tokens at a fixed rate
   parameters:
