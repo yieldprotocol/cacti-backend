@@ -355,13 +355,16 @@ def fetch_app_info(query: str) -> Callable:
 @error_wrap
 def fetch_scraped_sites(query: str) -> Callable:
     def fn(token_handler):
-        scraped_sites_index = config.initialize(config.scraped_sites_index)
+        # below is the old index used previously for scraped sites - do we still use this?
+        # if so, should we make a different function for the new dapps_index?
+        # scraped_sites_index = config.initialize(config.scraped_sites_index)
+        dapps_index = config.initialize(config.dapps_index)
         tool = dict(
             type="tools.index_answer.IndexAnswerTool",
             _streaming=True,
             name="ScrapedSitesIndexAnswer",
             content_description="",  # not used
-            index=scraped_sites_index,
+            index=dapps_index, 
             top_k=3,
             source_key="url",
         )

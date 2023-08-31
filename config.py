@@ -19,6 +19,14 @@ scraped_sites_index = dict(
     text_key="content",
     extra_keys=["url"],
 )
+
+dapps_index = dict(
+    type="index.weaviate.WeaviateIndex",
+    index_name="ThirdPartyDapps",
+    text_key="description",
+    extra_keys=["url","name"],
+)
+
 api_docs_index = dict(
     type="index.weaviate.WeaviateIndex",
     index_name="APIDocsV1",
