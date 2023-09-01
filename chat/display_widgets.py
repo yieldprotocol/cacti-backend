@@ -164,10 +164,10 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         lines.append(f"Base bridge withdraw ETH action for amount: {items[0]}.")
     elif command == 'base-deposit-erc20':
         items = params.split(",")
-        lines.append(f"Base bridge deposit ERC20 token action for token: {items[0]} amount: {items[2]}.")
+        lines.append(f"Base bridge deposit ERC20 token action for token: {items[0]} receiving token: {items[1]} amount: {items[2]}.")
     elif command == 'base-withdraw-erc20':
         items = params.split(",")
-        lines.append(f"Base bridge withdraw ERC20 token action for token: {items[0]} amount: {items[2]}.")
+        lines.append(f"Base bridge withdraw ERC20 token action for token: {items[0]} receiving token: {items[1]} amount: {items[2]}.")
     elif command == 'stake-sfrxeth':
         items = params.split(",")
         lines.append(f"sfrxETH deposit action for address: {items[0]}, amount: {items[1]}.")
