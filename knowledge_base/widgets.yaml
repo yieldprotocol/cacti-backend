@@ -645,8 +645,8 @@
         description: amount to deposit
         type: string
     required:
-    - token
-    - amount
+      - token
+      - amount
     type: object
   return_value_description: ''
 - _name_: display_base_withdraw
@@ -660,8 +660,8 @@
         description: amount to withdraw
         type: string
     required:
-    - token
-    - amount
+      - token
+      - amount
     type: object
   return_value_description: ''
 - _name_: display_yield_protocol_lend
