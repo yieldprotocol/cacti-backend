@@ -634,33 +634,63 @@
     - amount
     type: object
   return_value_description: ''
-- _name_: display_base_deposit
-  description: Used to bridge/deposit ETH or token from mainnet L1 to base L2.
+- _name_: display_base_deposit_eth
+  description: Used to bridge/deposit ETH from mainnet L1 to Base L2.
   parameters:
     properties:
-      token:
-        description: token to deposit/bridge
+      amount:
+        description: amount to deposit
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_base_withdraw_eth
+  description: Used to withdraw ETH from base L2 to mainnet L1.
+  parameters:
+    properties:
+      amount:
+        description: amount to withdraw
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_base_deposit_erc29
+  description: Used to bridge/deposit ERC20 from mainnet L1 to Base L2.
+  parameters:
+    properties:
+      localToken: 
+        description: token to deposit
+        type: string
+      remoteToken:
+        description: token to receive
         type: string
       amount:
         description: amount to deposit
         type: string
     required:
-    - token
+    - localToken
+    - remoteToken
     - amount
     type: object
   return_value_description: ''
-- _name_: display_base_withdraw
-  description: Used to withdraw ETH from base L2 to mainnet L1
+- _name_: display_base_withdraw_erc20
+  description: Used to withdraw ERC20 from base L2 to mainnet L1.
   parameters:
     properties:
-      token:
-        description: token to withdraw
+      localToken: 
+        description: token to deposit
+        type: string
+      remoteToken:
+        description: token to receive
         type: string
       amount:
-        description: amount to withdraw
+        description: amount to deposit
         type: string
     required:
-    - token
+    - localToken
+    - remoteToken
     - amount
     type: object
   return_value_description: ''
