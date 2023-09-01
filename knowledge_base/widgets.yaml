@@ -635,7 +635,7 @@
     type: object
   return_value_description: ''
 - _name_: display_base_deposit
-  description: Used to bridge/deposit ETH or token from mainnet L1 to Base L2
+  description: Used to bridge/deposit ETH or token from mainnet L1 to base L2.
   parameters:
     properties:
       token:
@@ -650,7 +650,7 @@
     type: object
   return_value_description: ''
 - _name_: display_base_withdraw
-  description: Used to withdraw ETH from Base L2 to mainnet L1
+  description: Used to withdraw ETH from base L2 to mainnet L1
   parameters:
     properties:
       token:
