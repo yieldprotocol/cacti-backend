@@ -7,8 +7,11 @@ from urllib.parse import urlencode
 import requests
 import web3
 
+from fastapi.responses import Response
+
 import env
 import utils
+import auth
 
 from utils import ETH_MAINNET_CHAIN_ID, nft, FetchError, ExecError
 import utils.timing as timing
@@ -43,8 +46,6 @@ class NFTCollection(ContainerMixin):
     name: str
     num_assets: Optional[int]
     preview_image_url: str
-    banner_image_url: Optional[str]
-    first_token_image_url: Optional[str]
 
     def container_name(self) -> str:
         return 'display-nft-collection-container'
@@ -125,7 +126,6 @@ class NFTAsset(ContainerMixin):
     collection_name: str
     name: str
     preview_image_url: str
-    image_url:str
     description: str = ''
     price: Optional[str] = None
     attributes: Optional[ List ] = None
@@ -353,15 +353,12 @@ def fetch_nft_collection(network: str, address: str) -> NFTCollection:
         if response.status_code == 200:
             token_obj = response.json()
             num_assets = token_obj['collection']['totalSupply']
-            first_image = f"{API_URL}{token_obj['media']['small']}"
     return NFTCollection(
         network=network,
         address=address,
         name=obj['name'],
         num_assets=num_assets,
-        banner_image_url=obj['bannerImageURL'],
         preview_image_url=obj['featuredImageURL'],
-        first_token_image_url=first_image
     )
 
 
@@ -700,3 +697,17 @@ def _fetch_nft_asset_price_str(network: str, address: str, token_id: str) -> Opt
     else:
         price = None
     return price
+
+@auth.authenticate_user_id()
+def fetch_center_image(response, network: str, address: str, token_id: str, size: str, user_id:str=None):
+    
+    # TODO check if user is authenticated
+    url = f"{API_URL}/v2/{network}/{address}/nft/{token_id}/render/{size}"
+    resp = requests.get(url, headers=HEADERS)
+
+    # return response.content 
+    if resp.status_code != 200:
+        # Handle error appropriately, return a message, or another status code
+        return Response(content="Could not retrieve image", status_code=resp.status_code)
+    
+    return Response(content=resp.content)
