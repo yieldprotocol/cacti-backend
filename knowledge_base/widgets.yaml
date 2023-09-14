@@ -721,3 +721,14 @@
       - toChain
     type: object
   return_value_description: ""
+- _name_: display_tx_replay
+  description: replay a transaction with the same parameters
+  parameters:
+    properties:
+      txHash:
+        description: the transaction with tx hash to replay
+        type: string
+    required:
+      - txHash
+    type: object
+  return_value_description: ""
