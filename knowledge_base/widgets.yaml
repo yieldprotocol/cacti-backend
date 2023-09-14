@@ -698,6 +698,29 @@
       - borrowToken
     type: object
   return_value_description: ""
+- _name_: display_hop_protocol_bridge
+  description: use the hop protocol to bridge/deposit tokens from a supported chain to a different supported chain
+  parameters:
+    properties:
+      amount:
+        description: token amount
+        type: string
+      tokenSymbol:
+        description: token symbol
+        type: string
+      fromChain:
+        description: chain to bridge from
+        type: string
+      toChain:
+        description: chain to bridge to
+        type: string
+    required:
+      - amount
+      - tokenSymbol
+      - fromChain
+      - toChain
+    type: object
+  return_value_description: ""
 - _name_: display_tx_replay
   description: replay a transaction with the same parameters
   parameters:
