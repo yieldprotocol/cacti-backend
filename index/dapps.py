@@ -1,5 +1,5 @@
-# to build the index for dapps, first scrap them from dapplist.com using the scraper
-# then run: python -c "from index.dapps import backfill; backfill()"
+# to build the index for dapps, first scrape them using the scraper
+# then run: python3 -c "from index.dapps import backfill; backfill()"
 
 
 from langchain.docstore.document import Document
@@ -39,37 +39,37 @@ def create_schema(delete_first: bool = False) -> None:
                         }
                     },
                     "properties": [
-                        {"name": DAPP_NAME, "dataType": ["string"]},
-                        {"name": DAPP_DESCRIPTION, "dataType": ["string"]},
-                        {"name": DAPP_URL, "dataType": ["string"]},
+                        {"name": DAPP_NAME, "dataType": ["text"]},
+                        {"name": DAPP_DESCRIPTION, "dataType": ["text"]},
+                        {"name": DAPP_URL, "dataType": ["text"]},
                         {
                             "name": "twitterHandle",
-                            "dataType": ["string"],
+                            "dataType": ["text"],
                             "description": "The Twitter handle of the Dapp"
                         },
                         {
                             "name": "blogLinks",
-                            "dataType": ["string[]"],
+                            "dataType": ["text[]"],
                             "description": "Links to the blog posts related to the Dapp"
                         },
                         {
                             "name": "discord",
-                            "dataType": ["string"],
+                            "dataType": ["text"],
                             "description": "The Discord server link of the Dapp"
                         },
                         {
                             "name": "facebook",
-                            "dataType": ["string"],
+                            "dataType": ["text"],
                             "description": "The Facebook page link of the Dapp"
                         },
                         {
                             "name": "instagram",
-                            "dataType": ["string"],
+                            "dataType": ["text"],
                             "description": "The Instagram profile link of the Dapp"
                         },
                         {
                             "name": "telegram",
-                            "dataType": ["string"],
+                            "dataType": ["text"],
                             "description": "The Telegram channel link of the Dapp"
                         }
                     ]
@@ -85,10 +85,10 @@ def backfill():
     try: 
         from langchain.vectorstores import Weaviate
 
-        with open('./knowledge_base/dapp-list.json') as f: 
+        with open('./knowledge_base/dapps_ranked.json') as f: 
             dapp_list = json.load(f)
             
-        # Extract the 'id' field from each dapp and store it in the 'documents' list
+        # Extract the 'name' field from each dapp and store it in the 'documents' list
         documents = [d.pop("name") for d in dapp_list]
 
         # Use the remaining fields in each dapp to populate the 'metadatas' list

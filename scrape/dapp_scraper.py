@@ -160,3 +160,34 @@ def clean_payload_data(original_data):
     return reduced_data
 
 
+def load_data_from_json_to_db(session, json_path):
+    # 1. Setup
+    # If the table doesn't exist, create it
+    # Base.metadata.create_all(session.bind) Dont need this - jacob b
+
+    # 2. Data Loading
+
+    # Read the JSON data
+    with open(json_path, "r") as file:
+        dapps_data = json.load(file)
+
+    # Loop through the JSON data and insert each entry into the database
+    for dapp in dapps_data:
+        dapp_instance = DApp(
+            description=dapp["description"],
+            name=dapp["name"],
+            url=dapp["url"],
+            twitter_handle=dapp["twitterHandle"],
+            blog_links=dapp["blogLinks"],
+            discord=dapp["discord"],
+            facebook=dapp["facebook"],
+            instagram=dapp["instagram"],
+            telegram=dapp["telegram"]
+        )
+        session.add(dapp_instance)
+
+    # 3. Finalization
+
+    # Commit the transactions
+    session.commit()
+
