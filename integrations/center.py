@@ -572,7 +572,7 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
         collection_name=obj['collection']['name'],
         name=obj['metadata']['name'],
         preview_image_url=f"{API_URL}{obj['media']['small']}",
-        image_url=f"{API_URL}{obj['media']['medium']}",
+        # image_url=f"{API_URL}{obj['media']['medium']}",
         description=obj['metadata']['description'],
         attributes=obj['metadata']['attributes'],
     )
