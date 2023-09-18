@@ -701,9 +701,11 @@ def _fetch_nft_asset_price_str(network: str, address: str, token_id: str) -> Opt
 @auth.authenticate_user_id()
 def fetch_center_image(response, network: str, address: str, token_id: str, size: str, user_id:str=None):
     
-    # TODO check if user is authenticated
     url = f"{API_URL}/v2/{network}/{address}/nft/{token_id}/render/{size}"
     resp = requests.get(url, headers=HEADERS)
+
+    # Check if user is authenticated
+    if not user_id: return None 
 
     # return response.content 
     if resp.status_code != 200:
