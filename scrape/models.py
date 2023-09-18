@@ -36,10 +36,10 @@ class ScrapedUrl(Base, Timestamp):  # type: ignore
 
     Index('scraped_url_lookup', url, unique=True)
 
-class Dapp(Base):
-    __tablename__ = 'dapps'
+class Dapp(Base, Timestamp):
+    __tablename__ = 'dapp'
     
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     description = Column(TEXT, nullable=False)
     name = Column(String(255), nullable=False, unique=True)
     url = Column(String(255), nullable=False)
@@ -50,4 +50,4 @@ class Dapp(Base):
     instagram = Column(String(255), nullable=True)
     telegram = Column(String(255), nullable=True)
 
-    Index('dapp_name_url_index', 'name', 'url', unique=True)
+    Index('dapp_by_name', 'name', unique=True)
