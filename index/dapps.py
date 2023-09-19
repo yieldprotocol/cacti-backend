@@ -45,32 +45,68 @@ def create_schema(delete_first: bool = False) -> None:
                         {
                             "name": "twitterHandle",
                             "dataType": ["text"],
-                            "description": "The Twitter handle of the Dapp"
+                            "description": "The Twitter handle of the Dapp",
+                            "moduleConfig": {
+                                    "text2vec-openai": {
+                                    "skip": False,
+                                    "vectorizePropertyName": False
+                                }
+                            }
                         },
                         {
                             "name": "blogLinks",
                             "dataType": ["text[]"],
-                            "description": "Links to the blog posts related to the Dapp"
+                            "description": "Links to the blog posts related to the Dapp",
+                            "moduleConfig": {
+                                    "text2vec-openai": {
+                                    "skip": False,
+                                    "vectorizePropertyName": False
+                                }
+                            }
                         },
                         {
                             "name": "discord",
                             "dataType": ["text"],
-                            "description": "The Discord server link of the Dapp"
+                            "description": "The Discord server link of the Dapp",
+                            "moduleConfig": {
+                                    "text2vec-openai": {
+                                    "skip": False,
+                                    "vectorizePropertyName": False
+                                }
+                            }
                         },
                         {
                             "name": "facebook",
                             "dataType": ["text"],
-                            "description": "The Facebook page link of the Dapp"
+                            "description": "The Facebook page link of the Dapp",
+                            "moduleConfig": {
+                                    "text2vec-openai": {
+                                    "skip": False,
+                                    "vectorizePropertyName": False
+                                }
+                            }
                         },
                         {
                             "name": "instagram",
                             "dataType": ["text"],
-                            "description": "The Instagram profile link of the Dapp"
+                            "description": "The Instagram profile link of the Dapp",
+                            "moduleConfig": {
+                                    "text2vec-openai": {
+                                    "skip": False,
+                                    "vectorizePropertyName": False
+                                }
+                            }
                         },
                         {
                             "name": "telegram",
                             "dataType": ["text"],
-                            "description": "The Telegram channel link of the Dapp"
+                            "description": "The Telegram channel link of the Dapp",
+                            "moduleConfig": {
+                                    "text2vec-openai": {
+                                    "skip": False,
+                                    "vectorizePropertyName": False
+                                }
+                            }
                         }
                     ]
                 }
