@@ -22,7 +22,7 @@ scraped_sites_index = dict(
 
 dapps_index = dict(
     type="index.weaviate.WeaviateIndex",
-    index_name="ThirdPartyDapps",
+    index_name="Web3Apps",
     text_key="description",
     extra_keys=["url","name"],
 )
