@@ -3,9 +3,10 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Set
 
-from fastapi import FastAPI, Request, Response, Body, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.responses import StreamingResponse
 
 import server
 import chat
@@ -15,6 +16,7 @@ from  utils import SERVER_ORIGINS, SERVER_SECRET_KEY
 from app import chat as app_chat
 from app import share as app_share
 
+from integrations import center 
 
 app = FastAPI()
 
@@ -80,6 +82,9 @@ class ClientState:
 async def api_nonce(request: Request):
     return auth.api_nonce(request)
 
+@app.get("/center_image/{network}/{address}/{token_id}/{size}")
+async def fetch_nft_image(request: Request, network: str, address: str, token_id: str, size: str):
+    return center.fetch_center_image(request, network, address, token_id, size)
 
 @app.post("/login")
 async def api_login(request: Request, data: auth.AcceptJSON):

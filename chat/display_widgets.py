@@ -171,6 +171,12 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     elif command == 'yield-protocol-borrow-close':
         items = params.split(",")
         lines.append(f"yield protocol borrow close action: {items[0]}") 
+    elif command == 'hop-protocol-bridge':
+        items = params.split(",")
+        lines.append(f"hop protocol bridge action for amount: {items[0]}, token symbol: {items[1]}, from chain: {items[2]}, to chain: {items[3]}.") 
+    elif command == 'tx-replay':
+        items = params.split(",")
+        lines.append(f"replay transaction with tx hash: {items[0]}") 
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
