@@ -248,6 +248,8 @@ def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
         return fetch_app_info(*params)
     elif command == 'fetch-scraped-sites':
         return fetch_scraped_sites(*params)
+    elif command == 'fetch-link-suggestion':
+        return fetch_link_suggestion(*params) 
     elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
     elif command == aave.AaveBorrowContractWorkflow.WORKFLOW_TYPE:
@@ -351,13 +353,26 @@ def fetch_app_info(query: str) -> Callable:
         tool._run(query)
     return fn
 
-
 @error_wrap
 def fetch_scraped_sites(query: str) -> Callable:
     def fn(token_handler):
-        # below is the old index used previously for scraped sites - do we still use this?
-        # if so, should we make a different function for the new dapps_index?
-        # scraped_sites_index = config.initialize(config.scraped_sites_index)
+        scraped_sites_index = config.initialize(config.scraped_sites_index)
+        tool = dict(
+            type="tools.index_answer.IndexAnswerTool",
+            _streaming=True,
+            name="ScrapedSitesIndexAnswer",
+            content_description="",  # not used
+            index=scraped_sites_index, 
+            top_k=3,
+            source_key="url",
+        )
+        tool = streaming.get_streaming_tools([tool], token_handler)[0]
+        tool._run(query)
+    return fn
+
+@error_wrap
+def fetch_link_suggestion(query: str) -> Callable:
+    def fn(token_handler):
         dapps_index = config.initialize(config.dapps_index)
         tool = dict(
             type="tools.index_answer.IndexAnswerTool",

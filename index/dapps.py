@@ -6,7 +6,7 @@ from langchain.docstore.document import Document
 from .weaviate import get_client
 import json
 
-INDEX_NAME = "ThirdPartyDapps"
+INDEX_NAME = "Web3Apps"
 INDEX_DESCRIPTION = "Index of Third party dapps"
 DAPP_DESCRIPTION = "description"
 DAPP_NAME = "name"
