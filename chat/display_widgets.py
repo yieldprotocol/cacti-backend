@@ -190,17 +190,17 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         items = params.split(",")
         lines.append(f"withdraw eth from reth action for amount: {items[0]}.")
     elif command == 'savings-dai-deposit':
-        params = json.loads(params)
-        lines.append(f"DAI deposit action for amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"DAI deposit action for amount: {items[0]}.")
     elif command == 'savings-dai-withdraw':
-        params = json.loads(params)
-        lines.append(f"DAI withdraw action for amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"DAI withdraw action for amount: {items[0]}.")
     elif command == 'deposit-vault':
-        params = json.loads(params)
-        lines.append(f"Deposit vault action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"Deposit vault action for token: {items[0]}, amount: {items[1]}.")
     elif command == 'withdraw-vault':
-        params = json.loads(params)
-        lines.append(f"Withdraw vault action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"Withdraw vault action for token: {items[0]}, amount: {items[1]}.")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
