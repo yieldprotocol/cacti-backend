@@ -563,66 +563,6 @@
     - amount
     type: object
   return_value_description: ''
-- _name_: display_savings_dai_deposit
-  description: Used to deposit DAI into the DAI savings account.
-  parameters:
-    properties:
-      amount:
-        description: Amount of DAI to deposit.
-        type: string
-    required:
-    - amount
-    type: object
-  return_value_description: ''
-- _name_: display_savings_dai_withdraw
-  description: Used to withdraw DAI from the DAI savings account.
-  parameters:
-    properties:
-      amount:
-        description: Amount of DAI to withdraw.
-        type: string
-    required:
-    - amount
-    type: object
-  return_value_description: ''
-- _name_: display_deposit_vault
-  description: Used to deposit a token into a vault
-  parameters:
-    properties:
-      depositToken:
-        description: Token to deposit into the vault.
-        type: string
-      amount:
-        description: Amount of token to deposit.
-        type: string
-      vault:
-        description: Vault to deposit the token in.
-        type: string
-    required:
-    - depositToken
-    - amount
-    - vault
-    type: object
-  return_value_description: ''
-- _name_: display_withdraw_vault
-  description: Used to withdraw a token from a vault
-  parameters:
-    properties:
-      withdrawToken:
-        description: Token to withdraw from the vault.
-        type: string
-      amount:
-        description: Amount of token to withdraw.
-        type: string
-      vault:
-        description: Vault to withdraw the token in.
-        type: string
-    required:
-    - withdrawToken
-    - amount
-    - vault
-    type: object
-  return_value_description: ''
 - _name_: fetch_nfts_owned_by_address_or_domain
   description: Used to fetch NFTs owned by a wallet address or ENS domain on a particular network
   parameters:
@@ -834,5 +774,65 @@
         type: string
     required:
     - amount
+    type: object
+  return_value_description: ''
+- _name_: display_savings_dai_deposit
+  description: Used to deposit DAI into the DAI savings account.
+  parameters:
+    properties:
+      amount:
+        description: Amount of DAI to deposit.
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_savings_dai_withdraw
+  description: Used to withdraw DAI from the DAI savings account.
+  parameters:
+    properties:
+      amount:
+        description: Amount of DAI to withdraw.
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_deposit_vault
+  description: Used to deposit a token into a vault
+  parameters:
+    properties:
+      depositToken:
+        description: Token to deposit into the vault.
+        type: string
+      amount:
+        description: Amount of token to deposit.
+        type: string
+      vault:
+        description: Vault to deposit the token in.
+        type: string
+    required:
+    - depositToken
+    - amount
+    - vault
+    type: object
+  return_value_description: ''
+- _name_: display_withdraw_vault
+  description: Used to withdraw a token from a vault
+  parameters:
+    properties:
+      withdrawToken:
+        description: Token to withdraw from the vault.
+        type: string
+      amount:
+        description: Amount of token to withdraw.
+        type: string
+      vault:
+        description: Vault to withdraw the token in.
+        type: string
+    required:
+    - withdrawToken
+    - amount
+    - vault
     type: object
   return_value_description: ''
