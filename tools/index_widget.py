@@ -10,6 +10,7 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
+from ens import ENS
 
 import ui_workflows
 import config
@@ -531,8 +532,9 @@ def fetch_nfts_owned_by_user(network: str = None) -> str:
 
 @error_wrap
 def fetch_nft_buy(network: str, address: str, token_id: str) -> str:
-    ret = opensea.fetch_nft_buy(network, address, token_id)
-    return ret
+    wallet_address = context.get_wallet_address()
+    nft_fulfillment_container = center.fetch_nft_buy(network, wallet_address, address, token_id)
+    return str(nft_fulfillment_container)
 
 
 @error_wrap
@@ -558,7 +560,9 @@ def fetch_yields(token, network, count) -> str:
 
 def ens_from_address(address) -> str:
     try:
-        domain = utils.ns.name(address)
+        web3 = context.get_web3_provider()
+        ns = ENS.from_web3(web3)
+        domain = ns.name(address)
         if domain is None:
             return f"No ENS domain for {address}"
         else:
@@ -572,7 +576,9 @@ def ens_from_address(address) -> str:
 
 def address_from_ens(domain) -> str:
     try:
-        address = utils.ns.address(domain)
+        web3 = context.get_web3_provider()
+        ns = ENS.from_web3(web3)
+        address = ns.address(domain)
         if address is None:
             return f"No address for {domain}"
         else:
@@ -638,7 +644,7 @@ def set_ens_primary_name(domain: str) ->TxPayloadForSending:
 
 @error_wrap
 @ensure_wallet_connected
-def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPayloadForSending:
+def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str, collectionName: str) ->TxPayloadForSending:
     wallet_chain_id = 1 # TODO: get from context
     wallet_address = context.get_wallet_address()
     user_chat_message_id = context.get_user_chat_message_id()
@@ -647,6 +653,7 @@ def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPay
         'domain': domain,
         'nftContractAddress': nftContractAddress,
         'nftId': nftId,
+        'collectionName': collectionName
     }
 
     result = ens.ENSSetAvatarNFTWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()

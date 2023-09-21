@@ -314,10 +314,14 @@
       nftId:
         description: Token ID of the NFT.
         type: string
+      collectionName:
+        description: Name of NFT collection. Use an empty string if the input parameter value is unknown but do not ask user to input empty string.
+        type: string
     required:
     - domain
     - nftContractAddress
     - nftId
+    - collectionName
     type: object
   return_value_description: ''
 - _name_: aave_supply
@@ -559,50 +563,6 @@
     - amount
     type: object
   return_value_description: ''
-- _name_: display_deposit_eth_lido
-  description: This widget is only used when the user wants to deposit ETH into the Lido to get steth
-  parameters:
-    properties:
-      amount:
-        description: Amount of ETH to deposit into the Lido.
-        type: string
-    required:
-    - amount
-    type: object
-  return_value_description: ''
-- _name_: display_withdraw_eth_lido
-  description: This widget is only used when the user wants to withdraw ETH from Lido
-  parameters:
-    properties:
-      amount:
-        description: Amount of ETH to withdraw from the Lido.
-        type: string
-    required:
-    - amount
-    type: object
-  return_value_description: ''
-- _name_: deposit_eth_reth
-  description: This widget is only used when the user wants to deposit ETH into the rocket pool to get rETH
-  parameters:
-    properties:
-      amount:
-        description: Amount of ETH to deposit into the rETH.
-        type: string
-    required:
-    - amount
-    type: object
-  return_value_description: ''
-- _name_: display_withdraw_eth_reth
-  description: This widget is only used when the user wants to withdraw ETH from rETH
-  parameters:
-    properties:
-      amount:
-        description: Amount of ETH to withdraw from the rETH.
-        type: string
-    required:
-    - amount
-    type: object
-  return_value_description: ''
 - _name_: fetch_nfts_owned_by_address_or_domain
   description: Used to fetch NFTs owned by a wallet address or ENS domain on a particular network
   parameters:
@@ -642,6 +602,36 @@
     required:
     - receiver
     - value
+    type: object
+  return_value_description: ''
+- _name_: display_arbitrum_deposit
+  description: Used to bridge/deposit ETH or token from mainnet L1 to arbitrum L2.
+  parameters:
+    properties:
+      token:
+        description: token to deposit/bridge
+        type: string
+      amount:
+        description: amount to deposit
+        type: string
+    required:
+    - token
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_arbitrum_withdraw
+  description: Used to withdraw ETH from arbitrum L2 to mainnet L1
+  parameters:
+    properties:
+      token:
+        description: token to withdraw
+        type: string
+      amount:
+        description: amount to withdraw
+        type: string
+    required:
+    - token
+    - amount
     type: object
   return_value_description: ''
 - _name_: display_yield_protocol_lend
@@ -708,3 +698,81 @@
       - borrowToken
     type: object
   return_value_description: ""
+- _name_: display_hop_protocol_bridge
+  description: use the hop protocol to bridge/deposit tokens from a supported chain to a different supported chain
+  parameters:
+    properties:
+      amount:
+        description: token amount
+        type: string
+      tokenSymbol:
+        description: token symbol
+        type: string
+      fromChain:
+        description: chain to bridge from
+        type: string
+      toChain:
+        description: chain to bridge to
+        type: string
+    required:
+      - amount
+      - tokenSymbol
+      - fromChain
+      - toChain
+    type: object
+  return_value_description: ""
+- _name_: display_tx_replay
+  description: replay a transaction with the same parameters
+  parameters:
+    properties:
+      txHash:
+        description: the transaction with tx hash to replay
+        type: string
+    required:
+      - txHash
+    type: object
+  return_value_description: ""
+- _name_: display_deposit_eth_lido
+  description: This widget is only used when the user wants to deposit/stake ETH into the Lido protocol to get steth
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to deposit/stake into Lido (and obtain stETH)
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_withdraw_eth_lido
+  description: This widget is only used when the user wants to withdraw ETH from Lido (convert stETH to ETH)
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to withdraw from Lido
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: deposit_eth_reth
+  description: This widget is only used when the user wants to deposit ETH into the rocket pool protocol to get rETH
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to deposit into rocket pool (and obtain rETH)
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_withdraw_eth_reth
+  description: This widget is only used when the user wants to withdraw ETH from rETH (convert rETH to ETH)
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to withdraw from rocket pool
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''

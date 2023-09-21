@@ -53,7 +53,7 @@ ALCHEMY_API_KEY =  os.getenv('ALCHEMY_API_KEY', None)
 WIDGET_INFO_TOKEN_LIMIT = 4000
 
 # Widget Index
-WIDGET_INDEX_NAME = "WidgetV19"
+WIDGET_INDEX_NAME = "WidgetV22"
 
 def get_widget_index_name():
     if env.is_local():
@@ -64,6 +64,6 @@ def get_widget_index_name():
 ### Network/Chain ###
 
 ETH_MAINNET_CHAIN_ID = 1
-ETH_MAINNET_RPC_URL = f"https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+ETH_MAINNET_RPC_URL = f"https://eth-mainnet.g.alchemy.com/v2/{ALCHEMY_API_KEY}"
 
 CHAIN_ID_TO_NETWORK_NAME = {ETH_MAINNET_CHAIN_ID: "ethereum-mainnet"}
