@@ -1,11 +1,17 @@
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, Generator, List, Optional, Union
+import traceback
 
 from urllib.parse import urlencode
 import requests
+import web3
+
+from fastapi.responses import Response
 
 import env
 import utils
+import auth
 
 from utils import ETH_MAINNET_CHAIN_ID, nft, FetchError, ExecError
 import utils.timing as timing
@@ -23,19 +29,22 @@ NETWORKS = [
     #"polygon-mainnet",
 ]
 
-API_URL = "https://api.center.dev/v1"
-API_V2_URL = "https://api.center.dev/v2"
+API_URL = "https://api.center.dev"
 
 MAX_RESULTS = 12
 PAGE_LIMIT = 12
 
+MAX_RESULTS_FOR_SEARCH = 12
+
+MAX_RESULTS_FOR_TRAITS = 100
+PAGE_LIMIT_FOR_TRAITS = 100
 
 @dataclass
 class NFTCollection(ContainerMixin):
     network: str
     address: str
     name: str
-    num_assets: int
+    num_assets: Optional[int]
     preview_image_url: str
 
     def container_name(self) -> str:
@@ -117,7 +126,9 @@ class NFTAsset(ContainerMixin):
     collection_name: str
     name: str
     preview_image_url: str
+    description: str = ''
     price: Optional[str] = None
+    attributes: Optional[ List ] = None
 
     def container_name(self) -> str:
         return 'display-nft-asset-container'
@@ -125,6 +136,22 @@ class NFTAsset(ContainerMixin):
     def container_params(self) -> Dict:
         return dataclass_to_container_params(self)
 
+@dataclass
+class NFTAssetFulfillment(ContainerMixin):
+    is_for_sale: bool
+    asset: NFTAsset
+    order_parameters: Optional[Dict[str, Any]] = None
+    order_signature: Optional[str] = None
+    order_value: Optional[str] = None
+    protocol_address: Optional[str] = None
+
+    def container_name(self) -> str:
+        return 'display-nft-asset-fulfillment-container'
+
+    def container_params(self) -> Dict:
+        ret = dataclass_to_container_params(self)
+        ret['asset'] = self.asset.struct()
+        return ret
 
 @dataclass
 class NFTAssetTraitValue(ContainerMixin):
@@ -181,29 +208,43 @@ class NFTAssetList(ContainerMixin):
         )
 
 def fetch_nft_search(search_str: str) -> Generator[Union[NFTCollection, NFTAsset], None, None]:
+    limit = MAX_RESULTS_FOR_SEARCH
+    offset = 0
     q = urlencode(dict(
         query=search_str,
-        type='collection',  # too noisy otherwise
+        limit=limit,
+        offset=offset,
     ))
     count = 0
     for network in NETWORKS:
-        url = f"{API_URL}/{network}/search?{q}"
+        url = f"{API_URL}/v2/{network}/search?{q}"
         timing.log('search_begin')
         response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         timing.log('search_done')
         obj = response.json()
-        for r in obj['results']:
-            if not r.get('previewImageUrl'):
+        for item in obj['items']:
+            if 'collection' not in item:
                 continue
-            count += 1
-            network = r['id'].split('/')[0]
-            if r['type'].lower() == 'collection':
-                result = fetch_nft_collection(network, r['address'])
-                if not _is_valid_collection(result):
-                    continue
-            else:
-                result = fetch_nft_asset(network, r['address'], r['tokenId'])
+            collection = item['collection']
+            if 'featuredImageURL' not in collection or not collection['featuredImageURL']:
+                continue
+            count += 1  # increment pre-filtered count, to determine filtering cost to speed
+            # v2 endpoint might return a non-checksum address, convert it for compatibility with elsewhere
+            address = web3.utils.address.to_checksum_address(collection['address'])
+            result = NFTCollection(
+                network=network,
+                address=address,
+                name=collection['name'],
+                num_assets=collection['totalSupply'],
+                preview_image_url=collection['featuredImageURL'],
+            )
+            if not _is_valid_collection(result):
+                continue
             yield result
             timing.log('first_result_done')
     timing.log('%d_results_done' % count)
@@ -211,14 +252,11 @@ def fetch_nft_search(search_str: str) -> Generator[Union[NFTCollection, NFTAsset
 
 def _is_valid_collection(collection: NFTCollection) -> bool:
     """Check if this NFT collection is a valid search result."""
-    # there should be traits
-    collection_traits = fetch_nft_collection_traits(collection.network, collection.address)
-    if not collection_traits.traits:
-        return False
     # should have listed and valid assets
-    assets_for_sale = list(fetch_nft_collection_assets_for_sale(collection.network, collection.address, _skip_timing=True))
-    if not assets_for_sale:
-        return False
+    if collection.network == "ethereum-mainnet":
+        token_prices = opensea.fetch_contract_listing_prices_with_retries(collection.address, max_results=1)
+        if not token_prices:
+            return False
     return True
 
 
@@ -239,11 +277,15 @@ def _is_valid_asset(asset: NFTAsset) -> bool:
 def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> Generator[NFTAsset, None, None]:
     timing.log('search_begin')
     if network == "ethereum-mainnet":
+        normalized_trait_name = trait_name.title()
+        normalized_trait_value = trait_value.title()
         token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
     else:
+        normalized_trait_name = trait_name
+        normalized_trait_value = trait_value
         token_prices = None
 
-    payload = {"query": {trait_name: [trait_value]}}
+    payload = {"query": {normalized_trait_name: [normalized_trait_value]}}
     headers = {
         "content-type": "application/json",
         **HEADERS
@@ -256,18 +298,25 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
             limit=limit,
             offset=offset,
         ))
-        url = f"{API_URL}/{network}/{address}/assets/searchByTraits?{q}"
+        url = f"{API_URL}/v1/{network}/{address}/assets/searchByTraits?{q}"
         response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         timing.log('search_done')
         obj = response.json()
+        if not obj['items']:
+            break
         for item in obj['items']:
             token_id = item['tokenId']
             if token_prices is not None:
                 if for_sale_only and token_id not in token_prices:
                     # filter to only for-sale assets
                     continue
-                price = token_prices.get(token_id, 'unlisted')
+                price_dict = token_prices.get(token_id)
+                price = price_dict['price_str'] if price_dict else 'unlisted'
             else:
                 price = None
             asset = NFTAsset(
@@ -291,16 +340,25 @@ def fetch_nft_search_collection_by_trait(network: str, address: str, trait_name:
 
 
 def fetch_nft_collection(network: str, address: str) -> NFTCollection:
-    url = f"{API_URL}/{network}/{address}"
+    url = f"{API_URL}/v2/{network}/{address}/nft/metadata"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
     obj = response.json()
+    num_assets = obj['totalSupply']
+    if num_assets == 0:  # seems to return 0 incorrectly
+        # use the asset endpoint with dummy token
+        token_id = 1
+        url = f"{API_URL}/v2/{network}/{address}/nft/{token_id}/metadata"
+        response = requests.get(url, headers=HEADERS)
+        if response.status_code == 200:
+            token_obj = response.json()
+            num_assets = token_obj['collection']['totalSupply']
     return NFTCollection(
         network=network,
         address=address,
         name=obj['name'],
-        num_assets=obj['numAssets'],
-        preview_image_url=obj['smallPreviewImageUrl'],
+        num_assets=num_assets,
+        preview_image_url=obj['featuredImageURL'],
     )
 
 
@@ -320,16 +378,21 @@ def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAsse
             {"Address": address, "TokenID": token_id}
             for token_id in token_ids[offset: offset + limit]
         ]}
-        url = f"{API_URL}/{network}/assets"
+        url = f"{API_URL}/v1/{network}/assets"
         response = requests.post(url, headers=HEADERS, json=payload)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         obj = response.json()
         for item in obj:
             if not item:
                 continue
             token_id = item['tokenId']
             if token_prices is not None:
-                price = token_prices.get(token_id, 'unlisted')
+                price_dict = token_prices.get(token_id)
+                price = price_dict['price_str'] if price_dict else 'unlisted'
             else:
                 price = None
             asset = NFTAsset(
@@ -340,6 +403,7 @@ def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAsse
                 name=item['name'],
                 preview_image_url=item['mediumPreviewImageUrl'],
                 price=price,
+                
             )
             if not _is_valid_asset(asset):
                 continue
@@ -352,11 +416,8 @@ def fetch_nft_collection_assets(network: str, address: str) -> NFTCollectionAsse
     )
 
 
-def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timing: bool = False) -> Generator[NFTAsset, None, None]:
-    # we set _skip_timing=True if we are using this as an internal helper, to avoid cluttering
-    # logs with irrelevant events
-    if not _skip_timing:
-        timing.log('search_begin')
+def fetch_nft_collection_assets_for_sale(network: str, address: str) -> Generator[NFTAsset, None, None]:
+    timing.log('search_begin')
     collection = fetch_nft_collection(network, address)
     if collection.network == "ethereum-mainnet":
         token_prices = opensea.fetch_contract_listing_prices_with_retries(address)
@@ -377,11 +438,14 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timin
             {"Address": address, "TokenID": token_id}
             for token_id in token_ids[offset: offset + limit]
         ]}
-        url = f"{API_URL}/{network}/assets"
+        url = f"{API_URL}/v1/{network}/assets"
         response = requests.post(url, headers=HEADERS, json=payload)
-        response.raise_for_status()
-        if not _skip_timing:
-            timing.log('search_done')
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
+        timing.log('search_done')
         obj = response.json()
         for item in obj:
             if not item:
@@ -404,29 +468,31 @@ def fetch_nft_collection_assets_for_sale(network: str, address: str, _skip_timin
             if not _is_valid_asset(asset):
                 continue
             yield asset
-            if not _skip_timing:
-                timing.log('first_result_done')
+            timing.log('first_result_done')
             count += 1
             if count >= MAX_RESULTS:
                 break
         offset += limit
-    if not _skip_timing:
-        timing.log('%d_results_done' % count)
+    timing.log('%d_results_done' % count)
 
 
 def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTraits:
     collection = fetch_nft_collection(network, address)
-    limit = PAGE_LIMIT
+    limit = PAGE_LIMIT_FOR_TRAITS
     offset = 0
     traits = []
-    while len(traits) < MAX_RESULTS:
+    while len(traits) < MAX_RESULTS_FOR_TRAITS:
         q = urlencode(dict(
             limit=limit,
             offset=offset,
         ))
-        url = f"{API_URL}/{network}/{address}/traits?{q}"
+        url = f"{API_URL}/v1/{network}/{address}/traits?{q}"
         response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         obj = response.json()
         for item in obj['items']:
             total = 0
@@ -455,17 +521,21 @@ def fetch_nft_collection_traits(network: str, address: str) -> NFTCollectionTrai
 
 def fetch_nft_collection_trait_values(network: str, address: str, trait: str) -> NFTCollectionTraitValues:
     collection = fetch_nft_collection(network, address)
-    limit = PAGE_LIMIT
+    limit = PAGE_LIMIT_FOR_TRAITS
     offset = 0
     values = []
-    while len(values) < MAX_RESULTS:
+    while len(values) < MAX_RESULTS_FOR_TRAITS:
         q = urlencode(dict(
             limit=limit,
             offset=offset,
         ))
-        url = f"{API_URL}/{network}/{address}/traits/{trait}?{q}"
+        url = f"{API_URL}/v1/{network}/{address}/traits/{trait}?{q}"
         response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception:
+            traceback.print_exc()
+            break
         obj = response.json()
         total = 0
         for item in obj['items']:
@@ -491,7 +561,7 @@ def fetch_nft_collection_trait_values(network: str, address: str, trait: str) ->
 
 
 def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
-    url = f"{API_URL}/{network}/{address}/{token_id}"
+    url = f"{API_URL}/v2/{network}/{address}/nft/{token_id}/metadata"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
     obj = response.json()
@@ -499,18 +569,18 @@ def fetch_nft_asset(network: str, address: str, token_id: str) -> NFTAsset:
         network=network,
         address=address,
         token_id=token_id,
-        collection_name=obj['collectionName'],
-        name=obj['name'],
-        preview_image_url=obj['mediumPreviewImageUrl'],
+        collection_name=obj['collection']['name'],
+        name=obj['metadata']['name'],
+        preview_image_url=f"{API_URL}{obj['media']['small']}",
+        # image_url=f"{API_URL}{obj['media']['medium']}",
+        description=obj['metadata']['description'],
+        attributes=obj['metadata']['attributes'],
     )
 
 
 def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAssetTraits:
-    if network == "ethereum-mainnet":
-        token_price = opensea.fetch_asset_listing_prices_with_retries(address, token_id) or 'unlisted'
-    else:
-        token_price = None
-    url = f"{API_URL}/{network}/{address}/{token_id}"
+    price = _fetch_nft_asset_price_str(network, address, token_id)
+    url = f"{API_URL}/v1/{network}/{address}/{token_id}"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
     obj = response.json()
@@ -521,7 +591,7 @@ def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> NFTAsse
         collection_name=obj['collectionName'],
         name=obj['name'],
         preview_image_url=obj['mediumPreviewImageUrl'],
-        price=token_price,
+        price=price
     )
     values = []
     for attrib in obj.get('metadata', {}).get('attributes', []):
@@ -544,7 +614,7 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
             normalized_network = "ethereum-mainnet"
         else:
             raise ExecError("Network not supported")
-        
+
     timing.log('fetch_started')
 
     # TODO: Add pagination once we have a UI component such as a Carousel to support it.
@@ -558,7 +628,7 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
         limit=limit,
         offset=offset,
     ))
-    url = f"{API_V2_URL}/{normalized_network}/{address_or_domain}/nfts-owned?{q}"
+    url = f"{API_URL}/v2/{normalized_network}/{address_or_domain}/nfts-owned?{q}"
 
     try:
         response = requests.get(url, headers=HEADERS)
@@ -566,12 +636,12 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
     except requests.exceptions.HTTPError as err:
         print(err)
         raise FetchError("Invalid address or domain")
-    
+
     obj = response.json()
     for item in obj['items']:
         nft_address = item['address']
         nft_token_id = item['tokenID']
-        nft_asset = fetch_nft_asset(normalized_network, nft_address, nft_token_id) 
+        nft_asset = fetch_nft_asset(normalized_network, nft_address, nft_token_id)
         assets.append(nft_asset)
 
     # In dev, tester's wallet would only have NFTs on the fork so fallback to fetching from contract on the fork
@@ -586,3 +656,60 @@ def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) 
 
     result = NFTAssetList(assets=assets)
     return result
+
+def fetch_nft_buy(network: str, wallet_address: str, nft_address: str, token_id: str) -> NFTAssetFulfillment:
+    nft_asset = fetch_nft_asset(network, nft_address, token_id)
+    listing = opensea.fetch_asset_listing_with_retries(nft_address, token_id)
+    if listing is None:
+        return NFTAssetFulfillment(
+            is_for_sale=False,
+            asset=nft_asset
+        )
+
+    nft_asset.price = listing.price_str
+
+    current_time_sec = int(time.time())
+    is_listing_expired = listing.expiration_time < current_time_sec
+
+    if is_listing_expired:
+        return NFTAssetFulfillment(
+            is_for_sale=False,
+            asset=nft_asset
+        )
+
+    fullfilment_data = opensea.fetch_fulfillment_data_with_retries(network, listing.order_hash, wallet_address, listing.protocol_address)
+
+    return NFTAssetFulfillment(
+        is_for_sale=True,
+        asset=nft_asset,
+        order_parameters=fullfilment_data.parameters,
+        order_signature=fullfilment_data.signature,
+        order_value=str(fullfilment_data.value_amount),
+        protocol_address=listing.protocol_address
+    )
+
+
+
+def _fetch_nft_asset_price_str(network: str, address: str, token_id: str) -> Optional[str]:
+    if network == "ethereum-mainnet":
+        price_dict = opensea.fetch_asset_listing_prices_with_retries(address, token_id)
+        price = price_dict['price_str'] if price_dict else 'unlisted'
+    else:
+        price = None
+    return price
+
+@auth.authenticate_user_id()
+def fetch_center_image(response, network: str, address: str, token_id: str, size: str, user_id:str=None):
+    
+    url = f"{API_URL}/v2/{network}/{address}/nft/{token_id}/render/{size}"
+    resp = requests.get(url, headers=HEADERS)
+
+    # Check if user is authenticated
+    if not user_id: return None 
+
+    # return response.content 
+    if resp.status_code != 200:
+        # Handle error appropriately, return a message, or another status code
+        return Response(content="Could not retrieve image", status_code=resp.status_code)
+    
+    return Response(content=resp.content)

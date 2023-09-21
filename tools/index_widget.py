@@ -10,12 +10,13 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
+from ens import ENS
 
 import ui_workflows
 import config
 import context
 import utils
-from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError, ETH_MAINNET_CHAIN_ID
+from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError, ETH_MAINNET_CHAIN_ID, get_token_balance, format_token_balance
 import utils.timing as timing
 from utils.coingecko.coingecko_coin_currency import coin_list, currency_list, coingecko_api_url_prefix
 import registry
@@ -309,10 +310,10 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
 def fetch_balance(token: str, wallet_address: str) -> str:
     if not wallet_address or wallet_address == 'None':
         raise FetchError(f"Please specify the wallet address to check the token balance of.")
-    contract_address = etherscan.get_contract_address(token)
-    if not contract_address:
-        raise FetchError(f"Could not look up contract address of {token}. Please try a different one.")
-    return etherscan.get_balance(contract_address, wallet_address)
+    web3 = context.get_web3_provider()
+    chain_id = context.get_wallet_chain_id()
+    balance = get_token_balance(web3, chain_id, token, wallet_address)
+    return format_token_balance(chain_id, token, balance)
 
 
 @error_wrap
@@ -341,13 +342,10 @@ def fetch_gas(wallet_address: str) -> str:
 @error_wrap
 def fetch_app_info(query: str) -> Callable:
     def fn(token_handler):
-        app_info_index = config.initialize(config.app_info_index)
         tool = dict(
-            type="tools.index_app_info.IndexAppInfoTool",
+            name="AppUsageGuideTool",
+            type="tools.app_usage_guide.AppUsageGuideTool",
             _streaming=True,
-            name="AppInfoIndexAnswer",
-            index=app_info_index,
-            top_k=3,
         )
         tool = streaming.get_streaming_tools([tool], token_handler)[0]
         tool._run(query)
@@ -534,8 +532,9 @@ def fetch_nfts_owned_by_user(network: str = None) -> str:
 
 @error_wrap
 def fetch_nft_buy(network: str, address: str, token_id: str) -> str:
-    ret = opensea.fetch_nft_buy(network, address, token_id)
-    return ret
+    wallet_address = context.get_wallet_address()
+    nft_fulfillment_container = center.fetch_nft_buy(network, wallet_address, address, token_id)
+    return str(nft_fulfillment_container)
 
 
 @error_wrap
@@ -561,7 +560,9 @@ def fetch_yields(token, network, count) -> str:
 
 def ens_from_address(address) -> str:
     try:
-        domain = utils.ns.name(address)
+        web3 = context.get_web3_provider()
+        ns = ENS.from_web3(web3)
+        domain = ns.name(address)
         if domain is None:
             return f"No ENS domain for {address}"
         else:
@@ -575,7 +576,9 @@ def ens_from_address(address) -> str:
 
 def address_from_ens(domain) -> str:
     try:
-        address = utils.ns.address(domain)
+        web3 = context.get_web3_provider()
+        ns = ENS.from_web3(web3)
+        address = ns.address(domain)
         if address is None:
             return f"No address for {domain}"
         else:
@@ -641,7 +644,7 @@ def set_ens_primary_name(domain: str) ->TxPayloadForSending:
 
 @error_wrap
 @ensure_wallet_connected
-def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPayloadForSending:
+def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str, collectionName: str) ->TxPayloadForSending:
     wallet_chain_id = 1 # TODO: get from context
     wallet_address = context.get_wallet_address()
     user_chat_message_id = context.get_user_chat_message_id()
@@ -650,6 +653,7 @@ def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPay
         'domain': domain,
         'nftContractAddress': nftContractAddress,
         'nftId': nftId,
+        'collectionName': collectionName
     }
 
     result = ens.ENSSetAvatarNFTWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()

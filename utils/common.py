@@ -11,7 +11,7 @@ import functools
 import traceback
 import context
 
-from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL, CHAIN_ID_TO_NETWORK_NAME
+from .constants import OPENAI_API_KEY, TENDERLY_FORK_URL, CHAIN_ID_TO_NETWORK_NAME, USE_CLIENT_TO_ESTIMATE_GAS
 from .evaluation import get_dummy_user_info
 
 DEFAULT_USER_INFO = {
@@ -124,12 +124,12 @@ def set_api_key():
     OpenAI.api_key = OPENAI_API_KEY
 
 
-w3 = Web3(Web3.HTTPProvider(TENDERLY_FORK_URL))
 tokenizer = tiktoken.encoding_for_model("text-davinci-003")
-ns = ENS.from_web3(w3)
-
 
 def estimate_gas(tx):
+    if USE_CLIENT_TO_ESTIMATE_GAS:
+        # Return None (null) to delegate gas estimation to the client
+        return None
     return hex(context.get_web3_provider().eth.estimate_gas(tx))
 
 def get_token_len(s: str) -> int:
@@ -197,7 +197,11 @@ def ensure_wallet_connected(fn):
 def get_real_user_info(user_info: dict) -> dict:
     try:
         user_info["Wallet Address"] = context.get_wallet_address()
+
+        web3 = context.get_web3_provider()
+        ns = ENS.from_web3(web3)
         user_info["ENS Domain"] = ns.name(user_info["Wallet Address"])
+
         chain_id = context.get_wallet_chain_id()
         if chain_id in CHAIN_ID_TO_NETWORK_NAME: user_info["Network"] = CHAIN_ID_TO_NETWORK_NAME[chain_id]
         return user_info

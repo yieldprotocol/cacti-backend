@@ -3,6 +3,7 @@
 from typing import List
 import re
 import json
+import traceback
 
 
 # this differs from tool/index_widget.py's RE_COMMAND because it matches
@@ -35,6 +36,7 @@ def _widgetize(command: str, params: str, depth: int = 0) -> str:
     try:
         return _widgetize_inner(command, params, depth)
     except Exception:
+        traceback.print_exc()
         return f"An error occurred evaluating command: {command}({params})"
 
 
@@ -47,9 +49,10 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     elif command == 'uniswap':
         items = params.split(",")
         lines.append(f"A swap of {items[0]} to {items[1]} with transaction keyword {items[2]} and amount {items[3]}")
-    elif command == 'buy-nft':
-        items = params.split(",")
-        lines.append(f"A widget to purchase token {items[1]} of contract address {items[0]}")
+    elif command == 'nft-asset-fulfillment-container':
+        params = json.loads(params)
+        asset = params['asset']['params']
+        lines.append(f"A widget to purchase NFT for collection name {asset['collectionName']}, NFT address {asset['address']}, NFT ID {asset['tokenId']}")
     elif command == 'list-container':
         params = json.loads(params)
         items = params['items']
@@ -59,12 +62,21 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
             f"-Item {idx}.{_widgetize(item['name'], json.dumps(item['params']), depth=depth)}"
             for idx, item in enumerate(items, start=1)
         ])
+    elif command == 'nft-asset-list-container':
+        params = json.loads(params)
+        nfts = params['assets']
+        lines.extend([
+            f"A list with {len(nfts)} NFTs:",
+        ] + [
+            f"-Item {idx}.{_widgetize(nft['name'], json.dumps(nft['params']), depth=depth)}"
+            for idx, nft in enumerate(nfts, start=1)
+        ])
     elif command == 'streaming-list-container':
         params = json.loads(params)
         operation = params['operation']
         if operation == 'create':
             prefix = params.get('prefix')
-            prefix =  f' ({prefix})' if prefix else ''
+            prefix = f' ({prefix})' if prefix else ''
             lines.append(f'A list of items{prefix}:')
         elif operation == 'update':
             prefix = params.get('prefix') or ''
@@ -130,29 +142,53 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         params = json.loads(params)
         lines.append(f"A workflow step was presented: {params['description']}.")
     elif command == 'yield-farm':
-        params = json.loads(params)
-        lines.append(f"Yield farm action for network: {params['network']}, project: {params['project']}, token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"Yield farm action for network: {items[1]}, project: {items[0]}, token: {items[2]}, amount: {items[3]}.")
     elif command == 'zksync-deposit':
-        params = json.loads(params)
-        lines.append(f"ZkSync bridge deposit action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"ZkSync bridge deposit action for token: {items[0]}, amount: {items[1]}.")
     elif command == 'zksync-withdraw':
-        params = json.loads(params)
-        lines.append(f"ZkSync bridge withdraw action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"ZkSync bridge withdraw action for token: {items[0]}, amount: {items[1]}.")
+    elif command == 'arbitrum-deposit':
+        items = params.split(",")
+        lines.append(f"Arbitrum bridge deposit action for token {items[0]} amount: {items[1]}.")
+    elif command == 'arbitrum-withdraw':
+        items = params.split(",")
+        lines.append(f"Arbitrum bridge withdraw action for token: {items[0]}, amount: {items[1]}.")
     elif command == 'stake-sfrxeth':
-        params = json.load(params)
-        lines.append(f"sfrxETH deposit action for address: {params['receiver']}, amount: {params['value']}.")
+        items = params.split(",")
+        lines.append(f"sfrxETH deposit action for address: {items[0]}, amount: {items[1]}.")
     elif command == 'yield-protocol-lend':
-        params = json.loads(params)
-        lines.append(f"yield protocol lend action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"yield protocol lend action for token: {items[0]}, amount: {items[1]}.")
     elif command == 'yield-protocol-lend-close':
-        params = json.loads(params)
-        lines.append(f"yield protocol lend close action for token: {params['token']}, amount: {params['amount']}.")
+        items = params.split(",")
+        lines.append(f"yield protocol lend close action for token: {items[0]}, amount: {items[1]}.")
     elif command == 'yield-protocol-borrow':
-        params = json.loads(params)
-        lines.append(f"yield protocol borrow action for borrow token: {params['borrowToken']}, borrow amount: {params['borrowAmount']}, collateral token: {params['collateralToken']}, collateral amount: {params['collateralAmount']}.")
+        items = params.split(",")
+        lines.append(f"yield protocol borrow action for borrow token: {items[0]}, borrow amount: {items[1]}, collateral token: {items[2]}, collateral amount: {items[3]}.")
     elif command == 'yield-protocol-borrow-close':
-        params = json.loads(params)
-        lines.append(f"yield protocol borrow close action: {params['borrowToken']}")
+        items = params.split(",")
+        lines.append(f"yield protocol borrow close action: {items[0]}")
+    elif command == 'hop-protocol-bridge':
+        items = params.split(",")
+        lines.append(f"hop protocol bridge action for amount: {items[0]}, token symbol: {items[1]}, from chain: {items[2]}, to chain: {items[3]}.") 
+    elif command == 'tx-replay':
+        items = params.split(",")
+        lines.append(f"replay transaction with tx hash: {items[0]}") 
+    elif command == "deposit-eth-lido":
+        items = params.split(",")
+        lines.append(f"deposit eth to lido action for amount: {items[0]}.")
+    elif command == "withdraw-eth-lido":
+        items = params.split(",")
+        lines.append(f"withdraw eth from lido action for amount: {items[0]}.")
+    elif command == "deposit-eth-reth":
+        items = params.split(",")
+        lines.append(f"deposit eth to reth action for amount: {items[0]}.")
+    elif command == "withdraw-eth-reth":
+        items = params.split(",")
+        lines.append(f"withdraw eth from reth action for amount: {items[0]}.")
     elif command == 'savings-dai-deposit':
         params = json.loads(params)
         lines.append(f"DAI deposit action for amount: {params['amount']}.")

@@ -52,11 +52,12 @@
     type: object
   return_value_description: a list of text describing NFT collections that were found
 - _name_: fetch_nft_collection_assets_by_trait
-  description: 'List assets with a particular trait name and value from a specific
-    NFT collection given its network and address. Don''t use this if we don''t have
-    the collection network and address.
-
-    Required parameters:'
+  description: List assets with a particular trait name and value from a specific
+    NFT collection given its network and address. Don't use this if we don't have
+    the collection network and address. Don't use this without first fetching the
+    valid list of trait names or trait values with the fetch_nft_collection_traits
+    or fetch_nft_collection_trait_values functions so we know the proper casing as
+    this search is case-sensitive.
   parameters:
     properties:
       address:
@@ -66,10 +67,10 @@
         description: Network of the NFT collection.
         type: string
       traitName:
-        description: Name of trait.
+        description: Name of trait (case-sensitive).
         type: string
       traitValue:
-        description: Value of trait.
+        description: Value of trait (case-sensitive).
         type: string
     required:
     - network
@@ -313,10 +314,14 @@
       nftId:
         description: Token ID of the NFT.
         type: string
+      collectionName:
+        description: Name of NFT collection. Use an empty string if the input parameter value is unknown but do not ask user to input empty string.
+        type: string
     required:
     - domain
     - nftContractAddress
     - nftId
+    - collectionName
     type: object
   return_value_description: ''
 - _name_: aave_supply
@@ -493,21 +498,6 @@
     - token
     type: object
   return_value_description: balance of a token in connected wallet, in decimal units
-- _name_: fetch_transactions
-  description: Get the transaction details in an account or wallet
-  parameters:
-    properties:
-      address:
-        description: Address of the account or wallet to check the transactions of.
-        type: string
-      last_n:
-        description: How many latest transactions the user wants to get.
-        type: string
-    required:
-    - address
-    - last_n
-    type: object
-  return_value_description: the transaction details
 - _name_: fetch_gas
   description: Get all gas used for transactions in an account or wallet
   parameters:
@@ -674,6 +664,36 @@
     - value
     type: object
   return_value_description: ''
+- _name_: display_arbitrum_deposit
+  description: Used to bridge/deposit ETH or token from mainnet L1 to arbitrum L2.
+  parameters:
+    properties:
+      token:
+        description: token to deposit/bridge
+        type: string
+      amount:
+        description: amount to deposit
+        type: string
+    required:
+    - token
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_arbitrum_withdraw
+  description: Used to withdraw ETH from arbitrum L2 to mainnet L1
+  parameters:
+    properties:
+      token:
+        description: token to withdraw
+        type: string
+      amount:
+        description: amount to withdraw
+        type: string
+    required:
+    - token
+    - amount
+    type: object
+  return_value_description: ''
 - _name_: display_yield_protocol_lend
   description: use the yield protocol to lend tokens at a fixed rate
   parameters:
@@ -738,3 +758,81 @@
       - borrowToken
     type: object
   return_value_description: ""
+- _name_: display_hop_protocol_bridge
+  description: use the hop protocol to bridge/deposit tokens from a supported chain to a different supported chain
+  parameters:
+    properties:
+      amount:
+        description: token amount
+        type: string
+      tokenSymbol:
+        description: token symbol
+        type: string
+      fromChain:
+        description: chain to bridge from
+        type: string
+      toChain:
+        description: chain to bridge to
+        type: string
+    required:
+      - amount
+      - tokenSymbol
+      - fromChain
+      - toChain
+    type: object
+  return_value_description: ""
+- _name_: display_tx_replay
+  description: replay a transaction with the same parameters
+  parameters:
+    properties:
+      txHash:
+        description: the transaction with tx hash to replay
+        type: string
+    required:
+      - txHash
+    type: object
+  return_value_description: ""
+- _name_: display_deposit_eth_lido
+  description: This widget is only used when the user wants to deposit/stake ETH into the Lido protocol to get steth
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to deposit/stake into Lido (and obtain stETH)
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_withdraw_eth_lido
+  description: This widget is only used when the user wants to withdraw ETH from Lido (convert stETH to ETH)
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to withdraw from Lido
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: deposit_eth_reth
+  description: This widget is only used when the user wants to deposit ETH into the rocket pool protocol to get rETH
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to deposit into rocket pool (and obtain rETH)
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_withdraw_eth_reth
+  description: This widget is only used when the user wants to withdraw ETH from rETH (convert rETH to ETH)
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to withdraw from rocket pool
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''

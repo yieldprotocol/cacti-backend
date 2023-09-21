@@ -39,6 +39,15 @@ def get_settings(request: Request, chat_session_id: str, user_id: Optional[str] 
     if chat_session.name:
         ret['name'] = chat_session.name
 
+    ret['created'] = chat_session.created
+    ret['updated'] = chat_session.updated
+    # bump update time by the creation time of last message in the session (works with index)
+    chat_message = ChatMessage.query.filter(
+        ChatMessage.chat_session_id == chat_session.id
+    ).order_by(ChatMessage.sequence_number.desc()).first()
+    if chat_message:
+        ret['updated'] = max(ret['updated'], chat_message.created)
+
     # data about whether you have permissions to edit
     can_edit = user_id is not None and str(chat_session.user_id) == user_id
     ret['canEdit'] = can_edit
