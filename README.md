@@ -75,6 +75,7 @@ The usage guide for the Cacti chatbot is available [here](./usage_guide.md)
 
 ## Steps to add new widget command
 - Update `widgets.yaml` with the widget command details
+    - If no value has to be returned please specify an empty string '' for `return_value_description`
 - Increment the numeric version in `WIDGET_INDEX_NAME` constant in `utils/constants.py`
 - For local env, the widget index name would use your OS login name to create an isolated index. For dev/prod, the widget index would be the numeric version mentioned above. (more info in `scripts/check_update_widget_index.py`)
 - Run this Python command to update your widget index with the new widget `python -m scripts.check_update_widget_index`

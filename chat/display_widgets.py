@@ -170,13 +170,25 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
         lines.append(f"yield protocol borrow action for borrow token: {items[0]}, borrow amount: {items[1]}, collateral token: {items[2]}, collateral amount: {items[3]}.")
     elif command == 'yield-protocol-borrow-close':
         items = params.split(",")
-        lines.append(f"yield protocol borrow close action: {items[0]}") 
+        lines.append(f"yield protocol borrow close action: {items[0]}")
     elif command == 'hop-protocol-bridge':
         items = params.split(",")
         lines.append(f"hop protocol bridge action for amount: {items[0]}, token symbol: {items[1]}, from chain: {items[2]}, to chain: {items[3]}.") 
     elif command == 'tx-replay':
         items = params.split(",")
         lines.append(f"replay transaction with tx hash: {items[0]}") 
+    elif command == "deposit-eth-lido":
+        items = params.split(",")
+        lines.append(f"deposit eth to lido action for amount: {items[0]}.")
+    elif command == "withdraw-eth-lido":
+        items = params.split(",")
+        lines.append(f"withdraw eth from lido action for amount: {items[0]}.")
+    elif command == "deposit-eth-reth":
+        items = params.split(",")
+        lines.append(f"deposit eth to reth action for amount: {items[0]}.")
+    elif command == "withdraw-eth-reth":
+        items = params.split(",")
+        lines.append(f"withdraw eth from reth action for amount: {items[0]}.")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")

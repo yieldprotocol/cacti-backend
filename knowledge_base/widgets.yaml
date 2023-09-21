@@ -732,3 +732,47 @@
       - txHash
     type: object
   return_value_description: ""
+- _name_: display_deposit_eth_lido
+  description: This widget is only used when the user wants to deposit/stake ETH into the Lido protocol to get steth
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to deposit/stake into Lido (and obtain stETH)
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_withdraw_eth_lido
+  description: This widget is only used when the user wants to withdraw ETH from Lido (convert stETH to ETH)
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to withdraw from Lido
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: deposit_eth_reth
+  description: This widget is only used when the user wants to deposit ETH into the rocket pool protocol to get rETH
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to deposit into rocket pool (and obtain rETH)
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_withdraw_eth_reth
+  description: This widget is only used when the user wants to withdraw ETH from rETH (convert rETH to ETH)
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to withdraw from rocket pool
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
