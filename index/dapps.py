@@ -48,7 +48,7 @@ def create_schema(delete_first: bool = False) -> None:
                             "description": "The Twitter handle of the Dapp",
                             "moduleConfig": {
                                     "text2vec-openai": {
-                                    "skip": False,
+                                    "skip": True,
                                     "vectorizePropertyName": False
                                 }
                             }
@@ -59,7 +59,7 @@ def create_schema(delete_first: bool = False) -> None:
                             "description": "Links to the blog posts related to the Dapp",
                             "moduleConfig": {
                                     "text2vec-openai": {
-                                    "skip": False,
+                                    "skip": True,
                                     "vectorizePropertyName": False
                                 }
                             }
@@ -70,7 +70,7 @@ def create_schema(delete_first: bool = False) -> None:
                             "description": "The Discord server link of the Dapp",
                             "moduleConfig": {
                                     "text2vec-openai": {
-                                    "skip": False,
+                                    "skip": True,
                                     "vectorizePropertyName": False
                                 }
                             }
@@ -81,7 +81,7 @@ def create_schema(delete_first: bool = False) -> None:
                             "description": "The Facebook page link of the Dapp",
                             "moduleConfig": {
                                     "text2vec-openai": {
-                                    "skip": False,
+                                    "skip": True,
                                     "vectorizePropertyName": False
                                 }
                             }
@@ -92,7 +92,7 @@ def create_schema(delete_first: bool = False) -> None:
                             "description": "The Instagram profile link of the Dapp",
                             "moduleConfig": {
                                     "text2vec-openai": {
-                                    "skip": False,
+                                    "skip": True,
                                     "vectorizePropertyName": False
                                 }
                             }
@@ -103,7 +103,7 @@ def create_schema(delete_first: bool = False) -> None:
                             "description": "The Telegram channel link of the Dapp",
                             "moduleConfig": {
                                     "text2vec-openai": {
-                                    "skip": False,
+                                    "skip": True,
                                     "vectorizePropertyName": False
                                 }
                             }
