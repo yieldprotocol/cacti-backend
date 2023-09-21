@@ -470,22 +470,26 @@
   return_value_description:
     an answer to the question, with suggested followup questions
     if available
-- _name_: fetch_scraped_sites
-  description:
-    Answer questions using general content scraped from web3 sites. It
-    does not know about this app or about widget magic commands for invoking transactions
-    or fetching data about specific things like NFTs or balances.
-  parameters:
-    properties:
-      query:
-        description:
-          a standalone question representing information to be retrieved
-          from the index.
-        type: string
-    required:
-      - query
-    type: object
-  return_value_description: a summarized answer with source citations
+#
+# deprecating scraped sites in favor of link suggestion - leaving for future reference
+# in case we ever want to revive
+#
+# - _name_: fetch_scraped_sites
+#   description:
+#     Answer questions using general content scraped from web3 sites. It
+#     does not know about this app or about widget magic commands for invoking transactions
+#     or fetching data about specific things like NFTs or balances.
+#   parameters:
+#     properties:
+#       query:
+#         description:
+#           a standalone question representing information to be retrieved
+#           from the index.
+#         type: string
+#     required:
+#       - query
+#     type: object
+#   return_value_description: a summarized answer with source citations
 - _name_: fetch_link_suggestion
   description:
     Answer questions using general content scraped from web3 sites. It
