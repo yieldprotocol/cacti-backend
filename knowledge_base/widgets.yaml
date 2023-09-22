@@ -470,7 +470,6 @@
     properties:
       query:
         description: a standalone question representing information to be retrieved
-        description: a standalone question representing information to be retrieved
           from the index.
         type: string
     required:
