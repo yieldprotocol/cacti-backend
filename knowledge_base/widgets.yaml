@@ -717,3 +717,141 @@
       - borrowToken
     type: object
   return_value_description: ""
+- _name_: display_hop_protocol_bridge
+  description: use the hop protocol to bridge/deposit tokens from a supported chain to a different supported chain
+  parameters:
+    properties:
+      amount:
+        description: token amount
+        type: string
+      tokenSymbol:
+        description: token symbol
+        type: string
+      fromChain:
+        description: chain to bridge from
+        type: string
+      toChain:
+        description: chain to bridge to
+        type: string
+    required:
+      - amount
+      - tokenSymbol
+      - fromChain
+      - toChain
+    type: object
+  return_value_description: ""
+- _name_: display_tx_replay
+  description: replay a transaction with the same parameters
+  parameters:
+    properties:
+      txHash:
+        description: the transaction with tx hash to replay
+        type: string
+    required:
+      - txHash
+    type: object
+  return_value_description: ""
+- _name_: display_deposit_eth_lido
+  description: This widget is only used when the user wants to deposit/stake ETH into the Lido protocol to get steth
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to deposit/stake into Lido (and obtain stETH)
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_withdraw_eth_lido
+  description: This widget is only used when the user wants to withdraw ETH from Lido (convert stETH to ETH)
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to withdraw from Lido
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: deposit_eth_reth
+  description: This widget is only used when the user wants to deposit ETH into the rocket pool protocol to get rETH
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to deposit into rocket pool (and obtain rETH)
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_withdraw_eth_reth
+  description: This widget is only used when the user wants to withdraw ETH from rETH (convert rETH to ETH)
+  parameters:
+    properties:
+      amount:
+        description: Amount of ETH to withdraw from rocket pool
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_savings_dai_deposit
+  description: Used to deposit DAI into the DAI savings account.
+  parameters:
+    properties:
+      amount:
+        description: Amount of DAI to deposit.
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_savings_dai_withdraw
+  description: Used to withdraw DAI from the DAI savings account.
+  parameters:
+    properties:
+      amount:
+        description: Amount of DAI to withdraw.
+        type: string
+    required:
+    - amount
+    type: object
+  return_value_description: ''
+- _name_: display_deposit_vault
+  description: Used to deposit a token into a vault
+  parameters:
+    properties:
+      depositToken:
+        description: Token to deposit into the vault.
+        type: string
+      amount:
+        description: Amount of token to deposit.
+        type: string
+      vault:
+        description: Vault to deposit the token in.
+        type: string
+    required:
+    - depositToken
+    - amount
+    - vault
+    type: object
+  return_value_description: ''
+- _name_: display_withdraw_vault
+  description: Used to withdraw a token from a vault
+  parameters:
+    properties:
+      withdrawToken:
+        description: Token to withdraw from the vault.
+        type: string
+      amount:
+        description: Amount of token to withdraw.
+        type: string
+      vault:
+        description: Vault to withdraw the token in.
+        type: string
+    required:
+    - withdrawToken
+    - amount
+    - vault
+    type: object
+  return_value_description: ''

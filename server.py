@@ -49,7 +49,7 @@ def _register_system(system_config_id, system_config_json):
 def _get_default_system_config_id():
     # we query the db but return the identifier to store, so that we can still
     # reference the id even after the session has been closed.
-    default_system_config = SystemConfig.query.filter_by(json=config.default_config).one_or_none()
+    default_system_config = SystemConfig.query.filter_by(json=config.default_config).first()
     if not default_system_config:
         default_system_config = SystemConfig(json=config.default_config)
         db_session.add(default_system_config)
