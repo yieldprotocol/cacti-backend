@@ -12,7 +12,7 @@ from sqlalchemy import (  # type: ignore
 from sqlalchemy.orm import (  # type: ignore
     scoped_session, sessionmaker, relationship,
     backref)
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY, TEXT
 from sqlalchemy.ext.declarative import declarative_base  # type: ignore
 from sqlalchemy_utils import ChoiceType, Timestamp  # type: ignore
 
@@ -35,3 +35,19 @@ class ScrapedUrl(Base, Timestamp):  # type: ignore
     data = Column(JSONB, nullable=False)
 
     Index('scraped_url_lookup', url, unique=True)
+
+class Dapp(Base, Timestamp):
+    __tablename__ = 'dapp'
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    description = Column(TEXT, nullable=False)
+    name = Column(String(255), nullable=False, unique=True)
+    url = Column(String(255), nullable=False)
+    twitter_handle = Column(String(255), nullable=True)
+    blog_links = Column(ARRAY(String(255)), nullable=True)
+    discord = Column(String(255), nullable=True)
+    facebook = Column(String(255), nullable=True)
+    instagram = Column(String(255), nullable=True)
+    telegram = Column(String(255), nullable=True)
+
+    Index('dapp_by_name', 'name', unique=True)

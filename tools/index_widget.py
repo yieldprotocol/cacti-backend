@@ -246,8 +246,10 @@ def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
         return str(fetch_yields(*params))
     elif command == 'fetch-app-info':
         return fetch_app_info(*params)
-    elif command == 'fetch-scraped-sites':
-        return fetch_scraped_sites(*params)
+    # elif command == 'fetch-scraped-sites':
+    #     return fetch_scraped_sites(*params)
+    elif command == 'fetch-link-suggestion':
+        return fetch_link_suggestion(*params) 
     elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
     elif command == aave.AaveBorrowContractWorkflow.WORKFLOW_TYPE:
@@ -351,17 +353,36 @@ def fetch_app_info(query: str) -> Callable:
         tool._run(query)
     return fn
 
+# deprating this in favor of link suggestion as the 2 seem to clash a lot
+# leaving here for future reference in case we ever want to revive
+#
+# @error_wrap
+# def fetch_scraped_sites(query: str) -> Callable:
+#     def fn(token_handler):
+#         scraped_sites_index = config.initialize(config.scraped_sites_index)
+#         tool = dict(
+#             type="tools.index_answer.IndexAnswerTool",
+#             _streaming=True,
+#             name="ScrapedSitesIndexAnswer",
+#             content_description="",  # not used
+#             index=scraped_sites_index, 
+#             top_k=3,
+#             source_key="url",
+#         )
+#         tool = streaming.get_streaming_tools([tool], token_handler)[0]
+#         tool._run(query)
+#     return fn
 
 @error_wrap
-def fetch_scraped_sites(query: str) -> Callable:
+def fetch_link_suggestion(query: str) -> Callable:
     def fn(token_handler):
-        scraped_sites_index = config.initialize(config.scraped_sites_index)
+        dapps_index = config.initialize(config.dapps_index)
         tool = dict(
-            type="tools.index_answer.IndexAnswerTool",
+            type="tools.index_link_suggestion.IndexLinkSuggestionTool",
             _streaming=True,
-            name="ScrapedSitesIndexAnswer",
+            name="LinkSuggestionIndexAnswer",
             content_description="",  # not used
-            index=scraped_sites_index,
+            index=dapps_index, 
             top_k=3,
             source_key="url",
         )

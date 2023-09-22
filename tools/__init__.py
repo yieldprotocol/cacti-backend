@@ -6,3 +6,4 @@ from . import index_widget
 from . import index_app_info
 from . import index_api_tool
 from . import app_usage_guide
+from . import index_link_suggestion
