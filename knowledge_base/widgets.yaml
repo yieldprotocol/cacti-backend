@@ -836,3 +836,59 @@
     - vault
     type: object
   return_value_description: ''
+- _name_: display_liquity_borrow
+  description: borrow LUSD using ETH using the liquity protocol
+  parameters:
+    properties:
+      borrowAmount:
+        description: amount of LUSD to borrow
+        type: string
+      collateralAmount:
+        description: amount of ETH to use as collateral
+        type: string
+    required:
+    - borrowAmount
+    - collateralAmount
+    type: object
+  return_value_description: ''
+- _name_: display_liquity_close
+  description: close a trove, which consists of borrowed LUSD and ETH as collateral
+  parameters:
+    properties:
+      user_wallet_address:
+        description: wallet address to use, which is inferred
+        type: string
+    required:
+    - user_wallet_address
+    type: object
+  return_value_description: ''
+- _name_: display_liquity_adjust
+  description: adjust a liquity trove by borrowing more LUSD using the same or more ETH
+  parameters:
+    properties:
+      borrowAmount:
+        description: amount of LUSD to borrow
+        type: string
+      collateralAmount:
+        description: amount of ETH to use as collateral, which can be zero additional ETH if no amount specified
+        type: string
+    required:
+    - borrowAmount
+    - collateralAmount
+    type: object
+  return_value_description: ''
+- _name_: display_liquity_repay
+  description: adjust a liquity trove by repaying LUSD and removing ETH if specified, otherwise assume the user doesn't want to remove ETH
+  parameters:
+    properties:
+      repayAmount:
+        description: amount of LUSD to repay
+        type: string
+      withdrawCollateral:
+        description: amount of ETH collateral to withdraw if provided
+        type: string
+    required:
+    - repayAmount
+    - withdrawCollateral
+    type: object
+  return_value_description: ''

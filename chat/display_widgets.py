@@ -201,6 +201,18 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     elif command == 'withdraw-vault':
         items = params.split(",")
         lines.append(f"Withdraw vault action for token: {items[0]}, amount: {items[1]}.")
+    elif command == 'liquity-borrow':
+        items = params.split(",")
+        lines.append(f"Borrow LUSD using ETH on liquity for borrow amount: {items[0]}, and collateral amount: {items[1]}.")
+    elif command == 'liquity-close':
+        items = params.split(",")
+        lines.append(f"Close a trove on liquity.")
+    elif command == 'liquity-adjust':
+        items = params.split(",")
+        lines.append(f"Adjust liquity trove by borrowing more LUSD using ETH for borrow amount: {items[0]}, and collateral amount: {items[1]}.")
+    elif command == 'liquity-repay':
+        items = params.split(",")
+        lines.append(f"Adjust liquity trove by repaying LUSD amount: {items[0]}, and withdrawing collateral amount: {items[1]}.")
     else:
         # assert 0, f'unrecognized command: {command}({params})'
         lines.append(f"An unrecognized command: {command}({params})")
