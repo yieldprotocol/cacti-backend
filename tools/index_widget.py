@@ -10,12 +10,13 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.prompts.base import BaseOutputParser
+from ens import ENS
 
 import ui_workflows
 import config
 import context
 import utils
-from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
+from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError, ETH_MAINNET_CHAIN_ID, get_token_balance, format_token_balance
 import utils.timing as timing
 from utils.coingecko.coingecko_coin_currency import coin_list, currency_list, coingecko_api_url_prefix
 import registry
@@ -126,8 +127,8 @@ class IndexWidgetTool(IndexLookupTool):
                         # keep waiting
                         return
 
-                if len(response_buffer) < len(WIDGET_START):
-                    # keep waiting
+                if 0 < len(response_buffer) < len(WIDGET_START) and WIDGET_START.startswith(response_buffer):
+                    # keep waiting if we could potentially be receiving WIDGET_START
                     return
                 token = response_buffer
                 response_buffer = ""
@@ -227,6 +228,10 @@ def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
         return str(fetch_nft_asset_traits(*params))
     elif command == 'fetch-nft-buy-asset':
         return str(fetch_nft_buy(*params))
+    elif command == 'fetch-nfts-owned-by-address-or-domain':
+        return str(fetch_nfts_owned_by_address_or_domain(*params))
+    elif command == 'fetch-nfts-owned-by-user':
+        return str(fetch_nfts_owned_by_user(*params))
     elif command == 'fetch-balance':
         return str(fetch_balance(*params))
     elif command == 'fetch-my-balance':
@@ -305,10 +310,10 @@ def fetch_price(basetoken: str, quotetoken: str = "usd") -> str:
 def fetch_balance(token: str, wallet_address: str) -> str:
     if not wallet_address or wallet_address == 'None':
         raise FetchError(f"Please specify the wallet address to check the token balance of.")
-    contract_address = etherscan.get_contract_address(token)
-    if not contract_address:
-        raise FetchError(f"Could not look up contract address of {token}. Please try a different one.")
-    return etherscan.get_balance(contract_address, wallet_address)
+    web3 = context.get_web3_provider()
+    chain_id = context.get_wallet_chain_id()
+    balance = get_token_balance(web3, chain_id, token, wallet_address)
+    return format_token_balance(chain_id, token, balance)
 
 
 @error_wrap
@@ -337,13 +342,10 @@ def fetch_gas(wallet_address: str) -> str:
 @error_wrap
 def fetch_app_info(query: str) -> Callable:
     def fn(token_handler):
-        app_info_index = config.initialize(config.app_info_index)
         tool = dict(
-            type="tools.index_app_info.IndexAppInfoTool",
+            name="AppUsageGuideTool",
+            type="tools.app_usage_guide.AppUsageGuideTool",
             _streaming=True,
-            name="AppInfoIndexAnswer",
-            index=app_info_index,
-            top_k=3,
         )
         tool = streaming.get_streaming_tools([tool], token_handler)[0]
         tool._run(query)
@@ -442,10 +444,12 @@ class TableContainer(ContainerMixin):
 def fetch_nft_search(search_str: str) -> Generator:
     yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
     num = 0
-    for item in center.fetch_nft_search(search_str):
-        yield StreamingListContainer(operation="append", item=item)
-        num += 1
-    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
+    try:
+        for item in center.fetch_nft_search(search_str):
+            yield StreamingListContainer(operation="append", item=item)
+            num += 1
+    finally:
+        yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
@@ -453,11 +457,13 @@ def fetch_nft_search_collection_by_trait(
         network: str, address: str, trait_name: str, trait_value: str, for_sale_only: bool = False) -> Generator:
     yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
     num = 0
-    for item in center.fetch_nft_search_collection_by_trait(
-            network, address, trait_name, trait_value, for_sale_only=for_sale_only):
-        yield StreamingListContainer(operation="append", item=item)
-        num += 1
-    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
+    try:
+        for item in center.fetch_nft_search_collection_by_trait(
+                network, address, trait_name, trait_value, for_sale_only=for_sale_only):
+            yield StreamingListContainer(operation="append", item=item)
+            num += 1
+    finally:
+        yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
@@ -475,10 +481,12 @@ def fetch_nft_collection_assets(network: str, address: str) -> str:
 def fetch_nft_collection_assets_for_sale(network: str, address: str) -> Generator:
     yield StreamingListContainer(operation="create", prefix="Searching", is_thinking=True)
     num = 0
-    for item in center.fetch_nft_collection_assets_for_sale(network, address):
-        yield StreamingListContainer(operation="append", item=item)
-        num += 1
-    yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
+    try:
+        for item in center.fetch_nft_collection_assets_for_sale(network, address):
+            yield StreamingListContainer(operation="append", item=item)
+            num += 1
+    finally:
+        yield StreamingListContainer(operation="update", prefix=_get_result_list_prefix(num), is_thinking=False)
 
 
 @error_wrap
@@ -504,9 +512,29 @@ def fetch_nft_asset_traits(network: str, address: str, token_id: str) -> str:
 
 
 @error_wrap
+def fetch_nfts_owned_by_address_or_domain(network: str, address_or_domain: str) -> str:
+    return str(center.fetch_nfts_owned_by_address_or_domain(network, address_or_domain))
+
+
+@error_wrap
+def fetch_nfts_owned_by_user(network: str = None) -> str:
+    wallet_address = context.get_wallet_address()
+    parsed_network = None
+    if not network:
+        chain_id = context.get_wallet_chain_id()
+        if chain_id == ETH_MAINNET_CHAIN_ID:
+            parsed_network = "ethereum-mainnet"
+        else:
+            raise ExecError("Unsupported network")
+    else:
+        parsed_network = network
+    return str(center.fetch_nfts_owned_by_address_or_domain(parsed_network, wallet_address))
+
+@error_wrap
 def fetch_nft_buy(network: str, address: str, token_id: str) -> str:
-    ret = opensea.fetch_nft_buy(network, address, token_id)
-    return ret
+    wallet_address = context.get_wallet_address()
+    nft_fulfillment_container = center.fetch_nft_buy(network, wallet_address, address, token_id)
+    return str(nft_fulfillment_container)
 
 
 @error_wrap
@@ -532,7 +560,9 @@ def fetch_yields(token, network, count) -> str:
 
 def ens_from_address(address) -> str:
     try:
-        domain = utils.ns.name(address)
+        web3 = context.get_web3_provider()
+        ns = ENS.from_web3(web3)
+        domain = ns.name(address)
         if domain is None:
             return f"No ENS domain for {address}"
         else:
@@ -546,7 +576,9 @@ def ens_from_address(address) -> str:
 
 def address_from_ens(domain) -> str:
     try:
-        address = utils.ns.address(domain)
+        web3 = context.get_web3_provider()
+        ns = ENS.from_web3(web3)
+        address = ns.address(domain)
         if address is None:
             return f"No address for {domain}"
         else:
@@ -612,7 +644,7 @@ def set_ens_primary_name(domain: str) ->TxPayloadForSending:
 
 @error_wrap
 @ensure_wallet_connected
-def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPayloadForSending:
+def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str, collectionName: str) ->TxPayloadForSending:
     wallet_chain_id = 1 # TODO: get from context
     wallet_address = context.get_wallet_address()
     user_chat_message_id = context.get_user_chat_message_id()
@@ -621,6 +653,7 @@ def set_ens_avatar_nft(domain: str, nftContractAddress: str, nftId: str) ->TxPay
         'domain': domain,
         'nftContractAddress': nftContractAddress,
         'nftId': nftId,
+        'collectionName': collectionName
     }
 
     result = ens.ENSSetAvatarNFTWorkflow(wallet_chain_id, wallet_address, user_chat_message_id, params).run()

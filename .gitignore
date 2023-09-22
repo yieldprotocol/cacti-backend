@@ -9,3 +9,5 @@ docker-compose.local.yml
 .*venv
 discovery/output/
 .DS_Store
+.chroma
+.env

@@ -1,0 +1,89 @@
+name: Check and update widget index
+
+on:
+  push:
+    branches: [master, dev]
+
+jobs:
+  main:
+    name: Check and update widget index
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10"]
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout backend
+        uses: actions/checkout@v2
+        with:
+          path: backend
+
+      - name: Extract branch name
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: Show branch name
+        run: echo "Branch name is ${{ steps.extract_branch.outputs.branch }}"
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_GH_CI_SERVICE_ACCOUNT }}
+
+      - name: Setup SSH
+        uses: 'google-github-actions/ssh-compute@v0'
+        with:
+          instance_name: 'cacti-bastion-server'
+          zone: 'us-east1-b'
+          ssh_keys_dir: "/tmp/gcp"
+          ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
+          command: "echo noop"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          cd backend
+          pip install -r requirements.txt
+
+      - name: Set environment for branch
+        run: |
+          echo "SERVER_HOST=" >> "$GITHUB_ENV"
+          echo "SERVER_ORIGINS=" >> "$GITHUB_ENV"
+          echo "SERVER_SECRET_KEY=" >> "$GITHUB_ENV"
+          echo "WEAVIATE_URL=${{ secrets.WEAVIATE_URL }}" >> "$GITHUB_ENV"
+
+          if [[ ${{ steps.extract_branch.outputs.branch }} == 'master' ]]; then
+            echo "ENV_TAG=prod" >> "$GITHUB_ENV"
+            echo "WEAVIATE_API_KEY=${{ secrets.PROD_WEAVIATE_API_KEY }}" >> "$GITHUB_ENV"
+            echo "CHATDB_URL=${{ secrets.PROD_CHATDB_URL }}" >> "$GITHUB_ENV"
+            echo "OPENAI_API_KEY=${{ secrets.PROD_OPENAI_API_KEY }}" >> "$GITHUB_ENV"
+          else
+            echo "ENV_TAG=dev" >> "$GITHUB_ENV"
+            echo "WEAVIATE_API_KEY=${{ secrets.DEV_WEAVIATE_API_KEY }}" >> "$GITHUB_ENV"
+            echo "CHATDB_URL=${{ secrets.DEV_CHATDB_URL }}" >> "$GITHUB_ENV"
+            echo "OPENAI_API_KEY=${{ secrets.DEV_OPENAI_API_KEY }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Check and update widget index
+        run: |
+          GCP_SSH_CMD="gcloud compute ssh cacti-bastion-server --zone us-east1-b --ssh-key-file /tmp/gcp/google_compute_engine --quiet --tunnel-through-iap --ssh-flag"
+          if [[ ${{ steps.extract_branch.outputs.branch }} == 'master' ]]; then
+            $GCP_SSH_CMD '-fN -L 8080:${{ secrets.PROD_WEAVIATE_INTERNAL_IP }}'
+          else
+            $GCP_SSH_CMD '-fN -L 8080:${{ secrets.DEV_WEAVIATE_INTERNAL_IP }}'
+          fi
+          
+          cd backend
+          python -m scripts.check_update_widget_index

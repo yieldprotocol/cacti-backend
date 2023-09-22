@@ -14,7 +14,7 @@ import system
 import config
 from database import utils as db_utils
 from database.models import (
-    db_session, FeedbackStatus,
+    db_session, FeedbackStatus, PrivacyType,
     ChatSession, ChatMessage, ChatMessageFeedback,
     SystemConfig,
 )
@@ -49,7 +49,7 @@ def _register_system(system_config_id, system_config_json):
 def _get_default_system_config_id():
     # we query the db but return the identifier to store, so that we can still
     # reference the id even after the session has been closed.
-    default_system_config = SystemConfig.query.filter_by(json=config.default_config).one_or_none()
+    default_system_config = SystemConfig.query.filter_by(json=config.default_config).first()
     if not default_system_config:
         default_system_config = SystemConfig(json=config.default_config)
         db_session.add(default_system_config)
@@ -101,6 +101,8 @@ def _load_existing_history_and_messages(session_id):
                 history.add_system_message(message.payload, message_id=message.id)
             elif message.actor == 'commenter':
                 history.add_commenter_message(message.payload, message_id=message.id)
+            elif message.actor == 'function':
+                history.add_function_message(message.payload, message_id=message.id)
             else:
                 assert 0, f'unrecognized actor: {message.actor}'
 
@@ -108,26 +110,79 @@ def _load_existing_history_and_messages(session_id):
 
 
 def _ensure_authenticated(client_state, send_response):
-    if client_state.wallet_address:
+    """Returns true if we are authenticated."""
+    if client_state.user_id:
         return True
     msg = json.dumps({
         'messageId': 0,
         'actor': 'bot',
         'type': 'text',
-        'payload': 'Please connect your wallet to chat.',
+        'payload': 'Please sign in to chat.',
         'stillThinking': False,
         'operation': 'create',
-        'feedback': 'none',
+        'feedback': 'n/a',
     })
     send_response(msg)
     return False
 
 
+def _ensure_can_view_chat_session(session_id, client_state, send_response):
+    """Returns true if we are allowed to view the chat session."""
+    # user_id here could be None if logged out
+    user_id = client_state.user_id
+
+    chat_session = ChatSession.query.filter(ChatSession.id == session_id).one_or_none()
+    if not chat_session:
+        # non-existent session, treat as if no permissions
+        pass
+
+    elif user_id is not None and str(chat_session.user_id) == str(user_id) or chat_session.privacy_type == PrivacyType.public:
+        # allow to view your own sessions, or those shared publicly
+        # TODO: add case where session is shared with specific user ids / wallet addresses
+        return True
+
+    msg = json.dumps({
+        'messageId': 0,
+        'actor': 'bot',
+        'type': 'text',
+        'payload': 'No permissions to view this chat.',
+        'stillThinking': False,
+        'operation': 'create',
+        'feedback': 'n/a',
+    })
+    send_response(msg)
+
+    return False
+
+
+def _ensure_can_edit_chat_session(session_id, client_state, send_response):
+    """Returns true if we are allowed to view the chat session."""
+    user_id = client_state.user_id
+    assert user_id, 'expecting user id to be known here'
+
+    chat_session = ChatSession.query.filter(ChatSession.id == session_id).one_or_none()
+    assert chat_session, 'expecting chat session to be known here'
+
+    if str(chat_session.user_id) == str(user_id):
+        # only allow users to edit their own chats for now
+        return True
+
+    msg = json.dumps({
+        'messageId': 0,
+        'actor': 'bot',
+        'type': 'text',
+        'payload': 'No permissions to edit this chat.',
+        'stillThinking': False,
+        'operation': 'create',
+        'feedback': 'n/a',
+    })
+    send_response(msg)
+
+    return False
+
+
 @db_utils.close_db_session()
 def message_received(client_state, send_response, message):
-    if not _ensure_authenticated(client_state, send_response):
-        return
-
     obj = json.loads(message)
     assert isinstance(obj, dict), obj
     actor = obj['actor']
@@ -145,13 +200,34 @@ def message_received(client_state, send_response, message):
     system_config_id = client_state.system_config_id or default_system_config_id
     system = _get_system(system_config_id)
 
+    if typ == 'clear':
+        client_state.chat_history = None
+        return
+
     # resume an existing chat history session, given a session id
-    if typ == 'init':
+    elif typ == 'init':
         assert history is None, f'received a session resume request for existing session {history.session_id}'
 
         session_id = uuid.UUID(payload['sessionId'])
         resume_from_message_id = payload.get('resumeFromMessageId')
         before_message_id = payload.get('insertBeforeMessageId')
+
+        # send a message to clear frontend message list, if we expect a fresh session.
+        # this is sometimes needed if we switch sessions quickly on frontend before an
+        # earlier session has fully loaded, and we end up with messages from a different
+        # session still loading in.
+        if resume_from_message_id is None:
+            msg = json.dumps({
+                'messageId': '',
+                'actor': 'system',
+                'type': 'clear',
+                'payload': '',
+                'feedback': 'n/a',
+            })
+            send_response(msg)
+
+        if not _ensure_can_view_chat_session(session_id, client_state, send_response):
+            return
 
         # load DB stored chat history and associated messages
         history, messages = _load_existing_history_and_messages(session_id)
@@ -189,9 +265,23 @@ def message_received(client_state, send_response, message):
             send_response(msg)
         return
 
+    # Only allow chatting if authenticated
+    if not _ensure_authenticated(client_state, send_response):
+        return
+
     # first message received - first create a new session history instance
     if history is None:
+        # generate uuid, commit to database immediately so user's chat list can fetch this
         session_id = uuid.uuid4()
+        chat_session = ChatSession(
+            id=session_id,
+            user_id=client_state.user_id,
+            name=payload,
+        )
+        db_session.add(chat_session)
+        db_session.commit()
+
+        # set up session history instance
         history = chat.ChatHistory.new(session_id)
         assert client_state.chat_history is None
         client_state.chat_history = history
@@ -212,10 +302,10 @@ def message_received(client_state, send_response, message):
     history.wallet_address = client_state.wallet_address
 
     chat_session = ChatSession.query.filter(ChatSession.id == history.session_id).one_or_none()
-    if not chat_session:
-        chat_session = ChatSession(id=history.session_id)
-        db_session.add(chat_session)
-        db_session.flush()
+    assert chat_session is not None, 'expected to already have session in db at this point'
+
+    if not _ensure_can_edit_chat_session(history.session_id, client_state, send_response):
+        return
 
     def send_message(resp, last_chat_message_id=None, before_message_id=None):
         """Send message function.

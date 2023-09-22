@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
+import json
 import uuid
 
 from langchain.schema import AgentAction, AgentFinish, LLMResult
@@ -29,7 +30,7 @@ class Response:
 @dataclass
 class ChatMessage:
     actor: str
-    content: Union[str, Dict]
+    content: str
     message_id: Optional[uuid.UUID]
 
 
@@ -53,7 +54,7 @@ class ChatHistory:
         text = parse_widgets_into_text(text)
         self._add_message(text, 'bot', message_id=message_id, before_message_id=before_message_id)
 
-    def add_function_message(self, text: Dict, message_id: Optional[uuid.UUID] = None, before_message_id: Optional[uuid.UUID] = None) -> None:
+    def add_function_message(self, text: str, message_id: Optional[uuid.UUID] = None, before_message_id: Optional[uuid.UUID] = None) -> None:
         """Add function message to history."""
         self._add_message(text, 'function', message_id=message_id, before_message_id=before_message_id)
 
@@ -65,7 +66,7 @@ class ChatHistory:
         """Add commenter message to history."""
         self._add_message(text, 'commenter', message_id=message_id, before_message_id=before_message_id)
 
-    def _add_message(self, text: Union[str, Dict], actor: str, message_id: Optional[uuid.UUID] = None, before_message_id: Optional[uuid.UUID] = None) -> None:
+    def _add_message(self, text: str, actor: str, message_id: Optional[uuid.UUID] = None, before_message_id: Optional[uuid.UUID] = None) -> None:
         """Add message to history with given message id if specified, before message id if specified."""
         insert_idx = None
         if before_message_id is not None:
@@ -153,10 +154,11 @@ class ChatHistory:
                 total_count += count
         return "\n".join(ret)
 
-    def to_openai_messages(self, system_prefix: Optional[str] = "System", before_message_id : Optional[uuid.UUID] = None) -> List[BaseMessage]:
-        ret = [SystemMessage(content=("You are an agent that is trained to execute functions based on a user request. Use an empty string if the input parameter value is unknown."))]
+    def to_openai_messages(self, system_message: str, system_prefix: Optional[str] = "System", token_limit: Optional[int] = None, before_message_id : Optional[uuid.UUID] = None) -> List[BaseMessage]:
+        ret = [SystemMessage(content=(system_message))]
         for message in self:
             additional_kwargs = {}
+            content = message.content
             if before_message_id is not None and message.message_id == before_message_id:
                 break
             if message.actor == 'user':
@@ -167,7 +169,8 @@ class ChatHistory:
                 message_cls = AIMessage
             elif message.actor == 'function':
                 message_cls = AIMessage
-                additional_kwargs['function_call'] = message.content
+                additional_kwargs['function_call'] = json.loads(message.content)
+                content = ''
             elif message.actor == 'bot':
                 message_cls = AIMessage
             elif message.actor == 'commenter':
@@ -175,7 +178,15 @@ class ChatHistory:
                 continue
             else:
                 assert 0, f'unrecognized actor: {message.actor}'
-            ret.append(message_cls(content=message.content, additional_kwargs=additional_kwargs))
+            ret.append(message_cls(content=content, additional_kwargs=additional_kwargs))
+        if token_limit is not None:
+            total_count = utils.get_token_len(ret[0].content)
+            for idx in reversed(range(1, len(ret))):
+                count = utils.get_token_len(ret[idx].content) + utils.get_token_len(json.dumps(ret[idx].additional_kwargs))
+                if total_count + count > token_limit:
+                    ret = [ret[0]] + ret[idx + 1:]
+                    break
+                total_count += count
         return ret
 
     @classmethod

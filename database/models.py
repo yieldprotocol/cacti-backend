@@ -6,7 +6,7 @@ import sqlalchemy  # type: ignore
 from sqlalchemy import (  # type: ignore
     create_engine, func,
     Column, Index, Integer, String, JSON, Boolean,
-    ForeignKey,
+    ForeignKey, DateTime,
 )
 from sqlalchemy.orm import (  # type: ignore
     scoped_session, sessionmaker, relationship,
@@ -45,15 +45,50 @@ class WorkflowStepUserActionType(enum.IntEnum):
     tx = 2
     acknowledge = 3
 
+class PrivacyType(enum.IntEnum):
+    private = 1
+    public = 2
+
+
 class SystemConfig(Base, Timestamp):  # type: ignore
     __tablename__ = 'system_config'
     id = Column(Integer, primary_key=True)
     json = Column(JSONB, nullable=False, index=True)
 
 
+class User(Base, Timestamp):  # type: ignore
+    __tablename__ = 'user'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+
+class Wallet(Base, Timestamp):  # type: ignore
+    __tablename__ = 'wallet'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    wallet_address = Column(String, nullable=False)
+
+    Index('wallet_address_unique', wallet_address, unique=True)
+
+
+class UserWallet(Base, Timestamp):  # type: ignore
+    __tablename__ = 'user_wallet'
+    user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=False, primary_key=True)
+    wallet_id = Column(UUID(as_uuid=True), ForeignKey('wallet.id'), nullable=False, primary_key=True)
+
+    Index('wallet_user_id', wallet_id, user_id)
+
+
 class ChatSession(Base, Timestamp):  # type: ignore
     __tablename__ = 'chat_session'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    privacy_type = Column(ChoiceType(PrivacyType, impl=Integer()), server_default=str(int(PrivacyType.private)), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=True)
+    name = Column(String, nullable=True)
+    deleted = Column(DateTime, nullable=True)
+
+    source_shared_session_id = Column(UUID(as_uuid=True), nullable=True)
+
+
+Index('chat_session_by_user_deleted_created', ChatSession.user_id, ChatSession.deleted, ChatSession.created)
 
 
 class ChatMessage(Base, Timestamp):  # type: ignore
@@ -73,8 +108,46 @@ class ChatMessage(Base, Timestamp):  # type: ignore
 
     system_config_id = Column(Integer, ForeignKey('system_config.id'), nullable=False)
 
+    source_shared_message_id = Column(UUID(as_uuid=True), nullable=True)
+
 
 Index('chat_message_by_sequence_number', ChatMessage.chat_session_id, ChatMessage.sequence_number, ChatMessage.created)
+
+
+class SharedSession(Base, Timestamp):  # type: ignore
+    __tablename__ = 'shared_session'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=True)
+    name = Column(String, nullable=True)
+    deleted = Column(DateTime, nullable=True)
+
+    source_chat_session_id = Column(UUID(as_uuid=True), ForeignKey('chat_session.id'), nullable=False)
+
+
+Index('shared_session_by_user_deleted_created', SharedSession.user_id, SharedSession.deleted, SharedSession.created)
+
+
+class SharedMessage(Base, Timestamp):  # type: ignore
+    __tablename__ = 'shared_message'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    actor = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    payload = Column(String, nullable=False)
+    sequence_number = Column(Integer, nullable=False, default=0)
+
+    shared_session_id = Column(UUID(as_uuid=True), ForeignKey('shared_session.id'), nullable=False)
+    shared_session = relationship(
+        SharedSession,
+        backref=backref('shared_messages',
+                        uselist=True,
+                        cascade='delete,all'))
+
+    system_config_id = Column(Integer, ForeignKey('system_config.id'), nullable=False)
+
+    source_chat_message_id = Column(UUID(as_uuid=True), ForeignKey('chat_message.id'), nullable=False)
+
+
+Index('shared_message_by_sequence_number', SharedMessage.shared_session_id, SharedMessage.sequence_number, SharedMessage.created)
 
 
 class ChatMessageFeedback(Base, Timestamp):  # type: ignore

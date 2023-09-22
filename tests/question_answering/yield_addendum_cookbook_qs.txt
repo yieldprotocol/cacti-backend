@@ -1,0 +1,250 @@
+What is the Yield protocol?
+What is the Yield COOKBOOK?
+What are the 'Recipes made with love'?
+What is the purpose of the Yield protocol?
+What are the methods to integrate the Yield protocol using smart contract code?
+What are the methods for building a vault in the Yield protocol?
+How can two vaults be merged into one in the Yield protocol?
+What is the process for withdrawing ERC20 collateral in the Yield protocol?
+What are the options for debt repayment in the Yield protocol?
+What are the methods for lending in the Yield protocol?
+What are the different ways to provide liquidity using Yield protocol?
+How can liquidity be removed and repaid using Yield protocol?
+What is the process to provide liquidity to strategy by borrowing?
+What are the steps to post Ether as collateral?
+How can ERC1155 collateral be withdrawn using Yield protocol?
+What is the format for expressing actions in Ladle?
+How can Ladle execute calls on arbitrary targets?
+What is the purpose of the buildAction function in vault management?
+What parameters are required for the buildAction function?
+Under what conditions can a vault be destroyed using the destroyAction function?
+What is the purpose of the 'Merge two vaults into one' batch in the Yield protocol?
+What are the parameters required for the 'Merge two vaults into one' batch in the Yield protocol?
+What is the purpose of the 'Split a vault into two' batch in the Yield protocol?
+What are the parameters required for the 'Split a vault into two' batch in the Yield protocol?
+In what terms is the debt amount specified in the Yield protocol?
+What is the purpose of the 'ilk' parameter in the Join Approval batch?
+What is the 'ilkJoin' contract used for in Yield v2?
+What does the 'posted' parameter represent in the Join Approval batch?
+What is the significance of the 'deadline' parameter in the Join Approval batch?
+What is the purpose of the 'v, r, s' parameters in the Join Approval batch?
+What is the purpose of the ladle in the Yield protocol?
+What is the significance of the ladle having permission to move ilk for the user?
+What is the meaning of the 'deadline' parameter in the ladle.batch function?
+What is the 'ilkJoin' parameter used for in the ladle.batch function?
+What is the 'ignored' parameter used for in the ladle.batch function?
+What is the purpose of the 'Withdraw ERC20 collateral' batch?
+Is destroying the vault at the end of the 'Withdraw ERC20 collateral' batch mandatory?
+What is the 'receiver' parameter in the 'Withdraw ERC20 collateral' batch used for?
+What is the purpose of the 'Borrow fyToken' action?
+Can the 'Borrow fyToken' action be combined with other actions in a batch?
+What is the purpose of borrowing fyToken from an existing vault?
+What is exchanged for underlying in a YieldSpace pool?
+What is the maximum debt that can be accepted for a vault in fyToken terms?
+Can the 'borrow underlying' action be combined with other actions?
+What is the role of the 'receiver' parameter in the 'borrow underlying' action?
+What is the purpose of the ladle.batch function?
+What is the significance of the seriesId parameter in the ladle.buildAction function?
+What is the role of the off-chain signature in the ladle.forwardPermitAction function?
+What is the difference between 'posted' and 'borrowed' parameters in the ladle.serveAction function?
+What is the maximumDebt parameter used for in the ladle.serveAction function?
+What is the purpose of the 'Repay with underlying before maturity' batch function?
+What happens if there isn't enough debt to repay in the 'Repay with underlying before maturity' function?
+What is the 'base permit' mentioned in the document?
+What is the 'debtRepaidInBase' parameter used for in the 'Repay with underlying before maturity' function?
+What is the limit for the 'minimumFYTokenDebtRepaid' parameter in the 'Repay with underlying before maturity' function?
+What is the purpose of the 'Repay a whole vault with underlying before maturity' batch?
+What is the maximum amount of underlying that can be spent repaying debt in the 'Repay a whole vault with underlying before maturity' batch?
+What is the purpose of the 'Repay with underlying after maturity' action?
+How is the debt calculated in the 'Repay with underlying after maturity' action?
+What is the recommended action to combine with the 'Repay with underlying after maturity' action if the base permit is not present?
+What is the purpose of the 'Redeem' function in the Yield protocol?
+Is approval necessary for the 'Redeem' function in the Yield protocol?
+What is the 'Roll debt before maturity' action in the Yield protocol?
+What are the parameters required for the 'Roll debt before maturity' action in the Yield protocol?
+What is the purpose of the 'Lend' function in the Yield protocol?
+What is the process for closing a lending position before maturity using the Yield protocol?
+What is the inverse of lending in the Yield protocol?
+What is the role of the Ladle in the Yield protocol?
+What is the process for closing a lending position after maturity using the Yield protocol?
+Is approval required when redeeming fyToken representing a lending position in the Yield protocol?
+What does rolling lending before maturity mean in the Yield protocol?
+What is fyTokenRolled in the code snippet provided?
+What is ladle in the code snippet provided?
+What is the purpose of the minimumFYTokenReceived parameter in the code snippet?
+What are the limits for rolling lending before maturity in the Yield protocol?
+What does rolling lending after maturity mean in the Yield protocol?
+What is the process for redeeming fyToken for underlying in the Yield protocol?
+What is the ladle used for in Yield v2?
+What is the Yield v2 id for the series in the protocol?
+What are the limits for liquidity providing in the Yield protocol?
+What is the process of providing liquidity by borrowing in Yield protocol?
+What does the user borrow when providing liquidity by borrowing in Yield protocol?
+What actions are required to create a vault or provide collateral when providing liquidity by borrowing in Yield protocol?
+What is the purpose of the option shown to the user when providing liquidity by borrowing in Yield protocol?
+What are the parameters required for the routeAction function in Yield protocol?
+What is the purpose of creating a vault in the Yield protocol?
+How is the amount of underlying split when providing liquidity?
+What is the collateral used to borrow fyToken in the Yield protocol?
+What is the function of ladle.batch in the provided code snippet?
+What is the significance of the 'minRatio' and 'maxRatio' parameters in the 'routeAction' function?
+What is the purpose of the 'seriesId' parameter in the Yield protocol?
+What is the 'ilkId' parameter used for in the Yield protocol?
+What is the 'ladle' in the Yield protocol?
+What is the significance of the 'minRatio' parameter in the Yield protocol?
+What is the role of the 'receiver' parameter in the Yield protocol?
+How is the amount of fyToken to buy calculated when providing liquidity by buying?
+What happens to any surplus base when providing liquidity by buying?
+What is the 'ladle' in the code snippet provided?
+What is the purpose of the 'minRatio' and 'maxRatio' parameters in the code snippet?
+What is the limit for the real fyToken reserves of the pool when providing liquidity by buying?
+What is the purpose of the 'Remove liquidity and repay' function in the Yield protocol?
+What is the role of the fyToken in repaying debt using this function?
+What happens to any fyToken surplus when using this function?
+What is the 'minRatio' parameter used for in this function?
+What is the 'vaultId' parameter used for in this function?
+What is the recommended method for repaying a small amount of debt using fyToken?
+What can be done with the fyToken surplus after repaying debt?
+What is the purpose of the Ladle for Yield v2?
+What are the parameters required for the routeAction function?
+What are the usage and limits of the Remove liquidity, repay and sell function?
+What is the fyToken contract used for in the Yield protocol?
+What is the purpose of the ladle in Yield v2?
+When can fyToken be redeemed in the Yield protocol?
+What is the significance of the minRatio and maxRatio parameters in the remove liquidity process?
+What is the recommended usage of the remove liquidity and redeem process in the Yield protocol?
+What is the purpose of removing liquidity in the Yield protocol?
+What can be done with the fyToken resulting from removing liquidity before maturity?
+What is the recommended scenario for selling the fyToken within the pool?
+What are the parameters required for the 'routeAction' function in the provided code snippet?
+What is the limit for the sum of fyToken and base received when removing liquidity?
+What is the simplest option to roll liquidity before maturity?
+How can LP tokens be converted into underlying?
+What does the frontend need to calculate for rolling liquidity before maturity?
+What is ladle.forwardPermitAction used for in the code snippet?
+What is the purpose of the ladle.routeAction function in the code snippet?
+What is the ladle used for in Yield v2?
+What are pool1 and pool2 in the Yield protocol?
+What is the purpose of poolTokens in the Yield protocol?
+What is fyTokenToBuy used for in the Yield protocol?
+What are the minimum and maximum base/fyToken ratios accepted in the pool reserves?
+What is the additional action required to convert from LP tokens to strategy tokens?
+What is the purpose of ladle.batch() in the code snippet?
+What is the role of the 'strategy' contract in the code snippet?
+What is the significance of the 'minRatio' and 'maxRatio' parameters in the code snippet?
+What is the purpose of the 'receiver' parameter in the code snippet?
+What is the difference between providing liquidity to a strategy and providing liquidity to a pool?
+What are permits and why are they necessary for providing liquidity to a strategy?
+How is the amount of fyToken to buy calculated when providing liquidity to a strategy?
+What is the purpose of the 'maxRatio' parameter when providing liquidity to a strategy?
+What is the 'receiver' parameter used for when providing liquidity to a strategy?
+What are the initial steps to remove liquidity from a strategy in Yield protocol?
+Can the debt in the vault be in a different fyToken than received while removing liquidity?
+What is the significance of setting a value in the last action with slippage protection?
+What is Ladle in Yield v2 protocol?
+Is it possible to remove liquidity before maturity with strategies in Yield protocol?
+What is the process for removing liquidity from deprecated strategies in the Yield protocol?
+What are the parameters required for the liquidity removal batch in the Yield protocol?
+What is Ladle in the Yield protocol?
+What is the usage of burn and sell in the Yield protocol?
+What is the note mentioned in the Yield protocol regarding liquidity removal before maturity with strategies?
+What is the purpose of the 'joinEtherAction' function in the Yield protocol?
+What is the 'pourAction' function used for in the Yield protocol?
+Can a vault be destroyed if it still holds collateral or debt?
+What is the role of the Ladle in the 'exitEtherAction' function?
+What is the requirement for the WETH balance in the Yield protocol?
+What is the output of redeeming fyETH?
+What is the purpose of using a Ladle batch when unwrapping fyETH?
+What is the role of Ladle in Yield v2?
+What is the parameter 'redeemed' used for in the code snippet?
+Can a user skip using a Ladle batch and permit when redeeming fyETH if they are happy with WETH?
+What is the purpose of the WrapEtherModule in the Yield protocol?
+How does the joinEther function differ from the wrapEther function in the Ladle implementation?
+What is the Ladle in the Yield protocol?
+What is the purpose of the minRatio and maxRatio parameters in the ladle.batch function?
+What is the role of the receiver parameter in the ladle.batch function?
+What is the purpose of the WrapEtherModule in the Yield protocol?
+How does the joinEther function in the Ladle implementation differ from the WrapEtherModule?
+What happens to any unused Wrapped Ether when providing liquidity in the Yield protocol?
+What is the minimum and maximum base/fyToken ratio accepted in the pool reserves when providing liquidity?
+What is the limit for the real fyToken reserves of the pool when providing liquidity in the Yield protocol?
+What is the process to unwrap Wrapped Ether after removing liquidity from Ether pools?
+What happens to unused fyETH when calling repayFromLadle during liquidity removal?
+What is the purpose of the Ladle in Yield v2?
+What is the role of fyToken in the liquidity removal process?
+What is the purpose of the retrieve function in the batch call for unused fyETH?
+What is the Ladle module used for in the Yield protocol?
+Is off-chain signature available for ERC1155?
+What is the process for approving Ladle in ERC1155?
+How is the withdrawal of ERC1155 collateral executed?
+What happens when withdrawing Notional's fCash after maturity?
+What is the Yield protocol?
+What is the Yield Variable Rate COOKBOOK?
+What are the recipes made with in the Yield Variable Rate COOKBOOK?
+What is the concept behind the Yield protocol?
+What are the methods to integrate the Yield protocol using smart contract code?
+What is the format for expressing actions in the Ladle?
+How can you build a vault using the Yield protocol?
+What is the process for withdrawing ERC20 collateral?
+Can the Ladle execute calls on arbitrary targets?
+What is the Ladle used for in relation to Ether, Permit, and Cauldron actions?
+What is the purpose of the 'Build a vault' action in the Yield protocol?
+What parameters are required for the 'Build a vault' action?
+What is the 'Destroy a vault' action used for in the Yield protocol?
+What is the purpose of the 'Post ERC20 collateral' batch in the Yield protocol?
+What are the required parameters for the 'Post ERC20 collateral' batch?
+What is the purpose of the ladle in this batch?
+What is the significance of the ladle having permission to move ilk for the user?
+What is the meaning of the 'deadline' parameter in this batch?
+What is the 'ilkJoin' contract used for in this batch?
+What is the significance of setting the 'vaultId' parameter to 0?
+What is the purpose of the 'Withdraw ERC20 collateral' batch?
+What is the 'receiver' parameter used for in both batches?
+Can the 'destroy' function be called if the vault still holds collateral or debt?
+What is the 'collateralAmount' parameter used for in the 'Borrow base' batch?
+What is the effect of setting the 'vaultId' parameter to 0 in both batches?
+What is the purpose of the 'debtRepaidInBase' parameter in the 'repay with base' batch function?
+What happens if there isn't enough debt to repay in the 'repay with base' batch function?
+What is the 'ladle' parameter in the 'repay with base' batch function used for?
+What is the 'inkTo' parameter in the 'repay with base' batch function used for?
+What is the 'ink' parameter in the 'repay with base' batch function used for?
+What is the purpose of the 'Repay a whole vault with base' batch in the Yield protocol?
+What is the 'maxBasePaid' parameter used for in the 'Repay a whole vault with base' batch?
+What is the purpose of the 'Lend' function in the Yield protocol?
+What is the 'Close' function used for in the Yield protocol?
+What is the 'join' parameter used for in the 'Lend' function?
+What is the purpose of the ladle.wrapEtherAction() function?
+What is the significance of setting the vaultId parameter to 0?
+What is the meaning of the ignored parameter in the pourAction() function?
+What is the purpose of the value parameter in the ladle.batch() function?
+What is the effect of setting the debt parameter to 0 in the pourAction() function?
+What is the purpose of the Ladle in the Withdraw Ether collateral batch?
+Can the vault be destroyed if it still holds collateral or debt?
+What happens to the Ether collateral withdrawn from the vault?
+What is the meaning of the 'withdrawn' parameter in the batch function?
+What is the role of the receiver parameter in the batch function?
+What is the purpose of the Yield protocol?
+How does the Yield protocol handle liquidity provision?
+What is the role of the Yield token in the protocol?
+Can the Yield protocol be integrated with other DeFi protocols?
+What is the process for staking and earning rewards on the Yield protocol?
+What tool was used to create the flow diagrams?
+What should be done to add a new diagram to the protocol?
+What is the recommended file naming convention for new diagrams?
+How can an existing diagram be edited?
+What is the purpose of the txt file in the flow-diagrams directory?
+What is the purpose of the recipe harness?
+How do you run specific tests in the recipe harness?
+What is the configuration for the series in the harness?
+What are the four parameters for each series in the SERIES_STRATEGIES?
+What is the double for-loop used for in the harness?
+What is the purpose of incorporating the opposite series in liquidity rolling procedures?
+Why can't we use older pools whose series has already matured for liquidity rolling tests?
+Which series still use V1 strategies in the currently live March series?
+What is the issue with the ERC1155 collateral section of the harness?
+How can the tests for providing and withdrawing ERC1155 collateral be run separately?
+What is the purpose of the 'erc1155Collateral' modifier?
+Why is it important to only run either ERC20 or ERC1155 ilks at a time?
+What are the parameters required for the 'forge test' command?
+What is the significance of the 'ROLL_POOL' parameter in the 'forge test' command?
+What is the role of the 'RecipeHarness.t.sol' file in the testing process?

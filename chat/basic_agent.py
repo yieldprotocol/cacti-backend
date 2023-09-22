@@ -10,6 +10,8 @@ import registry
 import streaming
 from tools.base import BaseTool
 import utils.timing as timing
+from utils.constants import WIDGET_INFO_TOKEN_LIMIT
+from utils.common import modelname_to_contextsize
 from .base import BaseChat, ChatHistory, Response
 
 
@@ -43,15 +45,14 @@ New input: {input}
 Thought: {agent_scratchpad}"""
 
 
-HISTORY_TOKEN_LIMIT = 2500
-
 
 @registry.register_class
 class BasicAgentChat(BaseChat):
-    def __init__(self, tools: List[BaseTool], model_name: Optional[str] = None) -> None:
+    def __init__(self, tools: List[BaseTool], model_name: Optional[str] = "text-davinci-003") -> None:
         super().__init__()
         self.tools = tools
         self.model_name = model_name
+        self.token_limit = max(1800, modelname_to_contextsize(model_name) - WIDGET_INFO_TOKEN_LIMIT)
 
     def receive_input(
             self,
@@ -62,7 +63,7 @@ class BasicAgentChat(BaseChat):
             before_message_id: Optional[uuid.UUID] = None,
     ) -> None:
         userinput = userinput.strip()
-        history_string = history.to_string(bot_prefix="Observation", system_prefix="Thought", token_limit=HISTORY_TOKEN_LIMIT, before_message_id=before_message_id)
+        history_string = history.to_string(bot_prefix="Observation", system_prefix="Thought", token_limit=self.token_limit, before_message_id=before_message_id)
 
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
         timing.init()

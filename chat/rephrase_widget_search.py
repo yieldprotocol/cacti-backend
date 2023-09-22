@@ -16,6 +16,8 @@ import context
 import utils
 import utils.timing as timing
 from utils import error_wrap, ensure_wallet_connected, ConnectedWalletRequired, FetchError, ExecError
+from utils.constants import WIDGET_INFO_TOKEN_LIMIT
+from utils.common import modelname_to_contextsize
 import registry
 import streaming
 from chat.container import ContainerMixin, dataclass_to_container_params
@@ -53,12 +55,10 @@ Use the following format:
 ## Tool Input: {question}
 ## Widget Command:'''
 
-HISTORY_TOKEN_LIMIT = 1800
-
 
 @registry.register_class
 class RephraseWidgetSearchChat(BaseChat):
-    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True, model_name: Optional[str] = None, evaluate_widgets: bool = True) -> None:
+    def __init__(self, widget_index: Any, top_k: int = 3, show_thinking: bool = True, model_name: Optional[str] = "text-davinci-003", evaluate_widgets: bool = True) -> None:
         super().__init__()
         self.output_parser = ChatOutputParser()
         self.rephrase_prompt = PromptTemplate(
@@ -77,6 +77,7 @@ class RephraseWidgetSearchChat(BaseChat):
         self.show_thinking = show_thinking
         self.evaluate_widgets = evaluate_widgets
         self.model_name = model_name
+        self.token_limit = max(1800, modelname_to_contextsize(model_name) - WIDGET_INFO_TOKEN_LIMIT)
 
     def receive_input(
             self,
@@ -87,7 +88,7 @@ class RephraseWidgetSearchChat(BaseChat):
             before_message_id: Optional[uuid.UUID] = None,
     ) -> None:
         userinput = userinput.strip()
-        history_string = history.to_string(system_prefix=None, token_limit=HISTORY_TOKEN_LIMIT, before_message_id=before_message_id)  # omit system messages
+        history_string = history.to_string(system_prefix=None, token_limit=self.token_limit, before_message_id=before_message_id)  # omit system messages
 
         history.add_user_message(userinput, message_id=message_id, before_message_id=before_message_id)
         timing.init()
@@ -197,8 +198,8 @@ class RephraseWidgetSearchChat(BaseChat):
                     else:
                         # keep waiting
                         return
-                if len(response_buffer) < len(WIDGET_START):
-                    # keep waiting
+                if 0 < len(response_buffer) < len(WIDGET_START) and WIDGET_START.startswith(response_buffer):
+                    # keep waiting if we could potentially be receiving WIDGET_START
                     return
                 token = response_buffer
                 response_buffer = ""
