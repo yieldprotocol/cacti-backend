@@ -65,13 +65,11 @@ def backfill():
     try: 
         from langchain.vectorstores import Weaviate
 
-        with open('./knowledge_base/dapps_ranked.json') as f: 
+        with open('./knowledge_base/dapps_ranked_unique.json') as f: 
             dapp_list = json.load(f)
             
-        # Extract the 'name' field from each dapp and store it in the 'documents' list
-        documents = [d.pop("name") for d in dapp_list]
+        documents = [d.pop("description") for d in dapp_list]
 
-        # Use the remaining fields in each dapp to populate the 'metadatas' list
         metadatas = dapp_list
             
         create_schema(delete_first=True)
