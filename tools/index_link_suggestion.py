@@ -8,6 +8,8 @@ from langchain.prompts.base import BaseOutputParser
 import registry
 import streaming
 from .index_lookup import IndexLookupTool
+from gpt_index.utils import ErrorToRetry, retry_on_exceptions_with_backoff
+import utils.timing as timing
 
 
 TEMPLATE = '''You are a web3 assistant. You help users with answering web3-related questions. Your responses should sound natural, helpful, cheerful, and engaging, and you should use easy to understand language with explanations for jargon.
@@ -51,11 +53,28 @@ class IndexLinkSuggestionTool(IndexLookupTool):
 
     def _run(self, query: str) -> str:
         """Query index and answer question using document chunks."""
-        task_info = super()._run(query)
+
+        docs = retry_on_exceptions_with_backoff(
+            lambda: self._index.similarity_search(query, k=self._top_k),
+            [ErrorToRetry(TypeError)],
+        )
+        timing.log('widget_index_lookup_done')
+
+        task_info = ""
+        for i, doc in enumerate(docs):
+            dapp_info = f"""### DAPP {i+1}\nname: {doc.metadata['name']}\ndescription: {doc.page_content}\nurl: {doc.metadata['url']}\n\n"""
+            task_info += dapp_info
+
         example = {
             "task_info": task_info,
             "question": query,
             "stop": "User",
         }
+        self._chain.verbose = True
         result = self._chain.run(example)
+
         return result.strip()
+
+   
+
+
