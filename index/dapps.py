@@ -41,11 +41,10 @@ def create_schema(delete_first: bool = False) -> None:
                     "properties": [
                         {"name": DAPP_NAME, "dataType": ["text"]},
                         {"name": DAPP_DESCRIPTION, "dataType": ["text"]},
-                        {"name": DAPP_URL, "dataType": ["text"]},
                         {
-                            "name": "twitterHandle",
+                            "name": DAPP_URL, 
                             "dataType": ["text"],
-                            "description": "The Twitter handle of the Dapp",
+                            "description": "The URL of the Dapp",
                             "moduleConfig": {
                                     "text2vec-openai": {
                                     "skip": True,
@@ -53,61 +52,6 @@ def create_schema(delete_first: bool = False) -> None:
                                 }
                             }
                         },
-                        {
-                            "name": "blogLinks",
-                            "dataType": ["text[]"],
-                            "description": "Links to the blog posts related to the Dapp",
-                            "moduleConfig": {
-                                    "text2vec-openai": {
-                                    "skip": True,
-                                    "vectorizePropertyName": False
-                                }
-                            }
-                        },
-                        {
-                            "name": "discord",
-                            "dataType": ["text"],
-                            "description": "The Discord server link of the Dapp",
-                            "moduleConfig": {
-                                    "text2vec-openai": {
-                                    "skip": True,
-                                    "vectorizePropertyName": False
-                                }
-                            }
-                        },
-                        {
-                            "name": "facebook",
-                            "dataType": ["text"],
-                            "description": "The Facebook page link of the Dapp",
-                            "moduleConfig": {
-                                    "text2vec-openai": {
-                                    "skip": True,
-                                    "vectorizePropertyName": False
-                                }
-                            }
-                        },
-                        {
-                            "name": "instagram",
-                            "dataType": ["text"],
-                            "description": "The Instagram profile link of the Dapp",
-                            "moduleConfig": {
-                                    "text2vec-openai": {
-                                    "skip": True,
-                                    "vectorizePropertyName": False
-                                }
-                            }
-                        },
-                        {
-                            "name": "telegram",
-                            "dataType": ["text"],
-                            "description": "The Telegram channel link of the Dapp",
-                            "moduleConfig": {
-                                    "text2vec-openai": {
-                                    "skip": True,
-                                    "vectorizePropertyName": False
-                                }
-                            }
-                        }
                     ]
                 }
         
@@ -128,13 +72,12 @@ def backfill():
         documents = [d.pop("name") for d in dapp_list]
 
         # Use the remaining fields in each dapp to populate the 'metadatas' list
-        # is this the best 'metadatas' to use?
         metadatas = dapp_list
             
         create_schema(delete_first=True)
 
         client = get_client()
-        w = Weaviate(client, INDEX_NAME, DAPP_NAME) # is this a proper 3rd argument?
+        w = Weaviate(client, INDEX_NAME, DAPP_NAME) 
         w.add_texts(documents, metadatas)
     except Exception as e: 
         print(f"Error during backfill in dapps.py {str(e)}")
