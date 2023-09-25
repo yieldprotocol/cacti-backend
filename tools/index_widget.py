@@ -390,6 +390,19 @@ def fetch_link_suggestion(query: str) -> Callable:
         tool._run(query)
     return fn
 
+@error_wrap
+def generate_code(query: str) -> Callable:
+    def fn(token_handler):
+        tool = dict(
+            type="tools.index_generate_code.IndexGenerateCodeTool",
+            _streaming=True,
+            name="GenerateCode",
+            content_description="",  # not used
+        )
+        tool = streaming.get_streaming_tools([tool], token_handler)[0]
+        tool._run(query)
+    return fn
+
 
 class ListContainer(ContainerMixin, list):
     def message_prefix(self) -> str:
