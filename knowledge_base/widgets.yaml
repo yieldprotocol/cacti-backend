@@ -558,7 +558,9 @@
     an amount to sell, OR
 
     2.) A token to sell, a token to buy, the transaction keyword "BUYAMOUNT", and
-    an amount to buy.'
+    an amount to buy.
+    
+    Optionally, users can specify a paricular slippage tolerance for the swap transaction, if is none provided, the default is 0.5'
   parameters:
     properties:
       amount:
@@ -571,6 +573,9 @@
       tokenToSell:
         description: Token to sell in the swap transaction.
         type: string
+      slippage:
+        description: Slippage tolerance for the swap transaction.
+        type: string
       transactionKeyword:
         description: Either SELLAMOUNT if amount refers to token to sell or BUYAMOUNT
           if amount refers to token to buy.
@@ -580,6 +585,7 @@
     - tokenToBuy
     - transactionKeyword
     - amount
+    - slippage
     type: object
   return_value_description: ''
 - _name_: fetch_nfts_owned_by_address_or_domain
