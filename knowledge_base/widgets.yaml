@@ -855,3 +855,22 @@
     - vault
     type: object
   return_value_description: ''
+- _name_: display_code_runner
+  description: 
+    You are an expert Web3 developer well versed in using Javascript to interact with the ecosystem, you will help the user perform actions based on their request by generating functional Javascript  code
+
+    # INSTRUCTIONS
+    - Assume user wallet already connected to browser so don't ask for private key or Infura project ID
+    - Print out transaction hash if applicable
+    - Always use ethers.js
+    - Assume we already have the provider and signer available, and can be passed to the generated code
+    - Your final output should be a JSON object with a code field which contains formatted JS code with comments 
+  parameters:
+    properties:
+      user_wallet_address:
+        description: default to using the connected address
+        type: string
+    required:
+    - user_wallet_address
+    type: object
+  return_value_description: ''
