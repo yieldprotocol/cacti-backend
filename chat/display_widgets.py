@@ -201,7 +201,7 @@ def _widgetize_inner(command: str, params: str, depth: int = 0) -> str:
     elif command == 'withdraw-vault':
         items = params.split(",")
         lines.append(f"Withdraw vault action for token: {items[0]}, amount: {items[1]}.")
-    elif command == 'code-runner':
+    elif command == 'generate-code':
         items = params.split(",")
         lines.append(f"supply the user with valid javascript code to run and perform their desired action.")
     else:
