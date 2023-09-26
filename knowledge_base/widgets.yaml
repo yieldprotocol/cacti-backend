@@ -865,4 +865,4 @@
     required:
     - user_wallet_address
     type: object
-  return_value_description: 'message with formatted javascript code in a property called 'code' in JSON format'
+  return_value_description: 'message with formatted javascript code in a property called code in JSON format'
