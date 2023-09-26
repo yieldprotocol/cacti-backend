@@ -855,7 +855,7 @@
     - vault
     type: object
   return_value_description: ''
-- _name_: display_generate_code
+- _name_: generate_code
   description: generate code for the user; this widget should always be chosen for anything relating to code
   parameters:
     properties:
