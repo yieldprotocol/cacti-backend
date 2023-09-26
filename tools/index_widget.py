@@ -250,8 +250,8 @@ def replace_match(m: re.Match) -> Union[str, Generator, Callable]:
     #     return fetch_scraped_sites(*params)
     elif command == 'fetch-link-suggestion':
         return fetch_link_suggestion(*params) 
-    elif command == 'generate-code':
-        return generate_code(*params) 
+    elif command == 'generate-js-code':
+        return generate_js_code(*params) 
     elif command == aave.AaveSupplyContractWorkflow.WORKFLOW_TYPE:
         return str(exec_aave_operation(*params, operation='supply'))
     elif command == aave.AaveBorrowContractWorkflow.WORKFLOW_TYPE:
