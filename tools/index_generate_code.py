@@ -3,7 +3,6 @@ from langchain.chains import LLMChain
 
 import registry
 import streaming
-from .index_lookup import IndexLookupTool
 from gpt_index.utils import ErrorToRetry, retry_on_exceptions_with_backoff
 import utils.timing as timing
 
@@ -29,7 +28,7 @@ Assistant:'''
 
 
 @registry.register_class
-class IndexGenerateCodeTool(IndexLookupTool):
+class IndexGenerateCodeTool():
     """Tool for generating code to perform a user request."""
 
     _chain: LLMChain
@@ -54,11 +53,15 @@ class IndexGenerateCodeTool(IndexLookupTool):
         )
 
     def _run(self, query: str) -> str:
-        """Query index and answer question using document chunks."""
+
+        retry_on_exceptions_with_backoff(
+            lambda: self._index.similarity_search(query, k=self._top_k),
+            [ErrorToRetry(TypeError)],
+        )
 
         timing.log('widget_index_lookup_done')
 
         self._chain.verbose = True
         result = self._chain.run()
 
-        return result.strip()
+        return result
