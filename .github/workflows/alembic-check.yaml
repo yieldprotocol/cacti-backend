@@ -73,9 +73,9 @@ jobs:
       run: |
         GCP_SSH_CMD="gcloud compute ssh cacti-bastion-server --zone us-east1-b --ssh-key-file /tmp/gcp/google_compute_engine --quiet --tunnel-through-iap --ssh-flag"
         if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' ]]; then
-          $GCP_SSH_CMD '-vvv -fN -L 5432:${{ secrets.PROD_CHATDB_INTERNAL_IP }}'
+          $GCP_SSH_CMD '-fN -L 5432:${{ secrets.PROD_CHATDB_INTERNAL_IP }}'
         else
-          $GCP_SSH_CMD '-vvv -fN -L 5432:${{ secrets.DEV_CHATDB_INTERNAL_IP }}'
+          $GCP_SSH_CMD '-fN -L 5432:${{ secrets.DEV_CHATDB_INTERNAL_IP }}'
         fi
 
         cd backend
