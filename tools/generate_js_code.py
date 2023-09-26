@@ -14,6 +14,7 @@ TEMPLATE = '''You are an expert Web3 developer well versed in using JS to intera
 - Print out transaction hash if applicable
 - Always use ethers.js
 - Assume there is an ethers.js provider and signer available and can be provided to the function or code
+- The code should return a function or a promise that can be called to perform the action
 - Your final output should be a JSON object with a code field which contains formatted JS code with comments 
 
 ---
