@@ -398,7 +398,7 @@ def generate_code(query: str) -> Callable:
         tool = dict(
             type="tools.index_generate_code.IndexGenerateCodeTool",
             _streaming=True,
-            name="GenerateCode",
+            name="IndexGenerateCodeTool",
             content_description="",  # not used
         )
         tool = streaming.get_streaming_tools([tool], token_handler)[0]
