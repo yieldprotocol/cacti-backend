@@ -34,4 +34,4 @@ display_uniswap
 fetch_nfts_owned_by_address_or_domain
 fetch_nfts_owned_by_user
 fetch_link_suggestion
-generate_code
+generate_js_code
