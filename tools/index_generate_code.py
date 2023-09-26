@@ -16,9 +16,6 @@ TEMPLATE = '''You are an expert Web3 developer well versed in using JS to intera
 - Assume there is an ethers.js provider and signer available and can be provided to the function
 - Your final output should be a JSON object with a code field which contains formatted JS code with comments 
 
-# USER REQUEST EXAMPLE
-write code to send 2 eth to 0x123
-
 User: {question}
 Assistant:'''
 
