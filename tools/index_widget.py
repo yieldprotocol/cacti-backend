@@ -396,10 +396,9 @@ def fetch_link_suggestion(query: str) -> Callable:
 def generate_code(query: str) -> Callable:
     def fn(token_handler):
         tool = dict(
+            name="IndexGenerateCodeTool",
             type="tools.index_generate_code.IndexGenerateCodeTool",
             _streaming=True,
-            name="IndexGenerateCodeTool",
-            content_description="",  # not used
         )
         tool = streaming.get_streaming_tools([tool], token_handler)[0]
         tool._run(query)
