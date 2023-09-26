@@ -7,4 +7,4 @@ from . import index_app_info
 from . import index_api_tool
 from . import app_usage_guide
 from . import index_link_suggestion
-from . import index_generate_code
+from . import generate_js_code

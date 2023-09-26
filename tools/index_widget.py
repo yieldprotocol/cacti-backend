@@ -393,11 +393,11 @@ def fetch_link_suggestion(query: str) -> Callable:
     return fn
 
 @error_wrap
-def generate_code(query: str) -> Callable:
+def generate_js_code(query: str) -> Callable:
     def fn(token_handler):
         tool = dict(
-            name="IndexGenerateCodeTool",
-            type="tools.index_generate_code.IndexGenerateCodeTool",
+            name="GenerateJSCodeTool",
+            type="tools.generate_js_code.GenerateJSCodeTool",
             _streaming=True,
         )
         tool = streaming.get_streaming_tools([tool], token_handler)[0]

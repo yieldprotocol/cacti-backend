@@ -22,7 +22,7 @@ Assistant:'''
 
 
 @registry.register_class
-class IndexGenerateCodeTool(BaseTool):
+class GenerateJSCodeTool(BaseTool):
     """Tool for generating code to perform a user request."""
 
     _chain: LLMChain
