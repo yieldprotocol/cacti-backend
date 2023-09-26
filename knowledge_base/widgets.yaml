@@ -856,7 +856,7 @@
     type: object
   return_value_description: ''
 - _name_: display_generate_code
-  description: generate code for the user
+  description: generate code for the user; this widget should always be chosen for anything relating to code
   parameters:
     properties:
       user_wallet_address:
