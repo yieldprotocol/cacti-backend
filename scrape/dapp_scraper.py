@@ -8,11 +8,6 @@ import requests
 import json
 from typing import List
 
-from scrape.models import (
-    db_session,
-    Dapp
-)
-
 BROWSERLESS_API_KEY = os.getenv('BROWSERLESS_API_KEY', '')
 SCRAPE_API_URL = f'https://chrome.browserless.io/scrape?token={BROWSERLESS_API_KEY}'
 
@@ -171,44 +166,6 @@ def clean_payload_data(original_data):
         reduced_data.append(cleaned_dapp)
     
     return reduced_data
-
-
-def load_data_from_json_to_db(session=db_session, json_path=dapps_json_path):
-    print("Loading data from JSON to DB")
-    # 1. Setup
-    # If the table doesn't exist, create it
-    # Base.metadata.create_all(session.bind) Dont need this - jacob b
-
-    # 2. Data Loading
-
-    # Read the JSON data
-    with open(json_path, "r") as file:
-        dapps_data = json.load(file)
-
-    # Loop through the JSON data and insert each entry into the database
-    for dapp in dapps_data:
-        print(f'adding {dapp["name"]}')
-        dapp_instance = Dapp(
-            description=dapp["description"],
-            name=dapp["name"],
-            url=dapp["url"],
-            twitter_handle=dapp["twitterHandle"],
-            blog_links=dapp["blogLinks"],
-            discord=dapp["discord"],
-            facebook=dapp["facebook"],
-            instagram=dapp["instagram"],
-            telegram=dapp["telegram"]
-        )
-        session.add(dapp_instance)
-
-    # 3. Finalization
-
-    # Commit the transactions
-    session.commit()
-
-    print("Finished loading data from JSON to DB")
-
-
 
 if __name__ == "__main__":
 
