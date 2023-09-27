@@ -1,22 +1,22 @@
-- _name_: display_transfer
-  description: Transfer a token from a user's wallet to another address
-  parameters:
-    properties:
-      address:
-        description: Transfer recipient address.
-        type: string
-      amount:
-        description: Quantity to transfer.
-        type: string
-      token:
-        description: Symbol of the token being transferred.
-        type: string
-    required:
-    - token
-    - amount
-    - address
-    type: object
-  return_value_description: ''
+# - _name_: display_transfer
+#   description: Transfer a token from a user's wallet to another address
+#   parameters:
+#     properties:
+#       address:
+#         description: Transfer recipient address.
+#         type: string
+#       amount:
+#         description: Quantity to transfer.
+#         type: string
+#       token:
+#         description: Symbol of the token being transferred.
+#         type: string
+#     required:
+#     - token
+#     - amount
+#     - address
+#     type: object
+#   return_value_description: ''
 - _name_: fetch_nft_buy_asset
   description: Buy an NFT asset of a collection on the OpenSea marketplace, given
     its network, address, and token ID. Don't use this if we don't have the collection
