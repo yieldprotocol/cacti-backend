@@ -412,8 +412,12 @@ def generate_js_code(query: str) -> Callable:
             _streaming=True,
         )
         tool = streaming.get_streaming_tools([tool], token_handler)[0]
+        print('running tool')
         return tool._run(query)
-    return str(CodeContainer(code=fn()))
+    code = fn()
+    print('code', code)
+    print('testing')
+    return str(CodeContainer(code=code))
 
 
 class ListContainer(ContainerMixin, list):
