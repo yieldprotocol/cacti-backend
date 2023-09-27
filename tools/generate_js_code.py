@@ -15,7 +15,7 @@ TEMPLATE = '''You are an expert Web3 developer well versed in using JS to intera
 - Always use ethers.js
 - Assume there is an ethers.js provider and signer available and can be provided to the function or code
 - The code should return a function or a promise that can be called to perform the action
-- Your final output should be a JSON object with a code field which contains formatted JS code with comments 
+- Your final output should be a JSON object with a code field, which contains a formatted JS code function with comments, which can be run on a frontend; don't include anything else for now (ie: messages that precede the code, etc.)
 
 ---
 User: {question}
@@ -46,7 +46,6 @@ class GenerateJSCodeTool(BaseTool):
         description=BASE_TOOL_DESCRIPTION_TEMPLATE.format(
                 tool_description="generate code based on the user query",
                 input_description="a standalone query where user wants to generate code to perform an action",
-                output_description="a message answer, along with the generated code with helpful comments",
             )
 
         super().__init__(
