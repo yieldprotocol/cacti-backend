@@ -43,10 +43,11 @@ class GenerateJSCodeTool(BaseTool):
         )
         new_token_handler = kwargs.get('new_token_handler')
         chain = streaming.get_streaming_chain(prompt, new_token_handler)
-        description=BASE_TOOL_DESCRIPTION_TEMPLATE.format(
-                tool_description="generate code based on the user query",
-                input_description="a standalone query where user wants to generate code to perform an action",
-            )
+        description = BASE_TOOL_DESCRIPTION_TEMPLATE.format(
+            tool_description="generate code based on the user query",
+            input_description="a standalone query where user wants to generate code to perform an action",
+            output_description="a JSON object with a code field, which contains a formatted JS code function with comments, which can be run on a frontend; don't include anything else for now (ie: messages that precede the code, etc.)"
+        )
 
         super().__init__(
             *args,
@@ -61,8 +62,10 @@ class GenerateJSCodeTool(BaseTool):
             "stop": "User",
         }
         result = self._chain.run(example)
+        print('result in generate_js_code', result)
 
         return result
 
     async def _arun(self, query: str) -> str:
-        raise NotImplementedError(f"{self.__class__.__name__} does not support async")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support async")
