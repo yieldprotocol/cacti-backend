@@ -68,7 +68,7 @@ def backfill():
         with open('./knowledge_base/dapps_ranked_unique.json') as f: 
             dapp_list = json.load(f)
             
-        documents = [d.pop("description") for d in dapp_list]
+        documents = [d.get("description") for d in dapp_list]
 
         metadatas = dapp_list
             

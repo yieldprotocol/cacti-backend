@@ -427,11 +427,14 @@
     type: object
   return_value_description: ''
 - _name_: fetch_app_info
-  description: Used when we need to handle common questions and answers about the
-    chat assistant app, what it can do, how to interact with it, at a high-level.
-    Only useful for questions about the chat app experience. It does not know specific
-    information about the web3 ecosystem, of tokens or NFTs or contracts, or access
-    to live data and APIs.
+  description: This function is invoked exclusively to address questions pertaining to the capabilities, 
+    features, and interactions related to the chat assistant application itself. Users may 
+    inquire about the chat app's high-level functionalities, its operational attributes, or 
+    best practices for engagement. However, this function should NOT be triggered for queries 
+    related to specific details of the web3 ecosystem, such as tokens, NFTs, contracts, or any 
+    live data and API access. Ensure that the function responds solely to inquiries about 
+    the chat assistant app's core capabilities and user experience.
+
   parameters:
     properties:
       query:
