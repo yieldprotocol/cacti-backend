@@ -405,18 +405,15 @@ def fetch_link_suggestion(query: str) -> Callable:
 
 @error_wrap
 def generate_js_code(query: str) -> Callable:
-    def fn(token_handler):
-        tool = dict(
-            name="GenerateJSCodeTool",
-            type="tools.generate_js_code.GenerateJSCodeTool",
-            _streaming=True,
-        )
-        tool = streaming.get_streaming_tools([tool], token_handler)[0]
-        print('running tool')
-        return tool._run(query)
-    code = fn()
+    tool = dict(
+        name="GenerateJSCodeTool",
+        type="tools.generate_js_code.GenerateJSCodeTool",
+        _streaming=True,
+    )
+    tool = streaming.get_streaming_tools([tool], None)[0]
+    print('running tool')
+    code =tool._run(query)
     print('code', code)
-    print('testing')
     return str(CodeContainer(code=code))
 
 

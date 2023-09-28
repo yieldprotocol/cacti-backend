@@ -15,7 +15,7 @@ TEMPLATE = '''You are an expert Web3 developer well versed in using JS to intera
 - Always use ethers.js
 - Assume there is an ethers.js provider and signer available and can be provided to the function or code
 - The code should return a function or a promise that can be called to perform the action
-- Your final output should be a JSON object with a code field, which contains a formatted JS code function with comments, which can be run on a frontend; don't include anything else for now (ie: messages that precede the code, etc.)
+- Your final output should be a formatted JS code function with comments, which can be run on a frontend; don't include anything else for now (ie: messages that precede the code, etc.)
 
 ---
 User: {question}

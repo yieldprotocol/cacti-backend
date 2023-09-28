@@ -856,13 +856,13 @@
     type: object
   return_value_description: ''
 - _name_: generate_js_code
-  description: generate code for the user; this widget should always be chosen for anything relating to code
+  description: generate code for the user based on the query; this widget should always be chosen for anything relating to code within a query
   parameters:
     properties:
-      user_wallet_address:
-        description: default to using the connected address
+      query:
+        description: a standalone question representing the user's intent to perform an action via code
         type: string
     required:
-    - user_wallet_address
+    - query
     type: object
-  return_value_description: 'message with formatted javascript code in a property called code in JSON format'
+  return_value_description: formatted javascript code
