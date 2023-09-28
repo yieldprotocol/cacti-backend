@@ -1,22 +1,22 @@
-- _name_: display_transfer
-  description: Transfer a token from a user's wallet to another address
-  parameters:
-    properties:
-      address:
-        description: Transfer recipient address.
-        type: string
-      amount:
-        description: Quantity to transfer.
-        type: string
-      token:
-        description: Symbol of the token being transferred.
-        type: string
-    required:
-    - token
-    - amount
-    - address
-    type: object
-  return_value_description: ''
+# - _name_: display_transfer
+#   description: Transfer a token from a user's wallet to another address
+#   parameters:
+#     properties:
+#       address:
+#         description: Transfer recipient address.
+#         type: string
+#       amount:
+#         description: Quantity to transfer.
+#         type: string
+#       token:
+#         description: Symbol of the token being transferred.
+#         type: string
+#     required:
+#     - token
+#     - amount
+#     - address
+#     type: object
+#   return_value_description: ''
 - _name_: fetch_nft_buy_asset
   description: Buy an NFT asset of a collection on the OpenSea marketplace, given
     its network, address, and token ID. Don't use this if we don't have the collection
@@ -858,3 +858,14 @@
     - vault
     type: object
   return_value_description: ''
+- _name_: generate_js_code
+  description: generate code for the user based on the query; this widget should always be chosen for anything relating to code within a query
+  parameters:
+    properties:
+      query:
+        description: a standalone question representing the user's intent to perform an action via code
+        type: string
+    required:
+    - query
+    type: object
+  return_value_description: formatted javascript code
